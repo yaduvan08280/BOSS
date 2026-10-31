@@ -1,0 +1,77 @@
+import type { Db } from './client';
+
+/** Models with a `companyId` column. Kept in sync with the schema by `scope.test.ts`. */
+export const COMPANY_SCOPED_MODELS = new Set([
+  'Branch',
+  'Shift',
+  'Department',
+  'Designation',
+  'Role',
+  'User',
+  'UserDepartment',
+  'Counter',
+  'ModuleSetting',
+  'Attachment',
+  'Session',
+  'AuditLog',
+  'DomainEvent',
+  'Notification',
+]);
+
+/** Models with `deletedAt` (soft delete). Kept in sync with the schema by `scope.test.ts`. */
+export const SOFT_DELETE_MODELS = new Set([
+  'Company',
+  'Branch',
+  'Shift',
+  'Department',
+  'Designation',
+  'Role',
+  'User',
+  'Attachment',
+]);
+
+const LIST_READS = new Set(['findMany', 'findFirst', 'findFirstOrThrow', 'count', 'aggregate', 'groupBy']);
+const CREATES = new Set(['create', 'createMany', 'createManyAndReturn']);
+
+type AnyArgs = { where?: Record<string, unknown>; data?: unknown; create?: Record<string, unknown> };
+
+/**
+ * A client that can only see and write rows of one company.
+ * - every where gets `companyId`, every create gets `companyId` (overwriting anything passed in);
+ * - list reads hide soft-deleted rows unless the caller filters on `deletedAt` explicitly.
+ * Use scalar foreign keys (`roleId: …`), not nested `connect`, in creates on scoped models.
+ */
+export function forCompany(db: Db, companyId: string) {
+  return db.$extends({
+    name: 'company-scope',
+    query: {
+      $allModels: {
+        async $allOperations({ model, operation, args, query }) {
+          const a = { ...((args ?? {}) as AnyArgs) };
+          if (COMPANY_SCOPED_MODELS.has(model)) {
+            if (CREATES.has(operation)) {
+              a.data = Array.isArray(a.data)
+                ? a.data.map((d: Record<string, unknown>) => ({ ...d, companyId }))
+                : { ...(a.data as Record<string, unknown>), companyId };
+            } else if (operation === 'upsert') {
+              a.where = { ...a.where, companyId };
+              a.create = { ...a.create, companyId };
+            } else {
+              a.where = { ...a.where, companyId };
+            }
+          }
+          if (
+            SOFT_DELETE_MODELS.has(model) &&
+            LIST_READS.has(operation) &&
+            a.where?.deletedAt === undefined
+          ) {
+            a.where = { ...a.where, deletedAt: null };
+          }
+          return query(a as typeof args);
+        },
+      },
+    },
+  });
+}
+
+export type ScopedDb = ReturnType<typeof forCompany>;

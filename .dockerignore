@@ -1,0 +1,11 @@
+**/node_modules
+**/dist
+**/dev-dist
+.env
+.env.*
+.git
+docs
+e2e
+test-results
+playwright-report
+packages/db/src/generated

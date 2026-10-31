@@ -1,0 +1,11 @@
+// One file per module. Tables and columns are snake_case in Postgres; every business table has company_id.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../../packages/db/src/generated"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}

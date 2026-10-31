@@ -1,0 +1,19 @@
+{
+  "name": "@mono/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file-if-exists=../../.env src/main.ts",
+    "build": "tsup",
+    "start": "node dist/main.js",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@mono/api": "*",
+    "@mono/db": "*",
+    "@mono/shared": "*",
+    "pg-boss": "^12.38.0",
+    "pino": "^10.4.0"
+  }
+}

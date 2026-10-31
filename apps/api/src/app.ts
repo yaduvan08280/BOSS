@@ -1,0 +1,65 @@
+import cookie from '@fastify/cookie';
+import rateLimit from '@fastify/rate-limit';
+import swagger from '@fastify/swagger';
+import swaggerUi from '@fastify/swagger-ui';
+import Fastify, { type FastifyServerOptions } from 'fastify';
+import { jsonSchemaTransform, serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
+import { createPrisma, type Db } from '@mono/db';
+import type { Env } from './env';
+import { EventListener } from './lib/events';
+import authPlugin from './plugins/auth';
+import errorsPlugin from './plugins/errors';
+import originPlugin from './plugins/origin';
+import { sseRoutes } from './plugins/sse';
+import { authRoutes } from './modules/auth/routes';
+import { healthRoutes } from './modules/health/routes';
+
+export type BuildOptions = {
+  env: Env;
+  prisma?: Db;
+  listener?: EventListener;
+  logger?: FastifyServerOptions['logger'];
+};
+
+export async function buildApp(opts: BuildOptions) {
+  const { env } = opts;
+  const app = Fastify({
+    logger: opts.logger ?? {
+      level: env.LOG_LEVEL,
+      redact: ['req.headers.cookie', 'req.headers.authorization', 'res.headers["set-cookie"]'],
+      ...(env.NODE_ENV === 'development' ? { transport: { target: 'pino-pretty' } } : {}),
+    },
+    trustProxy: true,
+    bodyLimit: 2 * 1024 * 1024,
+  });
+  app.setValidatorCompiler(validatorCompiler);
+  app.setSerializerCompiler(serializerCompiler);
+
+  const prisma = opts.prisma ?? createPrisma(env.DATABASE_URL);
+  const listener = opts.listener ?? new EventListener(env.DATABASE_URL, app.log);
+  app.decorate('prisma', prisma);
+  app.addHook('onClose', async () => {
+    await listener.stop();
+    if (!opts.prisma) await prisma.$disconnect();
+  });
+  if (!opts.listener) await listener.start();
+
+  await app.register(errorsPlugin);
+  await app.register(cookie);
+  await app.register(rateLimit, { global: false });
+  await app.register(originPlugin, { allowed: [env.origin] });
+  await app.register(authPlugin, { secret: env.APP_SECRET });
+
+  if (env.NODE_ENV !== 'production') {
+    await app.register(swagger, {
+      openapi: { info: { title: `${env.APP_NAME} API`, version: '0.1.0' } },
+      transform: jsonSchemaTransform,
+    });
+    await app.register(swaggerUi, { routePrefix: '/api/docs' });
+  }
+
+  await app.register(healthRoutes);
+  await app.register(authRoutes, { env });
+  await app.register(sseRoutes, { listener });
+  return app;
+}

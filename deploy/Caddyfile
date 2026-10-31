@@ -1,0 +1,42 @@
+{
+	admin off
+	auto_https off
+	servers {
+		# cloudflared and the Docker network are private: trust them for the real client IP.
+		trusted_proxies static private_ranges
+		client_ip_headers CF-Connecting-IP X-Forwarded-For
+	}
+}
+
+:80 {
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(self), microphone=(self), geolocation=(self)"
+		-Server
+	}
+
+	handle /api/* {
+		# flush_interval -1: never buffer, so Server-Sent Events (/api/events) stream immediately.
+		reverse_proxy api:3000 {
+			flush_interval -1
+		}
+	}
+
+	handle {
+		root * /srv
+		encode zstd gzip
+		@immutable path /assets/*
+		header @immutable Cache-Control "public, max-age=31536000, immutable"
+		@nocache path /sw.js /index.html /manifest.webmanifest /registerSW.js
+		header @nocache Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

@@ -1,0 +1,22 @@
+# Development database only. API, worker and web run on the host with `npm run dev`.
+name: mono-dev
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mono
+      POSTGRES_PASSWORD: mono
+      POSTGRES_DB: mono
+      TZ: UTC
+    ports:
+      - '127.0.0.1:5432:5432'
+    volumes:
+      - mono-dev-pg:/var/lib/postgresql/data
+      - ./db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U mono']
+      interval: 5s
+      retries: 10
+volumes:
+  mono-dev-pg:
