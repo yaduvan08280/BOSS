@@ -2,6 +2,7 @@ import { createId } from '@paralleldrive/cuid2';
 import { Readable } from 'node:stream';
 import type { Db } from '@mono/db';
 import { emitEvent, redeemLinkCode, type Storage } from '@mono/api/services';
+import { doneCommand, moveCommand, taskButton, workSummary } from './bot-work';
 
 /** Bot logic as plain functions (easy to test); telegram-bot.ts wires them to grammY. */
 export type BotScope = { companyIds: string[] | null };
@@ -48,7 +49,7 @@ export async function onCode(db: Db, chatId: string, code: string, appName: stri
   return `I don't know that code. Check it and send it again, or get a new one in ${appName}.`;
 }
 
-/** /my and /today: unread notifications for now; work lists join in as the modules arrive (phase 3+). */
+/** /my and /today: tasks, checklists and verifications first, then unread messages. */
 export async function onMy(
   db: Db,
   scope: BotScope,
@@ -58,17 +59,18 @@ export async function onMy(
 ): Promise<string> {
   const me = await whoIs(db, scope, chatId);
   if (!me) return `This Telegram is not linked yet. Send your 8-character code from ${appName}.`;
+  const work = await workSummary(db, { id: me.id, companyId: me.companyId }, today);
   const since = today ? new Date(Date.now() - 24 * 3600_000) : undefined;
   const items = await db.notification.findMany({
     where: { userId: me.id, readAt: null, ...(since ? { createdAt: { gte: since } } : {}) },
     orderBy: { createdAt: 'desc' },
-    take: 8,
+    take: 5,
   });
-  if (!items.length) return today ? 'Nothing new today. 👍' : 'Nothing waiting on you. 👍';
-  return [
-    `${today ? 'Today' : 'Waiting on you'} (${items.length}):`,
-    ...items.map((n, i) => `${i + 1}. ${n.title}`),
-  ].join('\n');
+  if (!work.length && !items.length) return today ? 'Nothing due today. 👍' : 'Nothing waiting on you. 👍';
+  const out = [`${today ? 'Today' : 'Waiting on you'}:`, ...work];
+  if (items.length) out.push('', 'Unread:', ...items.map((n) => `• ${n.title}`));
+  out.push('', 'Mark done: /done 70 · Move: /move 70 05/11 18:00 reason');
+  return out.join('\n');
 }
 
 export async function onCapture(
@@ -165,10 +167,25 @@ export async function onProof(
   return '📎 Photo saved as proof.';
 }
 
+/** Inline buttons: act:<accept|done|verify|move>:<entityType>:<entityId> */
 export async function onAction(db: Db, scope: BotScope, chatId: string, data: string): Promise<string> {
   const me = await whoIs(db, scope, chatId);
   if (!me) return 'Link your Telegram first.';
-  // Accept / Done / Move date are wired to tasks, checklists and steps as those modules arrive (phase 3+).
-  void data;
-  return 'Please do this in the app for now; buttons go live with tasks in phase 3.';
+  const [, action, entityType, entityId] = data.split(':');
+  if (entityType === 'task' && action && entityId)
+    return taskButton(db, { id: me.id, companyId: me.companyId }, action, entityId);
+  return 'Please do this in the app.';
+}
+
+export async function onCommand(
+  db: Db,
+  scope: BotScope,
+  chatId: string,
+  command: 'done' | 'move',
+  args: string,
+): Promise<string> {
+  const me = await whoIs(db, scope, chatId);
+  if (!me) return 'Link your Telegram first.';
+  const who = { id: me.id, companyId: me.companyId };
+  return command === 'done' ? doneCommand(db, who, args) : moveCommand(db, who, args);
 }

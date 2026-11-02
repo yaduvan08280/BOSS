@@ -1,6 +1,7 @@
 import { Bot, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router';
+import { PageSkeleton } from '@/components/page';
 import { useTranslation } from 'react-i18next';
 import { canOpenSystemMaster, type Me } from '@mono/shared';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -89,7 +90,9 @@ export function AppShell({ me }: { me: Me }) {
               <ChangePasswordCard />
             </div>
           ) : (
-            <Outlet />
+            <Suspense fallback={<PageSkeleton />}>
+              <Outlet />
+            </Suspense>
           )}
         </main>
         <CommandPalette me={me} />

@@ -1,0 +1,166 @@
+/// Delegation: one-time task with a doer, a planned time and (optionally) a verifier. Status only changes
+/// through the delegation state machine in packages/shared.
+model Task {
+  id                    String    @id @default(cuid(2))
+  companyId             String    @map("company_id")
+  /// Human number per company: #70
+  number                Int
+  description           String
+  doerId                String    @map("doer_id")
+  creatorId             String    @map("creator_id")
+  verifierId            String?   @map("verifier_id")
+  plannedAt             DateTime  @map("planned_at") @db.Timestamptz(3)
+  /// The first planned time, kept when the date is moved (for R/Y/G and history).
+  originalPlannedAt     DateTime  @map("original_planned_at") @db.Timestamptz(3)
+  /// AWAITING_ACCEPTANCE | OPEN | PENDING_VERIFY | DONE | RETURNED_TO_CREATOR | CANCELLED
+  status                String
+  requireProof          Boolean   @default(false) @map("require_proof")
+  revisionCount         Int       @default(0) @map("revision_count")
+  reopenCount           Int       @default(0) @map("reopen_count")
+  acceptedAt            DateTime? @map("accepted_at") @db.Timestamptz(3)
+  doneAt                DateTime? @map("done_at") @db.Timestamptz(3)
+  doneNote              String?   @map("done_note")
+  verifiedAt            DateTime? @map("verified_at") @db.Timestamptz(3)
+  cancelledAt           DateTime? @map("cancelled_at") @db.Timestamptz(3)
+  lastOverdueNotifiedAt DateTime? @map("last_overdue_notified_at") @db.Timestamptz(3)
+  /// web | import | telegram | slip | ea
+  source                String    @default("web")
+  sourceId              String?   @map("source_id")
+  coveredById           String?   @map("covered_by_id")
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt             DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  events TaskEvent[]
+
+  @@unique([companyId, number])
+  @@index([companyId, status, plannedAt])
+  @@index([companyId, doerId, status])
+  @@index([companyId, verifierId, status])
+  @@map("tasks")
+}
+
+model TaskEvent {
+  id         String    @id @default(cuid(2))
+  companyId  String    @map("company_id")
+  taskId     String    @map("task_id")
+  /// created | status | date_moved | follow_up | comment | edited
+  type       String
+  actorId    String?   @map("actor_id")
+  note       String?
+  fromStatus String?   @map("from_status")
+  toStatus   String?   @map("to_status")
+  fromDate   DateTime? @map("from_date") @db.Timestamptz(3)
+  toDate     DateTime? @map("to_date") @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  task Task @relation(fields: [taskId], references: [id])
+
+  @@index([companyId, taskId, createdAt])
+  @@map("task_events")
+}
+
+/// A recurring checklist definition. The sweep job turns it into runs.
+model ChecklistMaster {
+  id                String    @id @default(cuid(2))
+  companyId         String    @map("company_id")
+  /// CHK-001
+  code              String
+  name              String
+  departmentId      String?   @map("department_id")
+  branchId          String?   @map("branch_id")
+  /// [{ key, text, requirePhoto, requireVoice, requireValue }]
+  items             Json
+  /// { type: daily|weekdays|weekly|monthly|quarterly|yearly|everyN, weekdays?, weekday?, day?, month?, everyN? }
+  frequency         Json
+  /// Due time, minutes from midnight in the company time zone.
+  dueMin            Int       @map("due_min")
+  windowHours       Int       @default(4) @map("window_hours")
+  doerIds           String[]  @map("doer_ids")
+  verifierId        String?   @map("verifier_id")
+  skipHolidays      Boolean   @default(true) @map("skip_holidays")
+  /// YYYY-MM-DD (company time zone)
+  startDate         String    @map("start_date")
+  active            Boolean   @default(true)
+  reminderPatternId String?   @map("reminder_pattern_id")
+  createdById       String?   @map("created_by_id")
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  runs ChecklistRun[]
+
+  @@unique([companyId, code])
+  @@index([companyId, active])
+  @@map("checklist_masters")
+}
+
+model ChecklistRun {
+  id           String    @id @default(cuid(2))
+  companyId    String    @map("company_id")
+  masterId     String    @map("master_id")
+  doerId       String    @map("doer_id")
+  verifierId   String?   @map("verifier_id")
+  /// Due time of this occurrence.
+  plannedAt    DateTime  @map("planned_at") @db.Timestamptz(3)
+  /// After this it is auto-closed as MISSED.
+  windowEndsAt DateTime  @map("window_ends_at") @db.Timestamptz(3)
+  /// OPEN | PENDING_VERIFY | DONE | MISSED
+  status       String    @default("OPEN")
+  itemsTotal   Int       @map("items_total")
+  itemsDone    Int       @default(0) @map("items_done")
+  note         String?
+  submittedAt  DateTime? @map("submitted_at") @db.Timestamptz(3)
+  verifiedAt   DateTime? @map("verified_at") @db.Timestamptz(3)
+  remindedAt   DateTime? @map("reminded_at") @db.Timestamptz(3)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  master ChecklistMaster    @relation(fields: [masterId], references: [id])
+  items  ChecklistRunItem[]
+
+  @@unique([masterId, plannedAt, doerId])
+  @@index([companyId, status, plannedAt])
+  @@index([companyId, doerId, status])
+  @@map("checklist_runs")
+}
+
+model ChecklistRunItem {
+  id           String    @id @default(cuid(2))
+  companyId    String    @map("company_id")
+  runId        String    @map("run_id")
+  itemKey      String    @map("item_key")
+  text         String
+  sortOrder    Int       @map("sort_order")
+  requirePhoto Boolean   @default(false) @map("require_photo")
+  requireVoice Boolean   @default(false) @map("require_voice")
+  requireValue Boolean   @default(false) @map("require_value")
+  done         Boolean   @default(false)
+  value        String?
+  note         String?
+  attachmentId String?   @map("attachment_id")
+  doneAt       DateTime? @map("done_at") @db.Timestamptz(3)
+
+  run ChecklistRun @relation(fields: [runId], references: [id])
+
+  @@index([runId])
+  @@map("checklist_run_items")
+}
+
+/// Holiday calendar (shared by checklists now, HR and CRM later). The HR screens arrive in phase 7.
+model Holiday {
+  id        String    @id @default(cuid(2))
+  companyId String    @map("company_id")
+  /// YYYY-MM-DD
+  date      String
+  name      String
+  /// FESTIVAL | NATIONAL | OPTIONAL
+  type      String    @default("FESTIVAL")
+  halfDay   Boolean   @default(false) @map("half_day")
+  branchId  String?   @map("branch_id")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([companyId, date])
+  @@map("holidays")
+}

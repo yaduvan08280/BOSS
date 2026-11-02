@@ -1,4 +1,6 @@
+import { Suspense } from 'react';
 import { NavLink, Outlet } from 'react-router';
+import { PageSkeleton } from '@/components/page';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 
@@ -32,7 +34,9 @@ export function CompanySetupTab() {
           </NavLink>
         ))}
       </div>
-      <Outlet />
+      <Suspense fallback={<PageSkeleton />}>
+        <Outlet />
+      </Suspense>
     </div>
   );
 }

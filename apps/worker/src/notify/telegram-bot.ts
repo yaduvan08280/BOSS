@@ -113,7 +113,8 @@ export class BotManager {
       .setMyCommands([
         { command: 'my', description: "What's waiting on you" },
         { command: 'today', description: "Today's work" },
-        { command: 'done', description: 'Mark something done: /done <number>' },
+        { command: 'done', description: 'Mark a task done: /done 70' },
+        { command: 'move', description: 'Move a date: /move 70 05/11 18:00 reason' },
         { command: 'capture', description: 'Note something for the EA' },
       ])
       .catch(() => undefined);

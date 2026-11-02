@@ -5,18 +5,36 @@ import { z } from 'zod';
 import { AppError, notFound } from '../../lib/errors';
 import type { Storage } from '../../lib/storage';
 
-const IMAGE_TYPES: Record<string, string> = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' };
-const MAX_BYTES = 5 * 1024 * 1024;
+/** Images, documents and voice notes. SVG/HTML are refused (they could run scripts when opened). */
+const TYPES: Record<string, string> = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/webp': 'webp',
+  'image/heic': 'heic',
+  'application/pdf': 'pdf',
+  'text/csv': 'csv',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+  'application/vnd.ms-excel': 'xls',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+  'audio/webm': 'webm',
+  'audio/ogg': 'ogg',
+  'audio/mpeg': 'mp3',
+  'audio/mp4': 'm4a',
+  'audio/x-m4a': 'm4a',
+  'video/mp4': 'mp4',
+};
+const MAX_BYTES = 10 * 1024 * 1024;
 
-/** Upload and download files. Only images for now (logos, avatars); proofs/documents come with their modules. */
+/** Upload and download files. Uploads are linked to a record (task, checklist item …) when that record is saved. */
 export async function fileRoutes(app: FastifyInstance, opts: { storage: Storage }) {
   await app.register(multipart, { limits: { fileSize: MAX_BYTES, files: 1 } });
 
   app.post('/api/files', { onRequest: [app.authenticate], schema: { tags: ['files'] } }, async (request) => {
     const file = await request.file();
     if (!file) throw new AppError(400, 'BAD_REQUEST', 'Attach a file');
-    const ext = IMAGE_TYPES[file.mimetype];
-    if (!ext) throw new AppError(400, 'BAD_REQUEST', 'Use a PNG, JPG or WebP image');
+    const mime = file.mimetype.split(';')[0]!.trim();
+    const ext = TYPES[mime];
+    if (!ext) throw new AppError(400, 'BAD_REQUEST', 'Use a photo, PDF, Excel/Word file or a voice note');
     const auth = request.auth!;
     const id = createId();
     const now = new Date();
@@ -24,7 +42,7 @@ export async function fileRoutes(app: FastifyInstance, opts: { storage: Storage 
     const size = await opts.storage.put(path, file.file);
     if (file.file.truncated) {
       await opts.storage.remove(path);
-      throw new AppError(400, 'BAD_REQUEST', 'The file is larger than 5 MB');
+      throw new AppError(400, 'BAD_REQUEST', 'The file is larger than 10 MB');
     }
     const row = await request.db.attachment.create({
       data: {
@@ -33,7 +51,7 @@ export async function fileRoutes(app: FastifyInstance, opts: { storage: Storage 
         entityType: 'upload',
         entityId: auth.userId,
         path,
-        mime: file.mimetype,
+        mime,
         size,
         originalName: file.filename.slice(0, 200),
         uploadedById: auth.userId,
@@ -51,6 +69,16 @@ export async function fileRoutes(app: FastifyInstance, opts: { storage: Storage 
       if (!row) throw notFound('File');
       reply.header('Content-Type', row.mime);
       reply.header('Cache-Control', 'private, max-age=86400');
+      if (
+        !row.mime.startsWith('image/') &&
+        !row.mime.startsWith('audio/') &&
+        row.mime !== 'application/pdf'
+      ) {
+        reply.header(
+          'Content-Disposition',
+          `attachment; filename="${row.originalName.replace(/[^\w.\- ]/g, '_')}"`,
+        );
+      }
       reply.header('X-Content-Type-Options', 'nosniff');
       return reply.send(opts.storage.get(row.path));
     },

@@ -80,15 +80,30 @@ export function useLiveEvents(enabled: boolean) {
       source.addEventListener('ready', () => {
         delay = 2000;
       });
-      source.addEventListener('domain', () => {
+      source.addEventListener('domain', (e) => {
         void qc.invalidateQueries({ queryKey: ME_KEY });
+        void qc.invalidateQueries({ queryKey: ['work-counts'] });
+        // Live boards: tasks and checklists refresh when anything changes on them.
+        const name = (JSON.parse((e as MessageEvent).data) as { name?: string }).name ?? '';
+        if (name.startsWith('delegation.') || name.startsWith('task.'))
+          void qc.invalidateQueries({ queryKey: ['tasks'] });
+        if (name.startsWith('checklist.')) void qc.invalidateQueries({ queryKey: ['checklists'] });
       });
       source.addEventListener('notification', () => {
         void qc.invalidateQueries({ queryKey: ME_KEY });
         void qc.invalidateQueries({ queryKey: ['notifications'] });
-        // Show the newest one as a toast.
+        // Show the newest one as a toast. One slot only: a busy hour must not bury the screen
+        // (and the taps meant for it) under a stack of toasts; the bell keeps the full list.
         void api<{ items: { title: string; body: string | null }[] }>('/api/notifications?limit=1')
-          .then((r) => r.items[0] && toast(r.items[0].title, { description: r.items[0].body ?? undefined }))
+          .then(
+            (r) =>
+              r.items[0] &&
+              toast(r.items[0].title, {
+                id: 'live-notification',
+                description: r.items[0].body ?? undefined,
+                duration: 5000,
+              }),
+          )
           .catch(() => undefined);
       });
       source.onerror = () => {

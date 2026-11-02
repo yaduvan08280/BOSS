@@ -1,4 +1,6 @@
+import { Suspense } from 'react';
 import { NavLink, Outlet } from 'react-router';
+import { PageSkeleton } from '@/components/page';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/form';
 import { SYSTEM_NAV } from '@/layout/nav';
@@ -44,7 +46,9 @@ export function SystemMasterLayout() {
           })}
         </div>
       </nav>
-      <Outlet />
+      <Suspense fallback={<PageSkeleton />}>
+        <Outlet />
+      </Suspense>
     </div>
   );
 }

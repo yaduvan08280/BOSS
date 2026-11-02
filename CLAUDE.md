@@ -443,7 +443,7 @@ Ubuntu 24.04 LTS on i7-12700 / 48 GB / 1.8 TB. Docker Engine + Compose plugin. S
 | 0 | Scaffold, auth, deploy skeleton | done (31/10/2026) |
 | 1 | Company setup, departments, users, roles, org chart, Home/Ask | done (02/11/2026) |
 | 2 | Notification engine, Telegram, templates, rules, reminders, worker | done (02/11/2026) — live Telegram/WhatsApp delivery needs GGM's own bot token / provider key |
-| 3 | Delegation, checklists, scorecard, R/Y/G | not started |
+| 3 | Delegation, checklists, scorecard, R/Y/G | done (02/11/2026) — Dictate uses the browser's speech recognition until phase 6; holiday screens arrive in phase 7 |
 | 4 | Help slips, tickets, EA, weekly MIS, Business Engine flow designer | not started |
 | 5 | FMS builder, engine, Live FMS, My steps, documents, KPI cards | not started |
 | 6 | AI layer | not started |
@@ -485,3 +485,11 @@ Ubuntu 24.04 LTS on i7-12700 / 48 GB / 1.8 TB. Docker Engine + Compose plugin. S
 28. Channels a company hasn't set up are recorded as SKIPPED when queued; send failures retry 5 times with backoff (30 s → 4 min) then FAILED.
 29. WhatsApp approval happens in the provider dashboard (WATI/AiSensy have no reliable submit API); MONO marks templates Pending and reads statuses back from WATI. AiSensy sends through API campaigns named like the template code.
 30. One Telegram bot per company (or the .env bot for companies without one), long polling in the worker. A token must not be polled from two places.
+31. R/Y/G (per task, cancelled not graded): Green = done on time, never revised; Yellow = 1 day late (any part of a day counts) or revised once; Red = 2+ days late or revised 2+ times; Open = not done and not yet late.
+32. Scorecard: a KPI line for the current week grades what was due by now **or is already done** (early work counts at once). Next week's target = the benchmark once met, else this week's actual − 10 points (never below the benchmark). States: meets / off this week / missed twice (this and last week over the benchmark) / no data.
+33. Nobody verifies their own work: if the task's verifier (or the EA/creator fallback when "EA verifies" is on) is the doer, the task has no verification step.
+34. Checklist runs are created up to 24 h ahead, unique per (master, planned time, doer); saving a master sweeps it immediately. Deleting a master keeps its runs as history, but they leave lists and counts and are never reminded or missed.
+35. `delegation.overdue` fires at most once per task per local day; moving the date resets it.
+36. People are not notified about their own actions (tests, escalations and Telegram codes excepted).
+37. Holidays live in the `Holiday` table from phase 3 (recurrence skips them); the calendar screens come with HR in phase 7.
+38. The change-password rate limit follows `LOGIN_RATE_LIMIT`. Web screens are loaded per route (React.lazy) to keep the phone download small.

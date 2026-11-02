@@ -1,5 +1,74 @@
 # Changelog
 
+## Phase 3: Delegation, checklists, scorecard, R/Y/G (02/11/2026)
+
+**Delegation sheet** (`/delegation`)
+- Every task change goes through the shared state machine (accept, decline, move date, follow-up, mark done, verify, send back, reopen, give to someone else, cancel). The company's toggles decide the guards: doer must accept, EA verifies, allow reopen.
+- Each change writes history, audit and a domain event, so Telegram, email and in-app follow automatically.
+- Tiles: Pending, Overdue, To verify (with the company's target), Done this week (on time / done) and My score.
+- Tabs: Add task, Pending, Verification and Done (with counts), FMS report (phase 5 placeholder), Scorecard.
+- Filters: search, doer, This week / All / dates, Mine / My team / Everyone. Tables on desktop, cards on phones. Bulk accept and verify.
+- **Add task**:
+  - Fields: doer (or Myself), planned date, optional verifier, description.
+  - **Dictate** uses the browser's speech recognition until the AI layer arrives.
+  - Files: drag-drop, camera, paste a screenshot, many files.
+  - "Require a photo or file when done": the API refuses to close the task on a remark alone.
+- **Import many** from CSV/Excel with a preview and per-line errors (all or nothing).
+- Task drawer: details, files and full history (date moves with reasons, follow-ups, notes, status changes).
+- Overdue tasks raise `delegation.overdue` once per local day; moving the date resets it.
+- **Scorecard**:
+  - Week picker and CSV export. Per person: % not done, % not on time, % verifications not done, % verifications late.
+  - Each KPI shows benchmark, last week, planned, actual, actual % and next week's target.
+  - Each line has a state: meets / off this week / missed twice / no data.
+- **R/Y/G report**: Green/Yellow/Red/Still open tiles, per-person table with split bars, Week or Month (W1–W4), CSV download.
+
+**Checklists** (`/checklists`)
+- Checklist master:
+  - Items can require a photo, voice note or value.
+  - Frequency: daily, chosen weekdays, weekly, monthly (date or last day), quarterly, yearly or every N days.
+  - Also: due time, hours to finish, doers, verifier, skip holidays and weekly offs, start date, on/off.
+- The worker sweeps every 5 minutes, creating each run up to 24 h ahead. Runs are unique per (master, planned time, doer), so a sweep never creates duplicates. Saving a master creates its due runs at once.
+- Run sheet: tick items, enter values (entering a value ticks the item), photo or voice proof per item, note, submit. The verifier verifies or sends it back.
+- Reminders before the due time; runs still open after the window close as **Missed** and the rules tell the owner.
+- Tabs: My checklists, All checklists, Assign checklist, Checklist master, Master changes (who changed what). Tiles: All, Due today, Overdue, To verify, Missed.
+- Deleting a master keeps its runs as history, but they leave every list and count and are never reminded or marked missed.
+
+**My Workspace** (`/workspace`): one list of tasks to do, tasks to verify and checklists due, live over SSE. Top-bar and menu badges show the same counts.
+
+**Telegram**
+- Task messages carry buttons:
+  - Accept or Done · Move date on new tasks.
+  - **Verify** for the verifier.
+  - Seen ✓ and Open on all of them.
+- `/done 70 what was done`, `/move 70 05/11 18:00 reason`; `/my` and `/today` list tasks and checklists.
+- A photo sent as a reply is saved as proof, then Done works on proof-required tasks.
+
+**Other**
+- Nobody verifies their own work: when the verifier (or the EA/creator fallback) is the doer, there is no verification step, and the scorecard doesn't count one.
+- People never get a message about their own action (tests and escalations excepted).
+- Live notification toasts share one slot (a new one replaces the last; the bell keeps them all), so a busy hour can't cover a phone screen and swallow taps.
+- The web app loads each screen on first visit: the main bundle went from 1.18 MB to 476 KB (145 KB gzipped).
+- Uploads accept more file types (PDF, Office, audio), up to 10 MB.
+- `seed:demo` adds:
+  - 30 tasks in every state.
+  - 6 checklist masters with a week of run history.
+  - 4 holidays.
+- No messages are sent while seeding.
+
+**Verified**
+- 118 unit/integration tests. New ones cover:
+  - Both state machines.
+  - Recurrence in the company time zone across holidays, weekly offs and month ends.
+  - R/Y/G grades and scorecard KPIs on fixed dates, plus next-week targets.
+  - The idempotent sweep, reminders, misses and deleted masters.
+  - Permissions and privacy; import; overdue once a day.
+  - Telegram buttons and commands.
+- Playwright (phone and desktop, run one at a time because specs share the demo accounts), each person in their own browser:
+  - Owner gives a task, the doer accepts and marks it done, the verifier verifies.
+  - A checklist run gets a value and a photo, is submitted and verified.
+  - Delegation, Scorecard, R/Y/G, Checklists, Masters and My Workspace fit at 380 and 1440 px.
+- Production stack: the `work` migration applies on a fresh database; task and checklist flows, scorecard and SPA routes work through Caddy; no errors in the API or worker logs.
+
 ## Phase 2: Notifications, Telegram, templates, rules, reminders (02/11/2026)
 
 **Engine** (worker)

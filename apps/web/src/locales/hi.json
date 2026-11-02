@@ -919,5 +919,329 @@
       "seeAll": "सभी सूचनाएँ देखें",
       "emptyBody": "आपके काम से जुड़े संदेश होते ही यहाँ दिखेंगे।"
     }
+  },
+  "work": {
+    "dictate": {
+      "start": "बोलकर लिखें",
+      "stop": "रोकें"
+    },
+    "files": {
+      "attach": "फ़ाइल जोड़ें",
+      "camera": "कैमरा",
+      "hint": "या फ़ाइलें यहाँ छोड़ें, या स्क्रीनशॉट पेस्ट करें (Ctrl+V)"
+    }
+  },
+  "ws": {
+    "subtitle_one": "{{count}} काम आपका इंतज़ार कर रहा है",
+    "subtitle_other": "{{count}} काम आपका इंतज़ार कर रहे हैं",
+    "tasks": "करने वाले टास्क",
+    "verify": "जाँचने के लिए",
+    "checklists": "चेकलिस्ट",
+    "emptyTitle": "कोई काम बाकी नहीं",
+    "emptyBody": "नए टास्क और चेकलिस्ट मिलते ही यहाँ दिखेंगे।"
+  },
+  "task": {
+    "tab": {
+      "add": "टास्क जोड़ें",
+      "pending": "बाकी",
+      "verification": "जाँच",
+      "done": "पूरे",
+      "fms": "FMS रिपोर्ट",
+      "scorecard": "स्कोरकार्ड"
+    },
+    "tile": {
+      "pending": "बाकी",
+      "pendingNote": "आपके खुले टास्क",
+      "overdue": "देर से",
+      "overdueNote": "तय तारीख़ निकल गई",
+      "toVerify": "जाँचने के लिए",
+      "toVerifyNote_one": "लक्ष्य {{count}} मिनट",
+      "toVerifyNote_other": "लक्ष्य {{count}} मिनट",
+      "done": "इस हफ़्ते पूरे",
+      "doneNote": "समय पर / पूरे",
+      "score": "मेरा स्कोर",
+      "scoreNote": "इस हफ़्ते का पूरा काम"
+    },
+    "status": {
+      "AWAITING_ACCEPTANCE": "स्वीकृति बाकी",
+      "OPEN": "खुला",
+      "PENDING_VERIFY": "जाँच बाकी",
+      "DONE": "पूरा",
+      "RETURNED_TO_CREATOR": "लौटाया",
+      "CANCELLED": "रद्द"
+    },
+    "act": {
+      "accept": "स्वीकार करें",
+      "decline": "लौटाएँ",
+      "moveDate": "तारीख़ बदलें",
+      "addFollowUp": "फ़ॉलो-अप",
+      "markDone": "पूरा करें",
+      "verify": "जाँच पूरी",
+      "reject": "वापस भेजें",
+      "reopen": "फिर खोलें",
+      "reassign": "किसी और को दें",
+      "cancel": "टास्क रद्द करें"
+    },
+    "dlg": {
+      "newDate": "नई तारीख़",
+      "proof": "सबूत जोड़ें",
+      "doneSend": "पूरा करें · {{name}} को भेजें",
+      "decline": {
+        "title": "यह टास्क लौटाएँ",
+        "label": "क्यों लौटा रहे हैं?"
+      },
+      "moveDate": {
+        "title": "तारीख़ बदलें",
+        "label": "तारीख़ क्यों बदल रही है?"
+      },
+      "addFollowUp": {
+        "title": "फ़ॉलो-अप जोड़ें",
+        "label": "नोट"
+      },
+      "markDone": {
+        "title": "पूरा करें",
+        "label": "क्या किया?"
+      },
+      "reject": {
+        "title": "करने वाले को वापस भेजें",
+        "label": "क्या कमी है?"
+      },
+      "reopen": {
+        "title": "टास्क फिर खोलें",
+        "label": "क्यों खोल रहे हैं?"
+      },
+      "reassign": {
+        "title": "किसी और को दें",
+        "label": ""
+      },
+      "cancel": {
+        "title": "यह टास्क रद्द करें",
+        "label": "कारण (वैकल्पिक)"
+      }
+    },
+    "col": {
+      "task": "टास्क",
+      "status": "स्थिति",
+      "description": "क्या",
+      "planned": "तय समय",
+      "assignedBy": "किसने दिया"
+    },
+    "empty": {
+      "pending": "कुछ बाकी नहीं",
+      "verification": "जाँचने को कुछ नहीं",
+      "done": "अभी कोई पूरा टास्क नहीं",
+      "all": "कोई टास्क नहीं"
+    },
+    "range": {
+      "week": "यह हफ़्ता",
+      "all": "सभी",
+      "custom": "तारीख़ें"
+    },
+    "scope": {
+      "label": "किसके टास्क",
+      "mine": "मेरे",
+      "team": "मेरी टीम",
+      "all": "सभी"
+    },
+    "ev": {
+      "created": "टास्क दिया",
+      "status": "अब: {{to}}",
+      "moved": "तारीख़ बदली {{from}} → {{to}}",
+      "follow_up": "फ़ॉलो-अप",
+      "comment": "नोट",
+      "edited": "बदला"
+    },
+    "kpi": {
+      "notDone": "सारा काम पूरा हो (% बाकी)",
+      "notOnTime": "सारा काम समय पर हो (% देर से)",
+      "verifyPending": "सारी जाँच पूरी हो (% बाकी)",
+      "verifyLate": "जाँच तय समय में (% देर से)"
+    },
+    "rep": {
+      "score": "स्कोरकार्ड",
+      "ryg": "R/Y/G रिपोर्ट",
+      "prev": "पिछला हफ़्ता",
+      "next": "अगला हफ़्ता",
+      "export": "एक्सपोर्ट",
+      "download": "डाउनलोड",
+      "noData": "इस अवधि में कोई टास्क नहीं",
+      "col": {
+        "person": "व्यक्ति",
+        "kpi": "KRA / KPI",
+        "benchmark": "बेंचमार्क",
+        "lastWeek": "पिछला हफ़्ता",
+        "planned": "तय",
+        "actual": "वास्तविक",
+        "actualPct": "वास्तविक %",
+        "target": "अगले हफ़्ते का लक्ष्य"
+      },
+      "state": {
+        "meets": "बेंचमार्क पर",
+        "off": "इस हफ़्ते चूके",
+        "missedTwice": "दो बार चूके",
+        "noData": "डेटा नहीं"
+      },
+      "week": "हफ़्ता",
+      "month": "महीना",
+      "graded": "ग्रेड हुए",
+      "green": "हरा",
+      "yellow": "पीला",
+      "red": "लाल",
+      "open": "अभी खुले",
+      "rcol": {
+        "person": "व्यक्ति",
+        "total": "कुल",
+        "g": "G",
+        "y": "Y",
+        "r": "R",
+        "open": "खुले",
+        "split": "बँटवारा"
+      },
+      "rygLegend": "हरा = समय पर, तारीख़ कभी नहीं बदली। पीला = एक दिन देर या तारीख़ एक बार बदली। लाल = दो या ज़्यादा दिन देर, या तारीख़ दो बार या ज़्यादा बदली। खुला = अभी चल रहा है, देर नहीं।"
+    },
+    "acceptedAt": "स्वीकार {{at}}",
+    "verifierIs": "जाँचने वाला: {{name}}",
+    "coveredBy": "कवर: {{name}}",
+    "overdue": "देर से",
+    "overdueBy": "{{d}} देर",
+    "inTime": "{{d}} में",
+    "doneAt": "पूरा {{at}}",
+    "revised_one": "{{count}}× बदली",
+    "revised_other": "{{count}}× बदली",
+    "by": "{{name}} ने दिया",
+    "doer": "करने वाला",
+    "verifier": "जाँचने वाला",
+    "allDoers": "सभी करने वाले",
+    "search": "टास्क, करने वाला या जाँचने वाला खोजें",
+    "from": "से",
+    "to": "तक",
+    "description": "टास्क",
+    "descriptionPh": "क्या करना है, कब तक, और 'पूरा' कैसा दिखेगा",
+    "attach": "फ़ोटो या फ़ाइलें जोड़ें",
+    "requireProof": "पूरा करते समय फ़ोटो या फ़ाइल ज़रूरी: करने वाला सिर्फ़ नोट लिखकर बंद नहीं कर सकेगा",
+    "submit": "टास्क भेजें",
+    "submitHint": "करने वाले को Telegram पर मिलेगा",
+    "importMany": "एक साथ कई जोड़ें",
+    "myself": "ख़ुद",
+    "noVerifier": "कोई जाँचने वाला नहीं",
+    "verifierOptional": "जाँचने वाला (वैकल्पिक)",
+    "created": "टास्क #{{n}} {{name}} को दिया",
+    "timeline": "समय-रेखा",
+    "system": "MONO",
+    "firstPlanned": "पहली तय तारीख़",
+    "doneOn": "पूरा हुआ",
+    "proofNeeded": "सबूत ज़रूरी",
+    "fmsSoon": "प्रोसेस (FMS) के स्टेप फ़ेज़ 5 में यहाँ दिखेंगे।",
+    "importHint": "पंक्तियाँ पेस्ट करें या CSV/Excel फ़ाइल खोलें। कॉलम: करने वाला, तारीख़ (DD/MM/YYYY HH:mm), टास्क, जाँचने वाला, सबूत (हाँ/नहीं)।",
+    "openFile": "CSV या Excel खोलें",
+    "importN_one": "{{count}} टास्क जोड़ें",
+    "importN_other": "{{count}} टास्क जोड़ें",
+    "imported_one": "{{count}} टास्क जुड़ा",
+    "imported_other": "{{count}} टास्क जुड़े"
+  },
+  "chk": {
+    "tab": {
+      "mine": "मेरी चेकलिस्ट",
+      "all": "सभी चेकलिस्ट",
+      "assign": "चेकलिस्ट दें",
+      "master": "चेकलिस्ट मास्टर",
+      "changes": "मास्टर में बदलाव"
+    },
+    "tile": {
+      "all": "सभी",
+      "dueToday": "आज देय",
+      "doneToday_one": "{{count}} पहले ही पूरी",
+      "doneToday_other": "{{count}} पहले ही पूरी",
+      "overdue": "देर से",
+      "overdueNote": "समय निकलने के बाद भी खुली",
+      "toVerify": "जाँचने के लिए",
+      "toVerifyNote": "जाँचने वाले का इंतज़ार",
+      "missed": "छूटी",
+      "missedNote": "अपने-आप बंद, कभी पूरी नहीं हुई"
+    },
+    "status": {
+      "OPEN": "चल रही",
+      "PENDING_VERIFY": "जाँच बाकी",
+      "DONE": "पूरी",
+      "MISSED": "छूटी"
+    },
+    "col": {
+      "checklist": "चेकलिस्ट",
+      "doer": "करने वाला",
+      "planned": "तय समय",
+      "due": "देय",
+      "status": "स्थिति",
+      "progress": "प्रगति"
+    },
+    "freq": {
+      "daily": "हर दिन",
+      "weekdays": "इन दिनों",
+      "weekly": "हफ़्ते में एक बार",
+      "monthly": "महीने में एक बार",
+      "quarterly": "हर 3 महीने",
+      "yearly": "साल में एक बार",
+      "everyN": "कुछ दिनों में एक बार",
+      "dayN": "{{n}} तारीख़",
+      "lastDay": "आख़िरी दिन",
+      "every": "हर",
+      "days": "दिन"
+    },
+    "field": {
+      "name": "नाम",
+      "items": "आइटम",
+      "frequency": "कितनी बार",
+      "dueTime": "समय",
+      "windowHours": "अवधि",
+      "doerIds": "करने वाले",
+      "verifierId": "जाँचने वाला",
+      "skipHolidays": "छुट्टियाँ",
+      "startDate": "शुरुआत",
+      "active": "चालू/बंद",
+      "departmentId": "विभाग"
+    },
+    "change": {
+      "master_created": "बनाई",
+      "master_changed": "बदली",
+      "master_deleted": "हटाई"
+    },
+    "requirePhoto": "फ़ोटो",
+    "requireVoice": "वॉइस नोट",
+    "requireValue": "मान",
+    "items_n": "{{done}}/{{total}} आइटम",
+    "left": "{{d}} बाकी",
+    "open": "खोलें",
+    "view": "देखें",
+    "noRuns": "अभी कोई चेकलिस्ट नहीं",
+    "noRunsBody": "समय आने पर यहाँ दिखेंगी।",
+    "noMasters": "अभी कोई चेकलिस्ट सेट नहीं",
+    "noChanges": "अभी कोई बदलाव नहीं",
+    "needPhoto": "फ़ोटो ज़रूरी",
+    "needVoice": "वॉइस नोट ज़रूरी",
+    "needValue": "मान ज़रूरी",
+    "valuePh": "मान लिखें",
+    "photo": "फ़ोटो",
+    "voice": "वॉइस",
+    "stop": "रोकें",
+    "notePh": "जाँचने वाले के लिए नोट (वैकल्पिक)",
+    "submit": "जमा करें",
+    "rejectWhy": "क्या ठीक करना है?",
+    "newMaster": "नई चेकलिस्ट",
+    "namePh": "सुबह का सेफ़्टी राउंड",
+    "items": "आइटम",
+    "itemPh": "क्या जाँचना है",
+    "addItem": "आइटम जोड़ें",
+    "up": "ऊपर",
+    "down": "नीचे",
+    "when": "कब और कौन",
+    "frequency": "कितनी बार",
+    "dueTime": "समय",
+    "window": "पूरा करने के घंटे",
+    "windowHint": "फिर छूटी मानी जाएगी",
+    "doers": "कौन करेगा",
+    "defaultVerifier": "कंपनी का डिफ़ॉल्ट जाँचने वाला",
+    "startDate": "शुरुआत",
+    "skipHolidays": "छुट्टियाँ और साप्ताहिक अवकाश छोड़ें",
+    "active": "चालू",
+    "create": "चेकलिस्ट बनाएँ"
   }
 }

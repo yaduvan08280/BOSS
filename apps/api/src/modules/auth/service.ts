@@ -1,6 +1,7 @@
 import type { Db } from '@mono/db';
 import { looksLikeEmail, normalizeMobile, type Me } from '@mono/shared';
 import { readAppearance } from '../org/company.routes';
+import { pendingCounts } from '../work/counts';
 import type { ActorContext } from '../../lib/audit';
 import { AppError, unauthenticated } from '../../lib/errors';
 import { recordChange } from '../../lib/events';
@@ -209,9 +210,8 @@ export async function getMe(db: Db, userId: string, appName: string): Promise<Me
       defaultLang: look.defaultLang,
       staffMayPickAccent: look.staffMayPickAccent,
     },
-    // Pending work arrives with the work modules (phase 3).
     counters: {
-      pendingWork: 0,
+      pendingWork: (await pendingCounts(db, user.companyId, user.id)).total,
       unreadNotifications: await db.notification.count({ where: { userId: user.id, readAt: null } }),
     },
   };

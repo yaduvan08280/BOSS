@@ -12,3 +12,8 @@ export { redeemLinkCode, newLinkCode } from './lib/telegram-link';
 export { ensureNotifyDefaults } from './modules/notify/defaults';
 export { NOTIFICATIONS_CHANNEL, createInAppNotification, type NotificationSignal } from './lib/events';
 export { LocalDiskStorage, type Storage } from './lib/storage';
+export { actOnTask, createTask, taskByNumber, effectiveVerifier } from './modules/delegation/service';
+export { flagOverdueTasks } from './modules/delegation/jobs';
+export { sweepChecklists, expireChecklists, remindChecklists } from './modules/checklist/jobs';
+export { actorFor, type Actor } from './modules/work/actor';
+export { pendingCounts } from './modules/work/counts';

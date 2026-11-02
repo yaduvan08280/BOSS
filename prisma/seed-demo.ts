@@ -7,6 +7,7 @@ import 'dotenv/config';
 import { createPrisma, formatNumber, nextCounter } from '@mono/db';
 import { bootstrapCompany, hashPassword } from '@mono/api/services';
 import { gstinCheckDigit, hhmmToMinutes } from '@mono/shared';
+import { seedDemoWork } from './seed-demo-work';
 
 const PASSWORD = process.env.SEED_DEMO_PASSWORD?.trim() || 'Demo1234';
 const DEPARTMENTS = [
@@ -104,7 +105,7 @@ try {
     ownerPassword: PASSWORD,
   });
   if (!created) {
-    console.log('Demo Industries already exists — nothing to do.');
+    console.log('Demo Industries already exists.');
   } else {
     const passwordHash = await hashPassword(PASSWORD);
     await prisma.$transaction(
@@ -214,6 +215,8 @@ try {
       `Created Demo Industries: 25 people, 14 departments. Sign in with 9000000000 / ${PASSWORD} (owner) or any HOD mobile 90000001xx.`,
     );
   }
+  // Each phase's demo data, added once (safe to re-run).
+  if (await seedDemoWork(prisma, company.id)) console.log('Added demo tasks, checklists and holidays.');
 } finally {
   await prisma.$disconnect();
 }

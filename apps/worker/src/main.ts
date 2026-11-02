@@ -3,7 +3,14 @@ import { PgBoss } from 'pg-boss';
 import pino from 'pino';
 import { createPrisma } from '@mono/db';
 import { loadEnv } from '@mono/api/env';
-import { channelClients, EventListener, LocalDiskStorage } from '@mono/api/services';
+import {
+  EventListener,
+  expireChecklists,
+  flagOverdueTasks,
+  LocalDiskStorage,
+  remindChecklists,
+  sweepChecklists,
+} from '@mono/api/services';
 import { dispatchPending, type HandlerRegistry } from './jobs/dispatch-events';
 import { notifyForEvent } from './notify/engine';
 import { processEscalations } from './notify/escalations';
@@ -22,6 +29,8 @@ boss.on('error', (err) => log.error({ err }, 'pg-boss error'));
 
 const QUEUE_DISPATCH = 'events.dispatch';
 const QUEUE_ESCALATIONS = 'notify.escalations';
+const QUEUE_WORK_5MIN = 'work.every5min';
+const QUEUE_WORK_1MIN = 'work.every1min';
 const HEARTBEAT_FILE = '/tmp/mono-worker-alive';
 const OUTBOX_POLL_MS = 10_000;
 
@@ -86,6 +95,22 @@ await boss.work(QUEUE_ESCALATIONS, async () => {
   if (r.escalated) log.info(r, 'Escalations sent');
 });
 await boss.schedule(QUEUE_ESCALATIONS, '* * * * *', null, { tz: 'UTC' });
+
+// Phase 3 jobs: checklist.sweep + overdue detection every 5 minutes; reminders and missed every minute.
+await boss.createQueue(QUEUE_WORK_5MIN, { policy: 'singleton' });
+await boss.createQueue(QUEUE_WORK_1MIN, { policy: 'singleton' });
+await boss.work(QUEUE_WORK_5MIN, async () => {
+  const created = await sweepChecklists(prisma);
+  const overdue = await flagOverdueTasks(prisma);
+  if (created || overdue) log.info({ created, overdue }, 'Work sweep');
+});
+await boss.work(QUEUE_WORK_1MIN, async () => {
+  await remindChecklists(prisma);
+  await expireChecklists(prisma);
+});
+await boss.schedule(QUEUE_WORK_5MIN, '*/5 * * * *', null, { tz: 'UTC' });
+await boss.schedule(QUEUE_WORK_1MIN, '* * * * *', null, { tz: 'UTC' });
+await boss.send(QUEUE_WORK_5MIN, null).catch(() => undefined);
 
 // React to new events right away.
 const listener = new EventListener(env.DATABASE_URL, log);

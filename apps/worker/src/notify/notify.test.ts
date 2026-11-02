@@ -121,6 +121,25 @@ describe('engine', () => {
     expect(Math.abs(tg.sendAfter.getTime() - end.getTime())).toBeLessThan(61_000);
     expect((tg.payload as { text: string }).text).toContain('Calibrate press');
   });
+
+  it('puts the task buttons on Telegram messages (Verify for the verifier)', async () => {
+    const { company, owner } = await newCompany();
+    await db.user.update({ where: { id: owner.id }, data: { telegramChatId: '444' } });
+    const event = await emit(company.id, 'delegation.done', {
+      doerId: 'someone-else',
+      verifierId: owner.id,
+      number: 71,
+      title: 'Grease bearings',
+      due: new Date().toISOString(),
+      telegramActions: ['verify'],
+    });
+    await notifyForEvent(event, deps);
+    const tg = await db.outbox.findFirstOrThrow({
+      where: { eventId: event.id, channel: 'telegram', userId: owner.id },
+    });
+    const buttons = (tg.payload as { buttons: { label: string; data?: string }[] }).buttons;
+    expect(buttons[0]).toEqual({ label: 'Verify', data: `act:verify:user:${event.entityId}` });
+  });
 });
 
 describe('outbox sender', () => {

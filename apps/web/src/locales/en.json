@@ -919,5 +919,329 @@
       "seeAll": "See all notifications",
       "emptyBody": "Messages about your work show up here as soon as they happen."
     }
+  },
+  "work": {
+    "dictate": {
+      "start": "Dictate",
+      "stop": "Stop"
+    },
+    "files": {
+      "attach": "Attach",
+      "camera": "Camera",
+      "hint": "or drop files here, or paste a screenshot (Ctrl+V)"
+    }
+  },
+  "ws": {
+    "subtitle_one": "{{count}} thing waiting on you",
+    "subtitle_other": "{{count}} things waiting on you",
+    "tasks": "Tasks to do",
+    "verify": "To verify",
+    "checklists": "Checklists",
+    "emptyTitle": "Nothing waiting on you",
+    "emptyBody": "New tasks and checklists show up here the moment they are given to you."
+  },
+  "task": {
+    "tab": {
+      "add": "Add task",
+      "pending": "Pending",
+      "verification": "Verification",
+      "done": "Done",
+      "fms": "FMS report",
+      "scorecard": "Scorecard"
+    },
+    "tile": {
+      "pending": "Pending",
+      "pendingNote": "your open tasks",
+      "overdue": "Overdue",
+      "overdueNote": "past the planned date",
+      "toVerify": "To verify",
+      "toVerifyNote_one": "{{count}}-minute target",
+      "toVerifyNote_other": "{{count}}-minute target",
+      "done": "Done this week",
+      "doneNote": "on time / done",
+      "score": "My score",
+      "scoreNote": "work done this week"
+    },
+    "status": {
+      "AWAITING_ACCEPTANCE": "Awaiting acceptance",
+      "OPEN": "Open",
+      "PENDING_VERIFY": "To verify",
+      "DONE": "Done",
+      "RETURNED_TO_CREATOR": "Declined",
+      "CANCELLED": "Cancelled"
+    },
+    "act": {
+      "accept": "Accept",
+      "decline": "Decline",
+      "moveDate": "Move date",
+      "addFollowUp": "Follow up",
+      "markDone": "Mark done",
+      "verify": "Verify",
+      "reject": "Send back",
+      "reopen": "Reopen",
+      "reassign": "Give to someone else",
+      "cancel": "Cancel task"
+    },
+    "dlg": {
+      "newDate": "New planned date",
+      "proof": "Attach proof",
+      "doneSend": "Mark done · send to {{name}}",
+      "decline": {
+        "title": "Decline this task",
+        "label": "Why are you declining it?"
+      },
+      "moveDate": {
+        "title": "Move the planned date",
+        "label": "Why is it changing?"
+      },
+      "addFollowUp": {
+        "title": "Add a follow-up",
+        "label": "Note"
+      },
+      "markDone": {
+        "title": "Mark done",
+        "label": "What was done?"
+      },
+      "reject": {
+        "title": "Send back to the doer",
+        "label": "What is missing?"
+      },
+      "reopen": {
+        "title": "Reopen the task",
+        "label": "Why reopen it?"
+      },
+      "reassign": {
+        "title": "Give the task to someone else",
+        "label": ""
+      },
+      "cancel": {
+        "title": "Cancel this task",
+        "label": "Reason (optional)"
+      }
+    },
+    "col": {
+      "task": "Task",
+      "status": "Status",
+      "description": "What",
+      "planned": "Planned",
+      "assignedBy": "Assigned by"
+    },
+    "empty": {
+      "pending": "Nothing pending",
+      "verification": "Nothing to verify",
+      "done": "No finished tasks yet",
+      "all": "No tasks"
+    },
+    "range": {
+      "week": "This week",
+      "all": "All",
+      "custom": "Dates"
+    },
+    "scope": {
+      "label": "Whose tasks",
+      "mine": "Mine",
+      "team": "My team",
+      "all": "Everyone"
+    },
+    "ev": {
+      "created": "Task given",
+      "status": "Now: {{to}}",
+      "moved": "Date moved {{from}} → {{to}}",
+      "follow_up": "Follow-up",
+      "comment": "Note",
+      "edited": "Edited"
+    },
+    "kpi": {
+      "notDone": "All work should be done (% not done)",
+      "notOnTime": "All work should be done on time (% not on time)",
+      "verifyPending": "All verifications should be done (% not done)",
+      "verifyLate": "Verifications within the target time (% late)"
+    },
+    "rep": {
+      "score": "Scorecard",
+      "ryg": "R/Y/G report",
+      "prev": "Previous week",
+      "next": "Next week",
+      "export": "Export",
+      "download": "Download",
+      "noData": "No tasks in this period",
+      "col": {
+        "person": "Person",
+        "kpi": "KRA / KPI",
+        "benchmark": "Benchmark",
+        "lastWeek": "Last week",
+        "planned": "Planned",
+        "actual": "Actual",
+        "actualPct": "Actual %",
+        "target": "Next week target"
+      },
+      "state": {
+        "meets": "Meets benchmark",
+        "off": "Off this week",
+        "missedTwice": "Missed twice",
+        "noData": "No data"
+      },
+      "week": "Week",
+      "month": "Month",
+      "graded": "Graded",
+      "green": "Green",
+      "yellow": "Yellow",
+      "red": "Red",
+      "open": "Still open",
+      "rcol": {
+        "person": "Person",
+        "total": "Total",
+        "g": "G",
+        "y": "Y",
+        "r": "R",
+        "open": "Open",
+        "split": "Split"
+      },
+      "rygLegend": "Green = on time, never moved. Yellow = a day late or moved once. Red = two or more days late, or moved twice or more. Open = still running and not late."
+    },
+    "acceptedAt": "Accepted {{at}}",
+    "verifierIs": "Verifier: {{name}}",
+    "coveredBy": "Covered by {{name}}",
+    "overdue": "Overdue",
+    "overdueBy": "overdue {{d}}",
+    "inTime": "in {{d}}",
+    "doneAt": "done {{at}}",
+    "revised_one": "moved {{count}}×",
+    "revised_other": "moved {{count}}×",
+    "by": "by {{name}}",
+    "doer": "Doer",
+    "verifier": "Verifier",
+    "allDoers": "All doers",
+    "search": "Search task, doer or verifier",
+    "from": "From",
+    "to": "To",
+    "description": "Task",
+    "descriptionPh": "What needs to be done, by when, and what 'done' looks like",
+    "attach": "Attach images or files",
+    "requireProof": "Require a photo or file when this is marked done: the doer cannot close it on a remark alone",
+    "submit": "Submit task",
+    "submitHint": "The doer gets it on Telegram",
+    "importMany": "Import many",
+    "myself": "Myself",
+    "noVerifier": "No verifier",
+    "verifierOptional": "Verifier (optional)",
+    "created": "Task #{{n}} given to {{name}}",
+    "timeline": "Timeline",
+    "system": "MONO",
+    "firstPlanned": "First planned for",
+    "doneOn": "Done on",
+    "proofNeeded": "Proof needed",
+    "fmsSoon": "Steps from processes (FMS) appear here with phase 5.",
+    "importHint": "Paste rows or open a CSV/Excel file. Columns: doer, planned date (DD/MM/YYYY HH:mm), task, verifier, proof (yes/no).",
+    "openFile": "Open CSV or Excel",
+    "importN_one": "Add {{count}} task",
+    "importN_other": "Add {{count}} tasks",
+    "imported_one": "{{count}} task added",
+    "imported_other": "{{count}} tasks added"
+  },
+  "chk": {
+    "tab": {
+      "mine": "My checklists",
+      "all": "All checklists",
+      "assign": "Assign checklist",
+      "master": "Checklist master",
+      "changes": "Master changes"
+    },
+    "tile": {
+      "all": "All",
+      "dueToday": "Due today",
+      "doneToday_one": "{{count}} already done",
+      "doneToday_other": "{{count}} already done",
+      "overdue": "Overdue",
+      "overdueNote": "open past the due time",
+      "toVerify": "To verify",
+      "toVerifyNote": "waiting for a verifier",
+      "missed": "Missed",
+      "missedNote": "auto-closed, never done"
+    },
+    "status": {
+      "OPEN": "Running",
+      "PENDING_VERIFY": "To verify",
+      "DONE": "Done",
+      "MISSED": "Missed"
+    },
+    "col": {
+      "checklist": "Checklist",
+      "doer": "Doer",
+      "planned": "Planned",
+      "due": "Due",
+      "status": "Status",
+      "progress": "Progress"
+    },
+    "freq": {
+      "daily": "Every day",
+      "weekdays": "On these days",
+      "weekly": "Once a week",
+      "monthly": "Once a month",
+      "quarterly": "Every 3 months",
+      "yearly": "Once a year",
+      "everyN": "Every few days",
+      "dayN": "Day {{n}}",
+      "lastDay": "Last day",
+      "every": "Every",
+      "days": "days"
+    },
+    "field": {
+      "name": "name",
+      "items": "items",
+      "frequency": "frequency",
+      "dueTime": "due time",
+      "windowHours": "window",
+      "doerIds": "doers",
+      "verifierId": "verifier",
+      "skipHolidays": "holidays",
+      "startDate": "start date",
+      "active": "on/off",
+      "departmentId": "department"
+    },
+    "change": {
+      "master_created": "created",
+      "master_changed": "changed",
+      "master_deleted": "deleted"
+    },
+    "requirePhoto": "Photo",
+    "requireVoice": "Voice note",
+    "requireValue": "Value",
+    "items_n": "{{done}}/{{total}} items",
+    "left": "{{d}} left",
+    "open": "Open",
+    "view": "View",
+    "noRuns": "No checklists right now",
+    "noRunsBody": "Runs appear here when they are due.",
+    "noMasters": "No checklists set up yet",
+    "noChanges": "No changes yet",
+    "needPhoto": "photo needed",
+    "needVoice": "voice note needed",
+    "needValue": "value needed",
+    "valuePh": "Enter the value",
+    "photo": "Photo",
+    "voice": "Voice",
+    "stop": "Stop",
+    "notePh": "Note for the verifier (optional)",
+    "submit": "Submit",
+    "rejectWhy": "What needs fixing?",
+    "newMaster": "New checklist",
+    "namePh": "Morning safety round",
+    "items": "Items",
+    "itemPh": "What to check",
+    "addItem": "Add item",
+    "up": "Move up",
+    "down": "Move down",
+    "when": "When and who",
+    "frequency": "How often",
+    "dueTime": "Due time",
+    "window": "Hours to finish",
+    "windowHint": "Then it closes as missed",
+    "doers": "Who does it",
+    "defaultVerifier": "Company default verifier",
+    "startDate": "Starts on",
+    "skipHolidays": "Skip holidays and weekly offs",
+    "active": "Active",
+    "create": "Create checklist"
   }
 }

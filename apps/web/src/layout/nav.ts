@@ -69,15 +69,15 @@ export const WORKSPACE_NAV: NavSection[] = [
     key: 'workspace',
     items: [
       { key: 'home', path: '/', icon: House, phase: 0, tag: 'workspace' },
-      { key: 'myWorkspace', path: '/workspace', icon: Inbox, phase: 3, tag: 'workspace' },
+      { key: 'myWorkspace', path: '/workspace', icon: Inbox, phase: 0, tag: 'workspace' },
       { key: 'support', path: '/support', icon: LifeBuoy, phase: 10, tag: 'workspace' },
     ],
   },
   {
     key: 'businessEngine',
     items: [
-      { key: 'delegation', path: '/delegation', icon: ListTodo, phase: 3, tag: 'businessEngine' },
-      { key: 'checklists', path: '/checklists', icon: ListChecks, phase: 3, tag: 'businessEngine' },
+      { key: 'delegation', path: '/delegation', icon: ListTodo, phase: 0, tag: 'businessEngine' },
+      { key: 'checklists', path: '/checklists', icon: ListChecks, phase: 0, tag: 'businessEngine' },
       { key: 'helpSlips', path: '/help-slips', icon: NotebookPen, phase: 4, tag: 'businessEngine' },
       { key: 'helpTickets', path: '/help-tickets', icon: Ticket, phase: 4, tag: 'businessEngine' },
       { key: 'ea', path: '/ea', icon: ClipboardList, phase: 4, tag: 'businessEngine' },

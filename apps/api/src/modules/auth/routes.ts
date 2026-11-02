@@ -154,7 +154,7 @@ export async function authRoutes(app: FastifyInstance, opts: { env: Env }) {
     '/api/auth/change-password',
     {
       onRequest: [app.authenticate],
-      config: { rateLimit: { max: 10, timeWindow: '15 minutes' } },
+      config: { rateLimit: { max: env.LOGIN_RATE_LIMIT, timeWindow: '15 minutes' } },
       schema: { tags: ['auth'], body: changePasswordSchema, response: { 200: okSchema, ...errors } },
     },
     async (request, reply) => {

@@ -37,6 +37,10 @@ export const DOMAIN_EVENTS = [
   'telegram.codes_sent',
   'notification.read',
   'proof.attached',
+  'task.created',
+  'task.edited',
+  'checklist.master_changed',
+  'settings.changed',
 ] as const;
 /** Module events (delegation.assigned, …) are listed in notify/catalog.ts and grow with each phase. */
 export type DomainEventName = (typeof DOMAIN_EVENTS)[number] | (string & {});

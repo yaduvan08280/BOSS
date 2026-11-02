@@ -25,6 +25,9 @@ import { inboxRoutes } from './modules/notify/inbox.routes';
 import { ruleRoutes } from './modules/notify/rules.routes';
 import { telegramRoutes } from './modules/notify/telegram.routes';
 import { templateRoutes } from './modules/notify/templates.routes';
+import { checklistRoutes } from './modules/checklist/routes';
+import { delegationRoutes } from './modules/delegation/routes';
+import { workRoutes } from './modules/work/routes';
 import { LocalDiskStorage, type Storage } from './lib/storage';
 
 export type BuildOptions = {
@@ -87,5 +90,8 @@ export async function buildApp(opts: BuildOptions) {
   await app.register(ruleRoutes);
   await app.register(telegramRoutes, { env });
   await app.register(inboxRoutes, { env });
+  await app.register(delegationRoutes);
+  await app.register(checklistRoutes);
+  await app.register(workRoutes);
   return app;
 }

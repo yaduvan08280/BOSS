@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { Me } from '@mono/shared';
 import { Avatar, BrandMark } from '@/components/brand';
 import { cn } from '@/lib/utils';
+import { useWorkCounts } from '@/modules/workspace/useWorkCounts';
 import type { NavSection } from './nav';
 
 type Props = {
@@ -18,6 +19,12 @@ type Props = {
 /** Dark (or light) side menu. Used fixed on desktop and inside the drawer on phones. */
 export function Sidebar({ me, sections, collapsed = false, onToggle, onNavigate, onSignOut }: Props) {
   const { t } = useTranslation();
+  const counts = useWorkCounts().data;
+  const badge: Record<string, number | undefined> = {
+    delegation: counts?.delegation,
+    checklists: counts?.checklists,
+    myWorkspace: counts?.total,
+  };
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
       <div className={cn('flex items-center gap-3 px-4 pb-4 pt-5', collapsed && 'justify-center px-2')}>
@@ -60,6 +67,11 @@ export function Sidebar({ me, sections, collapsed = false, onToggle, onNavigate,
                   >
                     <item.icon className="size-[18px] shrink-0" aria-hidden />
                     {!collapsed && <span className="truncate">{t(`nav.${item.key}`)}</span>}
+                    {!collapsed && Boolean(badge[item.key]) && (
+                      <span className="tabular ml-auto rounded-pill bg-sidebar-hover px-1.5 text-[11px] font-semibold">
+                        {badge[item.key]}
+                      </span>
+                    )}
                   </NavLink>
                 </li>
               ))}

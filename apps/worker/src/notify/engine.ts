@@ -24,7 +24,12 @@ export type EngineDeps = {
 
 /** Events that must reach people even during quiet hours. */
 const URGENT = new Set(['notify.escalation', 'notify.test', 'notify.telegram_code']);
-const TELEGRAM_ACTIONS: Record<string, string> = { accept: 'Accept', done: 'Done', move: 'Move date' };
+const TELEGRAM_ACTIONS: Record<string, string> = {
+  accept: 'Accept',
+  done: 'Done',
+  verify: 'Verify',
+  move: 'Move date',
+};
 
 type Tpl = {
   code: string;
@@ -99,13 +104,10 @@ export async function notifyForEvent(event: DomainEvent, deps: EngineDeps): Prom
     };
 
     for (const rule of rules) {
-      const { people, external } = await resolveRecipients(
-        db,
-        company.id,
-        rule.recipients,
-        payload,
-        event.actorId,
-      );
+      const resolved = await resolveRecipients(db, company.id, rule.recipients, payload, event.actorId);
+      // Nobody needs a message about what they just did themselves (tests and escalations excepted).
+      const people = urgent ? resolved.people : resolved.people.filter((p) => p.id !== event.actorId);
+      const external = resolved.external;
       const after = new Date(now.getTime() + rule.waitMinutes * 60_000);
 
       for (const p of people) {
