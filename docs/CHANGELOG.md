@@ -1,5 +1,75 @@
 # Changelog
 
+## Phase 4: Help slips, help tickets, EA system, weekly MIS, Business Engine flow designer (02/11/2026)
+
+**Help slips** (`/help-slips`)
+- A problem plus the raiser's own solutions (the company sets how many: 1–3). Flow: receiver screens (forward or send back) → approver decides → **approving creates a linked delegation task** (pick a solution or write your own, choose the doer and date) → raiser closes.
+- Switches: "Receiver screens first" off sends slips straight to the approver; "Approver step" off lets the receiver decide.
+- Every step has a time limit. A late slip tells whoever holds it, plus the accountable person, once. Decided slips the raiser leaves open close by themselves (approved ones once their task is done).
+- Accountability: "none" means the raiser stays accountable; it can also be the receiver or the approver.
+- Tabs: Waiting on me, Raise a slip, My slips, All slips. Tiles: Waiting on me, Open, Late, Approved, Rejected. Drawer with solutions, decision, linked task, files and history.
+
+**Help tickets** (`/help-tickets`)
+- Raise → solver replies → marks it fixed (photo or file required when "Proof to resolve" is on, again after every reopen) → raiser confirms, or says "not fixed" (reopen count). "Auto after 24 hrs" closes resolved tickets on its own.
+- Escalation is a level on the ticket, not a status:
+  - **Level 1:** the first reply or the planned fix time was missed; goes to the coordinator, or the solver's HOD if there is none.
+  - **Level 2:** still missed one more SLA later; goes to the HOD and the owner.
+  - The coordinator chases but decides nothing; they can comment, move the fix time or reassign.
+- Tabs: To fix, Raise a ticket, My tickets, All tickets. Tiles: Open, Late, Escalated, Waiting to confirm, Closed. Drawer with the conversation, SLA chips and actions.
+
+**EA system** (`/ea`)
+- One-line capture (web or Telegram `/capture`; plain Telegram messages from the owner or the EA count too).
+- The EA sorts captures on a drag-and-drop board: Captured, Information, Someday, Waiting (with the cap), Scheduled (day, time and kind), Delegated (creates a task), Done. Switched-off stages hide.
+- **Owner's week:** a day × hour grid on desktop and an agenda on phones; tap a free hour to book something into it.
+- Automatic:
+  - A scheduled day that passed goes back to Someday.
+  - Information closes after the "kept for" days.
+  - Delegated items finish when their task is done.
+  - The **daily brief** at 08:30 lists today's schedule, captures to sort, waiting n/cap, delegated work to chase and the Someday review.
+  - The **weekly plan** goes out on the plan day. Both send once per day per owner.
+
+**Weekly MIS** (`/mis`)
+- Per person, per week: tasks planned, work done %, on time %, verified in time %, checklists %, tickets fixed in time %, score (FMS steps arrive in phase 5). Admins see everyone, HODs their team, others themselves.
+- Week picker, Excel (CSV) and **PDF** (pdfmake, landscape A4).
+- Sent every Monday at 09:00 (company time) for the past week: to owners with everyone, to HODs with their team.
+
+**Business Engine flow designer** (System Master → Business engine card → `/system/engine`)
+- For all five modules: a React Flow chart drawn from the module's state machine under the company's settings. Legend: start, action, status, automatic, finished, dead end/escalation. Steps switched off, and statuses nothing can reach any more, fade out.
+- **Alerts (n/n)** view, full view, and a "Set up your flow" panel:
+  1) who does it; 1B) times and rules; 2) steps on/off.
+  - Live preview while editing, then Save or Reset to default, with a "Default / Changed" badge.
+  - "Recent changes by admin" (who, when, before → after) and who hears about what on Telegram.
+- Every setting does something:
+  - **Delegation:** "EA verifies before done" off makes Mark done go straight to Done. "Accept within" reminds the doer and tells the creator. "Reports open on" sets the sheet's default range.
+  - **Checklists:** "Mark missed after" is the default window for new checklists, and "Tell the owner about misses" off leaves the owner out of miss alerts.
+  - **Slips:** "Delegated within" sets the approved task's default date.
+
+**Also**
+- My Workspace, menu badges and the top-bar count now include slips, tickets and the EA's captures. Telegram `/my` lists tickets to fix and slips waiting.
+- New notification events: `delegation.accept_late`, `slip.late`, `slip.closed`, `mis.weekly`.
+  - `ticket.escalated`, `ea.daily_brief` and `ea.weekly_plan` now go to exactly the people the worker picks.
+  - Untouched built-in rules are upgraded automatically.
+- An event can leave out recipients a company switched off.
+- `seed:demo` adds 8 help slips and 10 tickets in every state (some late or escalated), and a 17-item EA board with this week's schedule. Sunita Bansal is set as the EA.
+- New packages, pinned to releases at least two weeks old: pdfmake 0.3.12, @xyflow/react 12.12.0, @dagrejs/dagre 3.1.1.
+
+**Verified**
+- 143 unit/integration tests. New ones cover:
+  - The slip, ticket and EA state machines, and the flow charts under different settings.
+  - Escalation levels and weekly MIS on fixed dates.
+  - Slip, ticket and EA lifecycles through the API.
+  - Late slips chased once; auto-closes; escalation recipients.
+  - The waiting cap, day rollover, a brief sent once at its time, and the brief text.
+  - "EA verifies" off going straight to Done; settings validation, reset and change log.
+  - MIS visibility, the PDF and the Monday send.
+- Playwright (phone and desktop), each person in their own browser:
+  - A slip raised, forwarded, approved into a task and closed.
+  - A ticket replied, fixed with a photo and confirmed.
+  - An EA capture scheduled into the week and done.
+  - The designer's switch turned off and a task closed without verification.
+  - Every new screen fits at 380 and 1440 px.
+- Production stack: the `engine` migration applies, the slip, ticket, EA, MIS PDF and designer APIs work through Caddy, and there are no errors in the API or worker logs.
+
 ## Phase 3: Delegation, checklists, scorecard, R/Y/G (02/11/2026)
 
 **Delegation sheet** (`/delegation`)

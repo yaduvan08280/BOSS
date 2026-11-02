@@ -147,5 +147,33 @@ export async function workSummary(db: Db, me: Who, today: boolean): Promise<stri
       `☑️ ${r.master.name} · ${r.itemsDone}/${r.itemsTotal} · ${formatShortDateTime(r.plannedAt, zone)}`,
     );
   if (verify) lines.push(`🔍 ${verify} task(s) waiting for you to verify`);
+  const [tickets, slips] = await Promise.all([
+    db.ticket.findMany({
+      where: {
+        companyId: me.companyId,
+        deletedAt: null,
+        solverId: me.id,
+        status: { in: ['OPEN', 'IN_PROGRESS'] },
+      },
+      orderBy: { plannedFixAt: 'asc' },
+      take: 5,
+    }),
+    db.slip.count({
+      where: {
+        companyId: me.companyId,
+        deletedAt: null,
+        OR: [
+          { status: 'SUBMITTED', receiverId: me.id },
+          { status: 'WITH_APPROVER', approverId: me.id },
+          { status: 'RETURNED', raiserId: me.id },
+        ],
+      },
+    }),
+  ]);
+  for (const t of tickets)
+    lines.push(
+      `🎫 T#${t.number} ${t.title.slice(0, 50)} · fix by ${formatShortDateTime(t.plannedFixAt, zone)}${t.plannedFixAt < now ? ' ⚠️ late' : ''}`,
+    );
+  if (slips) lines.push(`📝 ${slips} help slip(s) waiting on you`);
   return lines;
 }

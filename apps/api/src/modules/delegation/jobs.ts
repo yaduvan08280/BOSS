@@ -54,3 +54,54 @@ export async function flagOverdueTasks(db: Db, now = new Date()): Promise<number
   }
   return flagged;
 }
+
+/**
+ * "Accept within N minutes": a task still waiting for its doer to accept after that time
+ * reminds the doer and tells the creator, once per assignment.
+ */
+export async function remindUnaccepted(db: Db, now = new Date()): Promise<number> {
+  const waiting = await db.task.findMany({
+    where: { deletedAt: null, status: 'AWAITING_ACCEPTANCE' },
+    take: 500,
+  });
+  let sent = 0;
+  for (const t of waiting) {
+    const s = await moduleSettings(db, t.companyId, 'delegation');
+    const since = await db.taskEvent.findFirst({
+      where: { taskId: t.id, toStatus: 'AWAITING_ACCEPTANCE' },
+      orderBy: { createdAt: 'desc' },
+      select: { createdAt: true },
+    });
+    const from = since?.createdAt ?? t.createdAt;
+    if (now.getTime() - from.getTime() < s.acceptWithinMinutes * 60_000) continue;
+    if (
+      await db.taskEvent.count({ where: { taskId: t.id, type: 'accept_reminder', createdAt: { gte: from } } })
+    )
+      continue;
+    await db.$transaction(async (tx) => {
+      await tx.taskEvent.create({
+        data: { companyId: t.companyId, taskId: t.id, type: 'accept_reminder', actorId: null },
+      });
+      await emitEvent(
+        tx,
+        { companyId: t.companyId, actorId: null },
+        {
+          name: 'delegation.accept_late',
+          entityType: 'task',
+          entityId: t.id,
+          payload: {
+            doerId: t.doerId,
+            creatorId: t.creatorId,
+            number: t.number,
+            title: t.description.slice(0, 80),
+            minutes: s.acceptWithinMinutes,
+            link: `/delegation?task=${t.id}`,
+            telegramActions: ['accept'],
+          },
+        },
+      );
+    });
+    sent++;
+  }
+  return sent;
+}

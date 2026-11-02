@@ -1,5 +1,6 @@
 import type { Db, Tx } from '@mono/db';
 import { hasPermission } from '@mono/shared';
+import { AppError } from '../../lib/errors';
 
 /** Who is acting: from a web request or from the Telegram bot. */
 export type Actor = {
@@ -65,4 +66,34 @@ export async function attachUploads(
     data: { entityType, entityId },
   });
   return res.count;
+}
+
+/** The company's (first) owner: the fallback for every "who does it" setting. */
+export async function ownerOf(db: Db | Tx, companyId: string): Promise<string | null> {
+  const o = await db.user.findFirst({
+    where: { companyId, deletedAt: null, status: 'ACTIVE', role: { key: 'OWNER' } },
+    orderBy: { createdAt: 'asc' },
+    select: { id: true },
+  });
+  return o?.id ?? null;
+}
+
+/** HOD of the person's main department (one level up if they are the HOD), else the owner. */
+export async function hodFor(db: Db | Tx, companyId: string, userId: string): Promise<string | null> {
+  const u = await db.user.findFirst({
+    where: { id: userId, companyId },
+    select: { mainDepartment: { select: { hodUserId: true, parent: { select: { hodUserId: true } } } } },
+  });
+  const d = u?.mainDepartment;
+  const hod = d?.hodUserId && d.hodUserId !== userId ? d.hodUserId : d?.parent?.hodUserId;
+  return hod && hod !== userId ? hod : ownerOf(db, companyId);
+}
+
+/** An active person of this company, or a 400 naming what was wrong. */
+export async function checkPerson(db: Db | Tx, companyId: string, id: string, what: string) {
+  const u = await db.user.findFirst({
+    where: { id, companyId, deletedAt: null, status: 'ACTIVE' },
+    select: { id: true },
+  });
+  if (!u) throw new AppError(400, 'VALIDATION_FAILED', `${what} is not an active person`);
 }

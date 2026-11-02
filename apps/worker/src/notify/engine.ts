@@ -103,8 +103,11 @@ export async function notifyForEvent(event: DomainEvent, deps: EngineDeps): Prom
       if (row.status !== 'SKIPPED') queued++;
     };
 
+    // An event can leave out recipients a company switched off (e.g. "Tell the owner about misses").
+    const skip = Array.isArray(payload.skipRecipients) ? (payload.skipRecipients as string[]) : [];
     for (const rule of rules) {
-      const resolved = await resolveRecipients(db, company.id, rule.recipients, payload, event.actorId);
+      const keys = rule.recipients.filter((r) => !skip.includes(r));
+      const resolved = await resolveRecipients(db, company.id, keys, payload, event.actorId);
       // Nobody needs a message about what they just did themselves (tests and escalations excepted).
       const people = urgent ? resolved.people : resolved.people.filter((p) => p.id !== event.actorId);
       const external = resolved.external;

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { Me } from '@mono/shared';
 import { Badge } from '@/components/ui/form';
 import { EmptyState, KpiTile, PageHeader } from '@/components/page';
+import { useModuleSettings } from '@/lib/work';
 import { cn } from '@/lib/utils';
 import { useUsers } from '@/modules/system/api';
 import { AddTask } from './AddTask';
@@ -24,6 +25,7 @@ export function DelegationPage({ me }: { me: Me }) {
   const tz = me.company.timezone;
   const people = useUsers().data ?? [];
   const tiles = useTiles().data;
+  const range = useModuleSettings('delegation').data?.reportsOpenOn === 'thisWeek' ? 'week' : 'all';
   const counts = useTasks({ tab: 'pending' }).data?.counts;
   const set = (patch: Record<string, string | null>) => {
     const next = new URLSearchParams(params);
@@ -97,7 +99,14 @@ export function DelegationPage({ me }: { me: Me }) {
         <AddTask people={people} tz={tz} meId={me.user.id} onCreated={() => set({ tab: 'pending' })} />
       )}
       {(tab === 'pending' || tab === 'verification' || tab === 'done') && (
-        <TaskList key={tab} tab={tab} people={people} tz={tz} onOpen={(id) => set({ task: id })} />
+        <TaskList
+          key={`${tab}-${range}`}
+          tab={tab}
+          defaultRange={range}
+          people={people}
+          tz={tz}
+          onOpen={(id) => set({ task: id })}
+        />
       )}
       {tab === 'fms' && (
         <EmptyState icon={Workflow} title={t('common.comingIn', { phase: 5 })} body={t('task.fmsSoon')} />

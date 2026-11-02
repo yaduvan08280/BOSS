@@ -10,7 +10,8 @@
     "somethingWrongBody": "We couldn't load this. Check your connection and try again.",
     "comingIn": "Arrives in phase {{phase}}",
     "comingBody": "This screen is part of the plan and will be built in phase {{phase}}. The menu, layout and theme are ready for it.",
-    "offline": "You're offline. Changes will sync when you're back."
+    "offline": "You're offline. Changes will sync when you're back.",
+    "remove": "Remove"
   },
   "auth": {
     "title": "Sign in",
@@ -121,7 +122,8 @@
     "hrRules": "HR rules",
     "businessDetails": "Business details",
     "appearance": "Appearance",
-    "uiKit": "UI kit"
+    "uiKit": "UI kit",
+    "engineDesigner": "Business Engine"
   },
   "navDesc": {
     "home": "Search anything, or pick where to start",
@@ -167,7 +169,8 @@
     "hrRules": "Attendance, leave and Buddy rules",
     "businessDetails": "Your business in your words, for the AI",
     "appearance": "Colours, logo and app name",
-    "uiKit": "Every colour and building block"
+    "uiKit": "Every colour and building block",
+    "engineDesigner": "How each module flows, and the switches that change it"
   },
   "home": {
     "heading": "What do you want to do, {{name}}?",
@@ -240,7 +243,8 @@
       "noShift_other": "No shift added yet",
       "telegramNotLinked_one": "{{count}} person hasn't linked Telegram",
       "telegramNotLinked_other": "{{count}} people haven't linked Telegram"
-    }
+    },
+    "openDesigner": "Open the flow designer"
   },
   "account": {
     "title": "Profile",
@@ -625,7 +629,11 @@
       "crm_lead_stuck": "Lead stuck",
       "crm_order_step_due": "Order step due",
       "crm_payment_due": "Payment reminder to customer",
-      "crm_customer_sleeping": "Customer gone quiet"
+      "crm_customer_sleeping": "Customer gone quiet",
+      "slip_late": "Help slip waiting too long",
+      "slip_closed": "Help slip closed",
+      "mis_weekly": "Weekly MIS",
+      "delegation_accept_late": "Task not accepted in time"
     },
     "to": {
       "doer": "Doer",
@@ -647,7 +655,8 @@
       "owner": "Owner",
       "hr": "HR",
       "actor": "Whoever did it",
-      "someone": "Someone"
+      "someone": "Someone",
+      "accountable": "Accountable person"
     },
     "channel": {
       "telegram": "Telegram",
@@ -929,7 +938,9 @@
       "attach": "Attach",
       "camera": "Camera",
       "hint": "or drop files here, or paste a screenshot (Ctrl+V)"
-    }
+    },
+    "dueIn": "in {{d}}",
+    "lateBy": "{{d}} late"
   },
   "ws": {
     "subtitle_one": "{{count}} thing waiting on you",
@@ -938,7 +949,9 @@
     "verify": "To verify",
     "checklists": "Checklists",
     "emptyTitle": "Nothing waiting on you",
-    "emptyBody": "New tasks and checklists show up here the moment they are given to you."
+    "emptyBody": "New tasks and checklists show up here the moment they are given to you.",
+    "tickets": "Tickets",
+    "slips": "Help slips"
   },
   "task": {
     "tab": {
@@ -1243,5 +1256,495 @@
     "skipHolidays": "Skip holidays and weekly offs",
     "active": "Active",
     "create": "Create checklist"
+  },
+  "slip": {
+    "title": "Help slip #{{n}}",
+    "tab": {
+      "inbox": "Waiting on me",
+      "raise": "Raise a slip",
+      "mine": "My slips",
+      "all": "All slips"
+    },
+    "tile": {
+      "withMe": "Waiting on me",
+      "withMeNote": "to screen, decide or close",
+      "open": "Open",
+      "openNote": "not decided yet",
+      "late": "Late",
+      "lateNote": "past their step time",
+      "approved": "Approved",
+      "approvedNote": "last 30 days",
+      "rejected": "Rejected",
+      "rejectedNote": "with a reason"
+    },
+    "status": {
+      "SUBMITTED": "With the receiver",
+      "RETURNED": "Sent back",
+      "WITH_APPROVER": "With the approver",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "CLOSED": "Closed",
+      "WITHDRAWN": "Withdrawn"
+    },
+    "act": {
+      "forward": "Forward to approver",
+      "return": "Send back",
+      "resubmit": "Edit and resubmit",
+      "approve": "Approve",
+      "reject": "Reject",
+      "close": "Close slip",
+      "withdraw": "Withdraw"
+    },
+    "dlg": {
+      "forward": "Forward to the approver",
+      "return": "Send it back to the raiser",
+      "resubmit": "Edit and resubmit",
+      "approve": "Approve a solution",
+      "reject": "Reject this slip",
+      "close": "Close the slip",
+      "withdraw": "Withdraw the slip"
+    },
+    "label": {
+      "forward": "Note for the approver (optional)",
+      "return": "What should the raiser fix?",
+      "reject": "Why is it rejected?",
+      "close": "Closing note (optional)",
+      "withdraw": "Reason (optional)"
+    },
+    "ev": {
+      "created": "Slip raised",
+      "comment": "Note",
+      "edited": "Edited",
+      "status": "Now: {{to}}"
+    },
+    "empty": {
+      "inbox": "Nothing waiting on you",
+      "mine": "You haven't raised any slips",
+      "all": "No slips yet"
+    },
+    "emptyBody": "A help slip is a problem plus your own ideas to solve it. The approver picks one and it becomes a task.",
+    "problem": "The problem",
+    "problemHint": "What is wrong, where, and how it affects work.",
+    "problemShort": "Describe the problem in a few more words",
+    "yourSolutions": "Your solutions",
+    "atLeast_one": "at least {{count}}",
+    "atLeast_other": "at least {{count}}",
+    "solutionN": "Solution {{n}}",
+    "solutionPh": "One way to fix it",
+    "addSolution": "Add a solution",
+    "needSolutions_one": "Give at least {{count}} solution",
+    "needSolutions_other": "Give at least {{count}} solutions",
+    "submit": "Submit slip",
+    "submitHint": "The receiver screens it first, then the approver decides.",
+    "raised": "Help slip #{{n}} raised",
+    "nSolutions_one": "{{count}} solution",
+    "nSolutions_other": "{{count}} solutions",
+    "waitingOn": "{{name}} · {{when}}",
+    "solutions": "Solutions",
+    "chosen": "Chosen",
+    "decidersOwn": "Decider's own solution",
+    "linkedTask": "Task #{{n}} for {{name}}",
+    "raiser": "Raised by",
+    "receiver": "Receiver",
+    "approver": "Approver",
+    "accountable": "Accountable",
+    "raisedAt": "Raised",
+    "history": "History",
+    "pickSolution": "Which solution?",
+    "ownSolution": "Write my own",
+    "approveHint": "Approving creates a delegation task for this person, linked to the slip."
+  },
+  "ticket": {
+    "tab": {
+      "assigned": "To fix",
+      "raise": "Raise a ticket",
+      "mine": "My tickets",
+      "all": "All tickets"
+    },
+    "tile": {
+      "open": "Open",
+      "openNote": "being fixed",
+      "late": "Late",
+      "lateNote": "past the fix time",
+      "escalated": "Escalated",
+      "escalatedNote": "to coordinator or HOD",
+      "waiting": "Waiting to confirm",
+      "waitingNote": "fixed, raiser to check",
+      "closedWeek": "Closed",
+      "closedWeekNote": "last 7 days"
+    },
+    "status": {
+      "OPEN": "Open",
+      "IN_PROGRESS": "In progress",
+      "RESOLVED": "Fixed — confirm?",
+      "CLOSED": "Closed",
+      "CANCELLED": "Cancelled"
+    },
+    "act": {
+      "reply": "Reply",
+      "resolve": "Mark fixed",
+      "confirm": "Yes, it's fixed",
+      "reopen": "Not fixed",
+      "comment": "Comment",
+      "movePlan": "Move fix time",
+      "reassign": "Give to someone else",
+      "cancel": "Cancel ticket"
+    },
+    "dlg": {
+      "resolve": "Mark it fixed",
+      "reopen": "It's not fixed",
+      "movePlan": "Move the fix time",
+      "reassign": "Give it to someone else",
+      "cancel": "Cancel this ticket"
+    },
+    "label": {
+      "resolve": "What did you do?",
+      "reopen": "What's still wrong?",
+      "movePlan": "Why is it changing?",
+      "cancel": "Reason (optional)"
+    },
+    "ev": {
+      "created": "Ticket raised",
+      "reply": "Reply",
+      "comment": "Comment",
+      "status": "Now: {{to}}",
+      "plan_moved": "Fix time moved to {{to}}",
+      "reassigned": "Given to a new solver",
+      "escalated": "Escalated"
+    },
+    "empty": {
+      "assigned": "Nothing to fix",
+      "mine": "You haven't raised any tickets",
+      "all": "No tickets yet"
+    },
+    "emptyBody": "Raise a ticket when something is broken and someone needs to fix it.",
+    "what": "What's wrong?",
+    "whatPh": "e.g. Printer on floor 2 jams on A3",
+    "details": "Details",
+    "solver": "Problem solver",
+    "fixBy": "Fix by",
+    "coordinator": "Coordinator",
+    "submit": "Raise ticket",
+    "submitHint": "The solver gets it on Telegram. Late tickets escalate on their own.",
+    "raised": "Ticket T#{{n}} raised",
+    "titleShort": "Say what is wrong in a few words",
+    "pickSolver": "Pick who fixes it",
+    "byOn": "by {{name}} · {{at}}",
+    "escalatedL": "Escalated L{{level}}",
+    "replyDue": "Reply {{when}}",
+    "fixDue": "Fix {{when}}",
+    "reopenedN_one": "Reopened {{count}}×",
+    "reopenedN_other": "Reopened {{count}}×",
+    "closedAt": "Closed",
+    "auto": "automatically",
+    "thread": "Conversation",
+    "replyPh": "Write a reply…",
+    "commentPh": "Add a comment…",
+    "proof": "Photo or file that shows it is fixed"
+  },
+  "ea": {
+    "tab": {
+      "board": "Board",
+      "week": "Owner's week"
+    },
+    "stage": {
+      "CAPTURED": "Captured",
+      "INFORMATION": "Information",
+      "SOMEDAY": "Someday",
+      "WAITING": "Waiting",
+      "SCHEDULED": "Scheduled",
+      "DELEGATED": "Delegated",
+      "DONE": "Done",
+      "CLOSED": "Closed"
+    },
+    "stageHint": {
+      "CAPTURED": "New, not sorted yet",
+      "INFORMATION": "Reference only; closes on its own",
+      "SOMEDAY": "Maybe later; reviewed now and then",
+      "WAITING": "Parked until someone answers",
+      "SCHEDULED": "Has a day and a time",
+      "DELEGATED": "Given as a task",
+      "DONE": "Finished this week"
+    },
+    "act": {
+      "toInformation": "Information",
+      "toSomeday": "Someday",
+      "toWaiting": "Waiting",
+      "schedule": "Schedule",
+      "delegate": "Delegate",
+      "done": "Done",
+      "close": "Close",
+      "reopen": "Reopen",
+      "missDay": "Missed day",
+      "expire": "Expire"
+    },
+    "kinds": {
+      "task": "Work",
+      "meeting": "Meeting",
+      "call": "Call",
+      "review": "Review"
+    },
+    "day": {
+      "1": "Mon",
+      "2": "Tue",
+      "3": "Wed",
+      "4": "Thu",
+      "5": "Fri",
+      "6": "Sat",
+      "7": "Sun"
+    },
+    "dayLong": {
+      "1": "Monday",
+      "2": "Tuesday",
+      "3": "Wednesday",
+      "4": "Thursday",
+      "5": "Friday",
+      "6": "Saturday",
+      "7": "Sunday"
+    },
+    "tile": {
+      "toSort": "To sort",
+      "toSortNote": "new captures",
+      "today": "Today",
+      "todayNote": "scheduled",
+      "waiting": "Waiting",
+      "waitingNote": "of the cap",
+      "delegated": "Delegated",
+      "delegatedNote": "tasks still open"
+    },
+    "capture": "Capture",
+    "capturePh": "One line — a call, an idea, a promise…",
+    "captured": "Captured #{{n}}",
+    "whose": "Whose board",
+    "cantMove": "That card can't go there",
+    "text": "What",
+    "note": "Note",
+    "date": "Day",
+    "start": "Start",
+    "length": "Length",
+    "kind": "Kind",
+    "taskLink": "Task #{{n}} · {{status}}",
+    "taskShort": "#{{n}} · {{status}}",
+    "waitingOn": "Waiting on",
+    "waitingOnPh": "Who or what are we waiting for?",
+    "waitingCap": "{{n}} of {{cap}} waiting",
+    "free": "Free — tap to book",
+    "bookSlot": "Book {{at}}",
+    "bookSlotHint": "Pick an item to put in this slot.",
+    "nothingToBook": "Nothing to schedule. Capture something first."
+  },
+  "mis": {
+    "col": {
+      "person": "Person",
+      "tasks": "Tasks",
+      "done": "Work done",
+      "onTime": "On time",
+      "verifications": "Verified in time",
+      "checklists": "Checklists",
+      "tickets": "Tickets fixed in time",
+      "fms": "FMS steps",
+      "score": "Score"
+    },
+    "excel": "Excel",
+    "empty": "No one to show",
+    "tasksN_one": "{{count}} task",
+    "tasksN_other": "{{count}} tasks",
+    "legend": "% of what was due that week (up to now for this week). Green 90%+, amber 70%+, red below. FMS steps arrive with processes. Sent every Monday at 09:00 to the owner and HODs."
+  },
+  "engine": {
+    "modules": "Modules",
+    "m": {
+      "checklist": "Checklists",
+      "delegation": "Delegation",
+      "slip": "Help slips",
+      "ticket": "Help tickets",
+      "ea": "EA system"
+    },
+    "thing": {
+      "checklist": "a checklist",
+      "delegation": "a task",
+      "slip": "a help slip",
+      "ticket": "a ticket",
+      "ea": "a capture"
+    },
+    "lifeOf": "Life of {{what}}",
+    "lifeHint": "From the moment it is given to the moment it closes. Switched-off steps fade out.",
+    "flowchart": "Flowchart",
+    "alerts": "Alerts ({{n}}/{{total}})",
+    "alertsN": "alerts {{n}}/{{total}}",
+    "fullView": "Full view",
+    "exitFull": "Exit full view",
+    "escalated": "Escalated",
+    "off": "Off",
+    "on": "On",
+    "offWord": "Off",
+    "notSet": "Not set",
+    "default": "Default (owner / HOD)",
+    "setUp": "Set up your flow",
+    "custom": "Changed",
+    "defaultBadge": "Default",
+    "who": "Who does it",
+    "times": "Times and rules",
+    "steps": "Switch steps on or off",
+    "reset": "Reset to default",
+    "saved": "Saved. The flow works this way from now on.",
+    "resetDone": "Back to the default flow",
+    "changes": "Recent changes by admin",
+    "noChanges": "No changes yet — the default flow is in use.",
+    "resetToDefault": "Reset to default",
+    "rolesLegend": "Who hears about what on Telegram",
+    "noTelegram": "nothing on Telegram",
+    "noRule": "No rule",
+    "editRules": "Edit notification rules",
+    "legend": {
+      "start": "Start",
+      "action": "Action",
+      "status": "Status",
+      "auto": "Automatic",
+      "finished": "Finished",
+      "deadend": "Dead end / escalation",
+      "off": "Switched off"
+    },
+    "role": {
+      "doer": "doer",
+      "creator": "creator",
+      "verifier": "verifier",
+      "raiser": "raiser",
+      "receiver": "receiver",
+      "approver": "approver",
+      "solver": "solver",
+      "coordinator": "coordinator",
+      "owner": "owner",
+      "ea": "EA"
+    },
+    "act": {
+      "assign": "Give a task",
+      "sweep": "Due time comes",
+      "raise": "Raise",
+      "capture": "Capture",
+      "escalate": "No reply / late → escalate",
+      "accept": "Accept",
+      "decline": "Decline",
+      "moveDate": "Move date",
+      "addFollowUp": "Follow up",
+      "markDone": "Mark done",
+      "verify": "Verify",
+      "reject": "Send back",
+      "reopen": "Reopen",
+      "reassign": "Give to someone else",
+      "cancel": "Cancel",
+      "tick": "Tick items",
+      "submit": "Submit",
+      "expire": "Window passes",
+      "forward": "Forward",
+      "return": "Send back",
+      "resubmit": "Resubmit",
+      "approve": "Approve → task",
+      "close": "Close",
+      "withdraw": "Withdraw",
+      "reply": "Reply",
+      "resolve": "Mark fixed (+proof)",
+      "confirm": "Raiser confirms",
+      "autoClose": "Auto-close after 24 h",
+      "comment": "Comment",
+      "movePlan": "Move fix time",
+      "toInformation": "Keep as information",
+      "toSomeday": "Someday",
+      "toWaiting": "Park as waiting",
+      "schedule": "Schedule",
+      "delegate": "Delegate → task",
+      "done": "Done",
+      "missDay": "Day passes"
+    },
+    "f": {
+      "eaUserId": "EA",
+      "verifierUserId": "Default verifier",
+      "receiverUserId": "Receiver",
+      "approverUserId": "Approver",
+      "coordinatorUserId": "Process coordinator",
+      "acceptWithinMinutes": "Accept within",
+      "verifyWithinMinutes": "Verify within",
+      "reportsOpenOn": "Reports open on",
+      "doerMustAccept": "Doer must accept",
+      "eaVerifies": "EA verifies before done",
+      "allowReopen": "Allow re-open",
+      "remindBeforeMinutes": "Reminder before due",
+      "missedAfterHours": "Mark missed after",
+      "verifierStep": "Verifier step",
+      "photoVoiceProof": "Photo / voice proof",
+      "tellOwnerAboutMisses": "Tell the owner about misses",
+      "receiverForwardHours": "Receiver forwards within",
+      "accountability": "Accountability",
+      "approverDecideHours": "Approver decides within",
+      "delegateWithinHours": "Delegated within",
+      "raiserCloseHours": "Raiser closes within",
+      "solutionsRequired": "Solutions the raiser must give",
+      "receiverScreens": "Receiver screens first",
+      "approverStep": "Approver step",
+      "firstReplyHours": "First reply within",
+      "fixHours": "Fix within",
+      "escalationLevels": "Escalation",
+      "proofToResolve": "Proof to resolve",
+      "closeBy": "Who closes the ticket",
+      "weekStartsOn": "Week starts on",
+      "weeklyPlanDay": "Weekly plan day",
+      "waitingCap": "Waiting cap",
+      "dailyBriefAt": "Daily brief at",
+      "dayStart": "Working day starts",
+      "dayEnd": "Working day ends",
+      "infoKeepDays": "Information kept for",
+      "somedayReviewDays": "Someday review every",
+      "delegationFollowUpDays": "Delegation follow-up after",
+      "informationStage": "Information stage",
+      "waitingStage": "Waiting stage",
+      "missedDayToSomeday": "Missed day → Someday"
+    },
+    "h": {
+      "eaUserId": "Verifies tasks when \"EA verifies\" is on, and sorts the EA board.",
+      "verifierUserId": "Checks runs when a checklist has no verifier of its own.",
+      "receiverUserId": "Screens new slips. Empty: the raiser's HOD.",
+      "approverUserId": "Decides slips. Empty: the owner.",
+      "coordinatorUserId": "Rides along on every ticket and gets level-1 escalations. Empty: the solver's HOD.",
+      "doerMustAccept": "New tasks wait until the doer accepts them.",
+      "eaVerifies": "Off: Mark done goes straight to Done (unless a task has its own verifier).",
+      "allowReopen": "Verifiers can send work back and creators can reopen done tasks.",
+      "verifierStep": "Submitted checklists wait for the verifier.",
+      "photoVoiceProof": "Items marked \"photo\" or \"voice\" need the file before they tick.",
+      "tellOwnerAboutMisses": "The owner hears about every missed checklist.",
+      "receiverScreens": "Off: new slips go straight to the approver.",
+      "approverStep": "Off: the receiver decides.",
+      "proofToResolve": "The solver must attach a photo or file to mark it fixed.",
+      "informationStage": "Reference items get their own column.",
+      "waitingStage": "Parked items get their own column (with the cap).",
+      "missedDayToSomeday": "Scheduled items whose day passed go back to Someday."
+    },
+    "opt": {
+      "reportsOpenOn": {
+        "thisWeek": "This week",
+        "all": "All"
+      },
+      "accountability": {
+        "none": "None — the raiser",
+        "receiver": "The receiver",
+        "approver": "The approver"
+      },
+      "escalationLevels": {
+        "0": "Off",
+        "1": "1 level",
+        "2": "2 levels"
+      },
+      "closeBy": {
+        "raiser": "Raiser confirms",
+        "auto24h": "Auto after 24 hrs"
+      }
+    },
+    "u": {
+      "atDue": "At due time",
+      "min": "{{n}} min",
+      "h_one": "{{count}} hour",
+      "h_other": "{{count}} hours",
+      "d_one": "{{count}} day",
+      "d_other": "{{count}} days"
+    }
   }
 }

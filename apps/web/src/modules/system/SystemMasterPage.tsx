@@ -14,7 +14,9 @@ const BADGE_FOR: Record<string, string> = { departments: 'departments', users: '
 export function SystemMasterLayout() {
   const { t } = useTranslation();
   const summary = useSummary();
-  const tabs = SYSTEM_NAV.flatMap((s) => s.items).filter((i) => i.key !== 'uiKit');
+  const tabs = SYSTEM_NAV.flatMap((s) => s.items).filter(
+    (i) => i.key !== 'uiKit' && i.key !== 'engineDesigner',
+  ); // the designer opens from its header card
   return (
     <div className="space-y-5">
       <h1 className="sr-only">{t('system.title')}</h1>

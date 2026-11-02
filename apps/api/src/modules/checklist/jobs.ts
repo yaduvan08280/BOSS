@@ -114,7 +114,13 @@ export async function expireChecklists(db: Db, now = new Date()): Promise<number
     include: { master: { select: { name: true } } },
     take: 200,
   });
+  const tellOwner = new Map<string, boolean>();
   for (const run of late) {
+    if (!tellOwner.has(run.companyId))
+      tellOwner.set(
+        run.companyId,
+        (await moduleSettings(db, run.companyId, 'checklist')).tellOwnerAboutMisses,
+      );
     transition(checklistMachine, {
       from: 'OPEN',
       action: 'expire',
@@ -139,6 +145,7 @@ export async function expireChecklists(db: Db, now = new Date()): Promise<number
             checklist: run.master.name,
             due: run.plannedAt.toISOString(),
             link: `/checklists?run=${run.id}`,
+            ...(tellOwner.get(run.companyId) ? {} : { skipRecipients: ['owner'] }),
           },
         },
       );

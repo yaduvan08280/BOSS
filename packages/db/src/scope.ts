@@ -31,6 +31,13 @@ export const COMPANY_SCOPED_MODELS = new Set([
   'ChecklistRun',
   'ChecklistRunItem',
   'Holiday',
+  'Slip',
+  'SlipSolution',
+  'SlipEvent',
+  'Ticket',
+  'TicketEvent',
+  'EaItem',
+  'JobMark',
 ]);
 
 /** Models with `deletedAt` (soft delete). Kept in sync with the schema by `scope.test.ts`. */
@@ -50,6 +57,9 @@ export const SOFT_DELETE_MODELS = new Set([
   'Task',
   'ChecklistMaster',
   'Holiday',
+  'Slip',
+  'Ticket',
+  'EaItem',
 ]);
 
 const LIST_READS = new Set(['findMany', 'findFirst', 'findFirstOrThrow', 'count', 'aggregate', 'groupBy']);

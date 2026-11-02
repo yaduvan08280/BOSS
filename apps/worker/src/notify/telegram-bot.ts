@@ -6,6 +6,7 @@ import { readChannel, setChannelMeta, type Storage } from '@mono/api/services';
 import {
   onAck,
   onAction,
+  canCapture,
   onCapture,
   onCode,
   onMy,
@@ -104,6 +105,8 @@ export class BotManager {
     bot.on('message:text', async (ctx) => {
       const text = ctx.message.text.trim();
       if (looksLikeCode(text)) return ctx.reply(await onCode(db, chat(ctx.chat.id), text, app));
+      if (!text.startsWith('/') && (await canCapture(db, scope, chat(ctx.chat.id))))
+        return ctx.reply(await onCapture(db, scope, chat(ctx.chat.id), text, app));
       return ctx.reply(await onStart(db, scope, chat(ctx.chat.id), undefined, app));
     });
 

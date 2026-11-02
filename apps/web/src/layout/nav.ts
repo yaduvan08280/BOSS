@@ -78,10 +78,10 @@ export const WORKSPACE_NAV: NavSection[] = [
     items: [
       { key: 'delegation', path: '/delegation', icon: ListTodo, phase: 0, tag: 'businessEngine' },
       { key: 'checklists', path: '/checklists', icon: ListChecks, phase: 0, tag: 'businessEngine' },
-      { key: 'helpSlips', path: '/help-slips', icon: NotebookPen, phase: 4, tag: 'businessEngine' },
-      { key: 'helpTickets', path: '/help-tickets', icon: Ticket, phase: 4, tag: 'businessEngine' },
-      { key: 'ea', path: '/ea', icon: ClipboardList, phase: 4, tag: 'businessEngine' },
-      { key: 'weeklyMis', path: '/mis', icon: ChartColumn, phase: 4, tag: 'businessEngine' },
+      { key: 'helpSlips', path: '/help-slips', icon: NotebookPen, phase: 0, tag: 'businessEngine' },
+      { key: 'helpTickets', path: '/help-tickets', icon: Ticket, phase: 0, tag: 'businessEngine' },
+      { key: 'ea', path: '/ea', icon: ClipboardList, phase: 0, tag: 'businessEngine' },
+      { key: 'weeklyMis', path: '/mis', icon: ChartColumn, phase: 0, tag: 'businessEngine' },
     ],
   },
   {
@@ -149,6 +149,7 @@ export const SYSTEM_NAV: NavSection[] = [
       { key: 'hrRules', path: '/system/hr-rules', icon: UserCog, phase: 7, tag: 'setup' },
       { key: 'businessDetails', path: '/system/business-details', icon: Sparkles, phase: 6, tag: 'setup' },
       { key: 'appearance', path: '/system/appearance', icon: Palette, phase: 0, tag: 'setup' },
+      { key: 'engineDesigner', path: '/system/engine', icon: Workflow, phase: 0, tag: 'setup' },
       { key: 'uiKit', path: '/dev/ui', icon: Palette, phase: 0, tag: 'setup' },
     ],
   },

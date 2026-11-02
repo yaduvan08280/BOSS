@@ -8,6 +8,7 @@ import { createPrisma, formatNumber, nextCounter } from '@mono/db';
 import { bootstrapCompany, hashPassword } from '@mono/api/services';
 import { gstinCheckDigit, hhmmToMinutes } from '@mono/shared';
 import { seedDemoWork } from './seed-demo-work';
+import { seedDemoEngine } from './seed-demo-engine';
 
 const PASSWORD = process.env.SEED_DEMO_PASSWORD?.trim() || 'Demo1234';
 const DEPARTMENTS = [
@@ -217,6 +218,8 @@ try {
   }
   // Each phase's demo data, added once (safe to re-run).
   if (await seedDemoWork(prisma, company.id)) console.log('Added demo tasks, checklists and holidays.');
+  if (await seedDemoEngine(prisma, company.id))
+    console.log('Added demo help slips, tickets and the EA board.');
 } finally {
   await prisma.$disconnect();
 }

@@ -23,6 +23,9 @@ export function Sidebar({ me, sections, collapsed = false, onToggle, onNavigate,
   const badge: Record<string, number | undefined> = {
     delegation: counts?.delegation,
     checklists: counts?.checklists,
+    helpSlips: counts?.slips,
+    helpTickets: counts?.tickets,
+    ea: counts?.ea,
     myWorkspace: counts?.total,
   };
   return (

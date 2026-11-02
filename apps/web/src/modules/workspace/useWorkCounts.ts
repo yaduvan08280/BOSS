@@ -5,6 +5,14 @@ export const WORK_COUNTS_KEY = ['work-counts'] as const;
 export const useWorkCounts = () =>
   useQuery({
     queryKey: WORK_COUNTS_KEY,
-    queryFn: () => api<{ delegation: number; checklists: number; total: number }>('/api/work/counts'),
+    queryFn: () =>
+      api<{
+        delegation: number;
+        checklists: number;
+        slips: number;
+        tickets: number;
+        ea: number;
+        total: number;
+      }>('/api/work/counts'),
     staleTime: 20_000,
   });

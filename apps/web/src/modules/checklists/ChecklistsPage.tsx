@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useIsPhone } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/form';
+import { useModuleSettings } from '@/lib/work';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { formatDateTime, formatShortDateTime, relative } from '@/lib/when';
@@ -253,6 +254,7 @@ export function ChecklistsPage({ me }: { me: Me }) {
   const open = params.get('run');
   const [editing, setEditing] = useState<Master | null>(null);
   const tz = me.company.timezone;
+  const settings = useModuleSettings('checklist');
   const users = useUsers().data;
   const deptList = useDepartments().data;
   const people = useMemo(() => users ?? [], [users]);
@@ -304,6 +306,8 @@ export function ChecklistsPage({ me }: { me: Me }) {
       )}
       {tab === 'assign' && (
         <MasterEditor
+          key={settings.data?.missedAfterHours ?? 'loading'}
+          windowHours={settings.data?.missedAfterHours}
           people={people}
           departments={departments}
           tz={tz}

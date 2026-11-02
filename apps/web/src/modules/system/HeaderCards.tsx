@@ -97,6 +97,12 @@ export function HeaderCards({ summary }: { summary: SystemSummary | undefined })
             {summary.engine.modules}
           </div>
           <div className="text-xs text-muted-foreground">{t('system.engineModules')}</div>
+          <Link
+            to="/system/engine"
+            className="mt-auto inline-flex items-center gap-1 pt-3 text-xs font-semibold"
+          >
+            {t('system.openDesigner')} <ArrowRight className="size-3.5" />
+          </Link>
         </CardShell>
 
         <CardShell>

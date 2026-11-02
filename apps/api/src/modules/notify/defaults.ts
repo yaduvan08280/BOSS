@@ -19,7 +19,14 @@ export async function loadDefaultTemplates(tx: Tx, companyId: string, channels?:
   return missing.length;
 }
 
-/** Add a default rule for every event that has no rule yet. */
+/** Built-in rules whose recipients changed; applied only to rules a company never edited. */
+const RULE_UPGRADES = [
+  { event: 'ticket.escalated', from: ['coordinator', 'hod'], to: ['user'] },
+  { event: 'ea.daily_brief', from: ['owner'], to: ['user'] },
+  { event: 'ea.weekly_plan', from: ['owner'], to: ['user'] },
+];
+
+/** Add a default rule for every event that has no rule yet, and upgrade untouched built-in ones. */
 export async function loadDefaultRules(tx: Tx, companyId: string) {
   const have = new Set(
     (
@@ -30,6 +37,11 @@ export async function loadDefaultRules(tx: Tx, companyId: string) {
   if (missing.length)
     await tx.notificationRule.createMany({
       data: missing.map((r) => ({ ...r, companyId, isDefault: true })),
+    });
+  for (const u of RULE_UPGRADES)
+    await tx.notificationRule.updateMany({
+      where: { companyId, event: u.event, isDefault: true, recipients: { equals: u.from } },
+      data: { recipients: u.to },
     });
   return missing.length;
 }

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { CheckCheck, ClipboardCheck, ListTodo, ShieldCheck } from 'lucide-react';
+import { CheckCheck, ClipboardCheck, ListTodo, NotebookPen, ShieldCheck, Ticket } from 'lucide-react';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import type { Me } from '@mono/shared';
@@ -10,6 +10,8 @@ import { api } from '@/lib/api';
 import { formatShortDateTime, relative } from '@/lib/when';
 import type { Run } from '../checklists/api';
 import type { TaskRow } from '../delegation/api';
+import type { SlipRow } from '../slips/api';
+import type { TicketRow } from '../tickets/api';
 
 /** Everything waiting on me, in one list: tasks to do or accept, things to verify, checklists due. */
 export function WorkspacePage({ me }: { me: Me }) {
@@ -22,6 +24,17 @@ export function WorkspacePage({ me }: { me: Me }) {
   const runs = useQuery({
     queryKey: ['checklists', 'runs', 'mine'],
     queryFn: () => api<{ runs: Run[] }>('/api/checklists/runs?scope=mine'),
+  });
+  const tickets = useQuery({
+    queryKey: ['tickets', 'workspace'],
+    queryFn: async () => [
+      ...(await api<{ tickets: TicketRow[] }>('/api/tickets?tab=assigned')).tickets,
+      ...(await api<{ tickets: TicketRow[] }>('/api/tickets?tab=mine')).tickets,
+    ],
+  });
+  const slips = useQuery({
+    queryKey: ['slips', 'workspace'],
+    queryFn: () => api<{ slips: SlipRow[] }>('/api/slips?tab=inbox'),
   });
   if (tasks.isPending || runs.isPending) return <PageSkeleton />;
   const uid = me.user.id;
@@ -58,7 +71,14 @@ export function WorkspacePage({ me }: { me: Me }) {
       </Link>
     </li>
   );
-  const total = todo.length + verify.length + due.length;
+  // Tickets I have to fix, and fixed ones waiting for my "is it fixed?".
+  const fix = (tickets.data ?? []).filter(
+    (x) =>
+      (x.solverId === uid && (x.status === 'OPEN' || x.status === 'IN_PROGRESS')) ||
+      (x.raiserId === uid && x.status === 'RESOLVED'),
+  );
+  const slipsWaiting = slips.data?.slips ?? [];
+  const total = todo.length + verify.length + due.length + fix.length + slipsWaiting.length;
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <PageHeader title={t('nav.myWorkspace')} subtitle={t('ws.subtitle', { count: total })} />
@@ -122,6 +142,46 @@ export function WorkspacePage({ me }: { me: Me }) {
                       t('chk.items_n', { done: r.itemsDone, total: r.itemsTotal }),
                       r.plannedAt,
                       r.status === 'OPEN' && relative(r.plannedAt).late,
+                    ),
+                  )}
+                </ul>
+              </Card>
+            </section>
+          )}
+          {fix.length > 0 && (
+            <section>
+              <h2 className="mb-2 text-sm font-semibold text-muted-foreground">{t('ws.tickets')}</h2>
+              <Card className="overflow-hidden">
+                <ul className="divide-y">
+                  {fix.map((x) =>
+                    item(
+                      x.id,
+                      `/help-tickets?ticket=${x.id}`,
+                      <Ticket className="size-4" />,
+                      `T#${x.number} ${x.title}`,
+                      t(`ticket.status.${x.status}`),
+                      x.plannedFixAt,
+                      x.status !== 'RESOLVED' && relative(x.plannedFixAt).late,
+                    ),
+                  )}
+                </ul>
+              </Card>
+            </section>
+          )}
+          {slipsWaiting.length > 0 && (
+            <section>
+              <h2 className="mb-2 text-sm font-semibold text-muted-foreground">{t('ws.slips')}</h2>
+              <Card className="overflow-hidden">
+                <ul className="divide-y">
+                  {slipsWaiting.map((x) =>
+                    item(
+                      x.id,
+                      `/help-slips?slip=${x.id}`,
+                      <NotebookPen className="size-4" />,
+                      `#${x.number} ${x.problem}`,
+                      t(`slip.status.${x.status}`),
+                      x.waitingOn?.dueAt ?? x.createdAt,
+                      Boolean(x.waitingOn && relative(x.waitingOn.dueAt).late),
                     ),
                   )}
                 </ul>

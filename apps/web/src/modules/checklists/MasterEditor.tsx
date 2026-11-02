@@ -20,14 +20,14 @@ import { useChecklistMutation, type Master } from './api';
 type Draft = Omit<Master, 'id' | 'code'>;
 const newKey = () => Math.random().toString(36).slice(2, 8);
 
-const blank = (tz: string): Draft => ({
+const blank = (tz: string, windowHours = 4): Draft => ({
   name: '',
   departmentId: null,
   branchId: null,
   items: [{ key: newKey(), text: '', requirePhoto: false, requireVoice: false, requireValue: false }],
   frequency: { type: 'daily' },
   dueTime: '10:00',
-  windowHours: 4,
+  windowHours,
   doerIds: [],
   verifierId: null,
   skipHolidays: true,
@@ -129,15 +129,18 @@ export function MasterEditor({
   departments,
   tz,
   onDone,
+  windowHours,
 }: {
   master?: Master;
   people: OrgPerson[];
   departments: OrgDepartment[];
   tz: string;
   onDone: () => void;
+  /** New checklists start with the company's "mark missed after" time. */
+  windowHours?: number;
 }) {
   const { t } = useTranslation();
-  const [d, setD] = useState<Draft>(() => (master ? { ...master } : blank(tz)));
+  const [d, setD] = useState<Draft>(() => (master ? { ...master } : blank(tz, windowHours)));
   const [error, setError] = useState<string | null>(null);
   const save = useChecklistMutation(
     (body: unknown) =>
@@ -160,7 +163,7 @@ export function MasterEditor({
     const parsed = checklistMasterSchema.safeParse(body);
     if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? null);
     setError(null);
-    save.mutate(parsed.data, { onSuccess: () => (!master && setD(blank(tz)), onDone()) });
+    save.mutate(parsed.data, { onSuccess: () => (!master && setD(blank(tz, windowHours)), onDone()) });
   };
 
   return (

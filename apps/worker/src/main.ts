@@ -4,12 +4,17 @@ import pino from 'pino';
 import { createPrisma } from '@mono/db';
 import { loadEnv } from '@mono/api/env';
 import {
+  eaJobs,
   EventListener,
   expireChecklists,
   flagOverdueTasks,
   LocalDiskStorage,
   remindChecklists,
+  remindUnaccepted,
+  sendWeeklyMis,
   sweepChecklists,
+  sweepSlips,
+  sweepTickets,
 } from '@mono/api/services';
 import { dispatchPending, type HandlerRegistry } from './jobs/dispatch-events';
 import { notifyForEvent } from './notify/engine';
@@ -96,17 +101,25 @@ await boss.work(QUEUE_ESCALATIONS, async () => {
 });
 await boss.schedule(QUEUE_ESCALATIONS, '* * * * *', null, { tz: 'UTC' });
 
-// Phase 3 jobs: checklist.sweep + overdue detection every 5 minutes; reminders and missed every minute.
+// Every 5 minutes: checklist sweep, overdue tasks, late slips, ticket escalations.
+// Every minute: checklist reminders and misses, the EA board's day and briefs, Monday's MIS.
 await boss.createQueue(QUEUE_WORK_5MIN, { policy: 'singleton' });
 await boss.createQueue(QUEUE_WORK_1MIN, { policy: 'singleton' });
 await boss.work(QUEUE_WORK_5MIN, async () => {
   const created = await sweepChecklists(prisma);
   const overdue = await flagOverdueTasks(prisma);
-  if (created || overdue) log.info({ created, overdue }, 'Work sweep');
+  const unaccepted = await remindUnaccepted(prisma);
+  const slips = await sweepSlips(prisma);
+  const tickets = await sweepTickets(prisma);
+  if (created || overdue || unaccepted || slips.late || slips.closed || tickets.escalated || tickets.closed)
+    log.info({ created, overdue, unaccepted, slips, tickets }, 'Work sweep');
 });
 await boss.work(QUEUE_WORK_1MIN, async () => {
   await remindChecklists(prisma);
   await expireChecklists(prisma);
+  const briefs = await eaJobs(prisma);
+  const mis = await sendWeeklyMis(prisma);
+  if (briefs || mis) log.info({ briefs, mis }, 'Scheduled sends');
 });
 await boss.schedule(QUEUE_WORK_5MIN, '*/5 * * * *', null, { tz: 'UTC' });
 await boss.schedule(QUEUE_WORK_1MIN, '* * * * *', null, { tz: 'UTC' });

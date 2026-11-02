@@ -16,6 +16,11 @@ const NotificationsPage = page(
 const ChecklistsPage = page(() => import('@/modules/checklists/ChecklistsPage'), 'ChecklistsPage');
 const DelegationPage = page(() => import('@/modules/delegation/DelegationPage'), 'DelegationPage');
 const WorkspacePage = page(() => import('@/modules/workspace/WorkspacePage'), 'WorkspacePage');
+const SlipsPage = page(() => import('@/modules/slips/SlipsPage'), 'SlipsPage');
+const TicketsPage = page(() => import('@/modules/tickets/TicketsPage'), 'TicketsPage');
+const EaPage = page(() => import('@/modules/ea/EaPage'), 'EaPage');
+const MisPage = page(() => import('@/modules/mis/MisPage'), 'MisPage');
+const EnginePage = page(() => import('@/modules/system/engine/EnginePage'), 'EnginePage');
 const ChannelsTab = page(() => import('@/modules/system/integration/ChannelsTab'), 'ChannelsTab');
 const IntegrationTab = page(() => import('@/modules/system/integration/IntegrationTab'), 'IntegrationTab');
 const RemindersTab = page(() => import('@/modules/system/integration/RemindersTab'), 'RemindersTab');
@@ -51,6 +56,10 @@ export const router = createBrowserRouter([
       { path: '/delegation', element: <WithMe render={(me) => <DelegationPage me={me} />} /> },
       { path: '/checklists', element: <WithMe render={(me) => <ChecklistsPage me={me} />} /> },
       { path: '/workspace', element: <WithMe render={(me) => <WorkspacePage me={me} />} /> },
+      { path: '/help-slips', element: <WithMe render={(me) => <SlipsPage me={me} />} /> },
+      { path: '/help-tickets', element: <WithMe render={(me) => <TicketsPage me={me} />} /> },
+      { path: '/ea', element: <WithMe render={(me) => <EaPage me={me} />} /> },
+      { path: '/mis', element: <WithMe render={(me) => <MisPage me={me} />} /> },
       ...placeholderRoutes.filter((r) => !r.path.startsWith('/system')),
       {
         element: <SystemOnly />,
@@ -76,6 +85,7 @@ export const router = createBrowserRouter([
               { path: 'roles', element: <RolesTab /> },
               { path: 'org-chart', element: <OrgChartTab /> },
               { path: 'appearance', element: <AppearanceTab /> },
+              { path: 'engine', element: <EnginePage /> },
               {
                 path: 'integration',
                 element: <IntegrationTab />,

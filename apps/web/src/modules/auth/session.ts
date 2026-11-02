@@ -88,6 +88,10 @@ export function useLiveEvents(enabled: boolean) {
         if (name.startsWith('delegation.') || name.startsWith('task.'))
           void qc.invalidateQueries({ queryKey: ['tasks'] });
         if (name.startsWith('checklist.')) void qc.invalidateQueries({ queryKey: ['checklists'] });
+        if (name.startsWith('slip.')) void qc.invalidateQueries({ queryKey: ['slips'] });
+        if (name.startsWith('ticket.')) void qc.invalidateQueries({ queryKey: ['tickets'] });
+        if (name.startsWith('ea.')) void qc.invalidateQueries({ queryKey: ['ea'] });
+        if (name === 'settings.changed') void qc.invalidateQueries({ queryKey: ['engine'] });
       });
       source.addEventListener('notification', () => {
         void qc.invalidateQueries({ queryKey: ME_KEY });

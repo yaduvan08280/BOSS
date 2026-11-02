@@ -52,17 +52,20 @@ export function TaskList({
   people,
   tz,
   onOpen,
+  defaultRange = 'all',
 }: {
   tab: TaskQuery['tab'];
   people: OrgPerson[];
   tz: string;
   onOpen: (id: string) => void;
+  /** "Reports open on" from the flow designer. */
+  defaultRange?: 'week' | 'all';
 }) {
   const { t } = useTranslation();
   const phone = useIsPhone();
   const names = useMemo(() => new Map(people.map((p) => [p.id, p.name])), [people]);
   const [q, setQ] = useState('');
-  const [range, setRange] = useState<'week' | 'all' | 'custom'>('all');
+  const [range, setRange] = useState<'week' | 'all' | 'custom'>(defaultRange);
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [doerId, setDoerId] = useState('');

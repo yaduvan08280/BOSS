@@ -28,6 +28,10 @@ import { templateRoutes } from './modules/notify/templates.routes';
 import { checklistRoutes } from './modules/checklist/routes';
 import { delegationRoutes } from './modules/delegation/routes';
 import { workRoutes } from './modules/work/routes';
+import { slipRoutes } from './modules/slip/routes';
+import { ticketRoutes } from './modules/ticket/routes';
+import { eaRoutes } from './modules/ea/routes';
+import { misRoutes } from './modules/mis/routes';
 import { LocalDiskStorage, type Storage } from './lib/storage';
 
 export type BuildOptions = {
@@ -93,5 +97,9 @@ export async function buildApp(opts: BuildOptions) {
   await app.register(delegationRoutes);
   await app.register(checklistRoutes);
   await app.register(workRoutes);
+  await app.register(slipRoutes);
+  await app.register(ticketRoutes);
+  await app.register(eaRoutes);
+  await app.register(misRoutes, { appName: env.APP_NAME });
   return app;
 }

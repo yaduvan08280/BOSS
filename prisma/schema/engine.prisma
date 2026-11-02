@@ -1,0 +1,171 @@
+/// Help Slip (CLAUDE.md §5.3): a problem with the raiser's own solutions, screened and decided.
+/// Status only changes through the slip state machine in packages/shared.
+model Slip {
+  id               String    @id @default(cuid(2))
+  companyId        String    @map("company_id")
+  number           Int
+  problem          String
+  raiserId         String    @map("raiser_id")
+  receiverId       String    @map("receiver_id")
+  approverId       String    @map("approver_id")
+  /// Who answers for it getting closed in time (the raiser when accountability is "none").
+  accountableId    String    @map("accountable_id")
+  departmentId     String?   @map("department_id")
+  /// SUBMITTED | RETURNED | WITH_APPROVER | APPROVED | REJECTED | CLOSED | WITHDRAWN
+  status           String
+  chosenSolutionId String?   @map("chosen_solution_id")
+  ownSolution      String?   @map("own_solution")
+  decisionNote     String?   @map("decision_note")
+  decidedById      String?   @map("decided_by_id")
+  /// The delegation task created when it was approved.
+  taskId           String?   @map("task_id")
+  returnCount      Int       @default(0) @map("return_count")
+  /// When it reached its current step (for the step's time limit).
+  stepSince        DateTime  @default(now()) @map("step_since") @db.Timestamptz(3)
+  lateNotifiedAt   DateTime? @map("late_notified_at") @db.Timestamptz(3)
+  decidedAt        DateTime? @map("decided_at") @db.Timestamptz(3)
+  closedAt         DateTime? @map("closed_at") @db.Timestamptz(3)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  solutions SlipSolution[]
+  events    SlipEvent[]
+
+  @@unique([companyId, number])
+  @@index([companyId, status, stepSince])
+  @@index([companyId, raiserId, status])
+  @@map("slips")
+}
+
+model SlipSolution {
+  id        String @id @default(cuid(2))
+  companyId String @map("company_id")
+  slipId    String @map("slip_id")
+  position  Int
+  text      String
+
+  slip Slip @relation(fields: [slipId], references: [id])
+
+  @@index([slipId, position])
+  @@map("slip_solutions")
+}
+
+model SlipEvent {
+  id         String   @id @default(cuid(2))
+  companyId  String   @map("company_id")
+  slipId     String   @map("slip_id")
+  /// created | status | comment | edited
+  type       String
+  actorId    String?  @map("actor_id")
+  note       String?
+  fromStatus String?  @map("from_status")
+  toStatus   String?  @map("to_status")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  slip Slip @relation(fields: [slipId], references: [id])
+
+  @@index([companyId, slipId, createdAt])
+  @@map("slip_events")
+}
+
+/// Help Ticket (CLAUDE.md §5.4): an issue for a problem solver, with SLAs and escalation levels.
+model Ticket {
+  id              String    @id @default(cuid(2))
+  companyId       String    @map("company_id")
+  number          Int
+  title           String
+  description     String    @default("")
+  raiserId        String    @map("raiser_id")
+  solverId        String    @map("solver_id")
+  coordinatorId   String?   @map("coordinator_id")
+  departmentId    String?   @map("department_id")
+  /// OPEN | IN_PROGRESS | RESOLVED | CLOSED | CANCELLED
+  status          String
+  plannedFixAt    DateTime  @map("planned_fix_at") @db.Timestamptz(3)
+  firstReplyAt    DateTime? @map("first_reply_at") @db.Timestamptz(3)
+  resolvedAt      DateTime? @map("resolved_at") @db.Timestamptz(3)
+  closedAt        DateTime? @map("closed_at") @db.Timestamptz(3)
+  /// raiser | auto
+  closedBy        String?   @map("closed_by")
+  reopenCount     Int       @default(0) @map("reopen_count")
+  /// 0 none, 1 coordinator, 2 HOD/owner
+  escalationLevel Int       @default(0) @map("escalation_level")
+  escalatedAt     DateTime? @map("escalated_at") @db.Timestamptz(3)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  events TicketEvent[]
+
+  @@unique([companyId, number])
+  @@index([companyId, status, plannedFixAt])
+  @@index([companyId, solverId, status])
+  @@index([companyId, raiserId, status])
+  @@map("tickets")
+}
+
+model TicketEvent {
+  id         String    @id @default(cuid(2))
+  companyId  String    @map("company_id")
+  ticketId   String    @map("ticket_id")
+  /// created | reply | comment | status | plan_moved | reassigned | escalated
+  type       String
+  actorId    String?   @map("actor_id")
+  note       String?
+  fromStatus String?   @map("from_status")
+  toStatus   String?   @map("to_status")
+  fromDate   DateTime? @map("from_date") @db.Timestamptz(3)
+  toDate     DateTime? @map("to_date") @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  ticket Ticket @relation(fields: [ticketId], references: [id])
+
+  @@index([companyId, ticketId, createdAt])
+  @@map("ticket_events")
+}
+
+/// EA board item (CLAUDE.md §5.5): a one-line capture for an owner, sorted by the EA.
+model EaItem {
+  id             String    @id @default(cuid(2))
+  companyId      String    @map("company_id")
+  number         Int
+  /// Whose board it is on.
+  ownerId        String    @map("owner_id")
+  createdById    String    @map("created_by_id")
+  text           String
+  note           String?
+  /// CAPTURED | INFORMATION | SOMEDAY | WAITING | SCHEDULED | DELEGATED | DONE | CLOSED
+  stage          String
+  /// task | meeting | call | review (scheduled items)
+  kind           String?
+  /// Local date YYYY-MM-DD and slot (minutes from midnight, company time zone) when scheduled.
+  scheduledDate  String?   @map("scheduled_date")
+  slotStart      Int?      @map("slot_start")
+  slotMinutes    Int?      @map("slot_minutes")
+  waitingOn      String?   @map("waiting_on")
+  taskId         String?   @map("task_id")
+  /// web | telegram
+  source         String    @default("web")
+  stageChangedAt DateTime  @default(now()) @map("stage_changed_at") @db.Timestamptz(3)
+  doneAt         DateTime? @map("done_at") @db.Timestamptz(3)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@unique([companyId, number])
+  @@index([companyId, ownerId, stage])
+  @@index([companyId, stage, scheduledDate])
+  @@map("ea_items")
+}
+
+/// "Already done" markers for scheduled sends (daily brief, weekly plan, weekly MIS): one row per company + key.
+model JobMark {
+  id        String   @id @default(cuid(2))
+  companyId String   @map("company_id")
+  key       String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([companyId, key])
+  @@map("job_marks")
+}

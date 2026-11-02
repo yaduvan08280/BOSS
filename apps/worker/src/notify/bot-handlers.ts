@@ -1,7 +1,15 @@
 import { createId } from '@paralleldrive/cuid2';
 import { Readable } from 'node:stream';
 import type { Db } from '@mono/db';
-import { emitEvent, redeemLinkCode, type Storage } from '@mono/api/services';
+import {
+  actorFor,
+  boardOwners,
+  captureEa,
+  emitEvent,
+  moduleSettings,
+  redeemLinkCode,
+  type Storage,
+} from '@mono/api/services';
 import { doneCommand, moveCommand, taskButton, workSummary } from './bot-work';
 
 /** Bot logic as plain functions (easy to test); telegram-bot.ts wires them to grammY. */
@@ -83,7 +91,25 @@ export async function onCapture(
   const me = await whoIs(db, scope, chatId);
   if (!me) return `This Telegram is not linked yet. Send your 8-character code from ${appName}.`;
   if (!text.trim()) return 'Write what to capture after the command, e.g. /capture Call the GST consultant';
-  return 'Got it. Captures go to the EA board, which arrives in phase 4. For now this note was not saved.';
+  const actor = await actorFor(db, me.companyId, me.id);
+  if (!actor) return 'Your account is not active.';
+  try {
+    const item = await captureEa(db, actor, { text: text.trim().slice(0, 500), source: 'telegram' });
+    return `📝 Captured #${item.number}. It's on the EA board.`;
+  } catch {
+    return 'Only the owner and the EA can add to the EA board.';
+  }
+}
+
+/** Plain text from a board owner or the EA is a capture; anyone else gets the usual hello. */
+export async function canCapture(db: Db, scope: BotScope, chatId: string): Promise<boolean> {
+  const me = await whoIs(db, scope, chatId);
+  if (!me) return false;
+  const [owners, s] = await Promise.all([
+    boardOwners(db, me.companyId),
+    moduleSettings(db, me.companyId, 'ea'),
+  ]);
+  return owners.some((o) => o.id === me.id) || s.eaUserId === me.id;
 }
 
 /** "Seen ✓" button: marks the in-app notification read, which also counts as a reply for escalations. */

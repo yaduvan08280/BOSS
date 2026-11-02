@@ -444,7 +444,7 @@ Ubuntu 24.04 LTS on i7-12700 / 48 GB / 1.8 TB. Docker Engine + Compose plugin. S
 | 1 | Company setup, departments, users, roles, org chart, Home/Ask | done (02/11/2026) |
 | 2 | Notification engine, Telegram, templates, rules, reminders, worker | done (02/11/2026) — live Telegram/WhatsApp delivery needs GGM's own bot token / provider key |
 | 3 | Delegation, checklists, scorecard, R/Y/G | done (02/11/2026) — Dictate uses the browser's speech recognition until phase 6; holiday screens arrive in phase 7 |
-| 4 | Help slips, tickets, EA, weekly MIS, Business Engine flow designer | not started |
+| 4 | Help slips, tickets, EA, weekly MIS, Business Engine flow designer | done (02/11/2026) — MIS PDFs use Helvetica (Hindi names need a Devanagari font later) |
 | 5 | FMS builder, engine, Live FMS, My steps, documents, KPI cards | not started |
 | 6 | AI layer | not started |
 | 7 | HR rules, attendance, leave, Buddy, cover board | not started |
@@ -475,7 +475,7 @@ Ubuntu 24.04 LTS on i7-12700 / 48 GB / 1.8 TB. Docker Engine + Compose plugin. S
 18. Customer tags: `CustomerTag` table only (no `tags[]` array on Customer).
 19. Off-machine backup (rclone to Google Drive) is part of the install steps and on by default.
 20. PWA manifest/icons in Phase 0; web push sending + per-device opt-in in Phase 2 (install prompt and offline queue in Phase 10).
-21. Open question (ask before Phase 4): meaning of Help Slip "accountability (none)".
+21. Help Slip "accountability (none)" (answered 02/11/2026): nobody else is held to it — the raiser stays accountable. The other choices make the receiver or the approver accountable. The accountable person is told when the slip is late.
 22. Logins created by an admin (add person, login toggle, reset) get a one-time password shown once; the person must choose their own at first sign-in, enforced by the API (`PASSWORD_CHANGE_REQUIRED`).
 23. "Paste a list" imports all-or-nothing, reports problems per line, and creates departments/designations that don't exist yet.
 24. Org chart: a drop counts only where the pointer is; the head slot wins over its column. HOD of a department is always also a member of it.
@@ -493,3 +493,10 @@ Ubuntu 24.04 LTS on i7-12700 / 48 GB / 1.8 TB. Docker Engine + Compose plugin. S
 36. People are not notified about their own actions (tests, escalations and Telegram codes excepted).
 37. Holidays live in the `Holiday` table from phase 3 (recurrence skips them); the calendar screens come with HR in phase 7.
 38. The change-password rate limit follows `LOGIN_RATE_LIMIT`. Web screens are loaded per route (React.lazy) to keep the phone download small.
+39. Help ticket escalation is a level (0/1/2) on the ticket, not a status. Level 1 when the first reply or the planned fix is missed (→ coordinator, else the solver's HOD); level 2 one SLA later — 2× the reply time, or the planned fix + the fix time (→ HOD and owner). Moving the fix time resets the level. Every "mark fixed" after a reopen needs fresh proof.
+40. Help slip steps have time limits: receiver forwards / decides, approver decides, raiser fixes a returned slip (receiver's time), raiser closes. One late notice per step to its holder and the accountable person. Decided slips close by themselves after the raiser's time (approved ones only once their task is done or cancelled).
+41. EA boards belong to owners. The EA is the person set in the flow designer; anyone with `ea.edit` can stand in. Daily brief, weekly plan and Monday MIS are sent once each through `JobMark` keys. The Someday review comes every N days counted from Monday 05/01/2026 (no stored state).
+42. Weekly MIS grades what was due that week (or already done), like the scorecard; the score is the average of the parts that have data. Admins see everyone, HODs their team, everyone else themselves.
+43. Flow designer settings are validated per module; person pickers must be active people; "Reset to default" deletes the company's row. Every setting shown has an effect. An event may leave out recipients with `payload.skipRecipients`. Built-in rule changes apply only to rules a company never edited (`RULE_UPGRADES`).
+44. Server PDFs use pdfmake with its built-in Helvetica and no file or network access while rendering. New npm packages are pinned to releases at least two weeks old.
+45. Playwright runs one test at a time (specs share the demo accounts); live notification toasts share one slot.

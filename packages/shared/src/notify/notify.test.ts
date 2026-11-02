@@ -10,16 +10,18 @@ describe('catalog', () => {
         .map((e) => e.event)
         .sort(),
     ).toEqual(['notify.escalation', 'notify.telegram_code', 'notify.test']);
+    // §7.3, plus phase 4: delegation.accept_late, slip.late, slip.closed, mis.weekly.
     const expected = {
-      delegation: 10,
+      delegation: 11,
       checklist: 6,
-      slip: 4,
+      slip: 6,
       ticket: 6,
       ea: 3,
       fms: 6,
       hr: 8,
       ims: 5,
       crm: 6,
+      mis: 1,
     };
     for (const [module, n] of Object.entries(expected)) {
       expect(

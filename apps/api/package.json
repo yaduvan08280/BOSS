@@ -28,6 +28,7 @@
     "fastify-type-provider-zod": "^7.0.0",
     "jose": "^6.2.14",
     "nodemailer": "^10.3.1",
+    "pdfmake": "^0.3.12",
     "pg": "^8.23.1",
     "web-push": "^3.6.7",
     "zod": "^4.6.7"

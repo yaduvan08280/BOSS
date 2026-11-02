@@ -10,7 +10,8 @@
     "somethingWrongBody": "यह लोड नहीं हो पाया। इंटरनेट जाँचें और फिर कोशिश करें।",
     "comingIn": "फ़ेज़ {{phase}} में आएगा",
     "comingBody": "यह स्क्रीन योजना में है और फ़ेज़ {{phase}} में बनेगी। मेनू, लेआउट और थीम इसके लिए तैयार हैं।",
-    "offline": "आप ऑफ़लाइन हैं। इंटरनेट आने पर बदलाव सिंक हो जाएँगे।"
+    "offline": "आप ऑफ़लाइन हैं। इंटरनेट आने पर बदलाव सिंक हो जाएँगे।",
+    "remove": "हटाएँ"
   },
   "auth": {
     "title": "साइन इन करें",
@@ -121,7 +122,8 @@
     "hrRules": "HR नियम",
     "businessDetails": "बिज़नेस की जानकारी",
     "appearance": "रूप",
-    "uiKit": "UI किट"
+    "uiKit": "UI किट",
+    "engineDesigner": "बिज़नेस इंजन"
   },
   "navDesc": {
     "home": "कुछ भी खोजें, या शुरुआत चुनें",
@@ -167,7 +169,8 @@
     "hrRules": "हाज़िरी, छुट्टी और Buddy के नियम",
     "businessDetails": "AI के लिए आपका बिज़नेस, आपके शब्दों में",
     "appearance": "रंग, लोगो और ऐप का नाम",
-    "uiKit": "हर रंग और हर हिस्सा"
+    "uiKit": "हर रंग और हर हिस्सा",
+    "engineDesigner": "हर मॉड्यूल कैसे चलता है, और उसे बदलने वाले स्विच"
   },
   "home": {
     "heading": "{{name}}, आज क्या करना है?",
@@ -240,7 +243,8 @@
       "noShift_other": "अभी कोई शिफ़्ट नहीं",
       "telegramNotLinked_one": "{{count}} व्यक्ति ने Telegram नहीं जोड़ा",
       "telegramNotLinked_other": "{{count}} लोगों ने Telegram नहीं जोड़ा"
-    }
+    },
+    "openDesigner": "फ़्लो डिज़ाइनर खोलें"
   },
   "account": {
     "title": "प्रोफ़ाइल",
@@ -625,7 +629,11 @@
       "crm_lead_stuck": "लीड अटकी",
       "crm_order_step_due": "ऑर्डर स्टेप बाकी",
       "crm_payment_due": "ग्राहक को भुगतान याद-दिहानी",
-      "crm_customer_sleeping": "ग्राहक ने ऑर्डर बंद किए"
+      "crm_customer_sleeping": "ग्राहक ने ऑर्डर बंद किए",
+      "slip_late": "हेल्प स्लिप बहुत देर से रुकी",
+      "slip_closed": "हेल्प स्लिप बंद",
+      "mis_weekly": "साप्ताहिक MIS",
+      "delegation_accept_late": "टास्क समय पर स्वीकार नहीं"
     },
     "to": {
       "doer": "करने वाला",
@@ -647,7 +655,8 @@
       "owner": "मालिक",
       "hr": "HR",
       "actor": "जिसने किया",
-      "someone": "कोई"
+      "someone": "कोई",
+      "accountable": "जवाबदेह व्यक्ति"
     },
     "channel": {
       "telegram": "Telegram",
@@ -929,7 +938,9 @@
       "attach": "फ़ाइल जोड़ें",
       "camera": "कैमरा",
       "hint": "या फ़ाइलें यहाँ छोड़ें, या स्क्रीनशॉट पेस्ट करें (Ctrl+V)"
-    }
+    },
+    "dueIn": "{{d}} में",
+    "lateBy": "{{d}} देर"
   },
   "ws": {
     "subtitle_one": "{{count}} काम आपका इंतज़ार कर रहा है",
@@ -938,7 +949,9 @@
     "verify": "जाँचने के लिए",
     "checklists": "चेकलिस्ट",
     "emptyTitle": "कोई काम बाकी नहीं",
-    "emptyBody": "नए टास्क और चेकलिस्ट मिलते ही यहाँ दिखेंगे।"
+    "emptyBody": "नए टास्क और चेकलिस्ट मिलते ही यहाँ दिखेंगे।",
+    "tickets": "टिकट",
+    "slips": "हेल्प स्लिप"
   },
   "task": {
     "tab": {
@@ -1243,5 +1256,495 @@
     "skipHolidays": "छुट्टियाँ और साप्ताहिक अवकाश छोड़ें",
     "active": "चालू",
     "create": "चेकलिस्ट बनाएँ"
+  },
+  "slip": {
+    "title": "हेल्प स्लिप #{{n}}",
+    "tab": {
+      "inbox": "मेरे पास रुकी",
+      "raise": "स्लिप भरें",
+      "mine": "मेरी स्लिप",
+      "all": "सभी स्लिप"
+    },
+    "tile": {
+      "withMe": "मेरे पास रुकी",
+      "withMeNote": "जाँचें, तय करें या बंद करें",
+      "open": "खुली",
+      "openNote": "अभी तय नहीं",
+      "late": "देर",
+      "lateNote": "अपने समय से आगे",
+      "approved": "मंज़ूर",
+      "approvedNote": "पिछले 30 दिन",
+      "rejected": "नामंज़ूर",
+      "rejectedNote": "कारण सहित"
+    },
+    "status": {
+      "SUBMITTED": "रिसीवर के पास",
+      "RETURNED": "वापस भेजी",
+      "WITH_APPROVER": "अप्रूवर के पास",
+      "APPROVED": "मंज़ूर",
+      "REJECTED": "नामंज़ूर",
+      "CLOSED": "बंद",
+      "WITHDRAWN": "वापस ली"
+    },
+    "act": {
+      "forward": "अप्रूवर को भेजें",
+      "return": "वापस भेजें",
+      "resubmit": "सुधार कर फिर भेजें",
+      "approve": "मंज़ूर करें",
+      "reject": "नामंज़ूर करें",
+      "close": "स्लिप बंद करें",
+      "withdraw": "वापस लें"
+    },
+    "dlg": {
+      "forward": "अप्रूवर को भेजें",
+      "return": "स्लिप भरने वाले को वापस भेजें",
+      "resubmit": "सुधार कर फिर भेजें",
+      "approve": "एक समाधान मंज़ूर करें",
+      "reject": "यह स्लिप नामंज़ूर करें",
+      "close": "स्लिप बंद करें",
+      "withdraw": "स्लिप वापस लें"
+    },
+    "label": {
+      "forward": "अप्रूवर के लिए नोट (वैकल्पिक)",
+      "return": "क्या सुधारना है?",
+      "reject": "नामंज़ूर क्यों?",
+      "close": "बंद करने का नोट (वैकल्पिक)",
+      "withdraw": "कारण (वैकल्पिक)"
+    },
+    "ev": {
+      "created": "स्लिप भरी गई",
+      "comment": "नोट",
+      "edited": "बदली गई",
+      "status": "अब: {{to}}"
+    },
+    "empty": {
+      "inbox": "आपके पास कुछ नहीं रुका",
+      "mine": "आपने अभी कोई स्लिप नहीं भरी",
+      "all": "अभी कोई स्लिप नहीं"
+    },
+    "emptyBody": "हेल्प स्लिप = एक समस्या और उसे हल करने के आपके अपने सुझाव। अप्रूवर एक चुनता है और वह टास्क बन जाता है।",
+    "problem": "समस्या",
+    "problemHint": "क्या गड़बड़ है, कहाँ, और काम पर क्या असर है।",
+    "problemShort": "समस्या थोड़ा और विस्तार से लिखें",
+    "yourSolutions": "आपके समाधान",
+    "atLeast_one": "कम से कम {{count}}",
+    "atLeast_other": "कम से कम {{count}}",
+    "solutionN": "समाधान {{n}}",
+    "solutionPh": "ठीक करने का एक तरीका",
+    "addSolution": "समाधान जोड़ें",
+    "needSolutions_one": "कम से कम {{count}} समाधान दें",
+    "needSolutions_other": "कम से कम {{count}} समाधान दें",
+    "submit": "स्लिप भेजें",
+    "submitHint": "पहले रिसीवर जाँचता है, फिर अप्रूवर तय करता है।",
+    "raised": "हेल्प स्लिप #{{n}} भेजी गई",
+    "nSolutions_one": "{{count}} समाधान",
+    "nSolutions_other": "{{count}} समाधान",
+    "waitingOn": "{{name}} · {{when}}",
+    "solutions": "समाधान",
+    "chosen": "चुना गया",
+    "decidersOwn": "तय करने वाले का अपना समाधान",
+    "linkedTask": "टास्क #{{n}} — {{name}}",
+    "raiser": "भरने वाला",
+    "receiver": "रिसीवर",
+    "approver": "अप्रूवर",
+    "accountable": "जवाबदेह",
+    "raisedAt": "भरी गई",
+    "history": "इतिहास",
+    "pickSolution": "कौन सा समाधान?",
+    "ownSolution": "अपना लिखें",
+    "approveHint": "मंज़ूर करने पर इस व्यक्ति के लिए एक टास्क बनता है, जो स्लिप से जुड़ा रहता है।"
+  },
+  "ticket": {
+    "tab": {
+      "assigned": "ठीक करने हैं",
+      "raise": "टिकट बनाएँ",
+      "mine": "मेरे टिकट",
+      "all": "सभी टिकट"
+    },
+    "tile": {
+      "open": "खुले",
+      "openNote": "ठीक हो रहे",
+      "late": "देर",
+      "lateNote": "तय समय निकल गया",
+      "escalated": "आगे बढ़ाए",
+      "escalatedNote": "कोऑर्डिनेटर या HOD तक",
+      "waiting": "पुष्टि बाकी",
+      "waitingNote": "ठीक हुआ, भरने वाला जाँचे",
+      "closedWeek": "बंद",
+      "closedWeekNote": "पिछले 7 दिन"
+    },
+    "status": {
+      "OPEN": "खुला",
+      "IN_PROGRESS": "काम चल रहा",
+      "RESOLVED": "ठीक हुआ — पुष्टि करें?",
+      "CLOSED": "बंद",
+      "CANCELLED": "रद्द"
+    },
+    "act": {
+      "reply": "जवाब दें",
+      "resolve": "ठीक हुआ",
+      "confirm": "हाँ, ठीक है",
+      "reopen": "ठीक नहीं हुआ",
+      "comment": "टिप्पणी",
+      "movePlan": "समय बदलें",
+      "reassign": "किसी और को दें",
+      "cancel": "टिकट रद्द करें"
+    },
+    "dlg": {
+      "resolve": "ठीक हुआ बताएँ",
+      "reopen": "ठीक नहीं हुआ",
+      "movePlan": "ठीक करने का समय बदलें",
+      "reassign": "किसी और को दें",
+      "cancel": "यह टिकट रद्द करें"
+    },
+    "label": {
+      "resolve": "आपने क्या किया?",
+      "reopen": "अभी क्या गड़बड़ है?",
+      "movePlan": "समय क्यों बदल रहा है?",
+      "cancel": "कारण (वैकल्पिक)"
+    },
+    "ev": {
+      "created": "टिकट बना",
+      "reply": "जवाब",
+      "comment": "टिप्पणी",
+      "status": "अब: {{to}}",
+      "plan_moved": "समय बदलकर {{to}}",
+      "reassigned": "नए व्यक्ति को दिया",
+      "escalated": "आगे बढ़ाया"
+    },
+    "empty": {
+      "assigned": "ठीक करने को कुछ नहीं",
+      "mine": "आपने अभी कोई टिकट नहीं बनाया",
+      "all": "अभी कोई टिकट नहीं"
+    },
+    "emptyBody": "कुछ खराब हो और किसी को ठीक करना हो, तब टिकट बनाएँ।",
+    "what": "क्या खराब है?",
+    "whatPh": "जैसे: दूसरी मंज़िल का प्रिंटर A3 पर अटकता है",
+    "details": "विवरण",
+    "solver": "ठीक करने वाला",
+    "fixBy": "कब तक ठीक हो",
+    "coordinator": "कोऑर्डिनेटर",
+    "submit": "टिकट बनाएँ",
+    "submitHint": "ठीक करने वाले को Telegram पर मिलेगा। देर होने पर अपने आप आगे बढ़ेगा।",
+    "raised": "टिकट T#{{n}} बना",
+    "titleShort": "कुछ शब्दों में बताएँ क्या खराब है",
+    "pickSolver": "चुनें कौन ठीक करेगा",
+    "byOn": "{{name}} द्वारा · {{at}}",
+    "escalatedL": "स्तर {{level}} तक बढ़ा",
+    "replyDue": "जवाब {{when}}",
+    "fixDue": "ठीक {{when}}",
+    "reopenedN_one": "{{count}} बार फिर खुला",
+    "reopenedN_other": "{{count}} बार फिर खुला",
+    "closedAt": "बंद हुआ",
+    "auto": "अपने आप",
+    "thread": "बातचीत",
+    "replyPh": "जवाब लिखें…",
+    "commentPh": "टिप्पणी लिखें…",
+    "proof": "ठीक होने का फ़ोटो या फ़ाइल"
+  },
+  "ea": {
+    "tab": {
+      "board": "बोर्ड",
+      "week": "मालिक का हफ़्ता"
+    },
+    "stage": {
+      "CAPTURED": "नया नोट",
+      "INFORMATION": "जानकारी",
+      "SOMEDAY": "कभी बाद में",
+      "WAITING": "इंतज़ार",
+      "SCHEDULED": "तय समय",
+      "DELEGATED": "सौंपा गया",
+      "DONE": "पूरा",
+      "CLOSED": "बंद"
+    },
+    "stageHint": {
+      "CAPTURED": "नया, अभी छाँटा नहीं",
+      "INFORMATION": "सिर्फ़ जानकारी; अपने आप बंद होगी",
+      "SOMEDAY": "शायद बाद में; बीच-बीच में देखें",
+      "WAITING": "किसी के जवाब तक रुका",
+      "SCHEDULED": "दिन और समय तय",
+      "DELEGATED": "टास्क बनाकर सौंपा",
+      "DONE": "इस हफ़्ते पूरा"
+    },
+    "act": {
+      "toInformation": "जानकारी",
+      "toSomeday": "कभी बाद में",
+      "toWaiting": "इंतज़ार",
+      "schedule": "समय तय करें",
+      "delegate": "सौंपें",
+      "done": "पूरा",
+      "close": "बंद करें",
+      "reopen": "फिर खोलें",
+      "missDay": "दिन निकल गया",
+      "expire": "समय खत्म"
+    },
+    "kinds": {
+      "task": "काम",
+      "meeting": "मीटिंग",
+      "call": "कॉल",
+      "review": "समीक्षा"
+    },
+    "day": {
+      "1": "सोम",
+      "2": "मंगल",
+      "3": "बुध",
+      "4": "गुरु",
+      "5": "शुक्र",
+      "6": "शनि",
+      "7": "रवि"
+    },
+    "dayLong": {
+      "1": "सोमवार",
+      "2": "मंगलवार",
+      "3": "बुधवार",
+      "4": "गुरुवार",
+      "5": "शुक्रवार",
+      "6": "शनिवार",
+      "7": "रविवार"
+    },
+    "tile": {
+      "toSort": "छाँटना है",
+      "toSortNote": "नए नोट",
+      "today": "आज",
+      "todayNote": "तय काम",
+      "waiting": "इंतज़ार",
+      "waitingNote": "सीमा में से",
+      "delegated": "सौंपे गए",
+      "delegatedNote": "टास्क अभी खुले"
+    },
+    "capture": "नोट करें",
+    "capturePh": "एक लाइन — कोई कॉल, विचार, वादा…",
+    "captured": "नोट #{{n}} जुड़ा",
+    "whose": "किसका बोर्ड",
+    "cantMove": "यह कार्ड वहाँ नहीं जा सकता",
+    "text": "क्या",
+    "note": "नोट",
+    "date": "दिन",
+    "start": "शुरू",
+    "length": "अवधि",
+    "kind": "प्रकार",
+    "taskLink": "टास्क #{{n}} · {{status}}",
+    "taskShort": "#{{n}} · {{status}}",
+    "waitingOn": "किसका इंतज़ार",
+    "waitingOnPh": "किसका या किस बात का इंतज़ार है?",
+    "waitingCap": "{{cap}} में से {{n}} इंतज़ार में",
+    "free": "खाली — बुक करने के लिए दबाएँ",
+    "bookSlot": "{{at}} बुक करें",
+    "bookSlotHint": "इस समय के लिए एक आइटम चुनें।",
+    "nothingToBook": "तय करने को कुछ नहीं। पहले कुछ नोट करें।"
+  },
+  "mis": {
+    "col": {
+      "person": "व्यक्ति",
+      "tasks": "टास्क",
+      "done": "काम पूरा",
+      "onTime": "समय पर",
+      "verifications": "समय पर जाँच",
+      "checklists": "चेकलिस्ट",
+      "tickets": "समय पर ठीक टिकट",
+      "fms": "FMS स्टेप",
+      "score": "स्कोर"
+    },
+    "excel": "Excel",
+    "empty": "दिखाने को कोई नहीं",
+    "tasksN_one": "{{count}} टास्क",
+    "tasksN_other": "{{count}} टास्क",
+    "legend": "उस हफ़्ते जितना काम तय था उसका % (इस हफ़्ते के लिए अब तक)। हरा 90%+, पीला 70%+, लाल उससे कम। FMS स्टेप प्रोसेस के साथ आएँगे। हर सोमवार 09:00 बजे मालिक और HOD को भेजा जाता है।"
+  },
+  "engine": {
+    "modules": "मॉड्यूल",
+    "m": {
+      "checklist": "चेकलिस्ट",
+      "delegation": "डेलिगेशन",
+      "slip": "हेल्प स्लिप",
+      "ticket": "हेल्प टिकट",
+      "ea": "EA सिस्टम"
+    },
+    "thing": {
+      "checklist": "एक चेकलिस्ट",
+      "delegation": "एक टास्क",
+      "slip": "एक हेल्प स्लिप",
+      "ticket": "एक टिकट",
+      "ea": "एक नोट"
+    },
+    "lifeOf": "{{what}} का सफ़र",
+    "lifeHint": "दिए जाने से बंद होने तक। बंद किए गए स्टेप धुंधले दिखते हैं।",
+    "flowchart": "फ़्लोचार्ट",
+    "alerts": "अलर्ट ({{n}}/{{total}})",
+    "alertsN": "अलर्ट {{n}}/{{total}}",
+    "fullView": "पूरी स्क्रीन",
+    "exitFull": "पूरी स्क्रीन बंद करें",
+    "escalated": "आगे बढ़ाया",
+    "off": "बंद",
+    "on": "चालू",
+    "offWord": "बंद",
+    "notSet": "तय नहीं",
+    "default": "डिफ़ॉल्ट (मालिक / HOD)",
+    "setUp": "अपना फ़्लो सेट करें",
+    "custom": "बदला गया",
+    "defaultBadge": "डिफ़ॉल्ट",
+    "who": "कौन करता है",
+    "times": "समय और नियम",
+    "steps": "स्टेप चालू या बंद करें",
+    "reset": "डिफ़ॉल्ट पर लौटें",
+    "saved": "सेव हुआ। अब से फ़्लो ऐसे ही चलेगा।",
+    "resetDone": "डिफ़ॉल्ट फ़्लो वापस",
+    "changes": "एडमिन के हाल के बदलाव",
+    "noChanges": "अभी कोई बदलाव नहीं — डिफ़ॉल्ट फ़्लो चल रहा है।",
+    "resetToDefault": "डिफ़ॉल्ट पर लौटाया",
+    "rolesLegend": "Telegram पर किसे क्या पता चलता है",
+    "noTelegram": "Telegram पर कुछ नहीं",
+    "noRule": "कोई नियम नहीं",
+    "editRules": "सूचना नियम बदलें",
+    "legend": {
+      "start": "शुरुआत",
+      "action": "काम",
+      "status": "स्थिति",
+      "auto": "अपने आप",
+      "finished": "पूरा",
+      "deadend": "अंत / आगे बढ़ाना",
+      "off": "बंद किया गया"
+    },
+    "role": {
+      "doer": "करने वाला",
+      "creator": "देने वाला",
+      "verifier": "जाँचने वाला",
+      "raiser": "भरने वाला",
+      "receiver": "रिसीवर",
+      "approver": "अप्रूवर",
+      "solver": "ठीक करने वाला",
+      "coordinator": "कोऑर्डिनेटर",
+      "owner": "मालिक",
+      "ea": "EA"
+    },
+    "act": {
+      "assign": "टास्क दें",
+      "sweep": "समय आता है",
+      "raise": "भरें",
+      "capture": "नोट करें",
+      "escalate": "जवाब नहीं / देर → आगे बढ़ाएँ",
+      "accept": "स्वीकार",
+      "decline": "मना करें",
+      "moveDate": "तारीख़ बदलें",
+      "addFollowUp": "फ़ॉलो-अप",
+      "markDone": "पूरा करें",
+      "verify": "जाँचें",
+      "reject": "वापस भेजें",
+      "reopen": "फिर खोलें",
+      "reassign": "किसी और को दें",
+      "cancel": "रद्द करें",
+      "tick": "आइटम टिक करें",
+      "submit": "जमा करें",
+      "expire": "समय निकल गया",
+      "forward": "आगे भेजें",
+      "return": "वापस भेजें",
+      "resubmit": "फिर भेजें",
+      "approve": "मंज़ूर → टास्क",
+      "close": "बंद करें",
+      "withdraw": "वापस लें",
+      "reply": "जवाब",
+      "resolve": "ठीक हुआ (+सबूत)",
+      "confirm": "भरने वाला पुष्टि करे",
+      "autoClose": "24 घंटे बाद अपने आप बंद",
+      "comment": "टिप्पणी",
+      "movePlan": "समय बदलें",
+      "toInformation": "जानकारी रखें",
+      "toSomeday": "कभी बाद में",
+      "toWaiting": "इंतज़ार में रखें",
+      "schedule": "समय तय करें",
+      "delegate": "सौंपें → टास्क",
+      "done": "पूरा",
+      "missDay": "दिन निकल गया"
+    },
+    "f": {
+      "eaUserId": "EA",
+      "verifierUserId": "डिफ़ॉल्ट जाँचने वाला",
+      "receiverUserId": "रिसीवर",
+      "approverUserId": "अप्रूवर",
+      "coordinatorUserId": "प्रोसेस कोऑर्डिनेटर",
+      "acceptWithinMinutes": "स्वीकार करने का समय",
+      "verifyWithinMinutes": "जाँचने का समय",
+      "reportsOpenOn": "रिपोर्ट खुलें",
+      "doerMustAccept": "करने वाला स्वीकार करे",
+      "eaVerifies": "पूरा होने से पहले EA जाँचे",
+      "allowReopen": "फिर खोलने दें",
+      "remindBeforeMinutes": "समय से पहले याद दिलाएँ",
+      "missedAfterHours": "इतने समय बाद छूटा माना जाए",
+      "verifierStep": "जाँच का स्टेप",
+      "photoVoiceProof": "फ़ोटो / आवाज़ सबूत",
+      "tellOwnerAboutMisses": "छूटने पर मालिक को बताएँ",
+      "receiverForwardHours": "रिसीवर कितने समय में भेजे",
+      "accountability": "जवाबदेही",
+      "approverDecideHours": "अप्रूवर कितने समय में तय करे",
+      "delegateWithinHours": "कितने समय में सौंपा जाए",
+      "raiserCloseHours": "भरने वाला कितने समय में बंद करे",
+      "solutionsRequired": "भरने वाले को कितने समाधान देने हैं",
+      "receiverScreens": "पहले रिसीवर जाँचे",
+      "approverStep": "अप्रूवर का स्टेप",
+      "firstReplyHours": "पहला जवाब कितने समय में",
+      "fixHours": "कितने समय में ठीक हो",
+      "escalationLevels": "आगे बढ़ाना",
+      "proofToResolve": "ठीक होने का सबूत",
+      "closeBy": "टिकट कौन बंद करे",
+      "weekStartsOn": "हफ़्ता शुरू होता है",
+      "weeklyPlanDay": "साप्ताहिक प्लान का दिन",
+      "waitingCap": "इंतज़ार की सीमा",
+      "dailyBriefAt": "रोज़ की ब्रीफ़",
+      "dayStart": "काम का दिन शुरू",
+      "dayEnd": "काम का दिन खत्म",
+      "infoKeepDays": "जानकारी कितने दिन रखें",
+      "somedayReviewDays": "\"कभी बाद में\" की समीक्षा हर",
+      "delegationFollowUpDays": "सौंपे काम का फ़ॉलो-अप",
+      "informationStage": "जानकारी स्टेज",
+      "waitingStage": "इंतज़ार स्टेज",
+      "missedDayToSomeday": "छूटा दिन → कभी बाद में"
+    },
+    "h": {
+      "eaUserId": "\"EA जाँचे\" चालू होने पर टास्क जाँचता है और EA बोर्ड छाँटता है।",
+      "verifierUserId": "जिस चेकलिस्ट का अपना जाँचने वाला न हो, उसे जाँचता है।",
+      "receiverUserId": "नई स्लिप जाँचता है। खाली: भरने वाले का HOD।",
+      "approverUserId": "स्लिप पर फ़ैसला करता है। खाली: मालिक।",
+      "coordinatorUserId": "हर टिकट पर साथ रहता है और स्तर-1 पर सूचना पाता है। खाली: ठीक करने वाले का HOD।",
+      "doerMustAccept": "नया टास्क तब तक रुका रहता है जब तक करने वाला स्वीकार न करे।",
+      "eaVerifies": "बंद: \"पूरा करें\" सीधे पूरा हो जाता है (जब तक टास्क का अपना जाँचने वाला न हो)।",
+      "allowReopen": "जाँचने वाले काम वापस भेज सकते हैं और देने वाले पूरे टास्क फिर खोल सकते हैं।",
+      "verifierStep": "जमा की गई चेकलिस्ट जाँच के लिए रुकती है।",
+      "photoVoiceProof": "\"फ़ोटो\" या \"आवाज़\" वाले आइटम फ़ाइल के बिना टिक नहीं होंगे।",
+      "tellOwnerAboutMisses": "हर छूटी चेकलिस्ट की ख़बर मालिक को।",
+      "receiverScreens": "बंद: नई स्लिप सीधे अप्रूवर के पास।",
+      "approverStep": "बंद: रिसीवर ही फ़ैसला करता है।",
+      "proofToResolve": "ठीक बताने के लिए फ़ोटो या फ़ाइल ज़रूरी।",
+      "informationStage": "जानकारी वाले आइटम का अलग कॉलम।",
+      "waitingStage": "रुके आइटम का अलग कॉलम (सीमा के साथ)।",
+      "missedDayToSomeday": "जिनका दिन निकल गया, वे \"कभी बाद में\" में लौटते हैं।"
+    },
+    "opt": {
+      "reportsOpenOn": {
+        "thisWeek": "इस हफ़्ते",
+        "all": "सभी"
+      },
+      "accountability": {
+        "none": "कोई नहीं — भरने वाला",
+        "receiver": "रिसीवर",
+        "approver": "अप्रूवर"
+      },
+      "escalationLevels": {
+        "0": "बंद",
+        "1": "1 स्तर",
+        "2": "2 स्तर"
+      },
+      "closeBy": {
+        "raiser": "भरने वाला पुष्टि करे",
+        "auto24h": "24 घंटे बाद अपने आप"
+      }
+    },
+    "u": {
+      "atDue": "तय समय पर",
+      "min": "{{n}} मिनट",
+      "h_one": "{{count}} घंटा",
+      "h_other": "{{count}} घंटे",
+      "d_one": "{{count}} दिन",
+      "d_other": "{{count}} दिन"
+    }
   }
 }
