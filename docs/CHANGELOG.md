@@ -1,5 +1,54 @@
 # Changelog
 
+## Phase 2: Notifications, Telegram, templates, rules, reminders (02/11/2026)
+
+**Engine** (worker)
+- Domain event → matching rules → recipients → templates.
+  - Recipients: doer, verifier, creator, HOD, owner, coordinator, customer… or a named person. The HOD lookup walks up the department tree, then falls back to the owner.
+  - Templates are picked per channel and the person's language, with variables filled from the event (user ids become names; dates shown as DD/MM/YYYY HH:mm in the company time zone).
+- In-app notification is always created, once per person, and pushed live over SSE (bell counter, toast).
+- Telegram, email, WhatsApp and push go through the **outbox**:
+  - The rule's wait and the person's quiet hours are respected (escalations and tests ignore quiet hours).
+  - Sending starts the moment something is queued, plus a 10 s poll for delayed messages and retries.
+  - `SKIP LOCKED` claims; 5 tries with exponential backoff; then SENT / FAILED / SKIPPED, each with a clear reason.
+- **Escalations**: "if no reply in N minutes, escalate to HOD / owner / coordinator / a person", checked every minute. A reply means the notification was read (also via Telegram "Seen") or the person acted on the record.
+- Admin group: one copy of every Telegram message.
+
+**Channels**
+- **Telegram** (grammY, long polling, one bot per company or the .env bot):
+  - Link with an 8-character code (24 h) or a one-tap `t.me/bot?start=CODE` link.
+  - `/start` `/my` `/today` `/done` `/capture`; inline Seen / Open buttons (Accept / Done / Move date wired with tasks in phase 3).
+  - A photo sent as a reply is saved as proof on that record.
+- **Email**: nodemailer SMTP per company (or .env), branded HTML + plain text.
+- **WhatsApp**: provider interface with **WATI** (send template, read template statuses, test) and **AiSensy** (send via API campaign). Interakt and Kit19 are shown as "coming later".
+- **Web push**: VAPID keys per company, per-device opt-in in Profile, a service-worker push handler, and dead subscriptions removed automatically.
+- Secrets (bot token, SMTP password, API keys, VAPID private key) encrypted with AES-256-GCM from `APP_SECRET`; never returned to the browser; empty field = keep.
+
+**Screens** (System Master → Integration)
+- **WhatsApp API**: provider, credentials, connection panel, Test API.
+- **Message templates**: 342 defaults (57 events × 3 channels × EN/HI), search, category and channel filters, load defaults per channel, editor with variable chips and live preview, Submit / Check all statuses, active toggle.
+- **Link Telegram**: Linked % (target 80%), pending / expired, people table, "Send codes to all not linked" (codes go by WhatsApp/email; people without either get theirs on screen), admin group.
+- **Connect channels**: Telegram bot (token checked with Telegram before saving), SMTP, phone push keys, each with Send test.
+- **Notification rules**: tiles, module chips, table, Add/Edit rule (event, audience, recipients, channels, wait, escalation), on/off, **Send test**.
+- **Reminder patterns**: Standard / Gentle / Strict defaults, editor (remind at, channels, once overdue).
+- Google Drive tab is a placeholder for phase 10.
+- **Bell** dropdown + **Notifications** page; **Profile** gets "Link my Telegram" and "Phone notifications".
+
+**Dev and ops**
+- Mailpit added to the dev stack (`http://localhost:8025`); `.env` SMTP points at it.
+- `db:migrate` now passes arguments to `prisma migrate dev`, and the client regenerates afterwards.
+- Existing companies get any missing defaults on the next seed/migrate run.
+- INSTALL.md has a new "Messaging" section (BotFather, Gmail app password, WhatsApp approval, push).
+
+**Verified**
+- 89 unit/integration tests, including:
+  - Encryption and tamper detection; secrets never returned.
+  - Engine fan-out, idempotency and quiet hours; skipping unconfigured channels.
+  - Retries and backoff; escalation to the HOD vs answered.
+  - Bot linking, Seen, photo proof; Telegram codes; inbox and permissions.
+- Playwright: Send test → toast and bell update live → email arrives in Mailpit; every Integration screen fits at 380 and 1440 px.
+- Production stack: Send test gives the in-app notification, and the unconfigured channels are recorded with reasons.
+
 ## Phase 1: Company setup, departments, users, roles, org chart, Home (02/11/2026)
 
 **System Master** (Owner/Admin)

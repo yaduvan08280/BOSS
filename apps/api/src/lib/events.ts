@@ -5,6 +5,10 @@ import type { DomainEventName } from '@mono/shared';
 import { type ActorContext, writeAudit } from './audit';
 
 export const EVENTS_CHANNEL = 'mono_events';
+/** New in-app notifications, so open browsers update the bell immediately. */
+export const NOTIFICATIONS_CHANNEL = 'mono_notifications';
+
+export type NotificationSignal = { id: string; companyId: string; userId: string };
 
 /** Small payload sent over NOTIFY (8 KB limit); listeners load the full row if they need it. */
 export type EventSignal = {
@@ -79,7 +83,31 @@ export async function recordChange(
  * In-process bus fed by Postgres LISTEN, so events from any process (api or worker) reach SSE clients.
  * Reconnects automatically if the connection drops.
  */
-export class EventListener extends EventEmitter<{ event: [EventSignal] }> {
+/** Create an in-app notification and signal it on commit. Use inside a transaction. */
+export async function createInAppNotification(
+  tx: Tx,
+  data: {
+    companyId: string;
+    userId: string;
+    title: string;
+    body?: string | null;
+    link?: string | null;
+    eventId?: string | null;
+    entityType?: string | null;
+    entityId?: string | null;
+    tone?: string | null;
+  },
+) {
+  const row = await tx.notification.create({ data });
+  const signal: NotificationSignal = { id: row.id, companyId: row.companyId, userId: row.userId };
+  await tx.$executeRaw`SELECT pg_notify(${NOTIFICATIONS_CHANNEL}, ${JSON.stringify(signal)})`;
+  return row;
+}
+
+export class EventListener extends EventEmitter<{
+  event: [EventSignal];
+  notification: [NotificationSignal];
+}> {
   private client: pg.Client | null = null;
   private stopped = false;
   private retryTimer: NodeJS.Timeout | null = null;
@@ -96,9 +124,11 @@ export class EventListener extends EventEmitter<{ event: [EventSignal] }> {
     this.stopped = false;
     const client = new pg.Client({ connectionString: this.url });
     client.on('notification', (msg) => {
-      if (msg.channel !== EVENTS_CHANNEL || !msg.payload) return;
+      if (!msg.payload) return;
       try {
-        this.emit('event', JSON.parse(msg.payload) as EventSignal);
+        if (msg.channel === EVENTS_CHANNEL) this.emit('event', JSON.parse(msg.payload) as EventSignal);
+        else if (msg.channel === NOTIFICATIONS_CHANNEL)
+          this.emit('notification', JSON.parse(msg.payload) as NotificationSignal);
       } catch (err) {
         this.log.warn({ err }, 'Bad event payload');
       }
@@ -109,6 +139,7 @@ export class EventListener extends EventEmitter<{ event: [EventSignal] }> {
     });
     await client.connect();
     await client.query(`LISTEN ${EVENTS_CHANNEL}`);
+    await client.query(`LISTEN ${NOTIFICATIONS_CHANNEL}`);
     this.client = client;
   }
 

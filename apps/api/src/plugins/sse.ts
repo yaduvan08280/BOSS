@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import type { EventListener, EventSignal } from '../lib/events';
+import type { EventListener, EventSignal, NotificationSignal } from '../lib/events';
 
 export const SSE_HEARTBEAT_MS = 25_000;
 
@@ -33,12 +33,18 @@ export async function sseRoutes(app: FastifyInstance, opts: { listener: EventLis
         if (signal.companyId !== auth.companyId) return;
         res.write(`id: ${signal.id}\nevent: domain\ndata: ${JSON.stringify(signal)}\n\n`);
       };
+      const onNotification = (signal: NotificationSignal) => {
+        if (signal.userId !== auth.userId || signal.companyId !== auth.companyId) return;
+        res.write(`event: notification\ndata: ${JSON.stringify({ id: signal.id })}\n\n`);
+      };
       opts.listener.on('event', onEvent);
+      opts.listener.on('notification', onNotification);
       const heartbeat = setInterval(() => res.write(`: ping\n\n`), SSE_HEARTBEAT_MS);
 
       const close = () => {
         clearInterval(heartbeat);
         opts.listener.off('event', onEvent);
+        opts.listener.off('notification', onNotification);
         open.delete(end);
       };
       const end = () => {

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import type { Language, LoginInput, Me, ThemeMode } from '@mono/shared';
+import { toast } from 'sonner';
 import { api, ApiError, refreshSession } from '@/lib/api';
 import { setLanguage } from '@/lib/i18n';
 import { applyTheme } from '@/lib/theme';
@@ -81,6 +82,14 @@ export function useLiveEvents(enabled: boolean) {
       });
       source.addEventListener('domain', () => {
         void qc.invalidateQueries({ queryKey: ME_KEY });
+      });
+      source.addEventListener('notification', () => {
+        void qc.invalidateQueries({ queryKey: ME_KEY });
+        void qc.invalidateQueries({ queryKey: ['notifications'] });
+        // Show the newest one as a toast.
+        void api<{ items: { title: string; body: string | null }[] }>('/api/notifications?limit=1')
+          .then((r) => r.items[0] && toast(r.items[0].title, { description: r.items[0].body ?? undefined }))
+          .catch(() => undefined);
       });
       source.onerror = () => {
         source?.close();

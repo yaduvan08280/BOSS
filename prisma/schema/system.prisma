@@ -58,15 +58,19 @@ model DomainEvent {
 
 /// In-app notification (always created, whatever other channels fire).
 model Notification {
-  id        String    @id @default(cuid(2))
-  companyId String    @map("company_id")
-  userId    String    @map("user_id")
-  title     String
-  body      String?
-  link      String?
-  eventId   String?   @map("event_id")
-  readAt    DateTime? @map("read_at") @db.Timestamptz(3)
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  id         String    @id @default(cuid(2))
+  companyId  String    @map("company_id")
+  userId     String    @map("user_id")
+  title      String
+  body       String?
+  link       String?
+  eventId    String?   @map("event_id")
+  entityType String?   @map("entity_type")
+  entityId   String?   @map("entity_id")
+  /// Escalations, failures … shown with the warning style.
+  tone       String?
+  readAt     DateTime? @map("read_at") @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
 
   user User @relation(fields: [userId], references: [id])
 

@@ -9,7 +9,7 @@ installing on the server is in [deploy/INSTALL.md](deploy/INSTALL.md).
 nvm use                      # Node 22
 npm ci                       # also generates the Prisma client
 cp .env.example .env         # then set APP_SECRET and the SEED_* lines
-npm run db:up                # Postgres 16 in Docker (+ a mono_test database)
+npm run db:up                # Postgres 16 (+ mono_test) and Mailpit (dev emails at http://localhost:8025)
 npm run db:deploy            # apply migrations
 npm run db:seed              # first company + owner from .env
 npm run seed:demo            # optional: Demo Industries, 25 people (owner 9000000000 / Demo1234)
@@ -26,7 +26,8 @@ npm run lint && npm run typecheck && npm test && npm run build
 npm run test:e2e:docker      # Playwright in Docker against the running app (E2E_SCREENSHOTS=1 saves docs/screenshots)
 ```
 
-After changing the Prisma schema run `npm run db:migrate` (it also regenerates the client; Prisma 7 no longer does that by itself).
+After changing the Prisma schema run `npm run db:migrate -- --name <what-changed>` (the client is regenerated afterwards; Prisma 7 no longer does that by itself).
+Telegram in development: create a separate test bot with @BotFather; never use the server's bot token on your PC (one token can only be polled from one place).
 E2E tests use the demo company (`npm run seed:demo`) and remove what they create.
 
 `npm test` runs against the `mono_test` database (`TEST_DATABASE_URL`). It only applies migrations, never wipes data.

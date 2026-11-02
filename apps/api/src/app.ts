@@ -20,6 +20,11 @@ import { roleRoutes } from './modules/org/roles.routes';
 import { setupRoutes } from './modules/org/setup.routes';
 import { userRoutes } from './modules/org/users.routes';
 import { systemRoutes } from './modules/system/routes';
+import { channelRoutes } from './modules/notify/channels.routes';
+import { inboxRoutes } from './modules/notify/inbox.routes';
+import { ruleRoutes } from './modules/notify/rules.routes';
+import { telegramRoutes } from './modules/notify/telegram.routes';
+import { templateRoutes } from './modules/notify/templates.routes';
 import { LocalDiskStorage, type Storage } from './lib/storage';
 
 export type BuildOptions = {
@@ -77,5 +82,10 @@ export async function buildApp(opts: BuildOptions) {
   await app.register(userRoutes);
   await app.register(roleRoutes);
   await app.register(systemRoutes);
+  await app.register(channelRoutes, { env });
+  await app.register(templateRoutes, { env });
+  await app.register(ruleRoutes);
+  await app.register(telegramRoutes, { env });
+  await app.register(inboxRoutes, { env });
   return app;
 }

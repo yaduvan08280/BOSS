@@ -46,7 +46,7 @@ export function KpiTile({
   return (
     <div
       className={cn(
-        'flex min-h-28 flex-col justify-between rounded-card border p-4 sm:p-5',
+        'flex min-h-24 flex-col justify-between rounded-card border p-3.5 sm:min-h-28 sm:p-5',
         hero ? 'border-ink bg-ink text-ink-foreground' : 'bg-card',
       )}
     >
@@ -58,7 +58,10 @@ export function KpiTile({
       </div>
       <div className="mt-2">
         <span
-          className={cn('tabular text-3xl font-semibold tracking-tight', tone === 'bad' && 'text-status-bad')}
+          className={cn(
+            'tabular text-2xl font-semibold tracking-tight sm:text-3xl',
+            tone === 'bad' && 'text-status-bad',
+          )}
         >
           {value}
         </span>

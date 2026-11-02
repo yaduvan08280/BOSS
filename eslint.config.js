@@ -37,6 +37,10 @@ export default tseslint.config(
     },
   },
   {
+    files: ['apps/web/public/*.js'],
+    languageOptions: { globals: { ...globals.serviceworker } },
+  },
+  {
     files: ['apps/web/src/components/ui/**/*.tsx'],
     rules: { 'react-refresh/only-export-components': 'off' },
   },

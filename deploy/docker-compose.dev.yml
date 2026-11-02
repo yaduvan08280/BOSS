@@ -18,5 +18,12 @@ services:
       test: ['CMD-SHELL', 'pg_isready -U mono']
       interval: 5s
       retries: 10
+  # Catches every email sent in development: inbox at http://localhost:8025, SMTP on localhost:1025.
+  mail:
+    image: axllent/mailpit:v1.33.0
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:8025:8025'
+      - '127.0.0.1:1025:1025'
 volumes:
   mono-dev-pg:

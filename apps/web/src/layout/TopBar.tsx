@@ -1,11 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { Bell, LifeBuoy, ListChecks, Menu, RefreshCw } from 'lucide-react';
+import { LifeBuoy, ListChecks, Menu, RefreshCw, type LucideIcon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { canOpenSystemMaster, type Language, type Me, type ThemeMode } from '@mono/shared';
 import { BrandMark } from '@/components/brand';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { NotificationBell } from './NotificationBell';
 import { UserMenu } from './UserMenu';
 
 type Props = {
@@ -26,7 +27,7 @@ function Counter({
   label,
   to,
 }: {
-  icon: typeof Bell;
+  icon: LucideIcon;
   count: number;
   label: string;
   to: string;
@@ -109,12 +110,7 @@ export function TopBar({ me, title, subtitle, inSystem, onOpenMenu, ...menu }: P
               to="/workspace"
             />
           </span>
-          <Counter
-            icon={Bell}
-            count={me.counters.unreadNotifications}
-            label={t('shell.notifications')}
-            to="/workspace"
-          />
+          <NotificationBell unread={me.counters.unreadNotifications} />
           <Button
             variant="ghost"
             size="icon"

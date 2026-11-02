@@ -3,3 +3,12 @@ export { emitEvent, recordChange, EventListener, EVENTS_CHANNEL, type EventSigna
 export { writeAudit, type ActorContext } from './lib/audit';
 export { bootstrapCompany, type BootstrapInput } from './modules/core/bootstrap';
 export { hashPassword } from './lib/password';
+export { channelClients, readChannel, setChannelMeta, type ChannelClients } from './lib/channels/config';
+export { sendTelegram, telegramGetMe } from './lib/channels/telegram';
+export { sendEmail } from './lib/channels/email';
+export { sendPush } from './lib/channels/push';
+export { ChannelError, type OutgoingMessage } from './lib/channels/types';
+export { redeemLinkCode, newLinkCode } from './lib/telegram-link';
+export { ensureNotifyDefaults } from './modules/notify/defaults';
+export { NOTIFICATIONS_CHANNEL, createInAppNotification, type NotificationSignal } from './lib/events';
+export { LocalDiskStorage, type Storage } from './lib/storage';

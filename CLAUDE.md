@@ -442,7 +442,7 @@ Ubuntu 24.04 LTS on i7-12700 / 48 GB / 1.8 TB. Docker Engine + Compose plugin. S
 |---|---|---|
 | 0 | Scaffold, auth, deploy skeleton | done (31/10/2026) |
 | 1 | Company setup, departments, users, roles, org chart, Home/Ask | done (02/11/2026) |
-| 2 | Notification engine, Telegram, templates, rules, reminders, worker | not started |
+| 2 | Notification engine, Telegram, templates, rules, reminders, worker | done (02/11/2026) — live Telegram/WhatsApp delivery needs GGM's own bot token / provider key |
 | 3 | Delegation, checklists, scorecard, R/Y/G | not started |
 | 4 | Help slips, tickets, EA, weekly MIS, Business Engine flow designer | not started |
 | 5 | FMS builder, engine, Live FMS, My steps, documents, KPI cards | not started |
@@ -474,9 +474,14 @@ Ubuntu 24.04 LTS on i7-12700 / 48 GB / 1.8 TB. Docker Engine + Compose plugin. S
 17. Night shifts count on the date the shift starts.
 18. Customer tags: `CustomerTag` table only (no `tags[]` array on Customer).
 19. Off-machine backup (rclone to Google Drive) is part of the install steps and on by default.
-20. PWA manifest/icons in Phase 0; web push in Phase 10.
+20. PWA manifest/icons in Phase 0; web push sending + per-device opt-in in Phase 2 (install prompt and offline queue in Phase 10).
 21. Open question (ask before Phase 4): meaning of Help Slip "accountability (none)".
 22. Logins created by an admin (add person, login toggle, reset) get a one-time password shown once; the person must choose their own at first sign-in, enforced by the API (`PASSWORD_CHANGE_REQUIRED`).
 23. "Paste a list" imports all-or-nothing, reports problems per line, and creates departments/designations that don't exist yet.
 24. Org chart: a drop counts only where the pointer is; the head slot wins over its column. HOD of a department is always also a member of it.
 25. `seed:demo` holds org data only for now; each later phase adds its own demo data (flows, tasks, checklists, customers, leads, items).
+26. Notifications: templates use named placeholders (`{{doer}}`); WhatsApp templates are numbered on submit. Defaults: every §7.3 event × WhatsApp/Email/Telegram × English/Hindi; one rule per event (team → Telegram + in-app + push, clients → WhatsApp + email). In-app is created immediately, once per person per event; other channels wait for the rule's delay and the person's quiet hours (default 21:00–07:00, company time zone). Escalations, test messages and Telegram codes ignore quiet hours.
+27. "Reply" for escalations = the person read the notification (app or Telegram "Seen"), or did anything on the same record after it was sent.
+28. Channels a company hasn't set up are recorded as SKIPPED when queued; send failures retry 5 times with backoff (30 s → 4 min) then FAILED.
+29. WhatsApp approval happens in the provider dashboard (WATI/AiSensy have no reliable submit API); MONO marks templates Pending and reads statuses back from WATI. AiSensy sends through API campaigns named like the template code.
+30. One Telegram bot per company (or the .env bot for companies without one), long polling in the worker. A token must not be polled from two places.

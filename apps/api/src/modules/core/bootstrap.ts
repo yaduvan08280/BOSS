@@ -8,6 +8,7 @@ import {
 } from '@mono/shared';
 import { recordChange } from '../../lib/events';
 import { hashPassword } from '../../lib/password';
+import { ensureNotifyDefaults } from '../notify/defaults';
 
 export type BootstrapInput = {
   companyName: string;
@@ -45,6 +46,8 @@ export async function bootstrapCompany(db: Db, input: BootstrapInput) {
   const slug = slugify(input.companyName);
   const existing = await db.company.findUnique({ where: { slug } });
   if (existing) {
+    // Companies created before a phase get that phase's defaults (adds only what's missing).
+    await db.$transaction((tx) => ensureNotifyDefaults(tx, existing.id));
     const owner = await db.user.findFirst({ where: { companyId: existing.id, role: { key: 'OWNER' } } });
     return { company: existing, owner, created: false };
   }
@@ -112,6 +115,7 @@ export async function bootstrapCompany(db: Db, input: BootstrapInput) {
       entityId: owner.id,
       after: { code, name: owner.name, role: 'OWNER' },
     });
+    await ensureNotifyDefaults(tx, company.id);
     return { company, owner, created: true };
   });
 }

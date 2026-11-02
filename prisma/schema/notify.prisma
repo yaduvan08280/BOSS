@@ -1,0 +1,172 @@
+/// Per-company channel settings. Secrets (tokens, passwords, keys) are AES-256-GCM encrypted with APP_SECRET
+/// and never sent back to the browser; `meta` holds the non-secret parts (provider, display name, last test …).
+model ChannelConfig {
+  id          String   @id @default(cuid(2))
+  companyId   String   @map("company_id")
+  /// email | telegram | whatsapp | push
+  channel     String
+  secret      String?
+  meta        Json     @default("{}")
+  updatedById String?  @map("updated_by_id")
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([companyId, channel])
+  @@map("channel_configs")
+}
+
+/// Message text per event, channel and language. Placeholders are named: {{doer}}, {{title}} …
+model Template {
+  id                 String    @id @default(cuid(2))
+  companyId          String    @map("company_id")
+  code               String
+  /// whatsapp | email | telegram
+  channel            String
+  event              String?
+  /// UTILITY | MARKETING | AUTHENTICATION (WhatsApp categories)
+  category           String    @default("UTILITY")
+  language           String    @default("en")
+  subject            String?
+  body               String
+  /// DRAFT | PENDING | APPROVED | REJECTED (email and Telegram are approved as soon as saved)
+  status             String    @default("APPROVED")
+  quality            String?
+  providerTemplateId String?   @map("provider_template_id")
+  sentCount          Int       @default(0) @map("sent_count")
+  readCount          Int       @default(0) @map("read_count")
+  active             Boolean   @default(true)
+  isDefault          Boolean   @default(false) @map("is_default")
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@unique([companyId, code, language])
+  @@index([companyId, channel, event])
+  @@map("templates")
+}
+
+model NotificationRule {
+  id                   String    @id @default(cuid(2))
+  companyId            String    @map("company_id")
+  event                String
+  /// team | client | vendor
+  audience             String    @default("team")
+  /// doer, verifier, creator, hod, owner, coordinator, customer … or user:<id>
+  recipients           String[]
+  /// telegram, whatsapp, email, inapp, push
+  channels             String[]
+  /// Minutes to wait after the event before sending.
+  waitMinutes          Int       @default(0) @map("wait_minutes")
+  /// hod | owner | coordinator | user:<id>
+  escalateTo           String?   @map("escalate_to")
+  escalateAfterMinutes Int?      @map("escalate_after_minutes")
+  aiFollowUp           Boolean   @default(false) @map("ai_follow_up")
+  active               Boolean   @default(true)
+  isDefault            Boolean   @default(false) @map("is_default")
+  createdById          String?   @map("created_by_id")
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt            DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([companyId, event, active])
+  @@map("notification_rules")
+}
+
+/// When to remind about something with a due time; tasks and checklists pick one.
+model ReminderPattern {
+  id            String    @id @default(cuid(2))
+  companyId     String    @map("company_id")
+  name          String
+  /// day_before | h3_before | h1_before | at_due | h1_after | next_morning
+  remindAt      String[]  @map("remind_at")
+  channels      String[]
+  /// none | hourly | morning
+  overdueRepeat String    @default("none") @map("overdue_repeat")
+  isDefault     Boolean   @default(false) @map("is_default")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([companyId])
+  @@map("reminder_patterns")
+}
+
+/// Every outgoing message (not in-app). The worker sends, retries with backoff and records delivery.
+model Outbox {
+  id           String    @id @default(cuid(2))
+  companyId    String    @map("company_id")
+  channel      String
+  userId       String?   @map("user_id")
+  /// chat id, email address, E.164 mobile or push subscription id
+  to           String
+  templateCode String?   @map("template_code")
+  /// Rendered message: { subject?, text, buttons?, waTemplate?, waParams?, link? }
+  payload      Json
+  /// QUEUED | SENDING | SENT | DELIVERED | READ | FAILED | SKIPPED
+  status       String    @default("QUEUED")
+  tries        Int       @default(0)
+  sendAfter    DateTime  @default(now()) @map("send_after") @db.Timestamptz(3)
+  lastError    String?   @map("last_error")
+  providerId   String?   @map("provider_id")
+  eventId      String?   @map("event_id")
+  ruleId       String?   @map("rule_id")
+  entityType   String?   @map("entity_type")
+  entityId     String?   @map("entity_id")
+  sentAt       DateTime? @map("sent_at") @db.Timestamptz(3)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([status, sendAfter])
+  @@index([companyId, createdAt])
+  @@index([channel, providerId])
+  @@map("outbox")
+}
+
+/// "If no reply in N minutes, escalate to …"
+model Escalation {
+  id                String    @id @default(cuid(2))
+  companyId         String    @map("company_id")
+  ruleId            String    @map("rule_id")
+  eventId           String    @map("event_id")
+  entityType        String?   @map("entity_type")
+  entityId          String?   @map("entity_id")
+  userId            String    @map("user_id")
+  dueAt             DateTime  @map("due_at") @db.Timestamptz(3)
+  /// WAITING | ANSWERED | ESCALATED | CANCELLED
+  status            String    @default("WAITING")
+  escalatedToUserId String?   @map("escalated_to_user_id")
+  resolvedAt        DateTime? @map("resolved_at") @db.Timestamptz(3)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([status, dueAt])
+  @@index([companyId, userId])
+  @@map("escalations")
+}
+
+model TelegramLinkCode {
+  id        String    @id @default(cuid(2))
+  companyId String    @map("company_id")
+  userId    String    @map("user_id")
+  code      String    @unique
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(3)
+  /// whatsapp | email | screen
+  sentVia   String?   @map("sent_via")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([companyId, userId])
+  @@map("telegram_link_codes")
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid(2))
+  companyId String   @map("company_id")
+  userId    String   @map("user_id")
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([companyId, userId])
+  @@map("push_subscriptions")
+}

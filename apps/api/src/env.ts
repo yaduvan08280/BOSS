@@ -13,6 +13,16 @@ const envSchema = z.object({
   /** GST lookup provider (CLAUDE.md §12). Empty = offline checksum check only. */
   GST_API_PROVIDER: z.string().default(''),
   GST_API_KEY: z.string().default(''),
+  // Optional server-wide channel defaults (a company's own settings in Integration win).
+  SMTP_HOST: z.string().default(''),
+  SMTP_PORT: z.coerce.number().int().default(587),
+  SMTP_USER: z.string().default(''),
+  SMTP_PASS: z.string().default(''),
+  SMTP_FROM: z.string().default(''),
+  TELEGRAM_BOT_TOKEN: z.string().default(''),
+  VAPID_PUBLIC_KEY: z.string().default(''),
+  VAPID_PRIVATE_KEY: z.string().default(''),
+  VAPID_SUBJECT: z.string().default(''),
   /** Login attempts allowed per IP per 15 minutes. */
   LOGIN_RATE_LIMIT: z.coerce.number().int().default(10),
 });

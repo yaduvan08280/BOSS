@@ -13,6 +13,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FieldError, Input, Label } from '@/components/ui/input';
 import { api, ApiError } from '@/lib/api';
 import { ME_KEY } from '@/modules/auth/session';
+import { LinkMyTelegram } from './LinkMyTelegram';
+import { PhoneNotifications } from './PhoneNotifications';
 
 function Row({ label, value }: { label: string; value: string | null }) {
   return (
@@ -103,6 +105,8 @@ export function AccountPage({ me }: { me: Me }) {
           </CardContent>
         </Card>
         <ChangePasswordCard />
+        <LinkMyTelegram />
+        <PhoneNotifications />
       </div>
     </div>
   );

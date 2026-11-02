@@ -116,7 +116,27 @@ To test from another computer on the office network before the tunnel exists, se
 
 Cloudflare handles HTTPS. No router ports need to be opened.
 
-## 7. Updating to a new version
+## 7. Messaging: Telegram, email, WhatsApp, phone push
+
+Everything below is in **System Master → Integration**. Secrets are stored encrypted and never shown again.
+
+**Telegram (do this first: most staff get their work here)**
+1. In Telegram, open **@BotFather** → send `/newbot` → give it a name (e.g. `GGM MONO`) and a username ending in `bot` (e.g. `ggm_mono_bot`).
+2. Copy the token BotFather gives you → **Connect channels → Telegram bot** → paste → **Connect bot**.
+3. **Link Telegram → Send codes to all not linked.** Everyone gets an 8-character code by WhatsApp or email (or you see it on screen if they have neither). Each person can also do it themselves: **Profile → Link my Telegram → Open @bot** (one tap).
+4. Optional: add the bot to a Telegram group, then paste the group's chat ID under **Admin group** to get a copy of every notification.
+
+> A bot token can be used from **one place only**. Don't run a development copy of MONO with the same token as the server: create a second bot for testing.
+
+**Email**: **Connect channels → Email (SMTP)**. With Gmail: turn on 2-step verification, create an *App password*, then use server `smtp.gmail.com`, port `587`, your Gmail address as user, the app password, and "Send from" `MONO <you@gmail.com>`. Press **Send test**.
+
+**WhatsApp**: **WhatsApp API** → choose WATI or AiSensy → paste the endpoint (WATI) and API key → **Test API**. WhatsApp only delivers *approved* templates: in **Message templates**, filter WhatsApp, press **Submit** on the ones you want and create a template with **the same name and text** in your provider's dashboard. Then press **Check all statuses**.
+
+**Phone push**: **Connect channels → Phone push → Create keys**. Each person then turns it on in **Profile → Phone notifications** (from the installed app).
+
+**Check it end to end**: **Notification rules → Send test** → pick yourself. You should get it in the app (bell), on Telegram and by email within seconds.
+
+## 8. Updating to a new version
 
 ```bash
 cd ~/mono
@@ -126,7 +146,7 @@ git pull
 
 Database migrations run automatically (`migrate` service) before the new `api` starts.
 
-## 8. Backups
+## 9. Backups
 
 - Every night at **02:30 India time**, the `backup` container saves the database (`mono-db-*.dump`) and uploaded files
   (`mono-uploads-*.tar.gz`) to `/srv/mono/backups`, keeping **14 days** (`BACKUP_CRON`, `BACKUP_KEEP_DAYS` in `.env`).
@@ -162,7 +182,7 @@ sudo tar -xzf /srv/mono/backups/mono-uploads-20261031-0230.tar.gz -C /srv/mono/u
 ./deploy/compose.sh up -d
 ```
 
-## 9. Day-to-day commands
+## 10. Day-to-day commands
 
 ```bash
 ./deploy/compose.sh ps                      # what is running
@@ -174,7 +194,7 @@ sudo tar -xzf /srv/mono/backups/mono-uploads-20261031-0230.tar.gz -C /srv/mono/u
 
 Logs rotate automatically (5 × 10 MB per service).
 
-## 10. Troubleshooting
+## 11. Troubleshooting
 
 | Symptom | Check |
 |---|---|
@@ -183,4 +203,5 @@ Logs rotate automatically (5 × 10 MB per service).
 | Signed in, but sent back to the login page | Same cause: `BASE_URL` must start with `https://` when using the tunnel. |
 | Tunnel not connecting | `./deploy/compose.sh logs cloudflared`. Check the token and that `COMPOSE_PROFILES=tunnel`. |
 | `api` unhealthy | `./deploy/compose.sh logs api | tail -50`. "Invalid environment" lists the exact settings to fix. |
+| Telegram bot silent | `./deploy/compose.sh logs worker | grep -i telegram`. \"terminated by other getUpdates\" means the same token runs somewhere else. |
 | Disk filling up | `du -sh /srv/mono/*` and `docker system prune` (removes old images only). |

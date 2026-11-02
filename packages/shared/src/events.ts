@@ -29,8 +29,17 @@ export const DOMAIN_EVENTS = [
   'role.created',
   'role.updated',
   'role.deleted',
+  'channel.updated',
+  'template.changed',
+  'rule.changed',
+  'reminder.changed',
+  'telegram.linked',
+  'telegram.codes_sent',
+  'notification.read',
+  'proof.attached',
 ] as const;
-export type DomainEventName = (typeof DOMAIN_EVENTS)[number];
+/** Module events (delegation.assigned, …) are listed in notify/catalog.ts and grow with each phase. */
+export type DomainEventName = (typeof DOMAIN_EVENTS)[number] | (string & {});
 
 export type DomainEventEnvelope<P = Record<string, unknown>> = {
   id: string;

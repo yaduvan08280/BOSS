@@ -209,8 +209,11 @@ export async function getMe(db: Db, userId: string, appName: string): Promise<Me
       defaultLang: look.defaultLang,
       staffMayPickAccent: look.staffMayPickAccent,
     },
-    // Real counts arrive with the work modules (Phase 2/3).
-    counters: { pendingWork: 0, unreadNotifications: 0 },
+    // Pending work arrives with the work modules (phase 3).
+    counters: {
+      pendingWork: 0,
+      unreadNotifications: await db.notification.count({ where: { userId: user.id, readAt: null } }),
+    },
   };
 }
 

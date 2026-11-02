@@ -142,7 +142,7 @@ export const SYSTEM_NAV: NavSection[] = [
       { key: 'users', path: '/system/users', icon: Users, phase: 0, tag: 'setup' },
       { key: 'roles', path: '/system/roles', icon: ShieldCheck, phase: 0, tag: 'setup' },
       { key: 'orgChart', path: '/system/org-chart', icon: Network, phase: 0, tag: 'setup' },
-      { key: 'integration', path: '/system/integration', icon: Plug, phase: 2, tag: 'messaging' },
+      { key: 'integration', path: '/system/integration', icon: Plug, phase: 0, tag: 'messaging' },
       { key: 'inventorySetup', path: '/system/inventory', icon: Package, phase: 8, tag: 'setup' },
       { key: 'crmSetup', path: '/system/crm', icon: ClipboardCheck, phase: 9, tag: 'setup' },
       { key: 'apiKeys', path: '/system/api-keys', icon: KeyRound, phase: 10, tag: 'setup' },
