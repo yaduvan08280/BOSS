@@ -3,7 +3,7 @@ import fp from 'fastify-plugin';
 import { forCompany, type Db, type ScopedDb } from '@mono/db';
 import { hasPermission, type PermissionKey } from '@mono/shared';
 import type { ActorContext } from '../lib/audit';
-import { forbidden, unauthenticated } from '../lib/errors';
+import { AppError, forbidden, unauthenticated } from '../lib/errors';
 import { ACCESS_COOKIE, verifyAccessToken } from '../lib/tokens';
 
 export type AuthContext = {
@@ -54,13 +54,21 @@ export default fp(async function authPlugin(app: FastifyInstance, opts: { secret
     if (!claims) throw unauthenticated('Your session expired');
     const user = await app.prisma.user.findFirst({
       where: { id: claims.sub, companyId: claims.cid, deletedAt: null, status: 'ACTIVE', loginEnabled: true },
-      select: { id: true, role: { select: { key: true, permissions: true } } },
+      select: { id: true, mustChangePassword: true, role: { select: { key: true, permissions: true } } },
     });
     const session = await app.prisma.session.findFirst({
       where: { id: claims.sid, userId: claims.sub, revokedAt: null },
       select: { id: true },
     });
     if (!user || !session) throw unauthenticated('Your session expired');
+    // After an admin reset, only the auth routes work until the person picks their own password.
+    if (
+      user.mustChangePassword &&
+      !request.url.startsWith('/api/auth/') &&
+      !request.url.startsWith('/api/events')
+    ) {
+      throw new AppError(403, 'PASSWORD_CHANGE_REQUIRED', 'Choose a new password first');
+    }
     request.auth = {
       userId: user.id,
       companyId: claims.cid,

@@ -6,6 +6,8 @@ import { canOpenSystemMaster, type Me } from '@mono/shared';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { cn, safeStorage } from '@/lib/utils';
 import { useLiveEvents, useLogout, useUpdatePreferences } from '@/modules/auth/session';
+import { ChangePasswordCard } from '@/modules/account/AccountPage';
+import { CommandPalette } from '@/modules/search/CommandPalette';
 import { BottomTabs } from './BottomTabs';
 import { findNavItem, SYSTEM_NAV, WORKSPACE_NAV } from './nav';
 import { Sidebar } from './Sidebar';
@@ -78,8 +80,19 @@ export function AppShell({ me }: { me: Me }) {
           {...menuProps}
         />
         <main className="mx-auto w-full max-w-[1440px] px-4 pb-28 pt-5 sm:pt-6 lg:px-8 lg:pb-12">
-          <Outlet />
+          {me.user.mustChangePassword ? (
+            <div className="mx-auto max-w-md space-y-4 pt-4">
+              <div>
+                <h1 className="text-2xl font-semibold tracking-tight">{t('auth.firstLoginTitle')}</h1>
+                <p className="mt-1.5 text-sm text-muted-foreground">{t('auth.firstLoginBody')}</p>
+              </div>
+              <ChangePasswordCard />
+            </div>
+          ) : (
+            <Outlet />
+          )}
         </main>
+        <CommandPalette me={me} />
       </div>
 
       <button

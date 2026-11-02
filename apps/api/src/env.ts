@@ -9,6 +9,10 @@ const envSchema = z.object({
   APP_SECRET: z.string().min(32, 'APP_SECRET must be at least 32 characters'),
   DATABASE_URL: z.string().startsWith('postgres'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
+  UPLOAD_DIR: z.string().default('./data/uploads'),
+  /** GST lookup provider (CLAUDE.md §12). Empty = offline checksum check only. */
+  GST_API_PROVIDER: z.string().default(''),
+  GST_API_KEY: z.string().default(''),
   /** Login attempts allowed per IP per 15 minutes. */
   LOGIN_RATE_LIMIT: z.coerce.number().int().default(10),
 });

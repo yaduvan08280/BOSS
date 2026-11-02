@@ -441,7 +441,7 @@ Ubuntu 24.04 LTS on i7-12700 / 48 GB / 1.8 TB. Docker Engine + Compose plugin. S
 | Phase | Scope | Status |
 |---|---|---|
 | 0 | Scaffold, auth, deploy skeleton | done (31/10/2026) |
-| 1 | Company setup, departments, users, roles, org chart, Home/Ask | not started |
+| 1 | Company setup, departments, users, roles, org chart, Home/Ask | done (02/11/2026) |
 | 2 | Notification engine, Telegram, templates, rules, reminders, worker | not started |
 | 3 | Delegation, checklists, scorecard, R/Y/G | not started |
 | 4 | Help slips, tickets, EA, weekly MIS, Business Engine flow designer | not started |
@@ -476,3 +476,7 @@ Ubuntu 24.04 LTS on i7-12700 / 48 GB / 1.8 TB. Docker Engine + Compose plugin. S
 19. Off-machine backup (rclone to Google Drive) is part of the install steps and on by default.
 20. PWA manifest/icons in Phase 0; web push in Phase 10.
 21. Open question (ask before Phase 4): meaning of Help Slip "accountability (none)".
+22. Logins created by an admin (add person, login toggle, reset) get a one-time password shown once; the person must choose their own at first sign-in, enforced by the API (`PASSWORD_CHANGE_REQUIRED`).
+23. "Paste a list" imports all-or-nothing, reports problems per line, and creates departments/designations that don't exist yet.
+24. Org chart: a drop counts only where the pointer is; the head slot wins over its column. HOD of a department is always also a member of it.
+25. `seed:demo` holds org data only for now; each later phase adds its own demo data (flows, tasks, checklists, customers, leads, items).

@@ -65,9 +65,10 @@ In `nano`, set at least these lines (Ctrl+O to save, Ctrl+X to exit):
 
 ## 4. Create the data folders
 
+(The first start gives the uploads folder to the app's user automatically.)
+
 ```bash
 sudo mkdir -p /srv/mono/pg /srv/mono/uploads /srv/mono/backups /srv/mono/rclone
-sudo chown 1000:1000 /srv/mono/uploads
 ```
 
 ## 5. Start MONO

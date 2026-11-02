@@ -1,5 +1,6 @@
 import type { Db } from '@mono/db';
-import { DEFAULT_THEME, looksLikeEmail, normalizeMobile, themeSettingsSchema, type Me } from '@mono/shared';
+import { looksLikeEmail, normalizeMobile, type Me } from '@mono/shared';
+import { readAppearance } from '../org/company.routes';
 import type { ActorContext } from '../../lib/audit';
 import { AppError, unauthenticated } from '../../lib/errors';
 import { recordChange } from '../../lib/events';
@@ -150,7 +151,7 @@ export async function changePassword(
   await db.$transaction(async (tx) => {
     await tx.user.update({
       where: { id: ctx.actorId },
-      data: { passwordHash, passwordChangedAt: new Date() },
+      data: { passwordHash, passwordChangedAt: new Date(), mustChangePassword: false },
     });
     await tx.session.updateMany({
       where: { userId: ctx.actorId, revokedAt: null },
@@ -177,8 +178,8 @@ export async function getMe(db: Db, userId: string, appName: string): Promise<Me
     where: { id: userId },
     include: { role: true, company: true },
   });
-  const settings = (user.company.settings ?? {}) as Record<string, unknown>;
-  const theme = themeSettingsSchema.safeParse(settings.theme);
+  const look = readAppearance(user.company.settings, appName);
+  const prefs = (user.prefs ?? {}) as { favourites?: unknown };
   return {
     user: {
       id: user.id,
@@ -190,18 +191,35 @@ export async function getMe(db: Db, userId: string, appName: string): Promise<Me
       themeMode: user.themeMode === 'light' || user.themeMode === 'dark' ? user.themeMode : 'system',
       avatarUrl: user.avatarUrl,
       roleName: user.role.name,
+      roleKey: user.role.key,
       permissions: user.role.permissions,
+      mustChangePassword: user.mustChangePassword,
+      favourites: Array.isArray(prefs.favourites)
+        ? prefs.favourites.filter((f): f is string => typeof f === 'string')
+        : [],
     },
     company: {
       id: user.company.id,
       name: user.company.name,
-      appName: typeof settings.appName === 'string' && settings.appName ? settings.appName : appName,
+      appName: look.appName,
       timezone: user.company.timezone,
       fyStartMonth: user.company.fyStartMonth,
-      theme: theme.success ? theme.data : DEFAULT_THEME,
-      logoUrl: typeof settings.logoUrl === 'string' ? settings.logoUrl : null,
+      theme: look.theme,
+      logoUrl: look.logoFileId ? `/api/files/${look.logoFileId}` : null,
+      defaultLang: look.defaultLang,
+      staffMayPickAccent: look.staffMayPickAccent,
     },
     // Real counts arrive with the work modules (Phase 2/3).
     counters: { pendingWork: 0, unreadNotifications: 0 },
   };
+}
+
+export async function setFavourites(db: Db, userId: string, favourites: string[]) {
+  const user = await db.user.findUniqueOrThrow({ where: { id: userId }, select: { prefs: true } });
+  await db.user.update({
+    where: { id: userId },
+    data: {
+      prefs: { ...((user.prefs ?? {}) as Record<string, unknown>), favourites: [...new Set(favourites)] },
+    },
+  });
 }

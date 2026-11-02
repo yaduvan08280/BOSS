@@ -4,6 +4,7 @@ import { z } from 'zod';
 import {
   apiErrorSchema,
   changePasswordSchema,
+  favouritesSchema,
   LANGUAGES,
   loginSchema,
   meSchema,
@@ -133,6 +134,18 @@ export async function authRoutes(app: FastifyInstance, opts: { env: Env }) {
     },
     async (request) => {
       await auth.updatePreferences(app.prisma, request.auth!.userId, request.body);
+      return { ok: true as const };
+    },
+  );
+
+  r.put(
+    '/api/auth/me/favourites',
+    {
+      onRequest: [app.authenticate],
+      schema: { tags: ['auth'], body: favouritesSchema, response: { 200: okSchema, ...errors } },
+    },
+    async (request) => {
+      await auth.setFavourites(app.prisma, request.auth!.userId, request.body.favourites);
       return { ok: true as const };
     },
   );

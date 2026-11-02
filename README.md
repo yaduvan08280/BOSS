@@ -12,6 +12,7 @@ cp .env.example .env         # then set APP_SECRET and the SEED_* lines
 npm run db:up                # Postgres 16 in Docker (+ a mono_test database)
 npm run db:deploy            # apply migrations
 npm run db:seed              # first company + owner from .env
+npm run seed:demo            # optional: Demo Industries, 25 people (owner 9000000000 / Demo1234)
 npm run dev                  # api :3000, worker, web :5173
 ```
 
@@ -24,6 +25,9 @@ API docs (dev only): <http://localhost:3000/api/docs>. UI kit and theme playgrou
 npm run lint && npm run typecheck && npm test && npm run build
 npm run test:e2e:docker      # Playwright in Docker against the running app (E2E_SCREENSHOTS=1 saves docs/screenshots)
 ```
+
+After changing the Prisma schema run `npm run db:migrate` (it also regenerates the client; Prisma 7 no longer does that by itself).
+E2E tests use the demo company (`npm run seed:demo`) and remove what they create.
 
 `npm test` runs against the `mono_test` database (`TEST_DATABASE_URL`). It only applies migrations, never wipes data.
 

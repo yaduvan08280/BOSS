@@ -10,3 +10,7 @@ export * from './enums';
 export * from './errors';
 export * from './events';
 export * from './auth/schemas';
+export * from './org/gst';
+export * from './org/people';
+export * from './org/schemas';
+export * from './org/types';

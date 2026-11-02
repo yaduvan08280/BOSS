@@ -48,7 +48,10 @@ export const meSchema = z.object({
     themeMode: z.enum(THEME_MODES),
     avatarUrl: z.string().nullable(),
     roleName: z.string(),
+    roleKey: z.string().nullable(),
     permissions: z.array(z.string()),
+    mustChangePassword: z.boolean(),
+    favourites: z.array(z.string()),
   }),
   company: z.object({
     id: z.string(),
@@ -58,6 +61,8 @@ export const meSchema = z.object({
     fyStartMonth: z.number().int(),
     theme: themeSettingsSchema,
     logoUrl: z.string().nullable(),
+    defaultLang: z.enum(LANGUAGES),
+    staffMayPickAccent: z.boolean(),
   }),
   counters: z.object({ pendingWork: z.number().int(), unreadNotifications: z.number().int() }),
 });

@@ -58,3 +58,43 @@ export const asHeader = (jar: Record<string, string>) =>
   Object.entries(jar)
     .map(([k, v]) => `${k}=${v}`)
     .join('; ');
+
+type App = Awaited<ReturnType<typeof makeApp>>['app'];
+
+/** Sign in and return a small client that sends the session cookie + origin on every call. */
+export async function signedIn(app: App, identifier: string, password: string) {
+  const res = await app.inject({
+    method: 'POST',
+    url: '/api/auth/login',
+    headers: { origin: ORIGIN },
+    payload: { identifier, password },
+  });
+  if (res.statusCode !== 200) throw new Error(`login failed: ${res.body}`);
+  let jar = cookieHeader(res);
+  const call = async (
+    method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
+    url: string,
+    payload?: unknown,
+  ) => {
+    const r = await app.inject({
+      method,
+      url,
+      headers: { cookie: asHeader(jar), origin: ORIGIN },
+      ...(payload !== undefined ? { payload: payload as object } : {}),
+    });
+    jar = cookieHeader(r, jar);
+    return { status: r.statusCode, body: r.body ? (JSON.parse(r.body) as any) : null }; // eslint-disable-line @typescript-eslint/no-explicit-any
+  };
+  return {
+    get: (url: string) => call('GET', url),
+    post: (url: string, body?: unknown) => call('POST', url, body ?? {}),
+    put: (url: string, body: unknown) => call('PUT', url, body),
+    patch: (url: string, body: unknown) => call('PATCH', url, body),
+    del: (url: string) => call('DELETE', url),
+  };
+}
+
+export async function ownerClient(app: App) {
+  const c = await makeCompany(app);
+  return { ...c, api: await signedIn(app, c.mobile, c.password) };
+}

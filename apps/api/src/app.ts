@@ -13,11 +13,20 @@ import originPlugin from './plugins/origin';
 import { sseRoutes } from './plugins/sse';
 import { authRoutes } from './modules/auth/routes';
 import { healthRoutes } from './modules/health/routes';
+import { fileRoutes } from './modules/files/routes';
+import { companyRoutes } from './modules/org/company.routes';
+import { departmentRoutes } from './modules/org/departments.routes';
+import { roleRoutes } from './modules/org/roles.routes';
+import { setupRoutes } from './modules/org/setup.routes';
+import { userRoutes } from './modules/org/users.routes';
+import { systemRoutes } from './modules/system/routes';
+import { LocalDiskStorage, type Storage } from './lib/storage';
 
 export type BuildOptions = {
   env: Env;
   prisma?: Db;
   listener?: EventListener;
+  storage?: Storage;
   logger?: FastifyServerOptions['logger'];
 };
 
@@ -61,5 +70,12 @@ export async function buildApp(opts: BuildOptions) {
   await app.register(healthRoutes);
   await app.register(authRoutes, { env });
   await app.register(sseRoutes, { listener });
+  await app.register(fileRoutes, { storage: opts.storage ?? new LocalDiskStorage(env.UPLOAD_DIR) });
+  await app.register(companyRoutes, { env });
+  await app.register(setupRoutes);
+  await app.register(departmentRoutes);
+  await app.register(userRoutes);
+  await app.register(roleRoutes);
+  await app.register(systemRoutes);
   return app;
 }

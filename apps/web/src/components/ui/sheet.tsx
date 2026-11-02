@@ -21,7 +21,7 @@ const panel = cva('fixed z-50 flex flex-col bg-card text-card-foreground shadow-
   defaultVariants: { side: 'right' },
 });
 
-type SheetContentProps = ComponentProps<typeof D.Content> &
+type SheetContentProps = Omit<ComponentProps<typeof D.Content>, 'title'> &
   VariantProps<typeof panel> & { title: ReactNode; description?: ReactNode; hideTitle?: boolean };
 
 /** Side drawer, bottom sheet (phones) or centred dialog — one component, same behaviour. */

@@ -2,6 +2,7 @@ import type { Db } from './client';
 
 /** Models with a `companyId` column. Kept in sync with the schema by `scope.test.ts`. */
 export const COMPANY_SCOPED_MODELS = new Set([
+  'CompanyContact',
   'Branch',
   'Shift',
   'Department',
@@ -21,6 +22,7 @@ export const COMPANY_SCOPED_MODELS = new Set([
 /** Models with `deletedAt` (soft delete). Kept in sync with the schema by `scope.test.ts`. */
 export const SOFT_DELETE_MODELS = new Set([
   'Company',
+  'CompanyContact',
   'Branch',
   'Shift',
   'Department',

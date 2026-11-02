@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FieldError, Input, Label } from '@/components/ui/input';
 import { api, ApiError } from '@/lib/api';
+import { ME_KEY } from '@/modules/auth/session';
 
 function Row({ label, value }: { label: string; value: string | null }) {
   return (
@@ -21,8 +23,9 @@ function Row({ label, value }: { label: string; value: string | null }) {
   );
 }
 
-export function AccountPage({ me }: { me: Me }) {
+export function ChangePasswordCard({ onDone }: { onDone?: () => void }) {
   const { t } = useTranslation();
+  const qc = useQueryClient();
   const [saving, setSaving] = useState(false);
   const form = useForm<ChangePasswordInput>({
     resolver: zodResolver(changePasswordSchema),
@@ -35,6 +38,8 @@ export function AccountPage({ me }: { me: Me }) {
       await api('/api/auth/change-password', { method: 'POST', body: values });
       form.reset();
       toast.success(t('auth.passwordChanged'));
+      await qc.invalidateQueries({ queryKey: ME_KEY });
+      onDone?.();
     } catch (err) {
       const message = err instanceof ApiError ? err.message : t('common.somethingWrong');
       form.setError('currentPassword', { message });
@@ -43,6 +48,41 @@ export function AccountPage({ me }: { me: Me }) {
     }
   };
 
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t('auth.changePassword')}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={form.handleSubmit(submit)} className="space-y-4" noValidate>
+          <div className="space-y-1.5">
+            <Label htmlFor="current">{t('auth.currentPassword')}</Label>
+            <Input
+              id="current"
+              type="password"
+              autoComplete="current-password"
+              {...form.register('currentPassword')}
+            />
+            <FieldError>{form.formState.errors.currentPassword?.message}</FieldError>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="new">{t('auth.newPassword')}</Label>
+            <Input id="new" type="password" autoComplete="new-password" {...form.register('newPassword')} />
+            <p className="text-xs text-muted-foreground">{t('auth.newPasswordHint')}</p>
+            <FieldError>{form.formState.errors.newPassword?.message}</FieldError>
+          </div>
+          <Button type="submit" variant="primary" disabled={saving}>
+            {saving && <Loader2 className="animate-spin" />}
+            {t('auth.changePassword')}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function AccountPage({ me }: { me: Me }) {
+  const { t } = useTranslation();
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader title={t('account.title')} subtitle={t('account.subtitle')} />
@@ -62,40 +102,7 @@ export function AccountPage({ me }: { me: Me }) {
             <Row label={t('account.email')} value={me.user.email} />
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('auth.changePassword')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={form.handleSubmit(submit)} className="space-y-4" noValidate>
-              <div className="space-y-1.5">
-                <Label htmlFor="current">{t('auth.currentPassword')}</Label>
-                <Input
-                  id="current"
-                  type="password"
-                  autoComplete="current-password"
-                  {...form.register('currentPassword')}
-                />
-                <FieldError>{form.formState.errors.currentPassword?.message}</FieldError>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="new">{t('auth.newPassword')}</Label>
-                <Input
-                  id="new"
-                  type="password"
-                  autoComplete="new-password"
-                  {...form.register('newPassword')}
-                />
-                <p className="text-xs text-muted-foreground">{t('auth.newPasswordHint')}</p>
-                <FieldError>{form.formState.errors.newPassword?.message}</FieldError>
-              </div>
-              <Button type="submit" variant="primary" disabled={saving}>
-                {saving && <Loader2 className="animate-spin" />}
-                {t('auth.changePassword')}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+        <ChangePasswordCard />
       </div>
     </div>
   );

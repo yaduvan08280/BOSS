@@ -54,11 +54,21 @@ test('owner signs in and sees the shell', async ({ page }, info) => {
   await expectNoSideScroll(page);
   await shot(page, 'ui-kit', info.project.name);
 
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await page.goto('/');
-  await expect(page.locator('html')).toHaveClass(/dark/);
-  await shot(page, 'home-dark', info.project.name);
-  await page.emulateMedia({ colorScheme: 'light' });
+  // Dark mode through the API the user menu uses, then put back the person's own choice.
+  // Desktop only: both projects share one account, so toggling in parallel would race.
+  if (info.project.name !== 'desktop') return;
+  const origin = new URL(page.url()).origin;
+  const before = (await (await page.request.get('/api/auth/me')).json()).user.themeMode as string;
+  const setMode = (themeMode: string) =>
+    page.request.patch('/api/auth/me/preferences', { data: { themeMode }, headers: { origin } });
+  try {
+    expect((await setMode('dark')).ok()).toBe(true);
+    await page.goto('/');
+    await expect(page.locator('html')).toHaveClass(/dark/);
+    await shot(page, 'home-dark', info.project.name);
+  } finally {
+    await setMode(before);
+  }
 });
 
 test('phone menu opens as a drawer', async ({ page }, info) => {

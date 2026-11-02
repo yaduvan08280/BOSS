@@ -41,7 +41,10 @@ services:
     image: mono-tools:latest
     env_file: ${MONO_ENV_FILE:-../.env}
     environment: *app-env
-    command: ['sh', '-c', 'npx prisma migrate deploy && node apps/api/dist/seed.js']
+    # Also hands the uploads folder to the api user (uid 1000): Docker creates bind folders as root.
+    command: ['sh', '-c', 'chown 1000:1000 /data/uploads && npx prisma migrate deploy && node apps/api/dist/seed.js']
+    volumes:
+      - ${DATA_DIR:-/srv/mono}/uploads:/data/uploads
     depends_on:
       db: { condition: service_healthy }
     restart: 'no'

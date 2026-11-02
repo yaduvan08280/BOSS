@@ -12,3 +12,4 @@ test-results/
 docs/screenshots/*.png
 !docs/screenshots/.gitkeep
 .DS_Store
+data/

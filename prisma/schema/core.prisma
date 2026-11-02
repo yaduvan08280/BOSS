@@ -6,11 +6,19 @@ enum UserStatus {
 
 model Company {
   id           String    @id @default(cuid(2))
+  /// Trading name
   name         String
   legalName    String?   @map("legal_name")
   slug         String    @unique
   city         String?
   state        String?
+  ownerName    String?   @map("owner_name")
+  mobile       String?
+  email        String?
+  website      String?
+  cin          String?
+  gstin        String?
+  pan          String?
   timezone     String    @default("Asia/Kolkata")
   fyStartMonth Int       @default(4) @map("fy_start_month")
   /// appName, theme {seed,warmth,radius,sidebar,buttons}, logoUrl, defaultLang, defaultThemeMode …
@@ -25,8 +33,28 @@ model Company {
   designations Designation[]
   roles        Role[]
   users        User[]
+  contacts     CompanyContact[]
 
   @@map("companies")
+}
+
+/// Company points of contact ("Add as many as you need").
+model CompanyContact {
+  id        String    @id @default(cuid(2))
+  companyId String    @map("company_id")
+  role      String
+  name      String
+  phone     String?
+  email     String?
+  sortOrder Int       @default(0) @map("sort_order")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@index([companyId])
+  @@map("company_contacts")
 }
 
 model Branch {
@@ -135,35 +163,39 @@ model Role {
 }
 
 model User {
-  id                String     @id @default(cuid(2))
-  companyId         String     @map("company_id")
+  id                 String     @id @default(cuid(2))
+  companyId          String     @map("company_id")
   /// Human code, e.g. EMP-001 (per company, from counters).
-  code              String
-  name              String
+  code               String
+  name               String
   /// E.164, e.g. +919829012345
-  mobile            String?
-  email             String?
-  passwordHash      String?    @map("password_hash")
-  roleId            String     @map("role_id")
-  designationId     String?    @map("designation_id")
-  mainDepartmentId  String?    @map("main_department_id")
-  reportsToId       String?    @map("reports_to_id")
-  status            UserStatus @default(ACTIVE)
-  loginEnabled      Boolean    @default(false) @map("login_enabled")
-  branchId          String?    @map("branch_id")
-  shiftId           String?    @map("shift_id")
-  defaultBuddyId    String?    @map("default_buddy_id")
-  telegramChatId    String?    @map("telegram_chat_id")
-  lang              String     @default("en")
-  themeMode         String     @default("system") @map("theme_mode")
-  avatarUrl         String?    @map("avatar_url")
+  mobile             String?
+  email              String?
+  passwordHash       String?    @map("password_hash")
+  roleId             String     @map("role_id")
+  designationId      String?    @map("designation_id")
+  mainDepartmentId   String?    @map("main_department_id")
+  reportsToId        String?    @map("reports_to_id")
+  status             UserStatus @default(ACTIVE)
+  loginEnabled       Boolean    @default(false) @map("login_enabled")
+  branchId           String?    @map("branch_id")
+  shiftId            String?    @map("shift_id")
+  defaultBuddyId     String?    @map("default_buddy_id")
+  telegramChatId     String?    @map("telegram_chat_id")
+  lang               String     @default("en")
+  themeMode          String     @default("system") @map("theme_mode")
+  /// Per-user preferences: favourite screens, density …
+  prefs              Json       @default("{}")
+  /// Set after an admin reset; the user must pick a new password before doing anything else.
+  mustChangePassword Boolean    @default(false) @map("must_change_password")
+  avatarUrl          String?    @map("avatar_url")
   /// HR-only details (DOJ, DOB, bank, PAN, Aadhaar last 4, salary …)
-  hr                Json       @default("{}")
-  lastLoginAt       DateTime?  @map("last_login_at") @db.Timestamptz(3)
-  passwordChangedAt DateTime?  @map("password_changed_at") @db.Timestamptz(3)
-  createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt         DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt         DateTime?  @map("deleted_at") @db.Timestamptz(3)
+  hr                 Json       @default("{}")
+  lastLoginAt        DateTime?  @map("last_login_at") @db.Timestamptz(3)
+  passwordChangedAt  DateTime?  @map("password_changed_at") @db.Timestamptz(3)
+  createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt          DateTime?  @map("deleted_at") @db.Timestamptz(3)
 
   company        Company          @relation(fields: [companyId], references: [id])
   role           Role             @relation(fields: [roleId], references: [id])
