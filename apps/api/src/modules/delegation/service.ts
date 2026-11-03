@@ -64,10 +64,19 @@ async function log(
   await tx.taskEvent.create({ data: { companyId: t.companyId, taskId: t.id, actorId, type, ...extra } });
 }
 
-/** The newest files on a record (up to 5), sent along as proof with "done" / "fixed" messages. */
-export async function proofOf(tx: Tx, companyId: string, entityType: string, entityId: string) {
+/**
+ * Proof sent with "done" / "fixed" messages: the newest files (up to 5) the person who did the work
+ * attached — not the brief the creator attached when giving it.
+ */
+export async function proofOf(
+  tx: Tx,
+  companyId: string,
+  entityType: string,
+  entityId: string,
+  uploadedById: string,
+) {
   const files = await tx.attachment.findMany({
-    where: { companyId, entityType, entityId, deletedAt: null },
+    where: { companyId, entityType, entityId, uploadedById, deletedAt: null },
     orderBy: { createdAt: 'desc' },
     take: 5,
     select: { id: true },
@@ -236,7 +245,7 @@ export async function actOnTask(db: Db, actor: Actor, taskId: string, input: Tas
         payload.note = input.note;
         payload.telegramActions = to === 'PENDING_VERIFY' ? ['verify'] : [];
         // The verifier sees the proof right in the message (Telegram gets the photos themselves).
-        payload.proof = await proofOf(tx, t.companyId, 'task', t.id);
+        payload.proof = await proofOf(tx, t.companyId, 'task', t.id, t.doerId);
         event = 'delegation.done';
         await log(tx, t, actor.userId, 'comment', { note: input.note });
         break;

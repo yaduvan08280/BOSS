@@ -161,6 +161,19 @@ describe('proof reaches the verifier', () => {
   it('the "done, please verify" Telegram message carries the doer\'s photos', async () => {
     const t = await giveTask('Fit new tyres', new Date(Date.now() + 3600_000), { requireProof: true });
     await db.task.update({ where: { id: t.id }, data: { status: 'OPEN' } });
+    // The brief the owner attached when giving the task is not proof.
+    await db.attachment.create({
+      data: {
+        companyId,
+        entityType: 'task',
+        entityId: t.id,
+        path: `${companyId}/brief.png`,
+        mime: 'image/png',
+        size: 3,
+        originalName: 'brief.png',
+        uploadedById: ownerId,
+      },
+    });
     const file = await db.attachment.create({
       data: {
         companyId,

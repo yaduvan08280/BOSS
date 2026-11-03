@@ -23,8 +23,12 @@
   - Documents are sent as files. A missing file never blocks the message.
 - Button results are also written into the chat (Telegram's pop-up disappears too quickly to read "this task needs a photo").
 
+**Uploads in development**
+- The api and the worker each resolved the relative `UPLOAD_DIR` from their own start folder, so web uploads and Telegram photos landed in two different folders. The verifier's message warned that a file "could not be attached", and the web couldn't show Telegram photos. Relative paths are now always from the project root; existing files were merged. Production was not affected (both use `/data/uploads`).
+- Proof sent to the verifier is only what the doer (or ticket solver) attached, not the brief the creator attached when giving the task.
+
 **Verified**
-- 159 unit/integration tests (16 new). They cover:
+- 161 unit/integration tests (18 new). They cover:
   - Date reading and formatting (day first, no month-first, year always shown) and type-to-filter ranking.
   - Every Telegram command path, including the exact messages from testing.
   - /today across midnight; default verifiers in /my.

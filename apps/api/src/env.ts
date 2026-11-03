@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { z } from 'zod';
 
 const envSchema = z.object({
@@ -32,6 +34,21 @@ export type Env = z.infer<typeof envSchema> & { cookieSecure: boolean; origin: s
 let cached: Env | undefined;
 
 /** Validate process.env once; exits with a readable list of problems instead of failing later. */
+/**
+ * A relative path means "from the project root", never from wherever a process was started.
+ * (In development the api and the worker start in different folders; a plain relative UPLOAD_DIR
+ * gave them two separate upload folders, so neither could see the other's files.)
+ */
+export function fromProjectRoot(path: string, start = process.cwd()): string {
+  if (isAbsolute(path)) return path;
+  for (let dir = resolve(start); ; dir = dirname(dir)) {
+    const pkg = join(dir, 'package.json');
+    if (existsSync(pkg) && 'workspaces' in (JSON.parse(readFileSync(pkg, 'utf8')) as object))
+      return join(dir, path);
+    if (dirname(dir) === dir) return resolve(start, path);
+  }
+}
+
 export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
   if (cached && source === process.env) return cached;
   const parsed = envSchema.safeParse(source);
@@ -40,7 +57,12 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
     throw new Error(`Invalid environment:\n${lines}`);
   }
   const url = new URL(parsed.data.BASE_URL);
-  const env = { ...parsed.data, cookieSecure: url.protocol === 'https:', origin: url.origin };
+  const env = {
+    ...parsed.data,
+    UPLOAD_DIR: fromProjectRoot(parsed.data.UPLOAD_DIR),
+    cookieSecure: url.protocol === 'https:',
+    origin: url.origin,
+  };
   if (source === process.env) cached = env;
   return env;
 }
