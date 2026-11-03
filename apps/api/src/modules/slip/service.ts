@@ -14,7 +14,7 @@ import {
 import { writeAudit } from '../../lib/audit';
 import { AppError, notFound } from '../../lib/errors';
 import { emitEvent } from '../../lib/events';
-import { createTask } from '../delegation/service';
+import { createTask, proofOf } from '../delegation/service';
 import { attachUploads, can, checkPerson, hodFor, ownerOf, teamOf, type Actor } from '../work/actor';
 import { moduleSettings } from '../work/settings';
 
@@ -138,7 +138,10 @@ export async function createSlip(db: Db, actor: Actor, input: SlipCreateInput) {
         name: status === 'WITH_APPROVER' ? 'slip.forwarded' : 'slip.submitted',
         entityType: 'slip',
         entityId: slip.id,
-        payload: payloadOf(slip),
+        payload: {
+          ...payloadOf(slip),
+          files: await proofOf(tx, slip.companyId, 'slip', slip.id, actor.userId),
+        },
       },
     );
     return slip;

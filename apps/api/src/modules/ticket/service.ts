@@ -93,7 +93,12 @@ export async function createTicket(db: Db, actor: Actor, input: TicketCreateInpu
     await emitEvent(
       tx,
       { companyId: actor.companyId, actorId: actor.userId },
-      { name: 'ticket.raised', entityType: 'ticket', entityId: t.id, payload: ticketPayload(t) },
+      {
+        name: 'ticket.raised',
+        entityType: 'ticket',
+        entityId: t.id,
+        payload: { ...ticketPayload(t), files: await proofOf(tx, t.companyId, 'ticket', t.id, actor.userId) },
+      },
     );
     return t;
   });

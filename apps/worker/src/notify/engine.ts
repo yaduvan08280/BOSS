@@ -80,7 +80,8 @@ export async function notifyForEvent(event: DomainEvent, deps: EngineDeps): Prom
     );
     return usable.find((t) => t.language === lang) ?? usable.find((t) => t.language === 'en') ?? null;
   };
-  const proofIds = Array.isArray(payload.proof) ? (payload.proof as string[]) : [];
+  // Files that travel with the message: a new record's brief (files) or the work's proof (proof).
+  const proofIds = [payload.files, payload.proof].flatMap((v) => (Array.isArray(v) ? (v as string[]) : []));
   const proofFiles = proofIds.length
     ? await db.attachment.findMany({
         where: { id: { in: proofIds }, companyId: company.id, deletedAt: null },

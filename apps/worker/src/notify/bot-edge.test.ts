@@ -207,6 +207,44 @@ describe('proof reaches the verifier', () => {
   });
 });
 
+describe('the brief reaches the doer', () => {
+  it('files attached when giving a task go with the "New task" message', async () => {
+    const owner = (await actorFor(db, companyId, ownerId))!;
+    const brief = await db.attachment.create({
+      data: {
+        companyId,
+        entityType: 'upload',
+        entityId: ownerId,
+        path: `${companyId}/truck.jpg`,
+        mime: 'image/jpeg',
+        size: 3,
+        originalName: 'truck.jpg',
+        uploadedById: ownerId,
+      },
+    });
+    const t = await db.$transaction((tx) =>
+      createTask(tx, owner, {
+        doerId: driverId,
+        plannedAt: new Date(Date.now() + 3600_000).toISOString(),
+        description: 'Get these tyres fitted',
+        requireProof: false,
+        attachmentIds: [brief.id],
+      }),
+    );
+    const event = await db.domainEvent.findFirstOrThrow({
+      where: { companyId, name: 'delegation.assigned', entityId: t.id },
+    });
+    expect((event.payload as { files: string[] }).files).toEqual([brief.id]);
+    await notifyForEvent(event, { db, appName: 'MONO', baseUrl: 'https://mono.example.in' });
+    const tg = await db.outbox.findFirstOrThrow({
+      where: { eventId: event.id, channel: 'telegram', userId: driverId },
+    });
+    const msg = tg.payload as { files: { name: string }[]; buttons: { label: string }[] };
+    expect(msg.files.map((f) => f.name)).toEqual(['truck.jpg']);
+    expect(msg.buttons[0]!.label).toBe('Accept');
+  });
+});
+
 describe('sending files to Telegram', () => {
   type Call = { method: string; body: unknown };
   const fakeFetch = (calls: Call[]) =>

@@ -26,6 +26,7 @@
 **Uploads in development**
 - The api and the worker each resolved the relative `UPLOAD_DIR` from their own start folder, so web uploads and Telegram photos landed in two different folders. The verifier's message warned that a file "could not be attached", and the web couldn't show Telegram photos. Relative paths are now always from the project root; existing files were merged. Production was not affected (both use `/data/uploads`).
 - Proof sent to the verifier is only what the doer (or ticket solver) attached, not the brief the creator attached when giving the task.
+- The brief travels too: files attached when giving a task (also on reassign), raising a ticket or raising a help slip go into the doer's / solver's / receiver's Telegram message.
 
 **Verified**
 - 161 unit/integration tests (18 new). They cover:

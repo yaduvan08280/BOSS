@@ -65,8 +65,8 @@ async function log(
 }
 
 /**
- * Proof sent with "done" / "fixed" messages: the newest files (up to 5) the person who did the work
- * attached — not the brief the creator attached when giving it.
+ * Files sent along with a message: the newest (up to 5) one person attached to a record.
+ * "New task" carries the creator's brief; "done" / "fixed" carry the doer's proof — never each other's.
  */
 export async function proofOf(
   tx: Tx,
@@ -141,6 +141,8 @@ export async function createTask(
         due: task.plannedAt.toISOString(),
         link: link(task),
         telegramActions: status === 'AWAITING_ACCEPTANCE' ? ['accept'] : ['done', 'move'],
+        // The brief the creator attached goes with the message (photos into Telegram).
+        files: await proofOf(tx, actor.companyId, 'task', task.id, actor.userId),
       },
     },
   );
@@ -273,6 +275,7 @@ export async function actOnTask(db: Db, actor: Actor, taskId: string, input: Tas
         payload.doerId = input.doerId;
         payload.due = input.plannedAt ?? payload.due;
         payload.telegramActions = to === 'AWAITING_ACCEPTANCE' ? ['accept'] : ['done', 'move'];
+        payload.files = await proofOf(tx, t.companyId, 'task', t.id, t.creatorId);
         event = 'delegation.assigned';
         break;
       case 'cancel':
