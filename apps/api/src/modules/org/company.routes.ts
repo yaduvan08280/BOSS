@@ -18,10 +18,11 @@ const idParam = z.object({ id: z.string() });
 
 export async function companyRoutes(app: FastifyInstance, opts: { env: Env }) {
   const r = app.withTypeProvider<ZodTypeProvider>();
-  const admin = { onRequest: [app.requirePermission('core.admin')] };
+  // A fresh hook list per route: the rate limiter adds its hook to the list, so a shared one would leak limits.
+  const admin = () => ({ onRequest: [app.requirePermission('core.admin')] });
   const provider = gstProvider(opts.env.GST_API_PROVIDER, opts.env.GST_API_KEY);
 
-  r.get('/api/org/company', { ...admin, schema: { tags: ['org'] } }, async (request) => {
+  r.get('/api/org/company', { ...admin(), schema: { tags: ['org'] } }, async (request) => {
     const company = await app.prisma.company.findUniqueOrThrow({ where: { id: request.auth!.companyId } });
     const contacts = await request.db.companyContact.findMany({
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
@@ -32,7 +33,7 @@ export async function companyRoutes(app: FastifyInstance, opts: { env: Env }) {
 
   r.put(
     '/api/org/company',
-    { ...admin, schema: { tags: ['org'], body: companyProfileSchema } },
+    { ...admin(), schema: { tags: ['org'], body: companyProfileSchema } },
     async (request) => {
       const body = request.body;
       const mobile = normalizeMobile(body.mobile);
@@ -77,32 +78,35 @@ export async function companyRoutes(app: FastifyInstance, opts: { env: Env }) {
   r.post(
     '/api/org/company/gst-verify',
     {
-      ...admin,
+      ...admin(),
       config: { rateLimit: { max: 30, timeWindow: '1 minute' } },
       schema: { tags: ['org'], body: z.object({ gstin: z.string().max(20) }) },
     },
     async (request) => verifyGstin(request.body.gstin, provider),
   );
 
-  r.post('/api/org/contacts', { ...admin, schema: { tags: ['org'], body: contactSchema } }, async (request) =>
-    inCompanyTx(request, async (tx, ctx) => {
-      const count = await tx.companyContact.count({ where: { companyId: ctx.companyId } });
-      const row = await tx.companyContact.create({
-        data: { ...request.body, companyId: ctx.companyId, sortOrder: count },
-      });
-      await recordChange(tx, ctx, {
-        event: 'contact.created',
-        entityType: 'contact',
-        entityId: row.id,
-        after: row,
-      });
-      return row;
-    }),
+  r.post(
+    '/api/org/contacts',
+    { ...admin(), schema: { tags: ['org'], body: contactSchema } },
+    async (request) =>
+      inCompanyTx(request, async (tx, ctx) => {
+        const count = await tx.companyContact.count({ where: { companyId: ctx.companyId } });
+        const row = await tx.companyContact.create({
+          data: { ...request.body, companyId: ctx.companyId, sortOrder: count },
+        });
+        await recordChange(tx, ctx, {
+          event: 'contact.created',
+          entityType: 'contact',
+          entityId: row.id,
+          after: row,
+        });
+        return row;
+      }),
   );
 
   r.patch(
     '/api/org/contacts/:id',
-    { ...admin, schema: { tags: ['org'], params: idParam, body: contactSchema.partial() } },
+    { ...admin(), schema: { tags: ['org'], params: idParam, body: contactSchema.partial() } },
     async (request) =>
       inCompanyTx(request, async (tx, ctx) => {
         const before = await tx.companyContact.findFirst({
@@ -123,7 +127,7 @@ export async function companyRoutes(app: FastifyInstance, opts: { env: Env }) {
 
   r.delete(
     '/api/org/contacts/:id',
-    { ...admin, schema: { tags: ['org'], params: idParam } },
+    { ...admin(), schema: { tags: ['org'], params: idParam } },
     async (request) =>
       inCompanyTx(request, async (tx, ctx) => {
         const before = await tx.companyContact.findFirst({
@@ -141,14 +145,14 @@ export async function companyRoutes(app: FastifyInstance, opts: { env: Env }) {
       }),
   );
 
-  r.get('/api/org/appearance', { ...admin, schema: { tags: ['org'] } }, async (request) => {
+  r.get('/api/org/appearance', { ...admin(), schema: { tags: ['org'] } }, async (request) => {
     const company = await app.prisma.company.findUniqueOrThrow({ where: { id: request.auth!.companyId } });
     return readAppearance(company.settings, opts.env.APP_NAME);
   });
 
   r.put(
     '/api/org/appearance',
-    { ...admin, schema: { tags: ['org'], body: appearanceSchema } },
+    { ...admin(), schema: { tags: ['org'], body: appearanceSchema } },
     async (request) =>
       inCompanyTx(request, async (tx, ctx) => {
         if (request.body.logoFileId) {

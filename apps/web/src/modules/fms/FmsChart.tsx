@@ -106,7 +106,8 @@ export function FmsChart({
   toFix: Set<string>;
   selected: string | null;
   onSelect: (key: string) => void;
-  onInsert: (afterKey: string) => void;
+  /** Leave out for a read-only chart (no "+" buttons). */
+  onInsert?: (afterKey: string) => void;
 }) {
   const { t } = useTranslation();
   const box = useRef<HTMLDivElement>(null);
@@ -168,7 +169,7 @@ export function FmsChart({
               fix: toFix.has(s.key),
               selected: selected === s.key,
               onSelect: () => onSelect(s.key),
-              onInsert: () => onInsert(s.key),
+              onInsert: onInsert ? () => onInsert(s.key) : undefined,
             }
           : {
               label: id === END ? t('fms.b.end') : t('fms.b.startForm'),

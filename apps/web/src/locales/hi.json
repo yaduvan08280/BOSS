@@ -31,7 +31,9 @@
       "10": "अक्टूबर",
       "11": "नवंबर",
       "12": "दिसंबर"
-    }
+    },
+    "edit": "बदलें",
+    "delete": "हटाएँ"
   },
   "auth": {
     "title": "साइन इन करें",
@@ -656,7 +658,8 @@
       "mis_weekly": "साप्ताहिक MIS",
       "delegation_accept_late": "टास्क समय पर स्वीकार नहीं",
       "delegation_passed_on": "टास्क आगे सौंपा",
-      "delegation_note": "टास्क पर नोट"
+      "delegation_note": "टास्क पर नोट",
+      "ai_daily_summary": "रोज़ का सारांश (AI)"
     },
     "to": {
       "doer": "करने वाला",
@@ -699,7 +702,8 @@
       "fms": "सिस्टम",
       "hr": "HRMS",
       "ims": "इन्वेंटरी",
-      "crm": "ग्राहक/विक्रेता"
+      "crm": "ग्राहक/विक्रेता",
+      "ai": "AI"
     },
     "tab": {
       "whatsapp": "WhatsApp API",
@@ -708,7 +712,8 @@
       "channels": "चैनल जोड़ें",
       "rules": "सूचना नियम",
       "reminders": "याद-दिहानी पैटर्न",
-      "drive": "Google Drive"
+      "drive": "Google Drive",
+      "ai": "AI"
     },
     "aud": {
       "team": "आपकी टीम",
@@ -920,7 +925,9 @@
       "sendTest": "टेस्ट भेजें",
       "testHint": "नियमों से होकर असली टेस्ट भेजता है: ऐप, Telegram, ईमेल, WhatsApp और फ़ोन, जो भी सेट है।",
       "testTo": "किसे भेजें",
-      "testSent": "टेस्ट भेजा। कुछ सेकंड में पहुँचेगा।"
+      "testSent": "टेस्ट भेजा। कुछ सेकंड में पहुँचेगा।",
+      "aiFollowUp": "संदेश AI लिखे",
+      "aiFollowUpHint": "AI व्यक्ति की भाषा में छोटा, विनम्र याद दिलाने वाला संदेश लिखता है (Telegram और ईमेल; WhatsApp अपना स्वीकृत टेम्पलेट रखता है)।"
     },
     "rem": {
       "hint": "टास्क और चेकलिस्ट इनमें से एक चुनते हैं कि कब याद दिलाना है।",
@@ -956,7 +963,9 @@
   "work": {
     "dictate": {
       "start": "बोलकर लिखें",
-      "stop": "रोकें"
+      "stop": "रोकें",
+      "writing": "लिख रहे हैं…",
+      "noMic": "माइक्रोफ़ोन नहीं चल सका।"
     },
     "files": {
       "attach": "फ़ाइल जोड़ें",
@@ -2216,6 +2225,271 @@
       "received": "हमें मिल गया है।",
       "sum": "{{q}} कितना होता है?",
       "send": "भेजें"
+    }
+  },
+  "ai": {
+    "connectFirst": "पहले System Master → Integration → AI में AI जोड़ें।",
+    "openSettings": "AI सेटिंग खोलें",
+    "words_one": "{{count}} शब्द",
+    "words_other": "{{count}} शब्द",
+    "provider": {
+      "anthropic": "Anthropic (Claude)",
+      "openai": "OpenAI",
+      "gemini": "Google Gemini",
+      "ollama": "Ollama (own machine)"
+    },
+    "providerHint": {
+      "anthropic": "सुझाया गया",
+      "openai": "Or a compatible server",
+      "gemini": "Google AI Studio key",
+      "ollama": "मुफ़्त, आपके सर्वर पर"
+    },
+    "stt": {
+      "browser": "ब्राउज़र (मुफ़्त; Chrome में सबसे अच्छा)",
+      "openai": "OpenAI Whisper (हिंदी और अंग्रेज़ी)",
+      "gemini": "Google Gemini"
+    },
+    "set": {
+      "provider": "1. कौन सा AI",
+      "model": "मॉडल",
+      "modelHint": "Type the model name exactly as your provider writes it.",
+      "perMillion": "per million tokens",
+      "baseUrl": "Server address",
+      "baseUrlHint": {
+        "openai": "Leave empty for OpenAI itself",
+        "gemini": "Leave empty for Google",
+        "ollama": "Where Ollama runs, e.g. http://localhost:11434"
+      },
+      "apiKey": "API key",
+      "keySaved": "A key ending …{{end}} is saved. Type a new one only to change it.",
+      "priceIn": "Price in ($ per million input tokens)",
+      "priceOut": "Price out ($ per million output tokens)",
+      "priceHint": "Optional: used to estimate the cost.",
+      "speech": "2. आवाज़ और रोज़ का सारांश",
+      "sttProvider": "आवाज़ को शब्दों में कौन बदले",
+      "sttHint": "Used by every Dictate / Speak button. The browser works without a key but needs Chrome.",
+      "sttModel": "Speech model",
+      "sttKey": "Speech API key",
+      "dailySummary": "मालिक को 08:45 पर रोज़ का सारांश",
+      "dailySummaryHint": "Telegram पर छोटा संदेश: कल क्या हुआ, क्या देर से है, आज क्या करना है।",
+      "test": "जाँचें",
+      "testOk": "जुड़ गया। AI ने जवाब दिया।"
+    },
+    "usage": {
+      "title": "इस महीने",
+      "calls": "AI कॉल",
+      "tokens": "Tokens",
+      "cost": "ख़र्च (अनुमान)",
+      "estimate": "Costs are estimates from the provider's list prices, in US dollars.",
+      "recent": "हाल की कॉल"
+    },
+    "feature": {
+      "build_flow": "Build with AI",
+      "edit_flow": "Edit with AI",
+      "kpis": "KPI suggestions",
+      "master": "Masters",
+      "ask": "Ask",
+      "ask_answer": "Ask (answer)",
+      "business": "Business details",
+      "daily_summary": "Daily summary",
+      "follow_up": "AI follow-up",
+      "transcribe": "Dictate",
+      "test": "Test"
+    },
+    "quality": {
+      "empty": "ख़ाली",
+      "short": "बहुत छोटा",
+      "fair": "ठीक",
+      "good": "अच्छा",
+      "veryGood": "बहुत अच्छा"
+    },
+    "biz": {
+      "title": "आपका व्यापार, आपके शब्दों में",
+      "placeholder": "What you make or sell, your customers, how an order moves, who does what…",
+      "refresh": "हमारे AI से बेहतर करें",
+      "refreshTitle": "Business details, refreshed",
+      "reviewHint": "Check and change anything, then use it. Nothing is saved until you press Save.",
+      "use": "यह लिखा हुआ लें",
+      "chatGpt": "ChatGPT से अपडेट करें",
+      "chatGptTitle": "Update it with ChatGPT",
+      "chatGptHint": "Copy the prompt into ChatGPT, answer its questions, then paste its final text here.",
+      "step1": "1. Copy the prompt",
+      "copyPrompt": "Copy the prompt",
+      "copyAgain": "Copy again",
+      "step2": "2. Paste ChatGPT's answer",
+      "copied": "Copied",
+      "copyFailed": "Could not copy. Select the text and copy it.",
+      "whatTitle": "क्या लिखें",
+      "what": [
+        "आप क्या बनाते या बेचते हैं",
+        "आपके ग्राहक कौन हैं",
+        "एक ऑर्डर कदम-दर-कदम कैसे चलता है",
+        "कौन क्या करता है",
+        "काम में कितना समय लगता है",
+        "आप कौन से कागज़ बनाते हैं",
+        "आपकी टीम कौन से शब्द बोलती है",
+        "आमतौर पर गड़बड़ कहाँ होती है"
+      ],
+      "privacy": "This text is sent with every AI request so the AI understands your business. Don't put passwords or bank details here."
+    },
+    "build": {
+      "button": "AI से बनाएँ",
+      "title": "AI से बनाएँ",
+      "subtitle": "बताइए काम कैसे चलता है; AI प्रक्रिया बना देगा।",
+      "back": "All processes",
+      "how": "काम कैसे चलता है?",
+      "language": "Language",
+      "lang": {
+        "en": "English",
+        "hi": "हिंदी",
+        "hinglish": "Hinglish"
+      },
+      "placeholder": "Who starts it, what happens next, who does each step and how long it takes…",
+      "words": "{{words}}/{{min}} words",
+      "moreWords": "30 words or more give a much better draft.",
+      "name": "Process name (optional)",
+      "namePlaceholder": "e.g. Order to dispatch",
+      "department": "Department (optional)",
+      "anyDepartment": "Let the AI choose",
+      "draft": "मेरी प्रक्रिया बनाएँ",
+      "drafting": "बन रहा है… एक मिनट लग सकता है",
+      "examples": "उदाहरण",
+      "peopleHint": "Name people the way they are in MONO ({{example}}) and they are assigned for you.",
+      "reviewTitle": "AI ने आपकी प्रक्रिया बनाई",
+      "summary": "{{steps}} steps · {{start}} start fields · {{fields}} step fields",
+      "allAssigned": "सबको काम मिल गया",
+      "unassigned_one": "{{count}} step needs a person",
+      "unassigned_other": "{{count}} steps need a person",
+      "unmatched": "MONO में नहीं मिले — बिल्डर में चुनें",
+      "where": {
+        "coordinator": "coordinator",
+        "solver": "problem solver",
+        "department": "department"
+      },
+      "changesTitle": "अपने शब्दों में बदलाव बताएँ",
+      "changesPlaceholder": "e.g. add a manager approval after the quote; Ravi does the invoice",
+      "change": "बदलें",
+      "remember": "अगली बार के लिए याद रखें?",
+      "rememberHint": "Ticked lines are added to your business details when you open the process.",
+      "open": "बिल्डर में खोलें",
+      "again": "फिर से शुरू करें"
+    },
+    "example": {
+      "leadToOrder": "Lead to order",
+      "orderToDispatch": "Order to dispatch",
+      "purchaseRequest": "Purchase request",
+      "complaint": "Customer complaint (Hindi)",
+      "joining": "New employee joining"
+    },
+    "edit": {
+      "button": "AI से बदलें",
+      "title": "AI से बदलें",
+      "hint": "Say what to change. You'll see the changes before anything is applied.",
+      "placeholder": "e.g. add a quality check after packing; Ravi does the invoice",
+      "run": "बदलाव दिखाएँ",
+      "accept": "बदलाव लागू करें",
+      "reject": "फिर से कोशिश करें",
+      "nothing": "The AI found nothing to change. Try saying it differently.",
+      "added": "New step: {{name}}",
+      "removed": "Step removed: {{name}}",
+      "fieldAdded": "New start field: {{name}}",
+      "fieldRemoved": "Start field removed: {{name}}",
+      "what": {
+        "name": "name",
+        "type": "type",
+        "doers": "who does it",
+        "time": "time",
+        "fields": "form",
+        "checklist": "checklist",
+        "proof": "proof",
+        "route": "where it goes next",
+        "automatic": "automatic action"
+      },
+      "quick": {
+        "approval": "Add approval step",
+        "approvalText": "Add a manager approval step where it makes sense.",
+        "photo": "Add photo proof",
+        "photoText": "Ask for a photo as proof at the steps where work is done physically.",
+        "whatsapp": "WhatsApp update",
+        "whatsappText": "Send the customer a WhatsApp update at the important steps.",
+        "shorter": "Make it shorter",
+        "shorterText": "Make the process shorter: merge steps that the same person does one after another."
+      },
+      "saveFirst": "पहले अपने बदलाव सेव करें",
+      "applied": "बदलाव लागू हुए। रखने के लिए Save draft दबाएँ।"
+    },
+    "kpi": {
+      "suggest": "AI से सुझाव",
+      "added_one": "{{count}} card added — check it and save",
+      "added_other": "{{count}} cards added — check them and save"
+    },
+    "master": {
+      "subtitle": "Lists the whole company picks from: vehicles, machines, sites…",
+      "build": "AI से मास्टर बनाएँ",
+      "new": "नया मास्टर",
+      "none": "अभी कोई मास्टर नहीं",
+      "noneBody": "Describe one in plain words and the AI proposes its fields.",
+      "byAi": "Built with AI",
+      "confirmDelete": "Delete the master “{{name}}”?",
+      "deleted": "Master deleted",
+      "askHint": "Say what the list is and what you keep about each one.",
+      "askPlaceholder": "e.g. our trucks: number, kind, driver, insurance and fitness dates",
+      "draft": "Propose fields",
+      "reviewTitle": "Check the proposed master",
+      "reviewHint": "Change, add or remove fields, then save.",
+      "edit": "Edit master",
+      "name": "Name",
+      "description": "What it is",
+      "keyField": "Unique for each row",
+      "displayField": "Shown when picked",
+      "later": "Rows, Excel import and the Master Library arrive in phase 10."
+    },
+    "ask": {
+      "row": "AI से पूछें: “{{q}}”",
+      "looking": "ढूँढ रहे हैं…",
+      "failed": "इसका जवाब नहीं मिला।",
+      "showing": "Showing {{shown}} of {{total}}.",
+      "onlyMine": "सिर्फ़ आपका अपना काम गिना गया है।",
+      "checkHint": "जवाब MONO के डेटा से हैं; जाँचने के लिए पंक्ति खोलें।"
+    },
+    "col": {
+      "number": "No.",
+      "task": "Task",
+      "doer": "Doer",
+      "given_by": "Given by",
+      "department": "Department",
+      "status": "Status",
+      "planned_at": "Due",
+      "done_at": "Done",
+      "is_late": "Late",
+      "days_late": "Days late",
+      "date_moves": "Date moves",
+      "created_at": "Created",
+      "checklist": "Checklist",
+      "submitted_at": "Submitted",
+      "items_done": "Items done",
+      "items_total": "Items",
+      "is_missed": "Missed",
+      "title": "Title",
+      "raised_by": "Raised by",
+      "solver": "Solver",
+      "escalation_level": "Escalation",
+      "planned_fix_at": "Fix due",
+      "resolved_at": "Fixed",
+      "closed_at": "Closed",
+      "reopen_count": "Reopened",
+      "process": "Process",
+      "record_number": "No.",
+      "record": "Record",
+      "step": "Step",
+      "started_at": "Started",
+      "started_by": "Started by",
+      "code": "Code",
+      "name": "Name",
+      "designation": "Designation",
+      "has_login": "Login",
+      "telegram_linked": "Telegram",
+      "value": "Value"
     }
   }
 }

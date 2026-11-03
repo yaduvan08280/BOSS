@@ -1,0 +1,308 @@
+{
+  "name": "order",
+  "runName": "Lead",
+  "departments": ["Sales", "Marketing"],
+  "coordinator": "Rohit Mittal",
+  "solver": null,
+  "startFields": [
+    {
+      "label": "Company name",
+      "type": "text",
+      "required": true,
+      "options": []
+    },
+    {
+      "label": "Contact person",
+      "type": "text",
+      "required": true,
+      "options": []
+    },
+    {
+      "label": "Mobile number",
+      "type": "mobile",
+      "required": true,
+      "options": []
+    },
+    {
+      "label": "City",
+      "type": "text",
+      "required": true,
+      "options": []
+    },
+    {
+      "label": "Source of the lead",
+      "type": "dropdown",
+      "required": true,
+      "options": ["Website", "Social Media", "Email Campaign", "Referral"]
+    },
+    {
+      "label": "Customer requirement",
+      "type": "items",
+      "required": true,
+      "options": []
+    }
+  ],
+  "steps": [
+    {
+      "key": "capture_enquiry",
+      "name": "Capture the new enquiry",
+      "type": "TASK",
+      "doers": ["Neha Kapoor"],
+      "byStarter": false,
+      "time": {
+        "value": 1,
+        "unit": "hours",
+        "from": "start"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "qualify_lead",
+      "name": "Qualify the lead",
+      "type": "TASK",
+      "doers": ["Arjun Rawat"],
+      "byStarter": false,
+      "time": {
+        "value": 1,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "set_meeting",
+      "name": "Set a meeting with the customer",
+      "type": "AUTO",
+      "doers": [],
+      "byStarter": true,
+      "time": {
+        "value": 3,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": "message",
+      "documentType": null,
+      "autoText": "We will be meeting with you on [date] to discuss your requirements. Kindly confirm if this works for you.",
+      "notifyCustomer": false
+    },
+    {
+      "key": "send_samples",
+      "name": "Send samples",
+      "type": "TASK",
+      "doers": ["Ravi Kumar"],
+      "byStarter": false,
+      "time": {
+        "value": 2,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": true
+    },
+    {
+      "key": "wait_for_trial_order",
+      "name": "Wait for the customer's trial order",
+      "type": "OUTSIDE",
+      "doers": [],
+      "byStarter": false,
+      "time": {
+        "value": 7,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": true
+    },
+    {
+      "key": "give_proposal",
+      "name": "Give the proposal in person",
+      "type": "TASK",
+      "doers": ["Rohit Mittal"],
+      "byStarter": false,
+      "time": {
+        "value": 3,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": true
+    },
+    {
+      "key": "negotiate_price",
+      "name": "Negotiate the price with customer",
+      "type": "DECISION",
+      "doers": [],
+      "byStarter": false,
+      "time": {
+        "value": 3,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "Price negotiation outcome",
+          "type": "dropdown",
+          "required": true,
+          "options": ["Accepted as is", "Needs adjustment"]
+        }
+      ],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": true
+    },
+    {
+      "key": "get_purchase_order",
+      "name": "Get the purchase order from customer",
+      "type": "OUTSIDE",
+      "doers": [],
+      "byStarter": false,
+      "time": {
+        "value": 3,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": true
+    },
+    {
+      "key": "approve_price",
+      "name": "Rajesh Goyal approves the final price",
+      "type": "APPROVAL",
+      "doers": ["Rajesh Goyal"],
+      "byStarter": false,
+      "time": {
+        "value": 8,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": "negotiate_price",
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "order_confirmation",
+      "name": "Sunita Bansal hands over to order desk",
+      "type": "TASK",
+      "doers": ["Sunita Bansal"],
+      "byStarter": false,
+      "time": {
+        "value": 4,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": true
+    },
+    {
+      "key": "thank_you_message",
+      "name": "Send customer a thank-you message",
+      "type": "AUTO",
+      "doers": [],
+      "byStarter": false,
+      "time": null,
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": "end",
+      "rejectTo": null,
+      "autoAction": "message",
+      "documentType": null,
+      "autoText": "Thank you for choosing Demo Industries. We look forward to serving your needs.",
+      "notifyCustomer": true
+    }
+  ],
+  "remember": [
+    "Neha Kapoor in marketing captures every new enquiry within an hour.",
+    "Arjun Rawat qualifies the lead within a day and sets a meeting.",
+    "Rajesh Goyal must approve the final price within 8 hours."
+  ]
+}

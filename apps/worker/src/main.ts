@@ -4,6 +4,7 @@ import pino from 'pino';
 import { createPrisma } from '@mono/db';
 import { loadEnv } from '@mono/api/env';
 import {
+  aiFollowUpText,
   eaJobs,
   EventListener,
   expireChecklists,
@@ -12,6 +13,7 @@ import {
   remindChecklists,
   remindUnaccepted,
   runFmsWebhooks,
+  sendDailySummaries,
   sendWeeklyMis,
   sweepChecklists,
   sweepSlips,
@@ -75,6 +77,7 @@ const handlers: HandlerRegistry = {
         appName: env.APP_NAME,
         baseUrl: env.BASE_URL,
         onQueued: () => void drainOutbox(),
+        aiWriter: (companyId, input) => aiFollowUpText(db, env.APP_SECRET, companyId, input),
       });
     },
   ],
@@ -105,7 +108,7 @@ await boss.work(QUEUE_ESCALATIONS, async () => {
 await boss.schedule(QUEUE_ESCALATIONS, '* * * * *', null, { tz: 'UTC' });
 
 // Every 5 minutes: checklist sweep, overdue tasks, late slips, ticket escalations.
-// Every minute: checklist reminders and misses, the EA board's day and briefs, Monday's MIS.
+// Every minute: checklist reminders and misses, the EA board's day and briefs, Monday's MIS, the AI summary.
 await boss.createQueue(QUEUE_WORK_5MIN, { policy: 'singleton' });
 await boss.createQueue(QUEUE_WORK_1MIN, { policy: 'singleton' });
 await boss.work(QUEUE_WORK_5MIN, async () => {
@@ -132,8 +135,9 @@ await boss.work(QUEUE_WORK_1MIN, async () => {
   await expireChecklists(prisma);
   const briefs = await eaJobs(prisma);
   const mis = await sendWeeklyMis(prisma);
+  const summaries = await sendDailySummaries(prisma, env.APP_SECRET);
   await runFmsWebhooks(prisma);
-  if (briefs || mis) log.info({ briefs, mis }, 'Scheduled sends');
+  if (briefs || mis || summaries) log.info({ briefs, mis, summaries }, 'Scheduled sends');
 });
 await boss.schedule(QUEUE_WORK_5MIN, '*/5 * * * *', null, { tz: 'UTC' });
 await boss.schedule(QUEUE_WORK_1MIN, '* * * * *', null, { tz: 'UTC' });

@@ -11,6 +11,7 @@ const SUBTABS = [
   { key: 'channels', path: '/system/integration/channels' },
   { key: 'rules', path: '/system/integration/rules' },
   { key: 'reminders', path: '/system/integration/reminders' },
+  { key: 'ai', path: '/system/integration/ai' },
   { key: 'drive', path: '/system/integration/drive' },
 ];
 

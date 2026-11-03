@@ -46,6 +46,10 @@ const OrgChartTab = page(() => import('@/modules/system/orgchart/OrgChartTab'), 
 const RolesTab = page(() => import('@/modules/system/roles/RolesTab'), 'RolesTab');
 const SystemMasterLayout = page(() => import('@/modules/system/SystemMasterPage'), 'SystemMasterLayout');
 const UsersTab = page(() => import('@/modules/system/users/UsersTab'), 'UsersTab');
+const AiTab = page(() => import('@/modules/ai/AiTab'), 'AiTab');
+const BusinessDetailsPage = page(() => import('@/modules/ai/BusinessDetailsPage'), 'BusinessDetailsPage');
+const BuildWithAiPage = page(() => import('@/modules/ai/BuildWithAiPage'), 'BuildWithAiPage');
+const MastersPage = page(() => import('@/modules/ai/MastersPage'), 'MastersPage');
 
 const placeholderRoutes = ALL_ITEMS.filter((i) => i.phase > 0).map((i) => ({
   path: i.path,
@@ -77,7 +81,10 @@ export const router = createBrowserRouter([
       { path: '/ea', element: <WithMe render={(me) => <EaPage me={me} />} /> },
       { path: '/mis', element: <WithMe render={(me) => <MisPage me={me} />} /> },
       { path: '/fms/builder', element: <WithMe render={(me) => <BuilderPage me={me} />} /> },
+      { path: '/fms/builder/ai', element: <WithMe render={(me) => <BuildWithAiPage me={me} />} /> },
       { path: '/fms/builder/:id', element: <WithMe render={(me) => <FlowEditorPage me={me} />} /> },
+      { path: '/masters', element: <WithMe render={(me) => <MastersPage me={me} />} /> },
+      { path: '/masters/build', element: <WithMe render={(me) => <MastersPage me={me} />} /> },
       { path: '/fms/live', element: <WithMe render={(me) => <LiveFmsPage me={me} />} /> },
       { path: '/fms/my-steps', element: <WithMe render={(me) => <MyStepsPage me={me} />} /> },
       { path: '/documents', element: <WithMe render={(me) => <DocumentsPage me={me} />} /> },
@@ -106,6 +113,7 @@ export const router = createBrowserRouter([
               { path: 'roles', element: <RolesTab /> },
               { path: 'org-chart', element: <OrgChartTab /> },
               { path: 'appearance', element: <AppearanceTab /> },
+              { path: 'business-details', element: <BusinessDetailsPage /> },
               { path: 'engine', element: <EnginePage /> },
               {
                 path: 'integration',
@@ -117,6 +125,7 @@ export const router = createBrowserRouter([
                   { path: 'channels', element: <ChannelsTab /> },
                   { path: 'rules', element: <RulesTab /> },
                   { path: 'reminders', element: <RemindersTab /> },
+                  { path: 'ai', element: <AiTab /> },
                   { path: 'drive', element: <DrivePlaceholder /> },
                 ],
               },

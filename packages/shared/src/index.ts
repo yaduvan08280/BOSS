@@ -38,3 +38,8 @@ export * from './fms/definition';
 export * from './fms/flow';
 export * from './fms/worktime';
 export * from './fms/fields';
+export * from './ai/providers';
+export * from './ai/drafts';
+export * from './ai/ask';
+export * from './ai/convert';
+export * from './ai/examples';

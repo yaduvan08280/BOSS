@@ -141,6 +141,37 @@ describe('engine', () => {
     expect(buttons[0]).toEqual({ label: 'Verify', data: `act:verify:user:${event.entityId}` });
   });
 
+  it('"AI follow-up" rules send the AI words on Telegram, and the template when the AI has none', async () => {
+    const { company, owner, tag } = await newCompany();
+    await db.user.update({ where: { id: owner.id }, data: { telegramChatId: `ai${tag}` } });
+    await db.notificationRule.updateMany({
+      where: { companyId: company.id, event: 'delegation.follow_up' },
+      data: { aiFollowUp: true },
+    });
+    const asked: { recipient: string; facts: string }[] = [];
+    const send = async (reply: string | null) => {
+      const event = await emit(company.id, 'delegation.follow_up', {
+        doerId: owner.id,
+        number: 70,
+        title: 'Grease bearings',
+        note: 'Any update?',
+      });
+      await notifyForEvent(event, {
+        ...deps,
+        aiWriter: async (_companyId, input) => (asked.push(input), reply),
+      });
+      const tg = await db.outbox.findFirstOrThrow({ where: { eventId: event.id, channel: 'telegram' } });
+      return (tg.payload as { text: string }).text;
+    };
+    expect(await send('Owner, task #70 is waiting on you — please share an update today.')).toBe(
+      'Owner, task #70 is waiting on you — please share an update today.',
+    );
+    expect(asked[0]).toMatchObject({ recipient: 'Owner' });
+    expect(asked[0]!.facts).toContain('#70');
+    // No AI text (not connected, or it failed): the usual template goes out.
+    expect(await send(null)).toContain('Any update?');
+  });
+
   it('a passed-on task: the next person gets the Accept button, the person who gave it only the news', async () => {
     const { company, owner, tag } = await newCompany();
     await db.user.update({ where: { id: owner.id }, data: { telegramChatId: `po${tag}` } });

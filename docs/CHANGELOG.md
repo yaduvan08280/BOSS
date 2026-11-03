@@ -1,5 +1,80 @@
 # Changelog
 
+## Phase 6 — AI layer (03/11/2026)
+
+**Connect an AI** (System Master → Integration → AI)
+- Pick Anthropic (Claude), OpenAI (or a compatible server), Google Gemini or Ollama (a free model on your own machine).
+  - The default model is Claude Opus 5.5. MONO knows the prices of the Claude models; for any other model you can type the price per million tokens.
+  - The key is stored encrypted and never shown again; the screen shows only its last 4 characters.
+- **Test** makes one tiny call and keeps the result.
+- "This month" shows calls, tokens and the estimated cost per feature, plus the latest calls. Every AI call is logged with its feature, prompt version, tokens, time and cost.
+- Speech to text: the browser (free, Chrome) or OpenAI Whisper / Gemini (Hindi and English).
+- A switch for the daily summary.
+
+**Business details** (System Master → Business details)
+- "Your business, in your words": what you make, your customers, how an order moves, who does what… Every AI request includes it.
+- A quality meter with the word count ("Very good · 521 words").
+- **Refresh with our AI** rewrites it from the current text plus what MONO's data shows (departments, processes, papers…). The new text is shown for review and saved only when you press Save.
+- **Update it with ChatGPT**: copy a ready prompt, paste ChatGPT's answer back. Nothing is sent anywhere by MONO for this.
+- **Remember this for next time?** After a draft, the AI suggests short facts; the ticked ones are added to the business details.
+
+**Build with AI** (FMS Builder → Build with AI)
+- Describe how the work goes, by typing or speaking, in English, Hindi or Hinglish. A counter shows "x/30 words".
+- Optionally give a name and a department. Five examples fill the box: Lead to order, Order to dispatch, Purchase request, Customer complaint (Hindi) and New employee joining.
+- "Your flow, drafted by AI" shows:
+  - the summary ("11 steps · 5 start fields · 14 step fields · Everyone is assigned");
+  - names it could not find in MONO;
+  - the flowchart, with red marks on steps to fix.
+- From there:
+  - ask for changes in your own words;
+  - **Open in the Builder** creates a draft process (your description becomes its "how it works" text).
+- Names are matched to real people: the full name, a unique first name ("Neha"), or a unique designation ("store keeper"). Ambiguous names (two Ravis) are left for you to choose.
+- MONO checks every draft. When it finds problems it can name (a step without a time, a branch to a step that doesn't exist, a step nothing leads to, no way to the end), it asks the AI once to fix them and keeps the better version.
+- It also corrects common slips by itself:
+  - a step that only says "End" is dropped;
+  - a task with Yes/No routes becomes a decision;
+  - an approval's Yes/No become its approved / rejected routes.
+
+**Edit with AI** (in the process editor)
+- Say the change ("add a quality check after packing; Ravi does the invoice"), or use the quick changes: Add approval step · Add photo proof · WhatsApp update · Make it shorter.
+- You see what would change (new steps, removed steps, and which part of a step changes: who, time, form, route…). **Apply** or **Try again**.
+- Details the AI doesn't handle stay as they were: backups, date-field timing, documents, field help.
+
+**More AI**
+- **Suggest with AI** on the Dashboard tab proposes KPI cards. Only fields that exist are used, and only number fields are added up.
+- **Masters:** *My masters* lists the company's masters; *Build a master with AI* proposes the fields to check and save; you can also make one by hand. Rows, Excel import and the Master Library come in phase 10.
+- **Ask** (Home search): type a question ("who has the most late tasks?"). The answer is a sentence plus the rows behind it, each opening its record.
+  - The AI only fills in a plan over six read-only views (tasks, checklists, tickets, process steps, process records, people). MONO checks every name, binds every value, adds the company, and runs it read-only with a 5-second limit.
+  - People without AI admin rights see only their own work.
+- **Dictate:** every mic button uses the company's speech-to-text when it is set up, else the browser's.
+- **Daily summary:** the owner gets a short message at 08:45 (company time): yesterday's work, what is late now (with names), what is due today. Telegram by default, once a day, only when AI is connected.
+- **AI follow-up:** a switch on any notification rule lets the AI write a short, polite chase in the person's language for Telegram and email. WhatsApp keeps its approved template, and the template is used whenever the AI has nothing.
+
+**Fixes found while testing**
+- A rate limit set on one route also applied to every route around it. This happened on the AI settings routes and the company settings routes, where GST verify's 30 a minute applied to all of them. Each route now has its own hook list, and a test covers it.
+- Two labels (Edit, Delete) were missing and showed as raw keys. A new test fails the build when a screen asks for text that doesn't exist.
+- A step the AI called "end" took the name MONO uses for "the record closes", which broke the flow. "end" is now reserved.
+- Ollama on a CPU: a long answer always failed after exactly 5 minutes with "Could not reach the AI service". Node gives up when no reply starts within 5 minutes, and Ollama sent nothing until it had finished writing. Answers are now streamed, so they can take as long as they need (up to 30 minutes).
+
+**Verified**
+- 217 unit/integration tests (28 new) cover:
+  - name matching, draft conversion and its slip fixes, the edit diff, Ask plan checks, cost estimates;
+  - the AI API with a scripted model: not-connected, key never returned, build → open in builder, the repair round, edit diff, KPI filtering, Ask over the real views, an injection attempt, own rows only, another company's rows never shown;
+  - business details, masters, and the 08:45 summary once a day;
+  - AI follow-up in the notification engine, Ollama streaming, and the rate-limit regression.
+- 37 browser tests:
+  - the AI screens fit at 380 px and 1440 px;
+  - business details save;
+  - a master shows and is deleted;
+  - the AI follow-up switch;
+  - "Build with AI" review → "Open in the Builder" with the model's answer stubbed.
+- Live run on a real model: Ollama with **qwen2.5:7b** on this machine's CPU. No cloud key was available.
+  - The whole screen path works: drafting, summary, flags, chart, "remember" suggestions.
+  - Evals: 3 of 5 descriptions pass (Order to dispatch, Purchase request, New employee joining).
+  - Lead to order gave 9–11 steps with gaps: some steps without a person, and the "need confirmed?" decision missed. The Hindi complaint had a broken "No" branch. Both answers are kept in `apps/api/src/modules/ai/evals/failed/`.
+  - **The phase 6 acceptance (Lead to Order → a valid 10–12 step flow) is not yet shown on the default model (Claude Opus 5.5).** It needs an API key: `AI_EVAL_PROVIDER=anthropic AI_EVAL_KEY=… npm test -- flow.eval`.
+- Production stack: the `task_handover` and `ai` migrations apply; AI routes answer through Caddy; no errors in the logs.
+
 ## Delegation: Pass on and task notes (03/11/2026)
 
 **Pass on: one task, several people, one after another**

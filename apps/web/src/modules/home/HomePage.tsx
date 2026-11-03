@@ -1,9 +1,9 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, Search, Star } from 'lucide-react';
+import { ArrowRight, Search, Sparkles, Star } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { canOpenSystemMaster, type Me, type SystemSummary } from '@mono/shared';
+import { canOpenSystemMaster, hasPermission, type Me, type SystemSummary } from '@mono/shared';
 import { AlertBanner } from '@/components/alert-banner';
 import { api } from '@/lib/api';
 import { cn, firstName } from '@/lib/utils';
@@ -12,6 +12,8 @@ import { ME_KEY } from '@/modules/auth/session';
 import { SearchResults } from '@/modules/search/SearchResults';
 import { handleListKeys } from '@/modules/search/keys';
 import { useSearch } from '@/modules/search/useSearch';
+import { looksLikeQuestion, useAiStatus } from '@/modules/ai/api';
+import { AskPanel } from '@/modules/ai/AskPanel';
 
 const CHIPS = [
   'all',
@@ -59,6 +61,16 @@ export function HomePage({ me }: { me: Me }) {
   const hits = useSearch(q, me);
   const alert = useHomeAlert(admin);
   const favourites = me.user.favourites;
+  // Ask (CLAUDE.md §13): questions go to the AI, which answers from the company's data.
+  const ai = useAiStatus();
+  const canAsk = Boolean(ai.data?.connected) && hasPermission(me.user.permissions, 'ai.view');
+  const [asked, setAsked] = useState<string | null>(null);
+  const ask = () => {
+    if (!canAsk || q.trim().length < 3) return false;
+    setAsked(q.trim());
+    setQ('');
+    return true;
+  };
 
   const toggleFavourite = async (key: string) => {
     const next = favourites.includes(key) ? favourites.filter((f) => f !== key) : [...favourites, key];
@@ -97,7 +109,10 @@ export function HomePage({ me }: { me: Me }) {
               handleListKeys(e, {
                 count: hits.length,
                 setActive,
-                onEnter: () => hits[active] && navigate(hits[active].to),
+                onEnter: () =>
+                  (looksLikeQuestion(q) || !hits.length) && ask()
+                    ? undefined
+                    : hits[active] && navigate(hits[active].to),
                 onEscape: () => setQ(''),
               })
             }
@@ -111,10 +126,22 @@ export function HomePage({ me }: { me: Me }) {
         </label>
         {q.trim() && (
           <div className="absolute inset-x-0 top-[calc(100%+6px)] z-20 max-h-[60dvh] overflow-y-auto rounded-card border bg-popover shadow-xl">
+            {canAsk && (
+              <button
+                onClick={ask}
+                className="flex w-full items-center gap-2 border-b px-4 py-3 text-left text-sm hover:bg-muted"
+              >
+                <Sparkles className="size-4 shrink-0 text-primary" />
+                <span className="min-w-0 truncate">{t('ai.ask.row', { q: q.trim() })}</span>
+              </button>
+            )}
             <SearchResults hits={hits} active={active} q={q} onPick={() => setQ('')} />
           </div>
         )}
       </div>
+      {asked && (
+        <AskPanel key={asked} question={asked} tz={me.company.timezone} onClose={() => setAsked(null)} />
+      )}
 
       {alert && (
         <div className="mt-5">

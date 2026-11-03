@@ -333,6 +333,15 @@ const ROWS: Row[] = [
   ],
   // Sent to the owner whose board it is (userId).
   ['ea.daily_brief', 'team', ['user'], 'Your day, {{date}}', '{{brief}}', 'आपका दिन, {{date}}', '{{brief}}'],
+  [
+    'ai.daily_summary',
+    'team',
+    ['user'],
+    'Good morning — {{date}}',
+    '{{summary}}',
+    'सुप्रभात — {{date}}',
+    '{{summary}}',
+  ],
   ['ea.weekly_plan', 'team', ['user'], 'Your week ahead', '{{plan}}', 'आपका अगला हफ़्ता', '{{plan}}'],
   [
     'mis.weekly',

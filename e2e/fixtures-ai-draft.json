@@ -1,0 +1,222 @@
+{
+  "name": "order",
+  "runName": "Order",
+  "departments": ["Sales", "Production", "Quality", "Dispatch", "Accounts"],
+  "coordinator": "Rohit Mittal",
+  "solver": "Rajesh Goyal",
+  "startFields": [],
+  "steps": [
+    {
+      "key": "enter_order_details",
+      "name": "Enter order details and promised date",
+      "type": "TASK",
+      "doers": ["Sunita Bansal", "Arjun Rawat"],
+      "byStarter": true,
+      "time": {
+        "value": 8,
+        "unit": "hours",
+        "from": "start"
+      },
+      "fields": [
+        {
+          "label": "Customer name",
+          "type": "text",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Items",
+          "type": "items",
+          "required": true,
+          "options": []
+        }
+      ],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": "confirm_stock_availability",
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "confirm_stock_availability",
+      "name": "Check if stock is available",
+      "type": "DECISION",
+      "doers": ["Ajay Meena"],
+      "byStarter": false,
+      "time": {
+        "value": 4,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": "plan_production",
+      "no": "finish_production",
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "plan_production",
+      "name": "Plan production and complete within 3 days",
+      "type": "TASK",
+      "doers": ["Ajay Meena"],
+      "byStarter": false,
+      "time": {
+        "value": 72,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": "quality_check",
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "quality_check",
+      "name": "Quality check and upload photo",
+      "type": "TASK",
+      "doers": ["Priya Sharma"],
+      "byStarter": false,
+      "time": {
+        "value": 24,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "Photo of slabs",
+          "type": "photo",
+          "required": true,
+          "options": []
+        }
+      ],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": "dispatch_booking",
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "finish_production",
+      "name": "Finish production and complete within 3 days",
+      "type": "TASK",
+      "doers": ["Ajay Meena"],
+      "byStarter": false,
+      "time": {
+        "value": 72,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": "quality_check",
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "dispatch_booking",
+      "name": "Book a truck the same day and load it",
+      "type": "TASK",
+      "doers": ["Mahesh Yadav", "Ravi Kumar"],
+      "byStarter": false,
+      "time": {
+        "value": 24,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "Vehicle number",
+          "type": "text",
+          "required": true,
+          "options": []
+        }
+      ],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": "invoice_creation",
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "invoice_creation",
+      "name": "Create the invoice and send e-way bill within 2 hours",
+      "type": "AUTO",
+      "doers": [],
+      "byStarter": false,
+      "time": {
+        "value": 2,
+        "unit": "hours",
+        "from": "start"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": true,
+      "yes": null,
+      "no": null,
+      "next": "end",
+      "rejectTo": null,
+      "autoAction": "document",
+      "documentType": "INV",
+      "autoText": null,
+      "notifyCustomer": true
+    },
+    {
+      "key": "end",
+      "name": "End of process",
+      "type": "AUTO",
+      "doers": [],
+      "byStarter": false,
+      "time": null,
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    }
+  ],
+  "remember": [
+    "Sales executives take the order.",
+    "Production head checks stock within 4 hours and plans production if not in stock, finishing it within 3 days.",
+    "Invoice is generated by the system after all steps are completed."
+  ]
+}

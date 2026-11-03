@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Copy, Plus, Trash2 } from 'lucide-react';
+import { Copy, Loader2, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -11,6 +11,7 @@ import { api } from '@/lib/api';
 import { personLabel } from '@/lib/people';
 import { useWorkMutation } from '@/lib/work';
 import { useDepartments } from '@/modules/system/api';
+import { aiApi, useAiStatus } from '@/modules/ai/api';
 import type { FlowDetail, KpiCard } from './api';
 
 /** Details (run name, departments, coordinator & solver, video, public form) and the KPI dashboard. */
@@ -174,6 +175,21 @@ function KpiEditor({ flow, def }: { flow: FlowDetail; def: FlowDefinition }) {
   ];
   const set = (i: number, patch: Partial<KpiCard>) =>
     setCards(cards.map((c, j) => (j === i ? { ...c, ...patch } : c)));
+  // "Suggest with AI": new cards go below the others, to check and save like any card.
+  const ai = useAiStatus();
+  const suggest = useWorkMutation(() => aiApi.suggestKpis(flow.id), []);
+  const addSuggestions = () =>
+    suggest.mutate(undefined, {
+      onSuccess: (list) => {
+        const have = new Set(cards.map((c) => `${c.source}|${c.aggregation}|${c.period}`));
+        const usable = new Set(sources.map((x) => x.value));
+        const add = list
+          .filter((k) => usable.has(k.source) && !have.has(`${k.source}|${k.aggregation}|${k.period}`))
+          .map(({ label, source, aggregation, period }) => ({ label, source, aggregation, period }));
+        setCards([...cards, ...add].slice(0, 12));
+        toast.success(t('ai.kpi.added', { count: add.length }));
+      },
+    });
   const fmt = (n: number | null | undefined) =>
     n === null || n === undefined ? '—' : n.toLocaleString('en-IN');
   return (
@@ -262,6 +278,15 @@ function KpiEditor({ flow, def }: { flow: FlowDetail; def: FlowDefinition }) {
             }
           >
             <Plus /> {t('fms.k.add')}
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={!ai.data?.connected || suggest.isPending}
+            title={ai.data?.connected ? undefined : t('ai.connectFirst')}
+            onClick={addSuggestions}
+          >
+            {suggest.isPending ? <Loader2 className="animate-spin" /> : <Sparkles />} {t('ai.kpi.suggest')}
           </Button>
           <Button
             size="sm"

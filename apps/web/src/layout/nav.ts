@@ -126,9 +126,9 @@ export const WORKSPACE_NAV: NavSection[] = [
   {
     key: 'masters',
     items: [
-      { key: 'myMasters', path: '/masters', icon: Boxes, phase: 10, tag: 'masters' },
+      { key: 'myMasters', path: '/masters', icon: Boxes, phase: 0, tag: 'masters' },
       { key: 'masterLibrary', path: '/masters/library', icon: LibraryBig, phase: 10, tag: 'masters' },
-      { key: 'buildMaster', path: '/masters/build', icon: Sparkles, phase: 10, tag: 'masters' },
+      { key: 'buildMaster', path: '/masters/build', icon: Sparkles, phase: 0, tag: 'masters' },
     ],
   },
 ];
@@ -147,7 +147,7 @@ export const SYSTEM_NAV: NavSection[] = [
       { key: 'crmSetup', path: '/system/crm', icon: ClipboardCheck, phase: 9, tag: 'setup' },
       { key: 'apiKeys', path: '/system/api-keys', icon: KeyRound, phase: 10, tag: 'setup' },
       { key: 'hrRules', path: '/system/hr-rules', icon: UserCog, phase: 7, tag: 'setup' },
-      { key: 'businessDetails', path: '/system/business-details', icon: Sparkles, phase: 6, tag: 'setup' },
+      { key: 'businessDetails', path: '/system/business-details', icon: Sparkles, phase: 0, tag: 'setup' },
       { key: 'appearance', path: '/system/appearance', icon: Palette, phase: 0, tag: 'setup' },
       { key: 'engineDesigner', path: '/system/engine', icon: Workflow, phase: 0, tag: 'setup' },
       { key: 'uiKit', path: '/dev/ui', icon: Palette, phase: 0, tag: 'setup' },

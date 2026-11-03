@@ -14,6 +14,8 @@ export const ERROR_CODES = [
   'FORBIDDEN_TRANSITION',
   'GUARD_FAILED',
   'RATE_LIMITED',
+  'AI_NOT_CONNECTED',
+  'AI_FAILED',
   'INTERNAL',
 ] as const;
 export type ErrorCode = (typeof ERROR_CODES)[number];

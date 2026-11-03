@@ -1,0 +1,247 @@
+{
+  "name": "purchase_request",
+  "runName": "Purchase Request",
+  "departments": ["HR", "Purchase", "Accounts", "Store"],
+  "coordinator": null,
+  "solver": null,
+  "startFields": [
+    {
+      "label": "Item",
+      "type": "dropdown",
+      "required": true,
+      "options": []
+    },
+    {
+      "label": "Quantity",
+      "type": "number",
+      "required": true,
+      "options": []
+    },
+    {
+      "label": "Reason for Purchase",
+      "type": "longtext",
+      "required": true,
+      "options": []
+    },
+    {
+      "label": "Required By",
+      "type": "date",
+      "required": true,
+      "options": []
+    }
+  ],
+  "steps": [
+    {
+      "key": "create_purchase_request",
+      "name": "Raise Purchase Request",
+      "type": "TASK",
+      "doers": ["whoever took the order / started it"],
+      "byStarter": true,
+      "time": {
+        "value": 8,
+        "unit": "hours",
+        "from": "start"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": "approve_hod",
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "approve_hod",
+      "name": "HR Approves Purchase Request",
+      "type": "APPROVAL",
+      "doers": ["Kavita Rathore"],
+      "byStarter": false,
+      "time": {
+        "value": 1,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": "generate_quotes",
+      "no": "create_purchase_request",
+      "next": null,
+      "rejectTo": "create_purchase_request",
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "generate_quotes",
+      "name": "Purchase Generates Quotes",
+      "type": "TASK",
+      "doers": ["Amit Khandelwal"],
+      "byStarter": false,
+      "time": {
+        "value": 2,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": "choose_vendor",
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "choose_vendor",
+      "name": "Purchase Chooses Vendor",
+      "type": "TASK",
+      "doers": ["Amit Khandelwal"],
+      "byStarter": false,
+      "time": {
+        "value": 1,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": "order_confirmation",
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "order_confirmation",
+      "name": "Confirm the Order with Vendor",
+      "type": "TASK",
+      "doers": ["Amit Khandelwal"],
+      "byStarter": false,
+      "time": {
+        "value": 1,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": "wait_for_delivery",
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": true
+    },
+    {
+      "key": "wait_for_delivery",
+      "name": "Wait for Delivery from Vendor",
+      "type": "OUTSIDE",
+      "doers": [],
+      "byStarter": false,
+      "time": {
+        "value": 3,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": "store_check",
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": true
+    },
+    {
+      "key": "store_check",
+      "name": "Store Keeper Checks Received Goods",
+      "type": "TASK",
+      "doers": ["Gopal Prajapat"],
+      "byStarter": false,
+      "time": {
+        "value": 1,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": true,
+      "yes": null,
+      "no": null,
+      "next": "record_received_quantity",
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "record_received_quantity",
+      "name": "Record Received Quantity and Upload Bill Photo",
+      "type": "TASK",
+      "doers": ["Gopal Prajapat"],
+      "byStarter": false,
+      "time": {
+        "value": 1,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": true,
+      "yes": null,
+      "no": null,
+      "next": "account_payment",
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "account_payment",
+      "name": "Accounts Pays Vendor within 7 Days",
+      "type": "TASK",
+      "doers": ["Suresh Agarwal"],
+      "byStarter": false,
+      "time": {
+        "value": 7,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    }
+  ],
+  "remember": [
+    "HR approves the purchase request within a day.",
+    "Purchase selects vendors and gets three quotes in two days.",
+    "Accounts pays the vendor within seven days of receiving goods."
+  ]
+}

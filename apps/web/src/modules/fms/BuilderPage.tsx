@@ -1,4 +1,4 @@
-import { Archive, ArchiveRestore, Copy, GitBranch, Loader2, Pencil, Plus } from 'lucide-react';
+import { Archive, ArchiveRestore, Copy, GitBranch, Loader2, Pencil, Plus, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
@@ -63,9 +63,14 @@ export function BuilderPage({ me }: { me: Me }) {
           label={(k) => t(`fms.b.list.${k}`)}
           counts={counts}
         />
-        <Button variant="primary" onClick={() => setCreating(true)}>
-          <Plus /> {t('fms.b.newFlow')}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" onClick={() => navigate('/fms/builder/ai')}>
+            <Sparkles /> {t('ai.build.button')}
+          </Button>
+          <Button variant="primary" onClick={() => setCreating(true)}>
+            <Plus /> {t('fms.b.newFlow')}
+          </Button>
+        </div>
       </div>
       {q.isPending ? (
         <PageSkeleton />

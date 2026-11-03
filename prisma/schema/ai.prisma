@@ -1,0 +1,83 @@
+/// AI connection of a company (CLAUDE.md §13). The API key lives encrypted in `secret`.
+model AiConfig {
+  id            String    @id @default(cuid(2))
+  companyId     String    @unique @map("company_id")
+  /// anthropic | openai | gemini | ollama
+  provider      String
+  model         String
+  /// Ollama (or an OpenAI-compatible server): where it runs
+  baseUrl       String?   @map("base_url")
+  /// encryptJson({ apiKey, sttKey })
+  secret        String?
+  /// Price per million tokens (USD) when the model is not in MONO's price list
+  priceIn       Decimal?  @map("price_in") @db.Decimal(10, 4)
+  priceOut      Decimal?  @map("price_out") @db.Decimal(10, 4)
+  /// browser | openai | gemini — who turns speech into text
+  sttProvider   String    @default("browser") @map("stt_provider")
+  sttModel      String?   @map("stt_model")
+  dailySummary  Boolean   @default(true) @map("daily_summary")
+  lastTestAt    DateTime? @map("last_test_at") @db.Timestamptz(3)
+  lastTestOk    Boolean?  @map("last_test_ok")
+  lastTestError String?   @map("last_test_error")
+  updatedById   String?   @map("updated_by_id")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("ai_configs")
+}
+
+/// One row per AI call: who, what for, tokens and the estimated cost.
+model AiUsage {
+  id           String   @id @default(cuid(2))
+  companyId    String   @map("company_id")
+  userId       String?  @map("user_id")
+  /// build_flow | edit_flow | kpis | master | ask | ask_answer | business | daily_summary | follow_up | transcribe | test
+  feature      String
+  provider     String
+  model        String
+  /// prompt template id@version
+  prompt       String?
+  inputTokens  Int      @default(0) @map("input_tokens")
+  outputTokens Int      @default(0) @map("output_tokens")
+  /// estimated cost in millionths of a US dollar
+  costMicros   Int      @default(0) @map("cost_micros")
+  ms           Int      @default(0)
+  ok           Boolean  @default(true)
+  error        String?
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([companyId, createdAt])
+  @@map("ai_usage")
+}
+
+/// "Your business, in your words" — included in every AI prompt.
+model BusinessDetails {
+  id          String   @id @default(cuid(2))
+  companyId   String   @unique @map("company_id")
+  text        String   @default("")
+  updatedById String?  @map("updated_by_id")
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("business_details")
+}
+
+/// A custom master (CLAUDE.md §8): its fields. Rows, import and the library arrive in phase 10.
+model MasterDef {
+  id           String    @id @default(cuid(2))
+  companyId    String    @map("company_id")
+  name         String
+  /// [{ key, label, type, required, options? }] — the FMS field types
+  fields       Json
+  keyField     String?   @map("key_field")
+  displayField String?   @map("display_field")
+  /// ai | library | own
+  source       String    @default("own")
+  description  String?
+  createdById  String?   @map("created_by_id")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([companyId, deletedAt])
+  @@map("master_defs")
+}

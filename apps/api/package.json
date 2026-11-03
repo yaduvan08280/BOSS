@@ -14,6 +14,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "0.135.0",
     "@fastify/cookie": "^11.1.5",
     "@fastify/multipart": "^10.1.6",
     "@fastify/rate-limit": "^11.2.1",

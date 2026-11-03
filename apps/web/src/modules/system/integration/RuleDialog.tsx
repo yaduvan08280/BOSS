@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { CHANNELS, NOTIFY_EVENTS, RECIPIENTS, ruleSchema } from '@mono/shared';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
-import { Field, Select } from '@/components/ui/form';
+import { Field, Select, Switch } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { patch, post, useOrgMutation } from '../api';
@@ -18,6 +18,7 @@ type Draft = {
   waitMinutes: string;
   escalateTo: string;
   escalateAfterMinutes: string;
+  aiFollowUp: boolean;
 };
 
 function Chips({
@@ -69,6 +70,7 @@ export function RuleDialog({ rule, onClose }: { rule: Rule | 'new'; onClose: () 
           waitMinutes: String(rule.waitMinutes),
           escalateTo: rule.escalateTo ?? '',
           escalateAfterMinutes: rule.escalateAfterMinutes ? String(rule.escalateAfterMinutes) : '',
+          aiFollowUp: rule.aiFollowUp,
         }
       : {
           event: 'delegation.assigned',
@@ -78,6 +80,7 @@ export function RuleDialog({ rule, onClose }: { rule: Rule | 'new'; onClose: () 
           waitMinutes: '0',
           escalateTo: '',
           escalateAfterMinutes: '',
+          aiFollowUp: false,
         },
   );
   const [error, setError] = useState<string | null>(null);
@@ -96,6 +99,7 @@ export function RuleDialog({ rule, onClose }: { rule: Rule | 'new'; onClose: () 
       waitMinutes: Number(d.waitMinutes || 0),
       escalateTo: d.escalateTo || null,
       escalateAfterMinutes: d.escalateAfterMinutes ? Number(d.escalateAfterMinutes) : null,
+      aiFollowUp: d.aiFollowUp,
     };
     const parsed = ruleSchema.safeParse(body);
     if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? null);
@@ -188,6 +192,17 @@ export function RuleDialog({ rule, onClose }: { rule: Rule | 'new'; onClose: () 
             />
           </Field>
         </div>
+        <label className="flex items-start justify-between gap-3 rounded-control border p-3">
+          <span>
+            <span className="block text-sm font-medium">{t('notify.rule.aiFollowUp')}</span>
+            <span className="block text-xs text-muted-foreground">{t('notify.rule.aiFollowUpHint')}</span>
+          </span>
+          <Switch
+            checked={d.aiFollowUp}
+            onCheckedChange={(v) => setD({ ...d, aiFollowUp: v })}
+            aria-label={t('notify.rule.aiFollowUp')}
+          />
+        </label>
         <p className="text-xs text-muted-foreground">{t('notify.rule.replyMeans')}</p>
         {error && <p className="text-sm text-status-bad-fg">{error}</p>}
       </div>

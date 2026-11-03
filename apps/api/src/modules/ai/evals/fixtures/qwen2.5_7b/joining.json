@@ -1,0 +1,291 @@
+{
+  "name": "employee_joining",
+  "runName": "joining_process",
+  "departments": ["HR", "IT"],
+  "coordinator": null,
+  "solver": null,
+  "startFields": [
+    {
+      "label": "Employee name",
+      "type": "text",
+      "required": true,
+      "options": []
+    },
+    {
+      "label": "Mobile number",
+      "type": "mobile",
+      "required": true,
+      "options": []
+    },
+    {
+      "label": "Department",
+      "type": "dropdown",
+      "required": true,
+      "options": [
+        "HR",
+        "Accounts",
+        "Dispatch",
+        "HR",
+        "IT",
+        "Marketing",
+        "Production",
+        "Purchase",
+        "Quality",
+        "Sales",
+        "Store"
+      ]
+    },
+    {
+      "label": "Designation",
+      "type": "dropdown",
+      "required": true,
+      "options": [
+        "Owner",
+        "Director",
+        "Accountant",
+        "Dispatch Manager",
+        "HR Manager",
+        "IT Administrator",
+        "Marketing Manager",
+        "Production Head",
+        "Purchase Manager",
+        "Quality Manager",
+        "Sales Manager",
+        "Sales Executive"
+      ]
+    },
+    {
+      "label": "Joining date",
+      "type": "date",
+      "required": true,
+      "options": []
+    }
+  ],
+  "steps": [
+    {
+      "key": "hr_initial_details",
+      "name": "HR fills initial details",
+      "type": "TASK",
+      "doers": ["Kavita Rathore"],
+      "byStarter": false,
+      "time": {
+        "value": 8,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "Employee name",
+          "type": "text",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Mobile number",
+          "type": "mobile",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Department",
+          "type": "dropdown",
+          "required": true,
+          "options": [
+            "HR",
+            "Accounts",
+            "Dispatch",
+            "HR",
+            "IT",
+            "Marketing",
+            "Production",
+            "Purchase",
+            "Quality",
+            "Sales",
+            "Store"
+          ]
+        },
+        {
+          "label": "Designation",
+          "type": "dropdown",
+          "required": true,
+          "options": [
+            "Owner",
+            "Director",
+            "Accountant",
+            "Dispatch Manager",
+            "HR Manager",
+            "IT Administrator",
+            "Marketing Manager",
+            "Production Head",
+            "Purchase Manager",
+            "Quality Manager",
+            "Sales Manager",
+            "Sales Executive"
+          ]
+        },
+        {
+          "label": "Joining date",
+          "type": "date",
+          "required": true,
+          "options": []
+        }
+      ],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": "hr_email_setup",
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "hr_email_setup",
+      "name": "IT creates email and MONO login",
+      "type": "TASK",
+      "doers": ["Nikhil Sharma"],
+      "byStarter": false,
+      "time": {
+        "value": 8,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "Employee name",
+          "type": "text",
+          "required": true,
+          "options": []
+        }
+      ],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": "hr_equipment",
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "hr_equipment",
+      "name": "Admin prepares ID card and uniform",
+      "type": "TASK",
+      "doers": ["Kavita Rathore"],
+      "byStarter": false,
+      "time": {
+        "value": 8,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": "hr_induction",
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "hr_induction",
+      "name": "HR conducts induction and assigns buddy",
+      "type": "TASK",
+      "doers": ["Kavita Rathore"],
+      "byStarter": false,
+      "time": {
+        "value": 8,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": "hr_document_collection",
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "hr_document_collection",
+      "name": "HR collects documents from the new employee",
+      "type": "TASK",
+      "doers": ["Kavita Rathore"],
+      "byStarter": false,
+      "time": {
+        "value": 8,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "Aadhaar card",
+          "type": "file",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "PAN card",
+          "type": "file",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Bank details",
+          "type": "text",
+          "required": true,
+          "options": []
+        }
+      ],
+      "checklist": [],
+      "proofRequired": true,
+      "yes": null,
+      "no": null,
+      "next": "hr_onboarding_complete",
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "hr_onboarding_complete",
+      "name": "HR confirms induction and closes the joining process",
+      "type": "TASK",
+      "doers": ["Kavita Rathore"],
+      "byStarter": false,
+      "time": {
+        "value": 8,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    }
+  ],
+  "remember": [
+    "HR is responsible for all initial setups and document collection.",
+    "The joining process takes about one week from offer acceptance to onboarding completion.",
+    "Induction includes a buddy assignment and an orientation session."
+  ]
+}

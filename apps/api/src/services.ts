@@ -26,3 +26,6 @@ export { moduleSettings } from './modules/work/settings';
 export { sendWeeklyMis } from './modules/mis/jobs';
 export { watchFmsSteps, runFmsWebhooks } from './modules/fms/jobs';
 export { completeStep, startRecord } from './modules/fms/engine';
+export { aiFollowUpText } from './modules/ai/followup';
+export { sendDailySummaries } from './modules/ai/summary';
+export { setTestLlm } from './modules/ai/llm';

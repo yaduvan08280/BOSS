@@ -1,4 +1,15 @@
-import { ArrowDown, ArrowLeft, ArrowUp, GitBranch, List, Loader2, Plus, Rocket, Save } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowUp,
+  GitBranch,
+  List,
+  Loader2,
+  Plus,
+  Rocket,
+  Save,
+  Wand2,
+} from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
@@ -15,18 +26,20 @@ import {
 import { ErrorState, PageSkeleton } from '@/components/page';
 import { StatusChip } from '@/components/status-chip';
 import { Button } from '@/components/ui/button';
-import { Dialog } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { TabStrip } from '@/components/work';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { useWorkMutation } from '@/lib/work';
 import { useUsers } from '@/modules/system/api';
+import { EditWithAiDialog } from '@/modules/ai/EditWithAiDialog';
+import { toast } from 'sonner';
 import { useFlow, type FlowDetail } from './api';
 import { FieldsEditor } from './FieldsEditor';
 import { keyFor } from './keys';
 import { FlowDetails } from './FlowDetails';
 import { FmsChart } from './FmsChart';
+import { PublishProblems } from './PublishProblems';
 import { StepEditor } from './StepEditor';
 
 const TABS = ['steps', 'start', 'details', 'dashboard'] as const;
@@ -53,6 +66,7 @@ function Editor({ flow }: { flow: FlowDetail; me: Me }) {
   const [selected, setSelected] = useState<string | null>(flow.definition.steps[0]?.key ?? null);
   const [problems, setProblems] = useState<FlowIssue[] | null>(null);
   const [changed, setChanged] = useState(false);
+  const [aiEdit, setAiEdit] = useState(false);
   const issues = useMemo(
     () => validateFlow(def, new Set(people.filter((p) => p.status === 'ACTIVE').map((p) => p.id))),
     [def, people],
@@ -168,7 +182,15 @@ function Editor({ flow }: { flow: FlowDetail; me: Me }) {
               </button>
             ))}
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="secondary"
+              disabled={changed}
+              title={changed ? t('ai.edit.saveFirst') : undefined}
+              onClick={() => setAiEdit(true)}
+            >
+              <Wand2 /> {t('ai.edit.button')}
+            </Button>
             <Button
               disabled={save.isPending || !changed}
               onClick={() => save.mutate(undefined, { onSuccess: () => setChanged(false) })}
@@ -343,31 +365,23 @@ function Editor({ flow }: { flow: FlowDetail; me: Me }) {
       )}
 
       {problems && (
-        <Dialog
-          open
-          onOpenChange={(o) => !o && setProblems(null)}
-          title={t('fms.b.fixFirst', { count: problems.length })}
-          description={t('fms.b.fixFirstHint')}
-        >
-          <ul className="space-y-1.5 text-sm">
-            {problems.map((p, i) => (
-              <li key={i}>
-                <button
-                  className="w-full rounded-control border p-2.5 text-left hover:border-primary"
-                  onClick={() => (p.stepKey && (setSelected(p.stepKey), setTab('steps')), setProblems(null))}
-                >
-                  <span className="font-semibold">
-                    {p.stepKey
-                      ? (def.steps.find((s) => s.key === p.stepKey)?.name ?? p.stepKey)
-                      : t('fms.b.wholeFlow')}
-                  </span>
-                  {' — '}
-                  {t(`fms.issue.${p.code}`)}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </Dialog>
+        <PublishProblems
+          problems={problems}
+          def={def}
+          onPick={(key) => (key && (setSelected(key), setTab('steps')), setProblems(null))}
+        />
+      )}
+      {aiEdit && (
+        <EditWithAiDialog
+          flowId={flow.id}
+          onClose={() => setAiEdit(false)}
+          onAccept={(next) => {
+            edit(next);
+            setSelected(next.steps[0]?.key ?? null);
+            setAiEdit(false);
+            toast.success(t('ai.edit.applied'));
+          }}
+        />
       )}
     </div>
   );

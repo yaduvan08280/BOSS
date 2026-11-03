@@ -1,0 +1,179 @@
+{
+  "name": "complaint",
+  "runName": "Complaint",
+  "departments": ["Management", "Quality", "Sales", "Dispatch", "HR"],
+  "coordinator": "Rajesh Goyal",
+  "solver": "Sunita Bansal",
+  "startFields": [
+    {
+      "label": "Customer name",
+      "type": "text",
+      "required": true,
+      "options": []
+    }
+  ],
+  "steps": [
+    {
+      "key": "record_complaint",
+      "name": "Record the complaint details",
+      "type": "TASK",
+      "doers": [],
+      "byStarter": true,
+      "time": {
+        "value": 2,
+        "unit": "hours",
+        "from": "start"
+      },
+      "fields": [
+        {
+          "label": "Customer name",
+          "type": "text",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Order number",
+          "type": "number",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Problem description",
+          "type": "longtext",
+          "required": true,
+          "options": []
+        }
+      ],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "quality_inspection",
+      "name": "Quality team inspects the issue",
+      "type": "TASK",
+      "doers": ["Quality Team 1"],
+      "byStarter": false,
+      "time": {
+        "value": 1,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": true,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "verify_complaint",
+      "name": "Verify the complaint with Sales head",
+      "type": "DECISION",
+      "doers": ["Sales Head"],
+      "byStarter": false,
+      "time": {
+        "value": 4,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": "resolve_complaint",
+      "no": "reject_complaint",
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "resolve_complaint",
+      "name": "Resolve the complaint with replacement or credit note",
+      "type": "TASK",
+      "doers": ["Sales Head"],
+      "byStarter": false,
+      "time": {
+        "value": 4,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": true,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "dispatch_replacement",
+      "name": "Dispatch the replacement",
+      "type": "TASK",
+      "doers": ["Dispatch"],
+      "byStarter": false,
+      "time": {
+        "value": 2,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": true,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "close_complaint",
+      "name": "Close the complaint record",
+      "type": "TASK",
+      "doers": ["Customer Care"],
+      "byStarter": false,
+      "time": {
+        "value": 24,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": true
+    }
+  ],
+  "remember": [
+    "Complaints are initially recorded by whoever answers the call.",
+    "The Quality team inspects issues within one day and sends photos.",
+    "Sales head decides on resolution, and dispatch handles replacements."
+  ]
+}

@@ -31,7 +31,9 @@
       "10": "October",
       "11": "November",
       "12": "December"
-    }
+    },
+    "edit": "Edit",
+    "delete": "Delete"
   },
   "auth": {
     "title": "Sign in",
@@ -656,7 +658,8 @@
       "mis_weekly": "Weekly MIS",
       "delegation_accept_late": "Task not accepted in time",
       "delegation_passed_on": "Task passed on",
-      "delegation_note": "Note on a task"
+      "delegation_note": "Note on a task",
+      "ai_daily_summary": "Daily summary (AI)"
     },
     "to": {
       "doer": "Doer",
@@ -699,7 +702,8 @@
       "fms": "Systems",
       "hr": "HRMS",
       "ims": "Inventory",
-      "crm": "Client/Vendor"
+      "crm": "Client/Vendor",
+      "ai": "AI"
     },
     "tab": {
       "whatsapp": "WhatsApp API",
@@ -708,7 +712,8 @@
       "channels": "Connect channels",
       "rules": "Notification rules",
       "reminders": "Reminder patterns",
-      "drive": "Google Drive"
+      "drive": "Google Drive",
+      "ai": "AI"
     },
     "aud": {
       "team": "Your team",
@@ -920,7 +925,9 @@
       "sendTest": "Send test",
       "testHint": "Sends a real test event through the rules: in-app, Telegram, email, WhatsApp and phone, whichever are set up.",
       "testTo": "Send to",
-      "testSent": "Test sent. It arrives in a few seconds."
+      "testSent": "Test sent. It arrives in a few seconds.",
+      "aiFollowUp": "AI writes the message",
+      "aiFollowUpHint": "The AI writes a short, polite chase in the person's language (Telegram and email; WhatsApp keeps its approved template)."
     },
     "rem": {
       "hint": "Tasks and checklists pick one of these to decide when to remind.",
@@ -956,7 +963,9 @@
   "work": {
     "dictate": {
       "start": "Dictate",
-      "stop": "Stop"
+      "stop": "Stop",
+      "writing": "Writing…",
+      "noMic": "The microphone could not be used."
     },
     "files": {
       "attach": "Attach",
@@ -2216,6 +2225,271 @@
       "received": "We have received it.",
       "sum": "What is {{q}}?",
       "send": "Send"
+    }
+  },
+  "ai": {
+    "connectFirst": "Connect AI in System Master → Integration → AI first.",
+    "openSettings": "Open AI settings",
+    "words_one": "{{count}} word",
+    "words_other": "{{count}} words",
+    "provider": {
+      "anthropic": "Anthropic (Claude)",
+      "openai": "OpenAI",
+      "gemini": "Google Gemini",
+      "ollama": "Ollama (own machine)"
+    },
+    "providerHint": {
+      "anthropic": "Recommended",
+      "openai": "Or a compatible server",
+      "gemini": "Google AI Studio key",
+      "ollama": "Free, runs on your server"
+    },
+    "stt": {
+      "browser": "The browser (free; best in Chrome)",
+      "openai": "OpenAI Whisper (Hindi and English)",
+      "gemini": "Google Gemini"
+    },
+    "set": {
+      "provider": "1. Which AI",
+      "model": "Model",
+      "modelHint": "Type the model name exactly as your provider writes it.",
+      "perMillion": "per million tokens",
+      "baseUrl": "Server address",
+      "baseUrlHint": {
+        "openai": "Leave empty for OpenAI itself",
+        "gemini": "Leave empty for Google",
+        "ollama": "Where Ollama runs, e.g. http://localhost:11434"
+      },
+      "apiKey": "API key",
+      "keySaved": "A key ending …{{end}} is saved. Type a new one only to change it.",
+      "priceIn": "Price in ($ per million input tokens)",
+      "priceOut": "Price out ($ per million output tokens)",
+      "priceHint": "Optional: used to estimate the cost.",
+      "speech": "2. Speech and daily summary",
+      "sttProvider": "Who turns speech into text",
+      "sttHint": "Used by every Dictate / Speak button. The browser works without a key but needs Chrome.",
+      "sttModel": "Speech model",
+      "sttKey": "Speech API key",
+      "dailySummary": "Daily summary to the owner at 08:45",
+      "dailySummaryHint": "A short Telegram message: what was done yesterday, what is late, what is due today.",
+      "test": "Test",
+      "testOk": "Connected. The AI answered."
+    },
+    "usage": {
+      "title": "This month",
+      "calls": "AI calls",
+      "tokens": "Tokens",
+      "cost": "Cost (est.)",
+      "estimate": "Costs are estimates from the provider's list prices, in US dollars.",
+      "recent": "Latest calls"
+    },
+    "feature": {
+      "build_flow": "Build with AI",
+      "edit_flow": "Edit with AI",
+      "kpis": "KPI suggestions",
+      "master": "Masters",
+      "ask": "Ask",
+      "ask_answer": "Ask (answer)",
+      "business": "Business details",
+      "daily_summary": "Daily summary",
+      "follow_up": "AI follow-up",
+      "transcribe": "Dictate",
+      "test": "Test"
+    },
+    "quality": {
+      "empty": "Empty",
+      "short": "Too short",
+      "fair": "Fair",
+      "good": "Good",
+      "veryGood": "Very good"
+    },
+    "biz": {
+      "title": "Your business, in your words",
+      "placeholder": "What you make or sell, your customers, how an order moves, who does what…",
+      "refresh": "Refresh with our AI",
+      "refreshTitle": "Business details, refreshed",
+      "reviewHint": "Check and change anything, then use it. Nothing is saved until you press Save.",
+      "use": "Use this text",
+      "chatGpt": "Update it with ChatGPT",
+      "chatGptTitle": "Update it with ChatGPT",
+      "chatGptHint": "Copy the prompt into ChatGPT, answer its questions, then paste its final text here.",
+      "step1": "1. Copy the prompt",
+      "copyPrompt": "Copy the prompt",
+      "copyAgain": "Copy again",
+      "step2": "2. Paste ChatGPT's answer",
+      "copied": "Copied",
+      "copyFailed": "Could not copy. Select the text and copy it.",
+      "whatTitle": "What to write",
+      "what": [
+        "What you make or sell",
+        "Who your customers are",
+        "How an order moves, step by step",
+        "Who does what",
+        "How long things take",
+        "The papers you make",
+        "Words your team uses",
+        "Where things usually go wrong"
+      ],
+      "privacy": "This text is sent with every AI request so the AI understands your business. Don't put passwords or bank details here."
+    },
+    "build": {
+      "button": "Build with AI",
+      "title": "Build with AI",
+      "subtitle": "Tell it how the work goes; it drafts the process.",
+      "back": "All processes",
+      "how": "How does the work go?",
+      "language": "Language",
+      "lang": {
+        "en": "English",
+        "hi": "हिंदी",
+        "hinglish": "Hinglish"
+      },
+      "placeholder": "Who starts it, what happens next, who does each step and how long it takes…",
+      "words": "{{words}}/{{min}} words",
+      "moreWords": "30 words or more give a much better draft.",
+      "name": "Process name (optional)",
+      "namePlaceholder": "e.g. Order to dispatch",
+      "department": "Department (optional)",
+      "anyDepartment": "Let the AI choose",
+      "draft": "Draft my process",
+      "drafting": "Drafting… this can take a minute",
+      "examples": "Examples",
+      "peopleHint": "Name people the way they are in MONO ({{example}}) and they are assigned for you.",
+      "reviewTitle": "Your flow, drafted by AI",
+      "summary": "{{steps}} steps · {{start}} start fields · {{fields}} step fields",
+      "allAssigned": "Everyone is assigned",
+      "unassigned_one": "{{count}} step needs a person",
+      "unassigned_other": "{{count}} steps need a person",
+      "unmatched": "Not found in MONO — choose them in the builder",
+      "where": {
+        "coordinator": "coordinator",
+        "solver": "problem solver",
+        "department": "department"
+      },
+      "changesTitle": "Ask for changes in your own words",
+      "changesPlaceholder": "e.g. add a manager approval after the quote; Ravi does the invoice",
+      "change": "Change it",
+      "remember": "Remember this for next time?",
+      "rememberHint": "Ticked lines are added to your business details when you open the process.",
+      "open": "Open in the Builder",
+      "again": "Start again"
+    },
+    "example": {
+      "leadToOrder": "Lead to order",
+      "orderToDispatch": "Order to dispatch",
+      "purchaseRequest": "Purchase request",
+      "complaint": "Customer complaint (Hindi)",
+      "joining": "New employee joining"
+    },
+    "edit": {
+      "button": "Edit with AI",
+      "title": "Edit with AI",
+      "hint": "Say what to change. You'll see the changes before anything is applied.",
+      "placeholder": "e.g. add a quality check after packing; Ravi does the invoice",
+      "run": "Show the changes",
+      "accept": "Apply the changes",
+      "reject": "Try again",
+      "nothing": "The AI found nothing to change. Try saying it differently.",
+      "added": "New step: {{name}}",
+      "removed": "Step removed: {{name}}",
+      "fieldAdded": "New start field: {{name}}",
+      "fieldRemoved": "Start field removed: {{name}}",
+      "what": {
+        "name": "name",
+        "type": "type",
+        "doers": "who does it",
+        "time": "time",
+        "fields": "form",
+        "checklist": "checklist",
+        "proof": "proof",
+        "route": "where it goes next",
+        "automatic": "automatic action"
+      },
+      "quick": {
+        "approval": "Add approval step",
+        "approvalText": "Add a manager approval step where it makes sense.",
+        "photo": "Add photo proof",
+        "photoText": "Ask for a photo as proof at the steps where work is done physically.",
+        "whatsapp": "WhatsApp update",
+        "whatsappText": "Send the customer a WhatsApp update at the important steps.",
+        "shorter": "Make it shorter",
+        "shorterText": "Make the process shorter: merge steps that the same person does one after another."
+      },
+      "saveFirst": "Save your changes first",
+      "applied": "Changes applied. Press Save draft to keep them."
+    },
+    "kpi": {
+      "suggest": "Suggest with AI",
+      "added_one": "{{count}} card added — check it and save",
+      "added_other": "{{count}} cards added — check them and save"
+    },
+    "master": {
+      "subtitle": "Lists the whole company picks from: vehicles, machines, sites…",
+      "build": "Build a master with AI",
+      "new": "New master",
+      "none": "No masters yet",
+      "noneBody": "Describe one in plain words and the AI proposes its fields.",
+      "byAi": "Built with AI",
+      "confirmDelete": "Delete the master “{{name}}”?",
+      "deleted": "Master deleted",
+      "askHint": "Say what the list is and what you keep about each one.",
+      "askPlaceholder": "e.g. our trucks: number, kind, driver, insurance and fitness dates",
+      "draft": "Propose fields",
+      "reviewTitle": "Check the proposed master",
+      "reviewHint": "Change, add or remove fields, then save.",
+      "edit": "Edit master",
+      "name": "Name",
+      "description": "What it is",
+      "keyField": "Unique for each row",
+      "displayField": "Shown when picked",
+      "later": "Rows, Excel import and the Master Library arrive in phase 10."
+    },
+    "ask": {
+      "row": "Ask AI: “{{q}}”",
+      "looking": "Looking it up…",
+      "failed": "Could not answer that.",
+      "showing": "Showing {{shown}} of {{total}}.",
+      "onlyMine": "Only your own work is counted.",
+      "checkHint": "Answers come from MONO's data; open a row to check it."
+    },
+    "col": {
+      "number": "No.",
+      "task": "Task",
+      "doer": "Doer",
+      "given_by": "Given by",
+      "department": "Department",
+      "status": "Status",
+      "planned_at": "Due",
+      "done_at": "Done",
+      "is_late": "Late",
+      "days_late": "Days late",
+      "date_moves": "Date moves",
+      "created_at": "Created",
+      "checklist": "Checklist",
+      "submitted_at": "Submitted",
+      "items_done": "Items done",
+      "items_total": "Items",
+      "is_missed": "Missed",
+      "title": "Title",
+      "raised_by": "Raised by",
+      "solver": "Solver",
+      "escalation_level": "Escalation",
+      "planned_fix_at": "Fix due",
+      "resolved_at": "Fixed",
+      "closed_at": "Closed",
+      "reopen_count": "Reopened",
+      "process": "Process",
+      "record_number": "No.",
+      "record": "Record",
+      "step": "Step",
+      "started_at": "Started",
+      "started_by": "Started by",
+      "code": "Code",
+      "name": "Name",
+      "designation": "Designation",
+      "has_login": "Login",
+      "telegram_linked": "Telegram",
+      "value": "Value"
     }
   }
 }

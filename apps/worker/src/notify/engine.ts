@@ -20,6 +20,11 @@ export type EngineDeps = {
   onQueued?: () => void;
   /** Channels the company has set up; others are recorded as SKIPPED instead of failing later. */
   available?: (companyId: string) => Promise<Set<string>>;
+  /** "AI follow-up" rules: the AI writes the message (null → the template is used). */
+  aiWriter?: (
+    companyId: string,
+    input: { recipient: string; lang: 'en' | 'hi'; facts: string; template: string },
+  ) => Promise<string | null>;
 };
 
 /** Events that must reach people even during quiet hours. */
@@ -97,6 +102,26 @@ export async function notifyForEvent(event: DomainEvent, deps: EngineDeps): Prom
   const now = new Date();
   const notified = new Set<string>();
   let queued = 0;
+
+  // AI follow-up texts are written before the transaction (an AI call can take seconds).
+  const aiTexts = new Map<string, string>();
+  if (deps.aiWriter && def)
+    for (const rule of rules.filter((r) => r.aiFollowUp)) {
+      const { people } = await resolveRecipients(db, company.id, rule.recipients, payload, event.actorId);
+      for (const p of people) {
+        if (!urgent && p.id === event.actorId) continue;
+        const lang = p.lang === 'hi' ? 'hi' : 'en';
+        const v = { ...vars, recipient: p.name };
+        const template = renderText(def.body[lang], v);
+        const text = await deps.aiWriter(company.id, {
+          recipient: p.name,
+          lang,
+          facts: `${renderText(def.title[lang], v)}\n${template}`,
+          template,
+        });
+        if (text) aiTexts.set(`${rule.id}:${p.id}`, text);
+      }
+    }
   let firstTelegram: string | null = null;
 
   await db.$transaction(async (tx) => {
@@ -197,7 +222,10 @@ export async function notifyForEvent(event: DomainEvent, deps: EngineDeps): Prom
             });
             continue;
           }
-          const body = renderText(tpl!.body, v);
+          // WhatsApp keeps its approved template; Telegram and email may carry the AI's words.
+          const body =
+            (channel !== 'whatsapp' ? aiTexts.get(`${rule.id}:${p.id}`) : undefined) ??
+            renderText(tpl!.body, v);
           const message: Record<string, unknown> = { text: body, link: v.link };
           if (channel === 'email')
             message.subject = renderText(tpl!.subject ?? def?.title[lang] ?? deps.appName, v);

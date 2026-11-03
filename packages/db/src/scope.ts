@@ -46,6 +46,10 @@ export const COMPANY_SCOPED_MODELS = new Set([
   'DocumentType',
   'Document',
   'KpiCard',
+  'AiConfig',
+  'AiUsage',
+  'BusinessDetails',
+  'MasterDef',
 ]);
 
 /** Models with `deletedAt` (soft delete). Kept in sync with the schema by `scope.test.ts`. */
@@ -71,6 +75,7 @@ export const SOFT_DELETE_MODELS = new Set([
   'Flow',
   'FmsRecord',
   'DocumentType',
+  'MasterDef',
 ]);
 
 const LIST_READS = new Set(['findMany', 'findFirst', 'findFirstOrThrow', 'count', 'aggregate', 'groupBy']);
