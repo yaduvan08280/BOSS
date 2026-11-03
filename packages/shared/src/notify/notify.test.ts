@@ -12,7 +12,7 @@ describe('catalog', () => {
     ).toEqual(['notify.escalation', 'notify.telegram_code', 'notify.test']);
     // §7.3, plus phase 4: delegation.accept_late, slip.late, slip.closed, mis.weekly; phase 5: fms.step_stuck, fms.customer_update.
     const expected = {
-      delegation: 11,
+      delegation: 13,
       checklist: 6,
       slip: 6,
       ticket: 6,

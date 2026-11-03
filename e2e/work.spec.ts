@@ -132,6 +132,69 @@ test('a task goes from given to verified, all from the web', async ({ page, brow
   }
 });
 
+test('a task passed from one person to the next, with notes everyone on it sees', async ({
+  page,
+  browser,
+}, info) => {
+  const label = `E2E ${info.project.name} ${Date.now()}: export order, quote then sample`;
+  await signIn(page, OWNER);
+  const res = await post(page.request, page, '/api/tasks', {
+    doerId: await userId(page, 'Sandeep Pal'),
+    plannedAt: new Date(Date.now() + 3 * 3600_000).toISOString(),
+    description: label,
+  });
+  const task = (await res.json()) as { id: string };
+  try {
+    // Sandeep did the quote and passes the same task on to Ramesh.
+    const a = await as(browser, SANDEEP, info);
+    await post(a.page.request, a.page, `/api/tasks/${task.id}/actions`, { action: 'accept' });
+    await a.page.goto(`/delegation?tab=pending&task=${task.id}`);
+    await a.page.getByRole('dialog').getByRole('button', { name: 'Pass on' }).click();
+    const dlg = a.page.getByRole('dialog').last();
+    await choose(a.page, dlg.getByLabel(/who does the next part/i), 'Ramesh Choudhary');
+    // Due in a few hours (company time), so it shows in this week's list.
+    const due = new Date(Date.now() + 3 * 3600_000);
+    const f = (o: Intl.DateTimeFormatOptions) =>
+      new Intl.DateTimeFormat('en-GB', { timeZone: TZ, ...o }).format(due);
+    await dlg
+      .getByLabel(/when is their part due/i)
+      .fill(f({ day: '2-digit', month: '2-digit', year: 'numeric' }).replaceAll('/', ''));
+    await dlg.getByLabel(/^time$/i).fill(f({ hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }));
+    await dlg.getByLabel(/what did you do/i).fill('Quote sent and approved by the buyer');
+    await expectNoSideScroll(a.page);
+    await shot(a.page, 'task-pass-on', info.project.name);
+    await dlg.getByRole('button', { name: /pass on to ramesh choudhary/i }).click();
+    await expect(a.page.getByText(/passed on to ramesh choudhary/i).first()).toBeVisible();
+
+    // Ramesh gets it as part 2, reads Sandeep's note with his name, and adds his own.
+    const b = await as(browser, RAMESH, info);
+    await b.page.goto('/delegation?tab=pending');
+    await expect(row(b.page, label)).toContainText('Part 2');
+    await row(b.page, label).getByRole('button', { name: 'Accept' }).click();
+    await b.page.goto(`/delegation?tab=pending&task=${task.id}`);
+    const drawer = b.page.getByRole('dialog');
+    await expect(drawer.getByText('Quote sent and approved by the buyer')).toBeVisible();
+    await expect(drawer.getByText('Sandeep Pal').first()).toBeVisible();
+    await drawer.getByPlaceholder('Write a note…').fill('Sample goes by courier tomorrow');
+    await drawer.getByRole('button', { name: 'Add note' }).click();
+    await expect(drawer.getByText('Sample goes by courier tomorrow')).toBeVisible();
+    await expectNoSideScroll(b.page);
+    await shot(b.page, 'task-notes', info.project.name);
+    await b.close();
+
+    // Sandeep no longer has it to do, but still sees it and Ramesh's note.
+    await a.page.goto(`/delegation?tab=pending&task=${task.id}`);
+    await expect(a.page.getByRole('dialog').getByText('Sample goes by courier tomorrow')).toBeVisible();
+    await expect(a.page.getByRole('dialog').getByRole('button', { name: 'Pass on' })).toHaveCount(0);
+    await a.close();
+  } finally {
+    await post(page.request, page, `/api/tasks/${task.id}/actions`, {
+      action: 'cancel',
+      reason: 'E2E clean-up',
+    });
+  }
+});
+
 /** "HH:mm" in the company time zone, a couple of hours from now. */
 function dueSoon() {
   const at = new Date(Date.now() + 2 * 3600_000);

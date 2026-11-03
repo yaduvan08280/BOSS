@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, it } from 'vitest';
 import { createPrisma } from '@mono/db';
 import { actorFor, bootstrapCompany, createTask } from '@mono/api/services';
-import { onAction, onCommand, onMy } from './bot-handlers';
+import { onAction, onCommand, onMy, onText } from './bot-handlers';
 
 const db = createPrisma();
 afterAll(async () => db.$disconnect());
@@ -68,5 +68,61 @@ describe('work from Telegram', () => {
     const t = await db.task.findUniqueOrThrow({ where: { id: task.id } });
     expect(t).toMatchObject({ status: 'DONE', revisionCount: 1, doneNote: 'both gauges set' });
     expect(await onCommand(db, scope, `d${tag}`, 'done', '99')).toContain('no task #99');
+  });
+
+  it('a text reply to a task message is a note on that task, with the name of whoever wrote it', async () => {
+    const tag = `${Date.now() % 1_000_000}`;
+    const { company, owner } = await bootstrapCompany(db, {
+      companyName: `Bot Notes ${tag}`,
+      ownerName: 'Owner',
+      ownerEmail: `n${tag}@x.in`,
+      ownerPassword: 'Secret123',
+    });
+    const role = await db.role.findFirstOrThrow({ where: { companyId: company.id, key: 'MEMBER' } });
+    const doer = await db.user.create({
+      data: {
+        companyId: company.id,
+        code: `N-${tag}`,
+        name: 'Sunita',
+        roleId: role.id,
+        telegramChatId: `s${tag}`,
+      },
+    });
+    const scope = { companyIds: [company.id] };
+    const ownerActor = (await actorFor(db, company.id, owner!.id))!;
+    const task = await db.$transaction((tx) =>
+      createTask(tx, ownerActor, {
+        doerId: doer.id,
+        plannedAt: new Date(Date.now() + 3600_000).toISOString(),
+        description: 'Send the sample',
+        requireProof: false,
+      }),
+    );
+    const sent = (providerId: string, entityType: string, entityId: string) =>
+      db.outbox.create({
+        data: {
+          companyId: company.id,
+          channel: 'telegram',
+          userId: doer.id,
+          to: `s${tag}`,
+          payload: {},
+          status: 'SENT',
+          providerId,
+          entityType,
+          entityId,
+        },
+      });
+    await sent(`s${tag}:501`, 'task', task.id);
+    await sent(`s${tag}:502`, 'ticket', 'x');
+
+    expect((await onText(db, scope, `s${tag}`, 'Courier picks it up at 4', 'MONO', 501)).text).toContain(
+      'Note added to #',
+    );
+    const notes = await db.taskEvent.findMany({ where: { taskId: task.id, type: 'note' } });
+    expect(notes).toMatchObject([{ actorId: doer.id, note: 'Courier picks it up at 4' }]);
+    // A reply to something that isn't a task, or no reply at all, is not a note.
+    await onText(db, scope, `s${tag}`, 'ok', 'MONO', 502);
+    await onText(db, scope, `s${tag}`, 'hello', 'MONO');
+    expect(await db.taskEvent.count({ where: { taskId: task.id, type: 'note' } })).toBe(1);
   });
 });

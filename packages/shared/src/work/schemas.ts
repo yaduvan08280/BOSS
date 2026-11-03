@@ -42,6 +42,14 @@ export const taskActionSchema = z.discriminatedUnion('action', [
   }),
   z.object({ action: z.literal('reopen'), comment: z.string().trim().min(3).max(500) }),
   z.object({ action: z.literal('reassign'), doerId: id, plannedAt: when.optional() }),
+  z.object({
+    action: z.literal('passOn'),
+    doerId: id,
+    note: z.string().trim().min(3, 'Write what you did').max(2000),
+    plannedAt: when,
+    attachmentIds: z.array(id).max(20).default([]),
+  }),
+  z.object({ action: z.literal('addNote'), note: z.string().trim().min(1, 'Write the note').max(2000) }),
   z.object({ action: z.literal('cancel'), reason: z.string().trim().max(500).optional() }),
 ]);
 export type TaskActionInput = z.infer<typeof taskActionSchema>;

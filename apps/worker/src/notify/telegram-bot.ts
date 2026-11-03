@@ -136,7 +136,17 @@ export class BotManager {
     });
 
     bot.on('message:text', async (ctx) =>
-      send(ctx, await onText(db, scope, chat(ctx.chat.id), ctx.message.text, app)),
+      send(
+        ctx,
+        await onText(
+          db,
+          scope,
+          chat(ctx.chat.id),
+          ctx.message.text,
+          app,
+          ctx.message.reply_to_message?.message_id,
+        ),
+      ),
     );
 
     bot.catch((err) => log.warn({ err: err.error }, 'Telegram bot error'));

@@ -654,7 +654,9 @@
       "slip_late": "Help slip waiting too long",
       "slip_closed": "Help slip closed",
       "mis_weekly": "Weekly MIS",
-      "delegation_accept_late": "Task not accepted in time"
+      "delegation_accept_late": "Task not accepted in time",
+      "delegation_passed_on": "Task passed on",
+      "delegation_note": "Note on a task"
     },
     "to": {
       "doer": "Doer",
@@ -677,7 +679,8 @@
       "hr": "HR",
       "actor": "Whoever did it",
       "someone": "Someone",
-      "accountable": "Accountable person"
+      "accountable": "Accountable person",
+      "helper": "People who did a part"
     },
     "channel": {
       "telegram": "Telegram",
@@ -1024,7 +1027,9 @@
       "reject": "Send back",
       "reopen": "Reopen",
       "reassign": "Give to someone else",
-      "cancel": "Cancel task"
+      "cancel": "Cancel task",
+      "passOn": "Pass on",
+      "addNote": "Add note"
     },
     "dlg": {
       "newDate": "New planned date",
@@ -1061,6 +1066,19 @@
       "cancel": {
         "title": "Cancel this task",
         "label": "Reason (optional)"
+      },
+      "passTo": "Pass on to {{name}}",
+      "passOn": {
+        "title": "Pass on to the next person",
+        "label": "What did you do?",
+        "hint": "Use this when your part is done and someone else has to finish it. The same task moves to them with your note; you and the person who gave it still see it and its notes.",
+        "who": "Who does the next part?",
+        "when": "When is their part due?",
+        "files": "Attach your work (optional)"
+      },
+      "addNote": {
+        "title": "Add a note",
+        "label": "Note"
       }
     },
     "col": {
@@ -1093,7 +1111,11 @@
       "moved": "Date moved {{from}} → {{to}}",
       "follow_up": "Follow-up",
       "comment": "Note",
-      "edited": "Edited"
+      "edited": "Edited",
+      "passed_on": "Passed on to {{name}}, due {{due}}",
+      "passedTo": "Passed on to {{name}}",
+      "note": "Note",
+      "reassigned": "Given to {{to}} (was {{from}})"
     },
     "kpi": {
       "notDone": "All work should be done (% not done)",
@@ -1181,7 +1203,21 @@
     "importN_one": "Add {{count}} task",
     "importN_other": "Add {{count}} tasks",
     "imported_one": "{{count}} task added",
-    "imported_other": "{{count}} tasks added"
+    "imported_other": "{{count}} tasks added",
+    "passedTo": "Passed on to {{name}}",
+    "part": "Part {{n}}",
+    "notesCount_one": "{{count}} note",
+    "notesCount_other": "{{count}} notes",
+    "chain": "Worked on by",
+    "drawerTab": {
+      "notes": "Notes",
+      "history": "History"
+    },
+    "notes": {
+      "empty": "No notes yet. Every note is kept with the name of whoever wrote it and the time.",
+      "placeholder": "Write a note…",
+      "add": "Add note"
+    }
   },
   "chk": {
     "tab": {
@@ -1685,7 +1721,9 @@
       "schedule": "Schedule",
       "delegate": "Delegate → task",
       "done": "Done",
-      "missDay": "Day passes"
+      "missDay": "Day passes",
+      "passOn": "Pass on to the next person",
+      "addNote": "Add note"
     },
     "f": {
       "eaUserId": "EA",

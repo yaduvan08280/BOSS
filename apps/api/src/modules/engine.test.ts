@@ -406,7 +406,7 @@ describe('flow designer settings', () => {
       'ea',
     ]);
     const del = overview.find((m: { module: string }) => m.module === 'delegation');
-    expect(del).toMatchObject({ custom: true, alerts: { total: 11 } });
+    expect(del).toMatchObject({ custom: true, alerts: { total: 13 } });
     expect(del.alerts.active).toBeGreaterThan(5);
     const changes = (await api.get('/api/engine/delegation/changes')).body;
     expect(changes[0]).toMatchObject({ actorName: 'Test Owner', after: { eaVerifies: false } });

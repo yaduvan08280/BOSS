@@ -20,6 +20,8 @@ export const TASK_ACTIONS = [
   'reject',
   'reopen',
   'reassign',
+  'passOn',
+  'addNote',
   'cancel',
 ] as const;
 export type TaskAction = (typeof TASK_ACTIONS)[number];
@@ -30,7 +32,12 @@ export type TaskContext = {
   allowReopen: boolean;
   /** True when someone has to verify (a verifier is set, or "EA verifies" is on). */
   needsVerify: boolean;
+  /** Reassign / pass on: the new doer is the person who gave the task (they don't accept their own task). */
+  toCreator?: boolean;
 };
+
+const handedTo = (c: TaskContext): TaskStatus =>
+  c.doerMustAccept && !c.toCreator ? 'AWAITING_ACCEPTANCE' : 'OPEN';
 
 const LIVE = ['AWAITING_ACCEPTANCE', 'OPEN', 'PENDING_VERIFY', 'RETURNED_TO_CREATOR'] as const;
 
@@ -74,9 +81,13 @@ export const delegationMachine = defineMachine<TaskStatus, TaskAction, TaskRole,
     {
       from: ['RETURNED_TO_CREATOR', 'AWAITING_ACCEPTANCE', 'OPEN'],
       action: 'reassign',
-      to: (c) => (c.doerMustAccept ? 'AWAITING_ACCEPTANCE' : 'OPEN'),
+      to: handedTo,
       roles: ['creator', 'admin'],
     },
+    // The doer did their part and hands the same task to the next person (who accepts it like a new task).
+    { from: 'OPEN', action: 'passOn', to: handedTo, roles: ['doer'] },
+    // Notes never change the status; anyone who can see the task may write one, also after it is done.
+    { from: [...LIVE, 'DONE'], action: 'addNote', to: 'OPEN', roles: ['any'] },
     { from: [...LIVE, 'DONE'], action: 'cancel', to: 'CANCELLED', roles: ['creator', 'admin'] },
   ],
 });
@@ -90,5 +101,5 @@ export function initialTaskStatus(
   return ctx.doerMustAccept && doerId !== creatorId ? 'AWAITING_ACCEPTANCE' : 'OPEN';
 }
 
-/** follow-ups keep whatever status the task had (the machine only checks they're allowed). */
-export const STATUS_KEEPING_ACTIONS: TaskAction[] = ['addFollowUp', 'moveDate'];
+/** Follow-ups, notes and date moves keep whatever status the task had (the machine only checks they're allowed). */
+export const STATUS_KEEPING_ACTIONS: TaskAction[] = ['addFollowUp', 'addNote', 'moveDate'];

@@ -3,6 +3,7 @@ import { nextCounter } from '@mono/db';
 import {
   delegationMachine,
   initialTaskStatus,
+  STATUS_KEEPING_ACTIONS,
   transition,
   type DelegationSettings,
   type TaskActionInput,
@@ -40,7 +41,7 @@ export function rolesFor(actor: Actor, t: Task, s: DelegationSettings): TaskRole
   return roles;
 }
 
-async function checkPerson(tx: Tx, companyId: string, id: string, what: string) {
+export async function checkPerson(tx: Tx, companyId: string, id: string, what: string) {
   const u = await tx.user.findFirst({
     where: { id, companyId, deletedAt: null, status: 'ACTIVE' },
     select: { id: true },
@@ -48,13 +49,15 @@ async function checkPerson(tx: Tx, companyId: string, id: string, what: string) 
   if (!u) throw new AppError(400, 'VALIDATION_FAILED', `${what} is not an active person`);
 }
 
-async function log(
+export async function log(
   tx: Tx,
   t: Task,
   actorId: string,
   type: string,
   extra: {
     note?: string | null;
+    fromUserId?: string;
+    toUserId?: string;
     fromStatus?: string;
     toStatus?: string;
     fromDate?: Date;
@@ -62,6 +65,16 @@ async function log(
   } = {},
 ) {
   await tx.taskEvent.create({ data: { companyId: t.companyId, taskId: t.id, actorId, type, ...extra } });
+}
+
+/** People who did an earlier part and passed the task on: they keep seeing it and hear about its notes. */
+export async function pastDoers(db: Db | Tx, companyId: string, taskId: string): Promise<string[]> {
+  const rows = await db.taskEvent.findMany({
+    where: { companyId, taskId, type: 'passed_on' },
+    select: { fromUserId: true },
+    distinct: ['fromUserId'],
+  });
+  return rows.flatMap((r) => (r.fromUserId ? [r.fromUserId] : []));
 }
 
 /**
@@ -159,14 +172,20 @@ export async function actOnTask(db: Db, actor: Actor, taskId: string, input: Tas
     if (!t) throw notFound('Task');
     const s = await moduleSettings(tx, actor.companyId, 'delegation');
     const roles = rolesFor(actor, t, s);
-    // People outside the task (and not the doer's HOD) can't even see it.
-    if (roles.length === 1 && !(await teamOf(tx, actor.companyId, actor.userId)).includes(t.doerId))
+    // People outside the task (not the doer's HOD, nor someone who did an earlier part) can't even see it.
+    const helpers = await pastDoers(tx, actor.companyId, t.id);
+    if (
+      roles.length === 1 &&
+      !helpers.includes(actor.userId) &&
+      !(await teamOf(tx, actor.companyId, actor.userId)).includes(t.doerId)
+    )
       throw notFound('Task');
     const verifier = effectiveVerifier(t, s);
     const ctx = {
       doerMustAccept: s.doerMustAccept,
       allowReopen: s.allowReopen,
       needsVerify: Boolean(verifier),
+      toCreator: 'doerId' in input && input.doerId === t.creatorId,
     };
     const step = transition(delegationMachine, {
       from: t.status as TaskStatus,
@@ -175,7 +194,7 @@ export async function actOnTask(db: Db, actor: Actor, taskId: string, input: Tas
       ctx,
     });
     const now = new Date();
-    const keep = input.action === 'addFollowUp' || input.action === 'moveDate';
+    const keep = STATUS_KEEPING_ACTIONS.includes(input.action);
     const to = keep ? (t.status as TaskStatus) : step.to;
     const data: Record<string, unknown> = { status: to };
     let event: string | null = null;
@@ -219,6 +238,51 @@ export async function actOnTask(db: Db, actor: Actor, taskId: string, input: Tas
         event = 'delegation.follow_up';
         await log(tx, t, actor.userId, 'follow_up', { note: input.note });
         break;
+      case 'addNote':
+        payload.note = input.note;
+        payload.helperIds = helpers;
+        event = 'delegation.note';
+        await log(tx, t, actor.userId, 'note', { note: input.note });
+        break;
+      case 'passOn': {
+        if (input.doerId === t.doerId)
+          throw new AppError(400, 'VALIDATION_FAILED', 'Pick the person who does the next part');
+        await checkPerson(tx, actor.companyId, input.doerId, 'The next person');
+        const next = new Date(input.plannedAt);
+        if (next.getTime() < now.getTime() - 5 * 60_000)
+          throw new AppError(
+            400,
+            'VALIDATION_FAILED',
+            'Pick a time for the next part that has not passed yet',
+          );
+        await attachUploads(tx, actor.companyId, actor.userId, input.attachmentIds, 'task', t.id);
+        // A new part, planned on its own: not a revision of the date.
+        data.doerId = input.doerId;
+        data.plannedAt = next;
+        data.acceptedAt = to === 'OPEN' ? now : null;
+        data.lastOverdueNotifiedAt = null;
+        data.passCount = t.passCount + 1;
+        payload.doerId = input.doerId;
+        payload.verifierId = effectiveVerifier({ ...t, doerId: input.doerId }, s);
+        payload.due = next.toISOString();
+        payload.note = input.note;
+        payload.telegramActions = to === 'AWAITING_ACCEPTANCE' ? ['accept'] : ['done', 'move'];
+        payload.telegramActionsFor = input.doerId;
+        // The next person gets the creator's brief and what was attached for this part.
+        payload.files = [
+          ...(await proofOf(tx, t.companyId, 'task', t.id, t.creatorId)),
+          ...(t.doerId === t.creatorId ? [] : await proofOf(tx, t.companyId, 'task', t.id, t.doerId)),
+        ];
+        event = 'delegation.passed_on';
+        await log(tx, t, actor.userId, 'passed_on', {
+          note: input.note,
+          fromUserId: t.doerId,
+          toUserId: input.doerId,
+          fromDate: t.plannedAt,
+          toDate: next,
+        });
+        break;
+      }
       case 'markDone': {
         const linked = await attachUploads(
           tx,
@@ -269,6 +333,7 @@ export async function actOnTask(db: Db, actor: Actor, taskId: string, input: Tas
         break;
       case 'reassign':
         await checkPerson(tx, actor.companyId, input.doerId, 'The doer');
+        await log(tx, t, actor.userId, 'reassigned', { fromUserId: t.doerId, toUserId: input.doerId });
         data.doerId = input.doerId;
         data.acceptedAt = to === 'OPEN' ? now : null;
         if (input.plannedAt) data.plannedAt = new Date(input.plannedAt);
@@ -301,41 +366,4 @@ export async function actOnTask(db: Db, actor: Actor, taskId: string, input: Tas
       );
     return updated;
   });
-}
-
-export async function editTask(
-  db: Db,
-  actor: Actor,
-  taskId: string,
-  input: { description?: string; verifierId?: string | null; requireProof?: boolean },
-) {
-  return db.$transaction(async (tx) => {
-    const t = await tx.task.findFirst({ where: { id: taskId, companyId: actor.companyId, deletedAt: null } });
-    if (!t) throw notFound('Task');
-    if (t.creatorId !== actor.userId && !can(actor, 'delegation.admin'))
-      throw new AppError(403, 'FORBIDDEN', 'Only the person who gave the task can edit it');
-    if (['DONE', 'CANCELLED'].includes(t.status))
-      throw new AppError(409, 'CONFLICT', 'Finished tasks are not edited; reopen it first');
-    if (input.verifierId) await checkPerson(tx, actor.companyId, input.verifierId, 'The verifier');
-    const updated = await tx.task.update({ where: { id: t.id }, data: input });
-    await log(tx, t, actor.userId, 'edited', {
-      note: input.description && input.description !== t.description ? 'Description changed' : null,
-    });
-    await writeAudit(
-      tx,
-      { ...actor, actorId: actor.userId },
-      { action: 'task.edited', entityType: 'task', entityId: t.id, before: t, after: updated },
-    );
-    await emitEvent(
-      tx,
-      { companyId: actor.companyId, actorId: actor.userId },
-      { name: 'task.edited', entityType: 'task', entityId: t.id },
-    );
-    return updated;
-  });
-}
-
-/** For Telegram "/done 70": find the task by its number. */
-export async function taskByNumber(db: Db | Tx, companyId: string, number: number) {
-  return db.task.findFirst({ where: { companyId, number, deletedAt: null } });
 }

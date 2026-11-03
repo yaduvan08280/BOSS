@@ -211,9 +211,12 @@ export async function notifyForEvent(event: DomainEvent, deps: EngineDeps): Prom
             }));
           }
           if (channel === 'telegram') {
-            const actions = Array.isArray(payload.telegramActions)
-              ? (payload.telegramActions as string[])
-              : [];
+            // Buttons go to everyone, or only to `telegramActionsFor` (the others just read the news).
+            const forOne = payload.telegramActionsFor;
+            const actions =
+              Array.isArray(payload.telegramActions) && (typeof forOne !== 'string' || forOne === p.id)
+                ? (payload.telegramActions as string[])
+                : [];
             const buttons: { label: string; data?: string; url?: string }[] = actions
               .filter((a) => TELEGRAM_ACTIONS[a])
               .map((a) => ({

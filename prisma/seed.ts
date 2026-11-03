@@ -1,11 +1,12 @@
 /**
  * Minimal seed: one company with built-in roles, a default shift and its owner.
  * Values come from SEED_* in .env. Safe to run again (does nothing if the company exists).
+ * Runs on every deploy, so it also gives every company the notification rules and templates of new events.
  * Demo / GGM seeds (`seed:demo`, `seed:ggm`) arrive in Phase 1.
  */
 import 'dotenv/config';
 import { createPrisma } from '@mono/db';
-import { bootstrapCompany } from '@mono/api/services';
+import { bootstrapCompany, ensureNotifyDefaults } from '@mono/api/services';
 
 function required(name: string): string {
   const v = process.env[name]?.trim();
@@ -27,7 +28,12 @@ try {
       `Created company "${company.name}" and owner ${owner?.code} (${owner?.mobile ?? owner?.email}).`,
     );
   } else {
-    console.log(`Company "${company.name}" already exists — nothing to do.`);
+    console.log(`Company "${company.name}" already exists.`);
+  }
+  for (const c of await prisma.company.findMany({ select: { id: true, name: true } })) {
+    const added = await prisma.$transaction((tx) => ensureNotifyDefaults(tx, c.id));
+    if (added.rules || added.templates)
+      console.log(`${c.name}: added ${added.rules} notification rules, ${added.templates} templates.`);
   }
 } finally {
   await prisma.$disconnect();

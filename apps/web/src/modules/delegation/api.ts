@@ -22,15 +22,19 @@ export type TaskRow = {
   doneNote: string | null;
   verifiedAt: string | null;
   coveredById: string | null;
+  passCount: number;
   files: number;
+  notes: number;
   actions: TaskAction[];
   createdAt: string;
 };
-export type TaskDetail = Omit<TaskRow, 'files'> & {
+export type TaskDetail = Omit<TaskRow, 'files' | 'notes'> & {
   events: {
     id: string;
     type: string;
     actorId: string | null;
+    fromUserId: string | null;
+    toUserId: string | null;
     note: string | null;
     fromStatus: string | null;
     toStatus: string | null;
@@ -159,5 +163,6 @@ export const DIALOG_ACTIONS: TaskAction[] = [
   'reject',
   'reopen',
   'reassign',
+  'passOn',
   'cancel',
 ];

@@ -64,6 +64,18 @@ export async function taskButton(db: Db, me: Who, action: string, taskId: string
   }
 }
 
+/** A text reply to a task message: a note on the task, with the person's name, for everyone on it. */
+export async function taskNote(db: Db, me: Who, taskId: string, note: string): Promise<string> {
+  const actor = await actorFor(db, me.companyId, me.id);
+  if (!actor) return 'Your account is not active.';
+  try {
+    const t = await actOnTask(db, actor, taskId, { action: 'addNote', note: note.slice(0, 2000) });
+    return `📝 Note added to #${t.number}.`;
+  } catch (err) {
+    return friendly(err);
+  }
+}
+
 /** Buttons on FMS step messages: Done, Yes / No (decisions), Approve. Anything with a form needs the app. */
 export async function fmsButton(db: Db, me: Who, action: string, stepId: string): Promise<string> {
   const actor = await actorFor(db, me.companyId, me.id);

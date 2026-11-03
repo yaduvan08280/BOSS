@@ -207,6 +207,8 @@ AWAITING_ACCEPTANCE --accept(doer)--> OPEN
 AWAITING_ACCEPTANCE --decline(doer, reason)--> RETURNED_TO_CREATOR
 OPEN --moveDate(doer|creator, newDate, reason)--> OPEN (log revision++)
 OPEN --addFollowUp(any)--> OPEN
+OPEN --passOn(doer, nextDoer, note, newDate, files?)--> AWAITING_ACCEPTANCE (if doerMustAccept and next ≠ creator) | OPEN
+AWAITING_ACCEPTANCE | OPEN | PENDING_VERIFY | RETURNED_TO_CREATOR | DONE --addNote(any)--> same status
 OPEN --markDone(doer, note, proof?)--> PENDING_VERIFY (if eaVerifies or verifier set) | DONE
 PENDING_VERIFY --verify(verifier)--> DONE
 PENDING_VERIFY --reject(verifier, comment)--> REOPENED (if allowReopen) --> OPEN
@@ -219,6 +221,8 @@ any --cancel(creator|admin)--> CANCELLED
 - Table: checkbox, #number + doer avatar/name + "by {creator}", status chips (Awaiting acceptance / Accepted dd/mm hh:mm / Verifier: name / Covered by {buddy}), task description, planned date + "overdue 2d", Follow up button, assigned by, actions (calendar = move date, pencil = edit, bin = cancel, tick = accept/verify).
 - **Add task** form: Select doer*, Planned date*, Verifier (optional), Task description* with **Dictate** (voice → text), Attach images or files (drag-drop, camera, paste screenshot with Ctrl+V, many files), checkbox "Require a photo or file when this is marked done — the doer cannot close it on a remark alone", Submit task ("The doer gets it on Telegram"), **Import many** (CSV/Excel).
 - Dialogs: **Move the planned date** (new planned date, why is it changing*), **Mark done** (what was done*, attach proof, button "Mark done · send to {verifier}"), **Add follow-up** (note), toast "Sent to Sandeep for verification".
+- **Pass on** (work done by several people one after another): the doer writes what they did*, picks who does the next part* and when it is due*, may attach their work → button "Pass on to {name}". The same task (same number) moves on; chips "Part 2", row "Worked on by A → B → C". Everyone who did a part keeps seeing the task and its notes.
+- **Notes** tab in the task drawer: everything people wrote on the task (notes, follow-ups, hand-overs, done notes, reasons) with name and time, and a box to add a note; History tab shows every change. On Telegram, replying to a task message with text adds a note.
 - **Scorecard** tab: week picker (prev/next, This week), Export. Rows per person: KRA/KPI lines — "All work should be done" (% work not done), "All work should be done on time" (% not on time), "All verifications should be done" / "within 1 hour" — Benchmark %, Last week actual %, This week planned / actual / actual %, Next week target. Legend: Meets benchmark / Off within a week / Missed twice / No data.
 - **R/Y/G report** toggle: Green = on time, no revision; Yellow = a day late or revised once; Red = two+ days late or revised twice+; Open = still running and not late. Tiles Graded/Green/Yellow/Red/Still open; table per person total, G, Y, R, open, % G / % Y / % R with bar; Week or Month (W1–W4) view; download.
 
@@ -296,7 +300,7 @@ In-app notification is always created. Quiet hours per user (default 21:00–07:
 - **Reminder patterns**: name; remind at (1 day before, 3 hours before, 1 hour before, at due time, 1 hour after, next morning); channels; once overdue: do not repeat / every 1 h / every morning. A checklist master or task picks a pattern.
 
 ### 7.3 Default events (seed rules for each)
-delegation: assigned, accepted, declined, date_moved, follow_up, done, verified, rejected, overdue, reopened ·
+delegation: assigned, accepted, declined, date_moved, follow_up, passed_on, note, done, verified, rejected, overdue, reopened ·
 checklist: assigned, reminder, completed, missed, verified, rejected · slip: submitted, returned, forwarded, decided ·
 ticket: raised, replied, resolved, reopened, escalated, closed · ea: captured, daily_brief, weekly_plan ·
 fms: step_assigned, step_due_soon, step_late, record_started, record_closed, approval_needed ·
@@ -305,7 +309,7 @@ ims: below_min, above_max, max_review_due, adjustment_approval, dead_stock ·
 crm: call_due, lead_assigned, lead_stuck, order_step_due, payment_due, customer_sleeping.
 
 ### 7.4 Telegram bot
-Commands: `/start` (ask for link code), `/my` (my pending list), `/today`, `/done <id>`, `/capture <text>` (EA), photo reply = attach proof. Inline buttons on messages: Accept · Done · Move date · Open. Each message deep-links to the web app.
+Commands: `/start` (ask for link code), `/my` (my pending list), `/today`, `/done <id>`, `/capture <text>` (EA), photo reply = attach proof, text reply to a task message = a note on that task. Inline buttons on messages: Accept · Done · Move date · Open. Each message deep-links to the web app.
 
 ---
 
@@ -510,3 +514,5 @@ Ubuntu 24.04 LTS on i7-12700 / 48 GB / 1.8 TB. Docker Engine + Compose plugin. S
 53. An FMS step is "due soon" an hour before its planned time and "late" after it (each told once); at 2× the planned duration it is "stuck" and the problem solver is told.
 54. Documents are numbered `{PREFIX}/{FY}/{0001}` per type through `Counter`; cancelled numbers are never reused.
 55. The public form has no captcha service. It uses a rate limit, a honeypot field and a small sum question whose answer is HMAC-signed with `APP_SECRET`.
+56. Delegation "Pass on" (answered 03/11/2026): a task done by several people one after another stays one task. The doer passes it on with what they did, the next person and a new due time (it can't be in the past or to themselves). The next person accepts it like a new task (not when it goes back to whoever gave it). A pass-on date is a new part, not a revision. History records each hand-over (from, to, both dates). People who passed it on keep seeing it. Fixed chains that repeat belong in an FMS flow instead. The task counts in reports for whoever finishes it; each earlier part's timing is visible in its hand-over.
+57. Task notes are `TaskEvent` rows of type `note`, written by anyone who can see the task (also after it is done, not once cancelled). They go to the doer, creator, verifier and everyone who did a part (`helper` recipient). The Notes tab shows every written entry (notes, follow-ups, hand-overs, done notes, reasons) with name and time. Telegram buttons on a message can be limited to one person (`telegramActionsFor`).

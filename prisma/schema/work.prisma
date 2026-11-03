@@ -27,6 +27,8 @@ model Task {
   source                String    @default("web")
   sourceId              String?   @map("source_id")
   coveredById           String?   @map("covered_by_id")
+  /// How many times the task was passed on to the next person (each part is in TaskEvent "passed_on").
+  passCount             Int       @default(0) @map("pass_count")
   createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt             DateTime? @map("deleted_at") @db.Timestamptz(3)
@@ -44,9 +46,12 @@ model TaskEvent {
   id         String    @id @default(cuid(2))
   companyId  String    @map("company_id")
   taskId     String    @map("task_id")
-  /// created | status | date_moved | follow_up | comment | edited
+  /// created | status | date_moved | follow_up | comment | note | passed_on | reassigned | edited
   type       String
   actorId    String?   @map("actor_id")
+  /// passed_on / reassigned: the doer before and after.
+  fromUserId String?   @map("from_user_id")
+  toUserId   String?   @map("to_user_id")
   note       String?
   fromStatus String?   @map("from_status")
   toStatus   String?   @map("to_status")
@@ -57,6 +62,7 @@ model TaskEvent {
   task Task @relation(fields: [taskId], references: [id])
 
   @@index([companyId, taskId, createdAt])
+  @@index([companyId, fromUserId, type])
   @@map("task_events")
 }
 

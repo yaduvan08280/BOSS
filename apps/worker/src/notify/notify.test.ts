@@ -140,6 +140,41 @@ describe('engine', () => {
     const buttons = (tg.payload as { buttons: { label: string; data?: string }[] }).buttons;
     expect(buttons[0]).toEqual({ label: 'Verify', data: `act:verify:user:${event.entityId}` });
   });
+
+  it('a passed-on task: the next person gets the Accept button, the person who gave it only the news', async () => {
+    const { company, owner, tag } = await newCompany();
+    await db.user.update({ where: { id: owner.id }, data: { telegramChatId: `po${tag}` } });
+    const role = await db.role.findFirstOrThrow({ where: { companyId: company.id, key: 'MEMBER' } });
+    const next = await db.user.create({
+      data: {
+        companyId: company.id,
+        code: `P-${tag}`,
+        name: 'Sunita',
+        roleId: role.id,
+        telegramChatId: `pn${tag}`,
+      },
+    });
+    const event = await emit(company.id, 'delegation.passed_on', {
+      doerId: next.id,
+      creatorId: owner.id,
+      number: 12,
+      title: 'Export order',
+      due: new Date().toISOString(),
+      note: 'Quote sent',
+      telegramActions: ['accept'],
+      telegramActionsFor: next.id,
+    });
+    await notifyForEvent(event, deps);
+    const labels = async (userId: string) => {
+      const tg = await db.outbox.findFirstOrThrow({
+        where: { eventId: event.id, channel: 'telegram', userId },
+      });
+      expect((tg.payload as { text: string }).text).toContain('passed it to Sunita');
+      return (tg.payload as { buttons: { label: string }[] }).buttons.map((b) => b.label);
+    };
+    expect(await labels(next.id)).toContain('Accept');
+    expect(await labels(owner.id)).not.toContain('Accept');
+  });
 });
 
 describe('outbox sender', () => {

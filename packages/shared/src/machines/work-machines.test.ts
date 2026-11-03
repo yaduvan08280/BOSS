@@ -71,13 +71,41 @@ describe('delegation machine', () => {
       'decline',
       'moveDate',
       'addFollowUp',
+      'addNote',
     ]);
     expect(availableActions(delegationMachine, 'OPEN', ['creator'], ctx)).toEqual([
       'moveDate',
       'reassign',
       'cancel',
     ]);
-    expect(availableActions(delegationMachine, 'OPEN', ['any'], ctx)).toEqual(['addFollowUp']);
+    expect(availableActions(delegationMachine, 'OPEN', ['any'], ctx)).toEqual(['addFollowUp', 'addNote']);
+    expect(availableActions(delegationMachine, 'OPEN', ['doer', 'any'], ctx)).toContain('passOn');
+  });
+
+  it('passes a task on: the next person accepts it, unless it goes back to whoever gave it', () => {
+    const pass = (x: Partial<typeof ctx> = {}) =>
+      transition(delegationMachine, {
+        from: 'OPEN',
+        action: 'passOn',
+        roles: ['doer'],
+        ctx: { ...ctx, ...x },
+      }).to;
+    expect(pass()).toBe('AWAITING_ACCEPTANCE');
+    expect(pass({ toCreator: true })).toBe('OPEN');
+    expect(pass({ doerMustAccept: false })).toBe('OPEN');
+    // Only the doer passes it on, and only while it is open.
+    expect(() =>
+      transition(delegationMachine, { from: 'OPEN', action: 'passOn', roles: ['creator', 'any'], ctx }),
+    ).toThrow();
+    expect(() =>
+      transition(delegationMachine, { from: 'PENDING_VERIFY', action: 'passOn', roles: ['doer'], ctx }),
+    ).toThrow();
+  });
+
+  it('takes notes from anyone on a live or done task, never on a cancelled one', () => {
+    for (const from of ['AWAITING_ACCEPTANCE', 'OPEN', 'PENDING_VERIFY', 'DONE'] as const)
+      expect(availableActions(delegationMachine, from, ['any'], ctx)).toContain('addNote');
+    expect(availableActions(delegationMachine, 'CANCELLED', ['any', 'admin'], ctx)).not.toContain('addNote');
   });
 });
 

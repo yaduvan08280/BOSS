@@ -5,7 +5,8 @@ import { taskActionSchema, taskCreateSchema, taskEditSchema, taskImportSchema } 
 import { AppError } from '../../lib/errors';
 import type { Actor } from '../work/actor';
 import { listTasks, myTiles, rygData, scorecardReport, taskDetail } from './queries';
-import { actOnTask, createTask, editTask } from './service';
+import { editTask } from './edit';
+import { actOnTask, createTask } from './service';
 
 export const actorOf = (r: FastifyRequest): Actor => ({
   companyId: r.auth!.companyId,

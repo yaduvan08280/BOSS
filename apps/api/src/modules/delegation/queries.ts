@@ -15,7 +15,10 @@ import { effectiveVerifier, rolesFor } from './service';
 
 export type Scope = 'mine' | 'team' | 'all';
 
-/** Which tasks someone may see: their own (doer/creator/verifier), their team's if HOD, everything if admin. */
+/**
+ * Which tasks someone may see: their own (doer/creator/verifier, or one they did a part of and passed on),
+ * their team's if HOD, everything if admin.
+ */
 export async function visibleWhere(db: Db | Tx, actor: Actor, scope: Scope): Promise<Prisma.TaskWhereInput> {
   const base: Prisma.TaskWhereInput = { companyId: actor.companyId, deletedAt: null };
   const s = await moduleSettings(db, actor.companyId, 'delegation');
@@ -23,6 +26,7 @@ export async function visibleWhere(db: Db | Tx, actor: Actor, scope: Scope): Pro
     { doerId: actor.userId },
     { creatorId: actor.userId },
     { verifierId: actor.userId },
+    { events: { some: { type: 'passed_on', fromUserId: actor.userId } } },
   ];
   if (s.eaVerifies && s.eaUserId === actor.userId) mine.push({ verifierId: null });
   if (scope === 'all' && can(actor, 'delegation.admin')) return base;
@@ -102,6 +106,12 @@ export async function listTasks(db: Db, actor: Actor, query: TaskListQuery) {
     _count: true,
   });
   const files = new Map(attachments.map((a) => [a.entityId, a._count]));
+  const noteRows = await db.taskEvent.groupBy({
+    by: ['taskId'],
+    where: { companyId: actor.companyId, type: 'note', taskId: { in: rows.map((r) => r.id) } },
+    _count: true,
+  });
+  const notes = new Map(noteRows.map((n) => [n.taskId, n._count]));
   return {
     scope,
     counts,
@@ -116,6 +126,7 @@ export async function listTasks(db: Db, actor: Actor, query: TaskListQuery) {
         verifierId: effectiveVerifier(t, s),
         ownVerifierId: t.verifierId,
         files: files.get(t.id) ?? 0,
+        notes: notes.get(t.id) ?? 0,
         actions: availableActions(delegationMachine, t.status as TaskStatus, rolesFor(actor, t, s), ctx),
       };
     }),

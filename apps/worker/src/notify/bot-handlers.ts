@@ -10,7 +10,15 @@ import {
   redeemLinkCode,
   type Storage,
 } from '@mono/api/services';
-import { doneCommand, fmsButton, moveCommand, taskButton, workSummary, type BotButton } from './bot-work';
+import {
+  doneCommand,
+  fmsButton,
+  moveCommand,
+  taskButton,
+  taskNote,
+  workSummary,
+  type BotButton,
+} from './bot-work';
 
 /** Bot logic as plain functions (easy to test); telegram-bot.ts only forwards updates to them. */
 export type BotScope = { companyIds: string[] | null };
@@ -234,7 +242,7 @@ export function helpText(capture: boolean) {
     '/done 12 what you did — mark task #12 done (just /done lists your tasks)',
     '/move 12 05/11/2026 18:00 reason — move task #12',
     ...(capture ? ['/capture <text> — note something on the EA board (or just type it)'] : []),
-    'Reply to a task message with a photo to attach proof.',
+    'Reply to a task message with text to add a note, or with a photo to attach proof.',
   ].join('\n');
 }
 
@@ -248,6 +256,7 @@ export async function onText(
   chatId: string,
   text: string,
   appName: string,
+  replyTo?: number,
 ): Promise<BotReply> {
   const t = text.trim();
   const cmd = /^\/([a-z_]+)(?:@\w+)?(?:\s+([\s\S]*))?$/i.exec(t);
@@ -276,9 +285,31 @@ export async function onText(
     }
   }
   if (looksLikeCode(t)) return reply(await onCode(db, chatId, t, appName));
+  if (t && replyTo) {
+    const note = await onReplyNote(db, scope, chatId, replyTo, t);
+    if (note) return reply(note);
+  }
   if (t && (await canCapture(db, scope, chatId)))
     return reply(await onCapture(db, scope, chatId, t, appName));
   return reply(await onStart(db, scope, chatId, undefined, appName));
+}
+
+/** Text sent as a reply to a task message becomes a note on that task; null when it wasn't about a task. */
+async function onReplyNote(
+  db: Db,
+  scope: BotScope,
+  chatId: string,
+  repliedMessageId: number,
+  text: string,
+): Promise<string | null> {
+  const me = await whoIs(db, scope, chatId);
+  if (!me) return null;
+  const sent = await db.outbox.findFirst({
+    where: { channel: 'telegram', providerId: `${chatId}:${repliedMessageId}`, userId: me.id },
+    select: { entityType: true, entityId: true },
+  });
+  if (sent?.entityType !== 'task' || !sent.entityId) return null;
+  return taskNote(db, { id: me.id, companyId: me.companyId }, sent.entityId, text);
 }
 
 /**

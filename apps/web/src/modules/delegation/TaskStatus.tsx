@@ -1,15 +1,17 @@
+import { Forward, MessageSquareText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { StatusChip } from '@/components/status-chip';
 import { formatShortDateTime } from '@/lib/when';
 import type { TaskRow } from './api';
 
-/** Status chips: Awaiting acceptance / Accepted dd/mm hh:mm / Verifier: name / Covered by … */
+/** Status chips: Awaiting acceptance / Accepted dd/mm hh:mm / Verifier: name / Covered by … / Part 2 / 3 notes */
 export function TaskStatusChips({
   t: task,
   names,
   tz,
 }: {
-  t: Pick<TaskRow, 'status' | 'acceptedAt' | 'verifierId' | 'coveredById' | 'plannedAt' | 'doneAt'>;
+  t: Pick<TaskRow, 'status' | 'acceptedAt' | 'verifierId' | 'coveredById' | 'plannedAt' | 'doneAt'> &
+    Partial<Pick<TaskRow, 'passCount' | 'notes'>>;
   names: Map<string, string>;
   tz: string;
 }) {
@@ -46,6 +48,16 @@ export function TaskStatusChips({
       {task.coveredById && (
         <span className="rounded-pill bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent-soft-foreground">
           {t('task.coveredBy', { name: names.get(task.coveredById) ?? '?' })}
+        </span>
+      )}
+      {Boolean(task.passCount) && (
+        <span className="inline-flex items-center gap-1 rounded-pill bg-muted px-2 py-0.5 text-[11px] font-medium">
+          <Forward className="size-3" /> {t('task.part', { n: (task.passCount ?? 0) + 1 })}
+        </span>
+      )}
+      {Boolean(task.notes) && (
+        <span className="inline-flex items-center gap-1 rounded-pill bg-muted px-2 py-0.5 text-[11px] font-medium">
+          <MessageSquareText className="size-3" /> {t('task.notesCount', { count: task.notes })}
         </span>
       )}
     </div>

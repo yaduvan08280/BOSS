@@ -1,5 +1,58 @@
 # Changelog
 
+## Delegation: Pass on and task notes (03/11/2026)
+
+**Pass on: one task, several people, one after another**
+- When your part is done and someone else has to finish, press **Pass on** (in the task or on its row). Fill in:
+  - what you did;
+  - who does the next part;
+  - when their part is due;
+  - your work, attached (optional).
+- The same task (same number) moves to them:
+  - They get it on Telegram like a new task, with an Accept button, your note, the original brief and the files you attached.
+  - The person who gave the task is told who has it now.
+  - The next person can pass it on again, as many times as needed.
+- The task shows "Part 2", "Part 3"… and a "Worked on by Sandeep Pal → Ramesh Choudhary → …" line. The history records each hand-over with both due dates.
+- Everyone who did a part keeps seeing the task in their list and its notes, but can't change it any more.
+- Refused:
+  - passing it to yourself;
+  - a due time that has already passed;
+  - passing it on before accepting it;
+  - anyone but the doer passing it on.
+- Passing it back to the person who gave it needs no acceptance.
+- The new due time is a new part, not a "date moved", so it doesn't turn the task yellow or red.
+
+**Notes on a task, with names**
+- The task drawer has **Notes** and **History** tabs.
+- Notes shows everything people wrote on the task, each with name, time and a tag:
+  - notes and follow-ups;
+  - hand-overs ("Passed on to Ramesh Choudhary");
+  - done notes ("Done");
+  - send-back and reopen reasons.
+  A box at the bottom adds a note; Ctrl+Enter sends it.
+- Notes can be added while the task runs and after it is done (not once it is cancelled). Each note reaches the doer, the person who gave it, the verifier and everyone who did a part, except the person who wrote it.
+- Rows show how many notes a task has.
+- Telegram: reply to a task message with text to add a note. A photo reply still attaches proof. `/help` says so.
+- The green "done note" box is gone from the drawer: the note is in Notes with the doer's name.
+
+**Notifications**
+- New events (with English and Hindi texts):
+  - `delegation.passed_on`, to the next person and the person who gave the task;
+  - `delegation.note`, to everyone on the task.
+  Every deploy now adds rules and templates for new events to every company, not only the main one. Existing rules are never changed.
+- Telegram buttons on a message can go to one person only. On a hand-over, only the next person gets Accept / Done; the person who gave the task just reads the news.
+
+**Verified**
+- 6 new tests:
+  - machine rules for pass on and notes;
+  - a three-person chain through the API: refusals, visibility for earlier doers, who hears about notes, the hand-over history, passing back to the creator;
+  - a Telegram text reply becoming a note;
+  - per-person Telegram buttons.
+- New browser test, on phone and desktop:
+  1. Sandeep passes a task to Ramesh.
+  2. Ramesh sees "Part 2", accepts it, reads Sandeep's note with his name, and adds his own.
+  3. Sandeep still sees the task and Ramesh's note, with no Pass on button.
+
 ## Phase 5 — FMS: builder, engine, Live FMS, My steps, documents, KPI cards (03/11/2026)
 
 **FMS Builder** (`/fms/builder`)

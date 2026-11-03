@@ -3,6 +3,7 @@ import {
   CalendarClock,
   Check,
   CheckCheck,
+  Forward,
   MessageSquarePlus,
   Paperclip,
   Search,
@@ -35,12 +36,14 @@ const ICON: Partial<Record<TaskAction, typeof Check>> = {
   reject: Undo2,
   reopen: Undo2,
   reassign: UserRoundCog,
+  passOn: Forward,
   cancel: Ban,
 };
 /** Which buttons show on a row, in this order (decline only inside the drawer). */
 const ROW_ACTIONS: TaskAction[] = [
   'accept',
   'markDone',
+  'passOn',
   'verify',
   'addFollowUp',
   'moveDate',
