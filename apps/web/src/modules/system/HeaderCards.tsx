@@ -127,6 +127,9 @@ export function HeaderCards({ summary }: { summary: SystemSummary | undefined })
               })}
             </div>
           </div>
+          <Link to="/fms/builder" className="mt-2 inline-flex items-center gap-1 text-xs font-semibold">
+            {t('system.openBuilder')} <ArrowRight className="size-3.5" />
+          </Link>
         </CardShell>
 
         <CardShell>

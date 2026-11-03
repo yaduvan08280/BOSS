@@ -20,7 +20,8 @@ import {
   setPublicForm,
 } from './builder';
 import { documentPdf } from './documents';
-import { completeStep, startRecord } from './engine';
+import { completeStep, parseDefinition, startRecord } from './engine';
+import { AppError } from '../../lib/errors';
 import { publicFormRoutes } from './public';
 import { flowReport, kpiValues, LIVE_TABS, liveFms, myFms, recordDetail } from './queries';
 import { reassignStep, recordAction } from './records';
@@ -109,6 +110,19 @@ export async function fmsRoutes(app: FastifyInstance, opts: { env: Env }) {
     async (q) => liveFms(app.prisma, actorOf(q), q.query.flowId, q.query.tab),
   );
   r.get('/api/fms/my', { ...view, schema: { tags } }, async (q) => myFms(app.prisma, actorOf(q)));
+  // The start form of the published version (never the unpublished draft).
+  r.get('/api/fms/flows/:id/start-form', { ...view, schema: { tags, params: idParam } }, async (q) => {
+    const flow = await app.prisma.flow.findFirst({
+      where: { id: q.params.id, companyId: actorOf(q).companyId, deletedAt: null, status: 'PUBLISHED' },
+      include: { versions: { orderBy: { version: 'desc' }, take: 1 } },
+    });
+    if (!flow?.versions[0]) throw new AppError(404, 'NOT_FOUND', 'This process is not published');
+    return {
+      name: flow.name,
+      runName: flow.runName,
+      fields: parseDefinition(flow.versions[0].definition).startFields,
+    };
+  });
   r.post(
     '/api/fms/flows/:id/records',
     {

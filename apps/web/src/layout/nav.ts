@@ -87,10 +87,10 @@ export const WORKSPACE_NAV: NavSection[] = [
   {
     key: 'systems',
     items: [
-      { key: 'myFmsSteps', path: '/fms/my-steps', icon: Route, phase: 5, tag: 'systems' },
-      { key: 'liveFms', path: '/fms/live', icon: Workflow, phase: 5, tag: 'systems' },
-      { key: 'documents', path: '/documents', icon: FileText, phase: 5, tag: 'systems' },
-      { key: 'fmsBuilder', path: '/fms/builder', icon: GitBranch, phase: 5, tag: 'systems' },
+      { key: 'myFmsSteps', path: '/fms/my-steps', icon: Route, phase: 0, tag: 'systems' },
+      { key: 'liveFms', path: '/fms/live', icon: Workflow, phase: 0, tag: 'systems' },
+      { key: 'documents', path: '/documents', icon: FileText, phase: 0, tag: 'systems' },
+      { key: 'fmsBuilder', path: '/fms/builder', icon: GitBranch, phase: 0, tag: 'systems' },
     ],
   },
   {

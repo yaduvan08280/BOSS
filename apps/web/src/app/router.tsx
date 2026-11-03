@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router';
 import { ALL_ITEMS } from '@/layout/nav';
 import { LoginPage } from '@/modules/auth/LoginPage';
@@ -21,6 +22,12 @@ const TicketsPage = page(() => import('@/modules/tickets/TicketsPage'), 'Tickets
 const EaPage = page(() => import('@/modules/ea/EaPage'), 'EaPage');
 const MisPage = page(() => import('@/modules/mis/MisPage'), 'MisPage');
 const EnginePage = page(() => import('@/modules/system/engine/EnginePage'), 'EnginePage');
+const BuilderPage = page(() => import('@/modules/fms/BuilderPage'), 'BuilderPage');
+const FlowEditorPage = page(() => import('@/modules/fms/FlowEditor'), 'FlowEditorPage');
+const LiveFmsPage = page(() => import('@/modules/fms/LiveFmsPage'), 'LiveFmsPage');
+const MyStepsPage = page(() => import('@/modules/fms/MyStepsPage'), 'MyStepsPage');
+const DocumentsPage = page(() => import('@/modules/fms/DocumentsPage'), 'DocumentsPage');
+const PublicFormPage = page(() => import('@/modules/fms/PublicFormPage'), 'PublicFormPage');
 const ChannelsTab = page(() => import('@/modules/system/integration/ChannelsTab'), 'ChannelsTab');
 const IntegrationTab = page(() => import('@/modules/system/integration/IntegrationTab'), 'IntegrationTab');
 const RemindersTab = page(() => import('@/modules/system/integration/RemindersTab'), 'RemindersTab');
@@ -47,6 +54,15 @@ const placeholderRoutes = ALL_ITEMS.filter((i) => i.phase > 0).map((i) => ({
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
+  // Public "share a form" link: no sign-in.
+  {
+    path: '/f/:token',
+    element: (
+      <Suspense fallback={null}>
+        <PublicFormPage />
+      </Suspense>
+    ),
+  },
   {
     element: <Authed />,
     children: [
@@ -60,6 +76,11 @@ export const router = createBrowserRouter([
       { path: '/help-tickets', element: <WithMe render={(me) => <TicketsPage me={me} />} /> },
       { path: '/ea', element: <WithMe render={(me) => <EaPage me={me} />} /> },
       { path: '/mis', element: <WithMe render={(me) => <MisPage me={me} />} /> },
+      { path: '/fms/builder', element: <WithMe render={(me) => <BuilderPage me={me} />} /> },
+      { path: '/fms/builder/:id', element: <WithMe render={(me) => <FlowEditorPage me={me} />} /> },
+      { path: '/fms/live', element: <WithMe render={(me) => <LiveFmsPage me={me} />} /> },
+      { path: '/fms/my-steps', element: <WithMe render={(me) => <MyStepsPage me={me} />} /> },
+      { path: '/documents', element: <WithMe render={(me) => <DocumentsPage me={me} />} /> },
       ...placeholderRoutes.filter((r) => !r.path.startsWith('/system')),
       {
         element: <SystemOnly />,

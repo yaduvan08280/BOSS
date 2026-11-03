@@ -1,3 +1,4 @@
+import type { ScopedDb } from '@mono/db';
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
@@ -68,9 +69,8 @@ export async function systemRoutes(app: FastifyInstance) {
       const summary: SystemSummary = {
         company: { stepsDone: steps.filter(Boolean).length, stepsTotal: steps.length, people, departments },
         engine: { modules: 5 },
-        // Processes and work load arrive with phases 3–5.
-        processes: { total: 0, live: 0, building: 0, notStarted: 0 },
-        people: { heavy: 0, balanced: 0, light: 0, free: people, inProcess: 0, total: people },
+        processes: await processSummary(db),
+        people: await loadSummary(db, people),
         health: {
           percent: Math.round((ready / checks.length) * 100),
           ready,
@@ -135,4 +135,77 @@ export async function systemRoutes(app: FastifyInstance) {
       };
     },
   );
+}
+
+/** Processes card: live (published), being built (a draft with steps), not started (no steps yet). */
+async function processSummary(db: ScopedDb) {
+  const flows = await db.flow.findMany({
+    where: { deletedAt: null, status: { not: 'ARCHIVED' } },
+    select: { status: true, draft: true },
+  });
+  const steps = (f: (typeof flows)[number]) =>
+    ((f.draft as { steps?: unknown[] } | null)?.steps ?? []).length;
+  return {
+    total: flows.length,
+    live: flows.filter((f) => f.status === 'PUBLISHED').length,
+    building: flows.filter((f) => f.status === 'DRAFT' && steps(f) > 0).length,
+    notStarted: flows.filter((f) => f.status === 'DRAFT' && steps(f) === 0).length,
+  };
+}
+
+/**
+ * People view: open work per person (tasks, FMS steps, tickets to fix, checklists due today) —
+ * heavy 10+, balanced 4–9, light 1–3, free 0 — and how many are doers in a live process.
+ */
+async function loadSummary(db: ScopedDb, total: number) {
+  const [people, tasks, steps, tickets, runs, versions] = await Promise.all([
+    db.user.findMany({ where: { deletedAt: null, status: 'ACTIVE' }, select: { id: true } }),
+    db.task.groupBy({
+      by: ['doerId'],
+      where: { deletedAt: null, status: { in: ['OPEN', 'AWAITING_ACCEPTANCE'] } },
+      _count: true,
+    }),
+    db.fmsRecordStep.groupBy({
+      by: ['doerId'],
+      where: { status: 'OPEN', record: { status: 'RUNNING' } },
+      _count: true,
+    }),
+    db.ticket.groupBy({
+      by: ['solverId'],
+      where: { deletedAt: null, status: { in: ['OPEN', 'IN_PROGRESS'] } },
+      _count: true,
+    }),
+    db.checklistRun.groupBy({
+      by: ['doerId'],
+      where: { status: 'OPEN', plannedAt: { lt: new Date(Date.now() + 86_400_000) } },
+      _count: true,
+    }),
+    db.flowVersion.findMany({
+      where: { flow: { status: 'PUBLISHED', deletedAt: null } },
+      select: { flowId: true, version: true, definition: true },
+      orderBy: { version: 'desc' },
+    }),
+  ]);
+  const load = new Map<string, number>();
+  const add = (id: string | null, n: number) => id && load.set(id, (load.get(id) ?? 0) + n);
+  for (const x of tasks) add(x.doerId, x._count);
+  for (const x of steps) add(x.doerId, x._count);
+  for (const x of tickets) add(x.solverId, x._count);
+  for (const x of runs) add(x.doerId, x._count);
+  const latest = new Map<string, unknown>();
+  for (const v of versions) if (!latest.has(v.flowId)) latest.set(v.flowId, v.definition);
+  const doers = new Set(
+    [...latest.values()].flatMap((d) =>
+      ((d as { steps?: { doerIds?: string[] }[] }).steps ?? []).flatMap((s) => s.doerIds ?? []),
+    ),
+  );
+  const n = (p: (x: number) => boolean) => people.filter((x) => p(load.get(x.id) ?? 0)).length;
+  return {
+    heavy: n((x) => x >= 10),
+    balanced: n((x) => x >= 4 && x < 10),
+    light: n((x) => x >= 1 && x < 4),
+    free: n((x) => x === 0),
+    inProcess: people.filter((x) => doers.has(x.id)).length,
+    total,
+  };
 }
