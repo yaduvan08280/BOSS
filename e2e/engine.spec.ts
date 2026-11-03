@@ -1,4 +1,15 @@
-import { expect, test, type Browser, type Page } from '@playwright/test';
+import { expect, test, type Browser, type Locator, type Page } from '@playwright/test';
+
+/** Pick from a MONO dropdown the way a person does: open it, type, click the match. */
+async function choose(page: Page, trigger: Locator, text: string) {
+  await trigger.click();
+  const search = page.getByRole('searchbox');
+  if (await search.count()) await search.fill(text);
+  await page
+    .getByRole('option', { name: new RegExp(text, 'i') })
+    .first()
+    .click();
+}
 
 /** Phase 4 on the demo company: slip, ticket and EA lifecycles in the web, and the flow designer's switches. */
 const PASSWORD = process.env.SEED_DEMO_PASSWORD ?? 'Demo1234';
@@ -77,7 +88,7 @@ test('a help slip goes from raised to approved (with a task) to closed', async (
   await drawer(page).getByRole('button', { name: 'Approve' }).click();
   const dlg = page.getByRole('dialog').last();
   await dlg.getByLabel('Add a second compressor').check();
-  await dlg.getByRole('combobox').first().selectOption({ label: 'Sandeep Pal' });
+  await choose(page, dlg.getByRole('combobox').first(), 'Sandeep Pal');
   await dlg.getByRole('button', { name: 'Approve' }).click();
   await expect(drawer(page).getByText(/task #\d+ for sandeep pal/i)).toBeVisible();
 
@@ -105,7 +116,7 @@ test('a help ticket is replied, fixed with proof and confirmed', async ({ browse
   const raiser = await as(browser, GOPAL, info);
   await raiser.page.goto('/help-tickets?tab=raise');
   await raiser.page.getByLabel(/what's wrong/i).fill(title);
-  await raiser.page.getByLabel(/problem solver/i).selectOption({ label: 'Sandeep Pal · Fitter' });
+  await choose(raiser.page, raiser.page.getByLabel(/problem solver/i), 'Sandeep Pal');
   await shot(raiser.page, 'ticket-raise', info.project.name);
   await raiser.page.getByRole('button', { name: 'Raise ticket' }).click();
   await expect(raiser.page.getByText(/ticket t#\d+ raised/i)).toBeVisible();

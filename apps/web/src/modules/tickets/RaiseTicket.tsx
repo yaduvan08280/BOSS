@@ -2,6 +2,7 @@ import { Loader2, Send } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ticketCreateSchema, type OrgPerson } from '@mono/shared';
+import { DateTimeInput } from '@/components/ui/date-input';
 import { DictateButton } from '@/components/dictate';
 import { FileDrop } from '@/components/file-drop';
 import { Button } from '@/components/ui/button';
@@ -97,10 +98,9 @@ export function RaiseTicket({
             </Select>
           </Field>
           <Field label={t('ticket.fixBy')}>
-            <Input
-              type="datetime-local"
+            <DateTimeInput
               value={form.plannedFixAt}
-              onChange={(e) => setForm({ ...form, plannedFixAt: e.target.value })}
+              onChange={(v) => setForm({ ...form, plannedFixAt: v })}
             />
           </Field>
         </div>

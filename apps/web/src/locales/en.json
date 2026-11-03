@@ -11,7 +11,27 @@
     "comingIn": "Arrives in phase {{phase}}",
     "comingBody": "This screen is part of the plan and will be built in phase {{phase}}. The menu, layout and theme are ready for it.",
     "offline": "You're offline. Changes will sync when you're back.",
-    "remove": "Remove"
+    "remove": "Remove",
+    "typeToFilter": "Type to filter",
+    "noMatch": "Nothing matches",
+    "dmy": "DD/MM/YYYY",
+    "hhmm": "HH:mm",
+    "time": "Time",
+    "openCalendar": "Open calendar",
+    "month": {
+      "1": "January",
+      "2": "February",
+      "3": "March",
+      "4": "April",
+      "5": "May",
+      "6": "June",
+      "7": "July",
+      "8": "August",
+      "9": "September",
+      "10": "October",
+      "11": "November",
+      "12": "December"
+    }
   },
   "auth": {
     "title": "Sign in",

@@ -1,6 +1,6 @@
 import type { Db } from '@mono/db';
-import { actOnTask, actorFor, taskByNumber } from '@mono/api/services';
-import { formatShortDateTime, parseLocalDateTime, zonedToUtc } from '@mono/shared';
+import { actOnTask, actorFor, effectiveVerifier, moduleSettings, taskByNumber } from '@mono/api/services';
+import { addDays, formatShortDateTime, localDate, parseLocalDateTime, zonedToUtc } from '@mono/shared';
 
 /** Work from Telegram: buttons on task messages and the /done, /move commands. Same rules as the web. */
 type Who = { id: string; companyId: string };
@@ -60,7 +60,7 @@ export async function taskButton(db: Db, me: Who, action: string, taskId: string
 /** /done 70 [what was done] */
 export async function doneCommand(db: Db, me: Who, args: string): Promise<string> {
   const m = /^#?(\d+)\s*(.*)$/s.exec(args.trim());
-  if (!m) return 'Write the task number: /done 70 what you did';
+  if (!m) return 'Write the task number: /done 12 what you did';
   const t = await taskByNumber(db, me.companyId, Number(m[1]));
   if (!t) return `There is no task #${m[1]}.`;
   const actor = await actorFor(db, me.companyId, me.id);
@@ -84,12 +84,13 @@ export async function moveCommand(db: Db, me: Who, args: string): Promise<string
   const m = /^#?(\d+)\s+(\d{1,2}[/.-]\d{1,2}(?:[/.-]\d{2,4})?)(?:\s+(\d{1,2}:\d{2}))?\s+(.{3,})$/s.exec(
     args.trim(),
   );
-  if (!m) return 'Write: /move 70 05/11 18:00 why it is changing';
+  if (!m)
+    return 'Write: /move <task number> DD/MM/YYYY HH:mm <why it is changing>\ne.g. /move 12 05/11/2026 18:00 waiting for the spare part';
   const zone = await tz(db, me.companyId);
   const year = new Date().getFullYear();
   const date = m[2]!.split(/[/.-]/).length === 2 ? `${m[2]}/${year}` : m[2]!;
   const parsed = parseLocalDateTime(m[3] ? `${date} ${m[3]}` : date);
-  if (!parsed) return `"${m[2]}" is not a date. Use DD/MM.`;
+  if (!parsed) return `"${m[2]}" is not a date. Use DD/MM/YYYY.`;
   const t = await taskByNumber(db, me.companyId, Number(m[1]));
   if (!t) return `There is no task #${m[1]}.`;
   const actor = await actorFor(db, me.companyId, me.id);
@@ -107,61 +108,71 @@ export async function moveCommand(db: Db, me: Who, args: string): Promise<string
   }
 }
 
-/** /my and /today: tasks to do or verify, checklists due, then unread messages. */
-export async function workSummary(db: Db, me: Who, today: boolean): Promise<string[]> {
+/** A tappable action under a bot reply (same callback format as the notification buttons). */
+export type BotButton = { label: string; data: string };
+export type WorkSummary = { lines: string[]; buttons: BotButton[]; later: number; firstTask: number | null };
+
+/**
+ * /my and /today: tasks to accept, do or verify, checklists, tickets and slips.
+ * "Today" = due before midnight in the company's time zone, plus anything already late.
+ */
+export async function workSummary(db: Db, me: Who, today: boolean, now = new Date()): Promise<WorkSummary> {
   const zone = await tz(db, me.companyId);
-  const endOfDay = new Date(Date.now() + 24 * 3600_000);
-  const [tasks, verify, runs] = await Promise.all([
+  const endOfDay = zonedToUtc(addDays(localDate(now, zone), 1), 0, zone);
+  const due = today ? { lt: endOfDay } : undefined;
+  const base = { companyId: me.companyId, deletedAt: null };
+  const s = await moduleSettings(db, me.companyId, 'delegation');
+  const [tasks, laterTasks, waiting, runs, tickets, slips] = await Promise.all([
     db.task.findMany({
       where: {
-        companyId: me.companyId,
-        deletedAt: null,
+        ...base,
         doerId: me.id,
         status: { in: ['AWAITING_ACCEPTANCE', 'OPEN'] },
-        ...(today ? { plannedAt: { lt: endOfDay } } : {}),
+        ...(due ? { plannedAt: due } : {}),
       },
       orderBy: { plannedAt: 'asc' },
       take: 10,
     }),
-    db.task.count({
-      where: { companyId: me.companyId, deletedAt: null, verifierId: me.id, status: 'PENDING_VERIFY' },
+    today
+      ? db.task.count({
+          where: {
+            ...base,
+            doerId: me.id,
+            status: { in: ['AWAITING_ACCEPTANCE', 'OPEN'] },
+            plannedAt: { gte: endOfDay },
+          },
+        })
+      : Promise.resolve(0),
+    // Verification can be mine without my name on the task (EA / creator fallback), so check each.
+    db.task.findMany({
+      where: { ...base, status: 'PENDING_VERIFY' },
+      select: { id: true, number: true, description: true, doerId: true, creatorId: true, verifierId: true },
     }),
     db.checklistRun.findMany({
-      where: { companyId: me.companyId, doerId: me.id, status: 'OPEN', plannedAt: { lt: endOfDay } },
+      where: {
+        companyId: me.companyId,
+        doerId: me.id,
+        status: 'OPEN',
+        plannedAt: { lt: endOfDay },
+        master: { deletedAt: null },
+      },
       include: { master: { select: { name: true } } },
       orderBy: { plannedAt: 'asc' },
       take: 10,
     }),
-  ]);
-  const now = new Date();
-  const lines: string[] = [];
-  for (const t of tasks) {
-    const late = t.plannedAt < now ? ' ⚠️ late' : '';
-    const wait = t.status === 'AWAITING_ACCEPTANCE' ? ' (to accept)' : '';
-    lines.push(
-      `#${t.number} ${t.description.slice(0, 60)} · ${formatShortDateTime(t.plannedAt, zone)}${late}${wait}`,
-    );
-  }
-  for (const r of runs)
-    lines.push(
-      `☑️ ${r.master.name} · ${r.itemsDone}/${r.itemsTotal} · ${formatShortDateTime(r.plannedAt, zone)}`,
-    );
-  if (verify) lines.push(`🔍 ${verify} task(s) waiting for you to verify`);
-  const [tickets, slips] = await Promise.all([
     db.ticket.findMany({
       where: {
-        companyId: me.companyId,
-        deletedAt: null,
+        ...base,
         solverId: me.id,
         status: { in: ['OPEN', 'IN_PROGRESS'] },
+        ...(due ? { plannedFixAt: due } : {}),
       },
       orderBy: { plannedFixAt: 'asc' },
       take: 5,
     }),
     db.slip.count({
       where: {
-        companyId: me.companyId,
-        deletedAt: null,
+        ...base,
         OR: [
           { status: 'SUBMITTED', receiverId: me.id },
           { status: 'WITH_APPROVER', approverId: me.id },
@@ -170,10 +181,34 @@ export async function workSummary(db: Db, me: Who, today: boolean): Promise<stri
       },
     }),
   ]);
+  const verify = waiting.filter((t) => effectiveVerifier(t, s) === me.id);
+  const lines: string[] = [];
+  const buttons: BotButton[] = [];
+  for (const t of tasks) {
+    const late = t.plannedAt < now ? ' ⚠️ late' : '';
+    const wait = t.status === 'AWAITING_ACCEPTANCE' ? ' (to accept)' : '';
+    lines.push(
+      `#${t.number} ${t.description.slice(0, 60)} · ${formatShortDateTime(t.plannedAt, zone)}${late}${wait}`,
+    );
+    buttons.push(
+      t.status === 'AWAITING_ACCEPTANCE'
+        ? { label: `👍 Accept #${t.number}`, data: `act:accept:task:${t.id}` }
+        : { label: `✅ Done #${t.number}`, data: `act:done:task:${t.id}` },
+    );
+  }
+  for (const r of runs)
+    lines.push(
+      `☑️ ${r.master.name} · ${r.itemsDone}/${r.itemsTotal} · ${formatShortDateTime(r.plannedAt, zone)}`,
+    );
+  for (const t of verify.slice(0, 5)) {
+    lines.push(`🔍 #${t.number} ${t.description.slice(0, 60)} — waiting for you to verify`);
+    buttons.push({ label: `🔍 Verify #${t.number}`, data: `act:verify:task:${t.id}` });
+  }
+  if (verify.length > 5) lines.push(`🔍 …and ${verify.length - 5} more to verify`);
   for (const t of tickets)
     lines.push(
       `🎫 T#${t.number} ${t.title.slice(0, 50)} · fix by ${formatShortDateTime(t.plannedFixAt, zone)}${t.plannedFixAt < now ? ' ⚠️ late' : ''}`,
     );
   if (slips) lines.push(`📝 ${slips} help slip(s) waiting on you`);
-  return lines;
+  return { lines, buttons: buttons.slice(0, 8), later: laterTasks, firstTask: tasks[0]?.number ?? null };
 }

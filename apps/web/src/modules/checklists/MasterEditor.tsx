@@ -8,6 +8,7 @@ import {
   type OrgDepartment,
   type OrgPerson,
 } from '@mono/shared';
+import { DateInput, TimeInput } from '@/components/ui/date-input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox, Field, Select } from '@/components/ui/form';
@@ -281,11 +282,7 @@ export function MasterEditor({
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label={t('chk.dueTime')}>
-              <Input
-                type="time"
-                value={d.dueTime}
-                onChange={(e) => setD({ ...d, dueTime: e.target.value })}
-              />
+              <TimeInput value={d.dueTime} onChange={(v) => setD({ ...d, dueTime: v })} />
             </Field>
             <Field label={t('chk.window')} hint={t('chk.windowHint')}>
               <Input
@@ -336,11 +333,7 @@ export function MasterEditor({
             </Select>
           </Field>
           <Field label={t('chk.startDate')}>
-            <Input
-              type="date"
-              value={d.startDate}
-              onChange={(e) => setD({ ...d, startDate: e.target.value })}
-            />
+            <DateInput value={d.startDate} onChange={(v) => setD({ ...d, startDate: v })} />
           </Field>
           <label className="flex items-start gap-2 text-sm">
             <Checkbox

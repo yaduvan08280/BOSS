@@ -5,27 +5,8 @@ import { cn } from '@/lib/utils';
 const field =
   'w-full min-w-0 rounded-control border border-input bg-card px-3 text-base text-foreground outline-none transition-[box-shadow,border-color] focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/25 aria-invalid:border-status-bad disabled:opacity-50 sm:text-sm';
 
-const CHEVRON =
-  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")";
-
-/** Native select: best on phones (opens the system picker). */
-export function Select({ className, children, ...props }: ComponentProps<'select'>) {
-  return (
-    <select
-      className={cn(field, 'h-11 appearance-none pr-9 sm:h-10', className)}
-      // Inline so class merging (e.g. a caller's bg-transparent) can never drop the arrow's position.
-      style={{
-        backgroundImage: CHEVRON,
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'right 10px center',
-        backgroundSize: '16px',
-      }}
-      {...props}
-    >
-      {children}
-    </select>
-  );
-}
+/** Type-to-filter dropdown (drop-in for a native select). */
+export { Select } from './select';
 
 export function Textarea({ className, ...props }: ComponentProps<'textarea'>) {
   return <textarea className={cn(field, 'min-h-28 py-2.5 font-mono text-sm', className)} {...props} />;

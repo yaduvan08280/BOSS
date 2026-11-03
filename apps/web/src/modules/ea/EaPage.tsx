@@ -1,7 +1,7 @@
 import { CalendarClock, ClipboardList, Hourglass, Inbox, Loader2, Plus, Send } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { localDate, type Me } from '@mono/shared';
+import { formatLocalDate, localDate, type Me } from '@mono/shared';
 import { DictateButton } from '@/components/dictate';
 import { ErrorState, KpiTile, PageHeader, PageSkeleton } from '@/components/page';
 import { Button } from '@/components/ui/button';
@@ -151,7 +151,7 @@ export function EaPage({ me }: { me: Me }) {
             <Dialog
               open
               onOpenChange={(o) => !o && setSlot(null)}
-              title={t('ea.bookSlot', { at: `${slot.date.slice(8)}/${slot.date.slice(5, 7)} ${slot.start}` })}
+              title={t('ea.bookSlot', { at: `${formatLocalDate(slot.date)} ${slot.start}` })}
               description={t('ea.bookSlotHint')}
             >
               <ul className="space-y-1.5">

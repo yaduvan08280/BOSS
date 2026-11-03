@@ -2,13 +2,13 @@ import { FileText, Loader2, Send } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { OrgPerson, TicketAction, TicketActionInput } from '@mono/shared';
+import { DateTimeInput } from '@/components/ui/date-input';
 import { FileDrop } from '@/components/file-drop';
 import { PageSkeleton } from '@/components/page';
 import { StatusChip } from '@/components/status-chip';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Field, Select, Textarea } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { InfoRow, Timeline } from '@/components/work';
 import { useActionMutation, useDueLabel } from '@/lib/work';
@@ -248,7 +248,7 @@ function TicketDialog({
       <div className="space-y-4">
         {(action === 'movePlan' || action === 'reassign') && (
           <Field label={t('ticket.fixBy')}>
-            <Input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
+            <DateTimeInput value={when} onChange={(v) => setWhen(v)} />
           </Field>
         )}
         {action === 'reassign' ? (

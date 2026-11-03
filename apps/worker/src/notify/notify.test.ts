@@ -74,7 +74,7 @@ describe('engine', () => {
       buttons: { label: string }[];
     };
     expect(tg.text).toContain('Hello Owner');
-    expect(tg.buttons.map((b) => b.label)).toEqual(['Seen ✓', 'Open']);
+    expect(tg.buttons.map((b) => b.label)).toEqual(['Open']); // no Seen button: any reply in the chat counts as seen
     const inapp = await db.notification.findMany({ where: { eventId: event.id } });
     expect(inapp).toHaveLength(1);
     expect(await notifyForEvent(event, deps)).toBe(0);
@@ -240,14 +240,14 @@ describe('Telegram bot', () => {
     const { company, owner } = await newCompany();
     const scope = { companyIds: [company.id] };
     const chatId = `9${Date.now()}`;
-    expect(await onMy(db, scope, chatId, 'MONO')).toContain('not linked');
+    expect((await onMy(db, scope, chatId, 'MONO')).text).toContain('not linked');
     const code = await db.$transaction((tx) => newLinkCode(tx, company.id, owner.id, 'screen'));
     expect(await onCode(db, chatId, code.code.toLowerCase(), 'MONO')).toContain('Linked');
     expect(await onCode(db, chatId, code.code, 'MONO')).toContain('already used');
 
     const event = await emit(company.id, 'notify.test', { userId: owner.id });
     await notifyForEvent(event, deps);
-    expect(await onMy(db, scope, chatId, 'MONO')).toContain('Test message');
+    expect((await onMy(db, scope, chatId, 'MONO')).text).toContain('Test message');
     const n = await db.notification.findFirstOrThrow({ where: { eventId: event.id } });
     expect(await onAck(db, scope, chatId, n.id)).toContain('seen');
     expect((await db.notification.findUniqueOrThrow({ where: { id: n.id } })).readAt).not.toBeNull();

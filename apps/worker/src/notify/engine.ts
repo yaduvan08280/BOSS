@@ -80,6 +80,13 @@ export async function notifyForEvent(event: DomainEvent, deps: EngineDeps): Prom
     );
     return usable.find((t) => t.language === lang) ?? usable.find((t) => t.language === 'en') ?? null;
   };
+  const proofIds = Array.isArray(payload.proof) ? (payload.proof as string[]) : [];
+  const proofFiles = proofIds.length
+    ? await db.attachment.findMany({
+        where: { id: { in: proofIds }, companyId: company.id, deletedAt: null },
+        select: { path: true, mime: true, originalName: true },
+      })
+    : [];
   const urgent = URGENT.has(event.name);
   const available = deps.available ? await deps.available(company.id) : null;
   const now = new Date();
@@ -117,12 +124,11 @@ export async function notifyForEvent(event: DomainEvent, deps: EngineDeps): Prom
         const v: Record<string, string> = { ...vars, recipient: p.name };
         const lang = p.lang === 'hi' ? 'hi' : 'en';
         const sendAt = urgent ? after : nextSendTime(after, company.timezone, quietHoursOf(p));
-        let notificationId: string | null = null;
 
         // In-app is always created, once per person per event.
         if (!notified.has(p.id)) {
           notified.add(p.id);
-          const n = await createInAppNotification(tx, {
+          await createInAppNotification(tx, {
             companyId: company.id,
             userId: p.id,
             title: renderText(def?.title[lang] ?? event.name, v),
@@ -133,7 +139,6 @@ export async function notifyForEvent(event: DomainEvent, deps: EngineDeps): Prom
             entityId: event.entityId,
             tone: event.name === 'notify.escalation' ? 'warn' : null,
           });
-          notificationId = n.id;
         }
 
         for (const channel of rule.channels) {
@@ -210,9 +215,10 @@ export async function notifyForEvent(event: DomainEvent, deps: EngineDeps): Prom
                 label: TELEGRAM_ACTIONS[a]!,
                 data: `act:${a}:${event.entityType}:${event.entityId}`,
               }));
-            if (notificationId) buttons.push({ label: 'Seen ✓', data: `ack:${notificationId}` });
             if (v.link?.startsWith('https://')) buttons.push({ label: 'Open', url: v.link });
             message.buttons = buttons;
+            if (proofFiles.length)
+              message.files = proofFiles.map((f) => ({ path: f.path, mime: f.mime, name: f.originalName }));
             firstTelegram ??= body;
           }
           await queue({

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { EA_KINDS, minutesToHHmm, type EaAction, type EaActionInput, type OrgPerson } from '@mono/shared';
+import { DateInput, DateTimeInput, TimeInput } from '@/components/ui/date-input';
 import { StatusChip } from '@/components/status-chip';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
@@ -133,10 +134,10 @@ export function EaItemDialog({
         {mode === 'schedule' && (
           <div className="grid grid-cols-2 gap-3">
             <Field label={t('ea.date')}>
-              <Input type="date" value={date} min={today} onChange={(e) => setDate(e.target.value)} />
+              <DateInput value={date} min={today} onChange={(v) => setDate(v)} />
             </Field>
             <Field label={t('ea.start')}>
-              <Input type="time" step={900} value={start} onChange={(e) => setStart(e.target.value)} />
+              <TimeInput value={start} onChange={(v) => setStart(v)} />
             </Field>
             <Field label={t('ea.length')}>
               <Select value={minutes} onChange={(e) => setMinutes(Number(e.target.value))}>
@@ -173,7 +174,7 @@ export function EaItemDialog({
               </Select>
             </Field>
             <Field label={t('task.col.planned')}>
-              <Input type="datetime-local" value={planned} onChange={(e) => setPlanned(e.target.value)} />
+              <DateTimeInput value={planned} onChange={(v) => setPlanned(v)} />
             </Field>
           </div>
         )}

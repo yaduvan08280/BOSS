@@ -1,5 +1,5 @@
 import type { Db } from '@mono/db';
-import { addDays, localDate, weekdayOf, zonedToUtc } from '@mono/shared';
+import { addDays, formatLocalDate, localDate, weekdayOf, zonedToUtc } from '@mono/shared';
 import { emitEvent } from '../../lib/events';
 import { claimMark } from '../ea/jobs';
 import { teamOf } from '../work/actor';
@@ -55,7 +55,7 @@ export async function sendWeeklyMis(db: Db, now = new Date(), onlyCompanyId?: st
       ).map((d) => d.hodUserId!),
     );
     const report = await misFor(db, c.id, people, at, now);
-    const week = `${lastMonday.slice(8)}/${lastMonday.slice(5, 7)}–${addDays(lastMonday, 6).slice(8)}/${addDays(lastMonday, 6).slice(5, 7)}`;
+    const week = `${formatLocalDate(lastMonday)} – ${formatLocalDate(addDays(lastMonday, 6))}`;
     for (const p of people) {
       const isOwner = p.role.key === 'OWNER';
       if (!isOwner && !hods.has(p.id)) continue;

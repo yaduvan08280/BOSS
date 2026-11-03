@@ -2,7 +2,15 @@ import { useQuery } from '@tanstack/react-query';
 import { ChartColumn, ChevronLeft, ChevronRight, Download, FileDown } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { addDays, localDate, zonedToUtc, type Me, type MisPart, type MisRow } from '@mono/shared';
+import {
+  addDays,
+  formatLocalDate,
+  localDate,
+  zonedToUtc,
+  type Me,
+  type MisPart,
+  type MisRow,
+} from '@mono/shared';
 import { EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/components/page';
 import { Button } from '@/components/ui/button';
 import { useIsPhone } from '@/components/ui/dialog';
@@ -44,7 +52,6 @@ export function MisPage({ me }: { me: Me }) {
     queryFn: () => api<Report>(`/api/mis?at=${encodeURIComponent(at)}`),
   });
   const r = q.data;
-  const dm = (d: string) => `${d.slice(8)}/${d.slice(5, 7)}/${d.slice(0, 4)}`;
 
   const csv = () => {
     if (!r) return;
@@ -88,7 +95,7 @@ export function MisPage({ me }: { me: Me }) {
           <ChevronLeft />
         </Button>
         <span className="tabular text-sm font-semibold">
-          {r ? `${dm(r.week.start)} – ${dm(r.week.end)}` : '…'}
+          {r ? `${formatLocalDate(r.week.start)} – ${formatLocalDate(r.week.end)}` : '…'}
         </span>
         <Button
           size="icon-sm"

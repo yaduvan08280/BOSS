@@ -2,6 +2,7 @@ import { Clock, Moon, Pencil, Plus, Star, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { shiftSchema } from '@mono/shared';
+import { TimeInput } from '@/components/ui/date-input';
 import { EmptyState, ErrorState, PageSkeleton } from '@/components/page';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -161,21 +162,13 @@ export function Shifts() {
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label={t('org.shifts.start')}>
-                <Input
-                  type="time"
-                  value={draft.start}
-                  onChange={(e) => setDraft({ ...draft, start: e.target.value })}
-                />
+                <TimeInput value={draft.start} onChange={(v) => setDraft({ ...draft, start: v })} />
               </Field>
               <Field
                 label={t('org.shifts.end')}
                 hint={draft.end <= draft.start ? t('org.shifts.overnightHint') : undefined}
               >
-                <Input
-                  type="time"
-                  value={draft.end}
-                  onChange={(e) => setDraft({ ...draft, end: e.target.value })}
-                />
+                <TimeInput value={draft.end} onChange={(v) => setDraft({ ...draft, end: v })} />
               </Field>
             </div>
             <Field label={t('org.shifts.days')}>

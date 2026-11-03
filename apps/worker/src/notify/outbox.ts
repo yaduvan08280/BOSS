@@ -8,7 +8,14 @@ import {
   sendTelegram,
   type ChannelClients,
   type OutgoingMessage,
+  type Storage,
 } from '@mono/api/services';
+
+const readFrom = (storage: Storage) => async (path: string) => {
+  const chunks: Buffer[] = [];
+  for await (const c of storage.get(path)) chunks.push(Buffer.from(c as Uint8Array));
+  return Buffer.concat(chunks);
+};
 
 export const MAX_TRIES = 5;
 const BASE_DELAY_MS = 30_000;
@@ -18,6 +25,8 @@ const realSenders = { telegram: sendTelegram, email: sendEmail, push: sendPush }
 export type SenderDeps = {
   db: Db;
   env: Env;
+  /** Where proof files live (Telegram uploads them with the message). */
+  storage?: Storage;
   /** Tests swap these to avoid real network calls. */
   clientsFor?: (companyId: string) => Promise<ChannelClients>;
   senders?: Partial<typeof realSenders>;
@@ -29,7 +38,17 @@ async function deliver(row: Outbox, clients: ChannelClients, deps: SenderDeps): 
   switch (row.channel) {
     case 'telegram':
       if (!clients.telegram) throw new ChannelError('Telegram is not connected', false);
-      return (await sendTelegram(clients.telegram.token, row.to, msg)).providerId ?? null;
+      return (
+        (
+          await sendTelegram(
+            clients.telegram.token,
+            row.to,
+            msg,
+            undefined,
+            deps.storage ? readFrom(deps.storage) : undefined,
+          )
+        ).providerId ?? null
+      );
     case 'email':
       if (!clients.email) throw new ChannelError('Email (SMTP) is not set up', false);
       return (

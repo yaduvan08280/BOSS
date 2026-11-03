@@ -500,3 +500,7 @@ Ubuntu 24.04 LTS on i7-12700 / 48 GB / 1.8 TB. Docker Engine + Compose plugin. S
 43. Flow designer settings are validated per module; person pickers must be active people; "Reset to default" deletes the company's row. Every setting shown has an effect. An event may leave out recipients with `payload.skipRecipients`. Built-in rule changes apply only to rules a company never edited (`RULE_UPGRADES`).
 44. Server PDFs use pdfmake with its built-in Helvetica and no file or network access while rendering. New npm packages are pinned to releases at least two weeks old.
 45. Playwright runs one test at a time (specs share the demo accounts); live notification toasts share one slot.
+46. Dates are only ever shown and typed as DD/MM/YYYY (times 24-hour HH:mm), always with the year. Browser date/time pickers are not used anywhere (they follow the browser locale); MONO's own DateInput/TimeInput replace them, and an e2e test fails if one comes back.
+47. Every option list filters as you type (the shared Select): all typed words must match, best matches first.
+48. Telegram has no read receipts for bots: any update from a linked chat marks everything delivered there before it as read (this also counts as a reply for escalations). No "Seen" button.
+49. Proof files (task done, ticket fixed, checklist submitted) are sent into Telegram with the verifier's message; every bot command goes through one tested router (`onText`).

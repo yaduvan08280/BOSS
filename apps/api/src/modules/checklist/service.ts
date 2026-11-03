@@ -265,6 +265,17 @@ export async function runAction(
       due: run.plannedAt.toISOString(),
       link: `/checklists?run=${run.id}`,
       comment: input.action === 'reject' ? input.comment : undefined,
+      // Photos taken on the items travel with the "please verify" message.
+      proof:
+        input.action === 'submit'
+          ? (
+              await tx.checklistRunItem.findMany({
+                where: { runId: run.id, attachmentId: { not: null } },
+                select: { attachmentId: true },
+                take: 5,
+              })
+            ).map((i) => i.attachmentId!)
+          : undefined,
     };
     const event =
       input.action === 'submit'

@@ -13,12 +13,12 @@ import {
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { weekOf, type OrgPerson, type TaskAction } from '@mono/shared';
+import { DateInput } from '@/components/ui/date-input';
 import { Avatar } from '@/components/brand';
 import { EmptyState, ErrorState, PageSkeleton } from '@/components/page';
 import { Button } from '@/components/ui/button';
 import { useIsPhone } from '@/components/ui/dialog';
 import { Select } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { formatShortDateTime, relative } from '@/lib/when';
 import { ActionDialog } from './ActionDialog';
@@ -187,21 +187,14 @@ export function TaskList({
         </div>
         {range === 'custom' && (
           <div className="flex items-center gap-1">
-            <Input
-              type="date"
+            <DateInput
               value={from}
-              onChange={(e) => setFrom(e.target.value)}
-              className="h-10 w-auto sm:h-10"
+              onChange={(v) => setFrom(v)}
+              className="w-40"
               aria-label={t('task.from')}
             />
             <span className="text-muted-foreground">–</span>
-            <Input
-              type="date"
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-              className="h-10 w-auto sm:h-10"
-              aria-label={t('task.to')}
-            />
+            <DateInput value={to} onChange={(v) => setTo(v)} className="w-40" aria-label={t('task.to')} />
           </div>
         )}
         {list.data?.scope && list.data.scope !== 'mine' && (

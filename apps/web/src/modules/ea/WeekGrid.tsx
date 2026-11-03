@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { addDays, hhmmToMinutes, minutesToHHmm, weekdayOf } from '@mono/shared';
+import { addDays, formatLocalDate, hhmmToMinutes, minutesToHHmm, weekdayOf } from '@mono/shared';
 import { Button } from '@/components/ui/button';
 import { useIsPhone } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
@@ -37,7 +37,7 @@ export function WeekGrid({
   const to = Math.ceil(hhmmToMinutes(s.dayEnd) / 60);
   const hours = Array.from({ length: to - from }, (_, i) => from + i);
   const scheduled = board.items.filter((i) => i.stage === 'SCHEDULED' && i.scheduledDate);
-  const dayLabel = (d: string) => `${t(`ea.day.${weekdayOf(d)}`)} ${d.slice(8)}/${d.slice(5, 7)}`;
+  const dayLabel = (d: string) => `${t(`ea.day.${weekdayOf(d)}`)} ${formatLocalDate(d)}`;
 
   return (
     <div className="space-y-3">

@@ -1,4 +1,15 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
+
+/** Pick from a MONO dropdown the way a person does: open it, type, click the match. */
+async function choose(page: Page, trigger: Locator, text: string) {
+  await trigger.click();
+  const search = page.getByRole('searchbox');
+  if (await search.count()) await search.fill(text);
+  await page
+    .getByRole('option', { name: new RegExp(text, 'i') })
+    .first()
+    .click();
+}
 
 /** Phase 2 on the demo company: Send test → in-app (bell, live) + email (Mailpit in dev). */
 const OWNER = {
@@ -25,7 +36,7 @@ test('Send test reaches the bell live and the inbox by email', async ({ page, re
   await expect(page.getByRole('cell', { name: /test message/i }).first()).toBeVisible();
   await page.getByRole('button', { name: 'Send test' }).first().click();
   const dialog = page.getByRole('dialog');
-  await dialog.getByRole('combobox').selectOption({ label: 'Rajesh Goyal' });
+  await choose(page, dialog.getByRole('combobox'), 'Rajesh Goyal');
   await dialog.getByRole('button', { name: 'Send test' }).click();
   await expect(page.getByText(/test sent/i)).toBeVisible();
 

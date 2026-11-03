@@ -40,9 +40,9 @@ describe('work from Telegram', () => {
 
     expect(await onAction(db, scope, `o${tag}`, `act:accept:task:${task.id}`)).toContain("isn't yours");
     expect(await onAction(db, scope, `d${tag}`, `act:accept:task:${task.id}`)).toContain('Accepted #1');
-    expect(await onMy(db, scope, `d${tag}`, 'MONO')).toContain('#1 Calibrate press 2');
-    expect(await onCommand(db, scope, `d${tag}`, 'move', '1 31/12 18:00 waiting for spare part')).toContain(
-      'moved to 31/12 18:00',
+    expect((await onMy(db, scope, `d${tag}`, 'MONO')).text).toContain('#1 Calibrate press 2');
+    expect(await onCommand(db, scope, `d${tag}`, 'move', '1 31/12 18:00 waiting for spare part')).toMatch(
+      /moved to 31\/12\/\d{4} 18:00/,
     );
     expect(await onAction(db, scope, `d${tag}`, `act:done:task:${task.id}`)).toContain(
       'Reply to the task message with a photo',
@@ -63,7 +63,7 @@ describe('work from Telegram', () => {
     expect(await onCommand(db, scope, `d${tag}`, 'done', '1 both gauges set')).toContain(
       'sent for verification',
     );
-    expect(await onMy(db, scope, `o${tag}`, 'MONO')).toContain('waiting for you to verify');
+    expect((await onMy(db, scope, `o${tag}`, 'MONO')).text).toContain('waiting for you to verify');
     expect(await onAction(db, scope, `o${tag}`, `act:verify:task:${task.id}`)).toContain('verified');
     const t = await db.task.findUniqueOrThrow({ where: { id: task.id } });
     expect(t).toMatchObject({ status: 'DONE', revisionCount: 1, doneNote: 'both gauges set' });

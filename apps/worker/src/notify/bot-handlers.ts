@@ -10,10 +10,16 @@ import {
   redeemLinkCode,
   type Storage,
 } from '@mono/api/services';
-import { doneCommand, moveCommand, taskButton, workSummary } from './bot-work';
+import { doneCommand, moveCommand, taskButton, workSummary, type BotButton } from './bot-work';
 
-/** Bot logic as plain functions (easy to test); telegram-bot.ts wires them to grammY. */
+/** Bot logic as plain functions (easy to test); telegram-bot.ts only forwards updates to them. */
 export type BotScope = { companyIds: string[] | null };
+/** A reply, optionally with one row of buttons per action. */
+export type BotReply = { text: string; buttons?: BotButton[] };
+const reply = (text: string, buttons?: BotButton[]): BotReply => ({
+  text,
+  ...(buttons?.length ? { buttons } : {}),
+});
 
 const CODE = /^[A-Z2-9]{8}$/i;
 
@@ -57,28 +63,43 @@ export async function onCode(db: Db, chatId: string, code: string, appName: stri
   return `I don't know that code. Check it and send it again, or get a new one in ${appName}.`;
 }
 
-/** /my and /today: tasks, checklists and verifications first, then unread messages. */
+/** /my and /today: tasks, checklists and verifications first (with one-tap buttons), then unread messages. */
 export async function onMy(
   db: Db,
   scope: BotScope,
   chatId: string,
   appName: string,
   today = false,
-): Promise<string> {
+): Promise<BotReply> {
   const me = await whoIs(db, scope, chatId);
-  if (!me) return `This Telegram is not linked yet. Send your 8-character code from ${appName}.`;
+  if (!me) return reply(`This Telegram is not linked yet. Send your 8-character code from ${appName}.`);
   const work = await workSummary(db, { id: me.id, companyId: me.companyId }, today);
-  const since = today ? new Date(Date.now() - 24 * 3600_000) : undefined;
   const items = await db.notification.findMany({
-    where: { userId: me.id, readAt: null, ...(since ? { createdAt: { gte: since } } : {}) },
+    where: { userId: me.id, readAt: null },
     orderBy: { createdAt: 'desc' },
     take: 5,
   });
-  if (!work.length && !items.length) return today ? 'Nothing due today. 👍' : 'Nothing waiting on you. 👍';
-  const out = [`${today ? 'Today' : 'Waiting on you'}:`, ...work];
+  const later = work.later ? `\n\n${work.later} more due later — send /my to see everything.` : '';
+  if (!work.lines.length && !items.length)
+    return reply((today ? 'Nothing due today. 👍' : 'Nothing waiting on you. 👍') + later);
+  const out = [`${today ? 'Due today (and anything late)' : 'Waiting on you'}:`, ...work.lines];
   if (items.length) out.push('', 'Unread:', ...items.map((n) => `• ${n.title}`));
-  out.push('', 'Mark done: /done 70 · Move: /move 70 05/11 18:00 reason');
-  return out.join('\n');
+  if (work.firstTask !== null)
+    out.push(
+      '',
+      `Tap a button, or: /done ${work.firstTask} what you did · /move ${work.firstTask} DD/MM/YYYY HH:mm reason`,
+    );
+  return reply(out.join('\n') + later, work.buttons);
+}
+
+/** /done with no number: the open tasks, each with its Done button. */
+async function onDoneList(db: Db, scope: BotScope, chatId: string, appName: string): Promise<BotReply> {
+  const me = await whoIs(db, scope, chatId);
+  if (!me) return reply(`This Telegram is not linked yet. Send your 8-character code from ${appName}.`);
+  const work = await workSummary(db, { id: me.id, companyId: me.companyId }, false);
+  const done = work.buttons.filter((b) => b.data.startsWith('act:done:'));
+  if (!done.length) return reply('You have no open tasks to mark done. 👍');
+  return reply('Which task is done? Tap it, or send /done <number> <what you did>.', done);
 }
 
 export async function onCapture(
@@ -200,7 +221,100 @@ export async function onAction(db: Db, scope: BotScope, chatId: string, data: st
   const [, action, entityType, entityId] = data.split(':');
   if (entityType === 'task' && action && entityId)
     return taskButton(db, { id: me.id, companyId: me.companyId }, action, entityId);
-  return 'Please do this in the app.';
+  return "That button isn't something the bot can do yet — open the app for it.";
+}
+
+const HELP = [
+  '/my — everything waiting on you',
+  '/today — due today, and anything late',
+  '/done 12 what you did — mark task #12 done (just /done lists your tasks)',
+  '/move 12 05/11/2026 18:00 reason — move task #12',
+  '/capture <text> — note something for the EA',
+  'Reply to a task message with a photo to attach proof.',
+].join('\n');
+
+/**
+ * Every text message the bot gets, in one place: slash commands (with or without @botname),
+ * link codes, EA captures from the owner/EA, and a hello for anything else.
+ */
+export async function onText(
+  db: Db,
+  scope: BotScope,
+  chatId: string,
+  text: string,
+  appName: string,
+): Promise<BotReply> {
+  const t = text.trim();
+  const cmd = /^\/([a-z_]+)(?:@\w+)?(?:\s+([\s\S]*))?$/i.exec(t);
+  if (cmd) {
+    const name = cmd[1]!.toLowerCase();
+    const args = (cmd[2] ?? '').trim();
+    switch (name) {
+      case 'start':
+        return reply(await onStart(db, scope, chatId, args || undefined, appName));
+      case 'help':
+        return reply(HELP);
+      case 'my':
+        return onMy(db, scope, chatId, appName);
+      case 'today':
+        return onMy(db, scope, chatId, appName, true);
+      case 'capture':
+        return reply(await onCapture(db, scope, chatId, args, appName));
+      case 'done':
+        return args
+          ? reply(await onCommand(db, scope, chatId, 'done', args))
+          : onDoneList(db, scope, chatId, appName);
+      case 'move':
+        return reply(await onCommand(db, scope, chatId, 'move', args));
+      default:
+        return reply(`I don't know /${name}.\n\n${HELP}`);
+    }
+  }
+  if (looksLikeCode(t)) return reply(await onCode(db, chatId, t, appName));
+  if (t && (await canCapture(db, scope, chatId)))
+    return reply(await onCapture(db, scope, chatId, t, appName));
+  return reply(await onStart(db, scope, chatId, undefined, appName));
+}
+
+/**
+ * Telegram doesn't tell bots when a message is read. So anything the person does in the chat
+ * (a button, a command, any message) counts as having seen everything we delivered there before it.
+ */
+export async function markSeen(db: Db, scope: BotScope, chatId: string, now = new Date()): Promise<number> {
+  const me = await whoIs(db, scope, chatId);
+  if (!me) return 0;
+  const sent = await db.outbox.findMany({
+    where: {
+      channel: 'telegram',
+      userId: me.id,
+      status: 'SENT',
+      eventId: { not: null },
+      sentAt: { lte: now },
+    },
+    select: { eventId: true },
+    distinct: ['eventId'],
+    orderBy: { eventId: 'asc' },
+    take: 500,
+  });
+  if (!sent.length) return 0;
+  const res = await db.notification.updateMany({
+    where: { userId: me.id, readAt: null, eventId: { in: sent.map((x) => x.eventId!) } },
+    data: { readAt: now },
+  });
+  if (res.count)
+    await db.$transaction((tx) =>
+      emitEvent(
+        tx,
+        { companyId: me.companyId, actorId: me.id },
+        {
+          name: 'notification.read',
+          entityType: 'user',
+          entityId: me.id,
+          payload: { count: res.count, via: 'telegram' },
+        },
+      ),
+    );
+  return res.count;
 }
 
 export async function onCommand(

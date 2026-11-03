@@ -4,6 +4,8 @@ export type OutgoingMessage = {
   text: string;
   subject?: string | null;
   link?: string | null;
+  /** Proof files from storage (Telegram sends photos as photos, others as documents). */
+  files?: { path: string; mime: string; name: string }[];
   /** Telegram inline buttons: [label, callbackData] or [label, url]. */
   buttons?: { label: string; data?: string; url?: string }[];
   /** WhatsApp: approved template name and its parameters in order. */

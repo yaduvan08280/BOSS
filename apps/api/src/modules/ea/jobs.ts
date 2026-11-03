@@ -1,5 +1,5 @@
 import type { Db } from '@mono/db';
-import { addDays, hhmmToMinutes, localDate, weekdayOf, zonedToUtc } from '@mono/shared';
+import { addDays, formatLocalDate, hhmmToMinutes, localDate, weekdayOf, zonedToUtc } from '@mono/shared';
 import { emitEvent } from '../../lib/events';
 import { moduleSettings } from '../work/settings';
 import { buildBrief, buildWeekPlan } from './brief';
@@ -88,7 +88,7 @@ export async function eaJobs(db: Db, now = new Date(), onlyCompanyId?: string) {
           ),
         );
       if (await claimMark(db, c.id, `ea.brief:${today}:${owner.id}`)) {
-        const date = `${today.slice(8)}/${today.slice(5, 7)}`;
+        const date = formatLocalDate(today);
         await emit('ea.daily_brief', {
           userId: owner.id,
           date,

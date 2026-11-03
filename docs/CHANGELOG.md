@@ -1,5 +1,37 @@
 # Changelog
 
+## Fixes after GGM testing (03/11/2026)
+
+**Dates are DD/MM/YYYY everywhere**
+- The browser's own date pickers are gone. They follow the browser's language: "11/04/2026" meant 4 November in an English (US) browser. All 13 were replaced by MONO's own fields:
+  - Date: type `04112026` and the slashes appear, or pick from a Monday-first calendar.
+  - Time: 24-hour; `18:00`, `1800` and `6pm` all work.
+  - Impossible dates like 31/02 are refused.
+- Every date shown, in lists, chips, Telegram, briefs and the MIS, now carries its year: `04/11/2026 18:00`.
+
+**Type to filter in every list**
+- Every dropdown in the app filters as you type. Every word must match (`sand pal` → Sandeep Pal), best matches come first, and letters in order also match (`rmsh` → Ramesh). Arrow keys and Enter work.
+- Long lists get a search box; on short ones you can still just start typing.
+
+**Telegram**
+- `/done` and `/move` were never wired to the bot (only the code behind them was tested); now they work. `/done` with no number lists your open tasks as tap-to-finish buttons. `/move` takes DD/MM/YYYY. Unknown commands get the help text.
+- `/today` = due before midnight in the company's time zone, plus anything late. Work due later is counted ("2 more due later — send /my").
+- `/my` shows one-tap Accept / Done / Verify buttons. It now includes tasks you verify by default (as the creator or EA), not only ones with your name as verifier.
+- **Seen without a button:** Telegram never tells bots when a message is read, so a WhatsApp-style blue tick isn't possible. Instead, anything you do in the chat (a button, a command, any message) marks everything delivered there before it as seen, which also stops escalations. The Seen button is gone.
+- **Proof travels with "please verify":**
+  - Covers delegation done, ticket fixed and checklist submitted. The photos are sent into the chat: one photo carries the message and the Verify button as its caption; several come as an album, then the message.
+  - Documents are sent as files. A missing file never blocks the message.
+- Button results are also written into the chat (Telegram's pop-up disappears too quickly to read "this task needs a photo").
+
+**Verified**
+- 159 unit/integration tests (16 new). They cover:
+  - Date reading and formatting (day first, no month-first, year always shown) and type-to-filter ranking.
+  - Every Telegram command path, including the exact messages from testing.
+  - /today across midnight; default verifiers in /my.
+  - Auto-seen (only what was delivered on Telegram).
+  - Proof files in the outbox; single photo, album and missing-file sending.
+- Playwright: no browser date picker on any date form, a typed date saved and shown back as DD/MM/YYYY, type-to-filter leaving one match. All 26 browser tests pass on phone and desktop.
+
 ## Phase 4: Help slips, help tickets, EA system, weekly MIS, Business Engine flow designer (02/11/2026)
 
 **Help slips** (`/help-slips`)

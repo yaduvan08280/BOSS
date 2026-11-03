@@ -11,7 +11,7 @@ import {
 import { CalendarClock, Hourglass, Phone, Send, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
-import { minutesToHHmm, type EaActionInput, type EaStage } from '@mono/shared';
+import { formatLocalDate, minutesToHHmm, type EaActionInput, type EaStage } from '@mono/shared';
 import { useActionMutation } from '@/lib/work';
 import { cn } from '@/lib/utils';
 import { DROP_ACTION, type EaBoard, type EaItem } from './api';
@@ -147,8 +147,7 @@ function Card({ item, onOpen }: { item: EaItem; onOpen: () => void }) {
       {item.stage === 'SCHEDULED' && item.scheduledDate && (
         <div className="mt-1.5 flex items-center gap-1 text-xs text-status-info-fg">
           <Icon className="size-3.5" />
-          {item.scheduledDate.slice(8)}/{item.scheduledDate.slice(5, 7)} ·{' '}
-          {minutesToHHmm(item.slotStart ?? 0)}
+          {formatLocalDate(item.scheduledDate)} · {minutesToHHmm(item.slotStart ?? 0)}
         </div>
       )}
       {item.stage === 'WAITING' && item.waitingOn && (

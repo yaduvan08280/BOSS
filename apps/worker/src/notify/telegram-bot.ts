@@ -1,20 +1,9 @@
-import { Bot } from 'grammy';
+import { Bot, type Context } from 'grammy';
 import type { Logger } from 'pino';
 import type { Db } from '@mono/db';
 import type { Env } from '@mono/api/env';
 import { readChannel, setChannelMeta, type Storage } from '@mono/api/services';
-import {
-  onAck,
-  onAction,
-  canCapture,
-  onCapture,
-  onCode,
-  onMy,
-  onProof,
-  onStart,
-  looksLikeCode,
-  type BotScope,
-} from './bot-handlers';
+import { markSeen, onAck, onAction, onProof, onText, type BotReply, type BotScope } from './bot-handlers';
 
 /**
  * Runs one long-polling bot per distinct token: a company's own bot, plus the .env bot for companies
@@ -65,17 +54,23 @@ export class BotManager {
     const bot = new Bot(token);
     const chat = (id: number | undefined) => String(id ?? '');
 
-    bot.command('start', async (ctx) =>
-      ctx.reply(await onStart(db, scope, chat(ctx.chat?.id), ctx.match?.trim() || undefined, app)),
-    );
-    bot.command('my', async (ctx) => ctx.reply(await onMy(db, scope, chat(ctx.chat?.id), app)));
-    bot.command('today', async (ctx) => ctx.reply(await onMy(db, scope, chat(ctx.chat?.id), app, true)));
-    bot.command('capture', async (ctx) =>
-      ctx.reply(await onCapture(db, scope, chat(ctx.chat?.id), ctx.match ?? '', app)),
-    );
-    bot.command('done', async (ctx) =>
-      ctx.reply(await onAction(db, scope, chat(ctx.chat?.id), `done:${ctx.match ?? ''}`)),
-    );
+    const send = (ctx: Context, r: BotReply) =>
+      ctx.reply(r.text, {
+        ...(r.buttons?.length
+          ? {
+              reply_markup: {
+                inline_keyboard: r.buttons.map((b) => [{ text: b.label, callback_data: b.data }]),
+              },
+            }
+          : {}),
+      });
+
+    // Any update from a linked chat means they saw what we sent before it (Telegram has no read receipts).
+    bot.use(async (ctx, next) => {
+      const id = ctx.chat?.id ?? ctx.from?.id;
+      if (id) await markSeen(db, scope, chat(id)).catch((err) => log.warn({ err }, 'mark seen failed'));
+      await next();
+    });
 
     bot.on('callback_query:data', async (ctx) => {
       const data = ctx.callbackQuery.data;
@@ -83,7 +78,9 @@ export class BotManager {
       const text = data.startsWith('ack:')
         ? await onAck(db, scope, chatId, data.slice(4))
         : await onAction(db, scope, chatId, data);
-      await ctx.answerCallbackQuery({ text });
+      // The pop-up answer disappears quickly; say it in the chat too.
+      await ctx.answerCallbackQuery({ text: text.slice(0, 190) });
+      await ctx.reply(text);
     });
 
     bot.on('message:photo', async (ctx) => {
@@ -102,23 +99,20 @@ export class BotManager {
       await ctx.reply(text);
     });
 
-    bot.on('message:text', async (ctx) => {
-      const text = ctx.message.text.trim();
-      if (looksLikeCode(text)) return ctx.reply(await onCode(db, chat(ctx.chat.id), text, app));
-      if (!text.startsWith('/') && (await canCapture(db, scope, chat(ctx.chat.id))))
-        return ctx.reply(await onCapture(db, scope, chat(ctx.chat.id), text, app));
-      return ctx.reply(await onStart(db, scope, chat(ctx.chat.id), undefined, app));
-    });
+    bot.on('message:text', async (ctx) =>
+      send(ctx, await onText(db, scope, chat(ctx.chat.id), ctx.message.text, app)),
+    );
 
     bot.catch((err) => log.warn({ err: err.error }, 'Telegram bot error'));
 
     void bot.api
       .setMyCommands([
         { command: 'my', description: "What's waiting on you" },
-        { command: 'today', description: "Today's work" },
-        { command: 'done', description: 'Mark a task done: /done 70' },
-        { command: 'move', description: 'Move a date: /move 70 05/11 18:00 reason' },
+        { command: 'today', description: 'Due today, and anything late' },
+        { command: 'done', description: 'Mark a task done (lists your tasks)' },
+        { command: 'move', description: 'Move a date: /move 12 05/11/2026 18:00 reason' },
         { command: 'capture', description: 'Note something for the EA' },
+        { command: 'help', description: 'What the bot can do' },
       ])
       .catch(() => undefined);
 

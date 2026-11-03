@@ -1,4 +1,22 @@
-import { expect, test, type APIRequestContext, type Browser, type Page } from '@playwright/test';
+import {
+  expect,
+  test,
+  type APIRequestContext,
+  type Browser,
+  type Locator,
+  type Page,
+} from '@playwright/test';
+
+/** Pick from a MONO dropdown the way a person does: open it, type, click the match. */
+async function choose(page: Page, trigger: Locator, text: string) {
+  await trigger.click();
+  const search = page.getByRole('searchbox');
+  if (await search.count()) await search.fill(text);
+  await page
+    .getByRole('option', { name: new RegExp(text, 'i') })
+    .first()
+    .click();
+}
 
 /** Phase 3 on the demo company: a task's whole life and a checklist run, each person in their own browser. */
 const PASSWORD = process.env.SEED_DEMO_PASSWORD ?? 'Demo1234';
@@ -60,8 +78,8 @@ test('a task goes from given to verified, all from the web', async ({ page, brow
   const label = `E2E ${info.project.name} ${Date.now()}: check the forklift brakes`;
   await signIn(page, OWNER);
   await page.goto('/delegation?tab=add');
-  await page.getByLabel(/^doer \*/i).selectOption(await userId(page, 'Sandeep Pal'));
-  await page.getByLabel(/verifier \(optional\)/i).selectOption({ label: 'Ramesh Choudhary' });
+  await choose(page, page.getByLabel(/^doer \*/i), 'Sandeep Pal');
+  await choose(page, page.getByLabel(/verifier \(optional\)/i), 'Ramesh Choudhary');
   await page.getByLabel(/^task \*/i).fill(label);
   await shot(page, 'task-add', info.project.name);
   await page.getByRole('button', { name: 'Submit task' }).click();
@@ -206,4 +224,64 @@ test('Delegation, Checklists and My Workspace fit the screen', async ({ page }, 
   await settled(page);
   await expectNoSideScroll(page);
   await shot(page, 'ryg', info.project.name);
+});
+
+test('dates are DD/MM/YYYY everywhere and long lists filter as you type', async ({ page }, info) => {
+  await signIn(page, OWNER);
+  const noBrowserPickers = async () =>
+    expect(page.locator('input[type=date], input[type=time], input[type=datetime-local]')).toHaveCount(0);
+
+  // Forms that take dates: never the browser's own picker (it follows the browser locale, e.g. MM/DD).
+  for (const path of [
+    '/delegation?tab=add',
+    '/help-tickets?tab=raise',
+    '/checklists?tab=assign',
+    '/system/company/shifts',
+  ]) {
+    await page.goto(path);
+    await settled(page);
+    await noBrowserPickers();
+  }
+
+  // Type a date and time, give the task, and read it back exactly as typed.
+  const label = `E2E ${info.project.name} ${Date.now()} date check`;
+  await page.goto('/delegation?tab=add');
+  const date = page.getByLabel(/^planned \*/i);
+  await expect(date).toHaveValue(/^\d{2}\/\d{2}\/\d{4}$/);
+  await date.fill('05112030');
+  await expect(date).toHaveValue('05/11/2030');
+  await page.getByLabel(/^time$/i).fill('18:00');
+
+  // Type-to-filter: a few letters leave only the matching people.
+  await page.getByLabel(/^doer \*/i).click();
+  await page.getByRole('searchbox').fill('sand pal');
+  await expect(page.getByRole('option')).toHaveCount(1);
+  await page.getByRole('searchbox').press('Enter');
+  await expect(page.getByLabel(/^doer \*/i)).toContainText('Sandeep Pal');
+
+  await page.getByLabel(/^task \*/i).fill(label);
+  await page.getByRole('button', { name: 'Submit task' }).click();
+  await expect(page.getByText(/given to Sandeep Pal/i)).toBeVisible();
+  const tasks = (await (await page.request.get('/api/tasks?scope=all&tab=pending')).json()) as {
+    tasks: { id: string; description: string }[];
+  };
+  const task = tasks.tasks.find((x) => x.description === label)!;
+  try {
+    await page.goto(`/delegation?tab=pending&task=${task.id}`);
+    await expect(page.getByRole('dialog').getByText('05/11/2030 18:00').first()).toBeVisible();
+    // The move-date dialog uses the same field.
+    await page.getByRole('dialog').getByRole('button', { name: 'Move date' }).click();
+    await noBrowserPickers();
+    await expect(
+      page
+        .getByRole('dialog')
+        .last()
+        .getByLabel(/new planned date/i),
+    ).toHaveValue('05/11/2030');
+  } finally {
+    await page.request.post(`/api/tasks/${task.id}/actions`, {
+      data: { action: 'cancel', reason: 'E2E clean-up' },
+      headers: origin(page),
+    });
+  }
 });

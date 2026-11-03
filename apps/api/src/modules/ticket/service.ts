@@ -14,6 +14,7 @@ import {
 import { writeAudit } from '../../lib/audit';
 import { AppError, notFound } from '../../lib/errors';
 import { emitEvent } from '../../lib/events';
+import { proofOf } from '../delegation/service';
 import { attachUploads, can, checkPerson, teamOf, type Actor } from '../work/actor';
 import { moduleSettings } from '../work/settings';
 
@@ -139,6 +140,7 @@ export async function actOnTicket(db: Db, actor: Actor, ticketId: string, input:
           throw new AppError(400, 'VALIDATION_FAILED', 'Attach a photo or file that shows it is fixed');
         Object.assign(data, { resolvedAt: now, firstReplyAt: t.firstReplyAt ?? now });
         await logTicket(tx, t, actor.userId, 'reply', { note: input.note });
+        payload.proof = await proofOf(tx, t.companyId, 'ticket', t.id);
         event = 'ticket.resolved';
         break;
       }

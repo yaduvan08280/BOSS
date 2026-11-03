@@ -34,10 +34,14 @@ export function formatDateTime(date: Date | string, tz = DEFAULT_TZ): string {
   return `${p.day}/${p.monthStr}/${p.year} ${p.hour}:${p.minute}`;
 }
 
-/** dd/mm hh:mm — compact chip format ("Accepted 24/06 11:41") */
+/** DD/MM/YYYY HH:mm everywhere — lists, chips, Telegram (decision: never a date without its year). */
 export function formatShortDateTime(date: Date | string, tz = DEFAULT_TZ): string {
-  const p = parts(new Date(date), tz);
-  return `${p.day}/${p.monthStr} ${p.hour}:${p.minute}`;
+  return formatDateTime(date, tz);
+}
+
+/** A local calendar date "YYYY-MM-DD" as DD/MM/YYYY. */
+export function formatLocalDate(iso: string): string {
+  return `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
 }
 
 /** Financial year that contains `date`, e.g. { start: 2026, end: 2027, short: '26-27', label: 'FY 2026-27' }. */

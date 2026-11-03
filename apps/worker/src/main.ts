@@ -39,7 +39,8 @@ const QUEUE_WORK_1MIN = 'work.every1min';
 const HEARTBEAT_FILE = '/tmp/mono-worker-alive';
 const OUTBOX_POLL_MS = 10_000;
 
-const bots = new BotManager(prisma, env, new LocalDiskStorage(env.UPLOAD_DIR), log);
+const storage = new LocalDiskStorage(env.UPLOAD_DIR);
+const bots = new BotManager(prisma, env, storage, log);
 
 // ---- Outbox: send as soon as something is queued, and poll for delayed / retried messages ----
 let sending = false;
@@ -53,7 +54,7 @@ async function drainOutbox() {
   try {
     do {
       again = false;
-      while ((await sendDue({ db: prisma, env })) > 0) {
+      while ((await sendDue({ db: prisma, env, storage })) > 0) {
         // keep sending until nothing is due
       }
     } while (again);

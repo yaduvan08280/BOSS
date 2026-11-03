@@ -2,6 +2,7 @@ import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { OrgPerson, SlipAction, SlipActionInput } from '@mono/shared';
+import { DateTimeInput } from '@/components/ui/date-input';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Field, Select, Textarea } from '@/components/ui/form';
@@ -130,7 +131,7 @@ export function SlipActionDialog({
                 </Select>
               </Field>
               <Field label={t('task.col.planned')}>
-                <Input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
+                <DateTimeInput value={when} onChange={(v) => setWhen(v)} />
               </Field>
             </div>
             <p className="text-xs text-muted-foreground">{t('slip.approveHint')}</p>

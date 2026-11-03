@@ -1,4 +1,4 @@
-import { addDays, daysBetween, minutesToHHmm, weekdayOf } from '@mono/shared';
+import { addDays, daysBetween, formatLocalDate, minutesToHHmm, weekdayOf } from '@mono/shared';
 
 type Item = {
   number: number;
@@ -55,8 +55,7 @@ export function buildWeekPlan(weekStart: string, items: Item[]): string {
     const day = items
       .filter((i) => i.stage === 'SCHEDULED' && i.scheduledDate === date)
       .sort((a, b) => (a.slotStart ?? 0) - (b.slotStart ?? 0));
-    if (day.length)
-      out.push(`${DAY_NAMES[weekdayOf(date)]} ${date.slice(8)}/${date.slice(5, 7)}:`, ...day.map(line));
+    if (day.length) out.push(`${DAY_NAMES[weekdayOf(date)]} ${formatLocalDate(date)}:`, ...day.map(line));
   }
   return out.length ? out.join('\n') : 'Nothing scheduled next week yet.';
 }

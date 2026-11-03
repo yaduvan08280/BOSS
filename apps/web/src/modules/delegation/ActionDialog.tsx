@@ -2,11 +2,11 @@ import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { OrgPerson, TaskAction, TaskActionInput } from '@mono/shared';
+import { DateTimeInput } from '@/components/ui/date-input';
 import { FileDrop } from '@/components/file-drop';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Field, Select, Textarea } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import type { Uploaded } from '@/lib/upload';
 import { isoToLocalInput, localInputToIso } from '@/lib/when';
 import { useTaskAction, type TaskRow } from './api';
@@ -82,7 +82,7 @@ export function ActionDialog({
       <div className="space-y-4">
         {(action === 'moveDate' || action === 'reassign') && (
           <Field label={t('task.dlg.newDate')}>
-            <Input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
+            <DateTimeInput value={when} onChange={(v) => setWhen(v)} />
           </Field>
         )}
         {action === 'reassign' && (

@@ -2,12 +2,12 @@ import { FileSpreadsheet, Loader2, Send } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { taskCreateSchema, type OrgPerson } from '@mono/shared';
+import { DateTimeInput } from '@/components/ui/date-input';
 import { DictateButton } from '@/components/dictate';
 import { FileDrop } from '@/components/file-drop';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox, Field, Select, Textarea } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { api } from '@/lib/api';
 import type { Uploaded } from '@/lib/upload';
 import { defaultPlanned, localInputToIso } from '@/lib/when';
@@ -80,11 +80,7 @@ export function AddTask({
             </Select>
           </Field>
           <Field label={`${t('task.col.planned')} *`}>
-            <Input
-              type="datetime-local"
-              value={form.plannedAt}
-              onChange={(e) => setForm({ ...form, plannedAt: e.target.value })}
-            />
+            <DateTimeInput value={form.plannedAt} onChange={(v) => setForm({ ...form, plannedAt: v })} />
           </Field>
           <Field label={t('task.verifierOptional')} className="sm:col-span-2">
             <Select

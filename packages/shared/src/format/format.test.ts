@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { formatINR, groupIndian, inrInWords, rupeesToPaise } from './money';
-import { financialYear, formatDate, formatDateTime, hhmmToMinutes, minutesToHHmm } from './date';
+import {
+  financialYear,
+  formatDate,
+  formatDateTime,
+  formatLocalDate,
+  formatShortDateTime,
+  hhmmToMinutes,
+  minutesToHHmm,
+} from './date';
 import { normalizeMobile } from './phone';
 
 describe('money', () => {
@@ -43,6 +51,15 @@ describe('dates', () => {
     expect(minutesToHHmm(hhmmToMinutes('23:00'))).toBe('23:00');
     expect(minutesToHHmm(1440 + 30)).toBe('00:30');
     expect(() => hhmmToMinutes('24:00')).toThrow();
+  });
+});
+
+describe('every date shows DD/MM/YYYY (never month first, never without the year)', () => {
+  it('formats instants and local dates the same way', () => {
+    const d = new Date('2026-11-04T12:30:00Z'); // 18:00 IST on 4 November
+    expect(formatDate(d)).toBe('04/11/2026');
+    expect(formatShortDateTime(d)).toBe('04/11/2026 18:00');
+    expect(formatLocalDate('2026-11-04')).toBe('04/11/2026');
   });
 });
 
