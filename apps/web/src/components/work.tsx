@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import { Badge } from '@/components/ui/form';
 import { cn } from '@/lib/utils';
 import { formatShortDateTime } from '@/lib/when';
@@ -84,6 +86,27 @@ export function InfoRow({ label, children }: { label: string; children: ReactNod
     <div className="flex justify-between gap-4 border-b py-2 text-sm last:border-0">
       <span className="text-muted-foreground">{label}</span>
       <span className="text-right font-medium">{children}</span>
+    </div>
+  );
+}
+
+/** "Slip or ticket?" — shown where people raise either, so they pick the right one. */
+export function SlipOrTicket({ current }: { current: 'slip' | 'ticket' }) {
+  const { t } = useTranslation();
+  const other = current === 'slip' ? 'ticket' : 'slip';
+  return (
+    <div className="max-w-3xl rounded-card border border-dashed bg-muted/40 p-4 text-sm">
+      <p className="font-semibold">{t(`work.which.${current}Title`)}</p>
+      <p className="mt-1 text-muted-foreground">{t(`work.which.${current}Body`)}</p>
+      <p className="mt-2 text-muted-foreground">
+        {t(`work.which.${other}Instead`)}{' '}
+        <Link
+          to={other === 'slip' ? '/help-slips?tab=raise' : '/help-tickets?tab=raise'}
+          className="font-semibold text-foreground underline"
+        >
+          {t(`work.which.${other}Link`)}
+        </Link>
+      </p>
     </div>
   );
 }

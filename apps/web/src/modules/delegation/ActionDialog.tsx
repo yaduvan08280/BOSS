@@ -2,6 +2,7 @@ import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { OrgPerson, TaskAction, TaskActionInput } from '@mono/shared';
+import { personLabel } from '@/lib/people';
 import { DateTimeInput } from '@/components/ui/date-input';
 import { FileDrop } from '@/components/file-drop';
 import { Button } from '@/components/ui/button';
@@ -93,7 +94,7 @@ export function ActionDialog({
                 .filter((p) => p.status === 'ACTIVE')
                 .map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name}
+                    {personLabel(p)}
                   </option>
                 ))}
             </Select>

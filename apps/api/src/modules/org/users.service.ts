@@ -7,6 +7,7 @@ import { AppError } from '../../lib/errors';
 export const personInclude = {
   role: { select: { name: true, key: true } },
   designation: { select: { name: true } },
+  mainDepartment: { select: { name: true } },
   reportsTo: { select: { name: true } },
   departments: { select: { departmentId: true } },
   hodOf: { where: { deletedAt: null }, select: { id: true } },
@@ -29,6 +30,7 @@ export function toPerson(u: PersonRow, withHr: boolean): OrgPerson {
     mainDepartmentId: u.mainDepartmentId,
     designationId: u.designationId,
     designationName: u.designation?.name ?? null,
+    mainDepartmentName: u.mainDepartment?.name ?? null,
     reportsToId: u.reportsToId,
     reportsToName: u.reportsTo?.name ?? null,
     branchId: u.branchId,

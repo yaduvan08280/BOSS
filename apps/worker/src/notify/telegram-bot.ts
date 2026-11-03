@@ -3,7 +3,29 @@ import type { Logger } from 'pino';
 import type { Db } from '@mono/db';
 import type { Env } from '@mono/api/env';
 import { readChannel, setChannelMeta, type Storage } from '@mono/api/services';
-import { markSeen, onAck, onAction, onProof, onText, type BotReply, type BotScope } from './bot-handlers';
+import {
+  canCapture,
+  markSeen,
+  onAck,
+  onAction,
+  onProof,
+  onText,
+  type BotReply,
+  type BotScope,
+} from './bot-handlers';
+
+const COMMANDS = [
+  { command: 'my', description: "What's waiting on you" },
+  { command: 'today', description: 'Due today, and anything late' },
+  { command: 'done', description: 'Mark a task done (lists your tasks)' },
+  { command: 'move', description: 'Move a date: /move 12 05/11/2026 18:00 reason' },
+  { command: 'help', description: 'What the bot can do' },
+];
+const CAPTURE_COMMANDS = [
+  ...COMMANDS.slice(0, 4),
+  { command: 'capture', description: 'Note something on the EA board' },
+  COMMANDS[4]!,
+];
 
 /**
  * Runs one long-polling bot per distinct token: a company's own bot, plus the .env bot for companies
@@ -65,10 +87,24 @@ export class BotManager {
           : {}),
       });
 
+    // The menu shows /capture only to the owner and the EA: their chat gets its own command list.
+    const menus = new Map<string, boolean>();
+    const syncMenu = async (chatId: string) => {
+      const capture = await canCapture(db, scope, chatId);
+      if (menus.get(chatId) === capture) return;
+      menus.set(chatId, capture);
+      const where = { type: 'chat' as const, chat_id: Number(chatId) };
+      if (capture) await bot.api.setMyCommands(CAPTURE_COMMANDS, { scope: where });
+      else await bot.api.deleteMyCommands({ scope: where });
+    };
+
     // Any update from a linked chat means they saw what we sent before it (Telegram has no read receipts).
     bot.use(async (ctx, next) => {
       const id = ctx.chat?.id ?? ctx.from?.id;
-      if (id) await markSeen(db, scope, chat(id)).catch((err) => log.warn({ err }, 'mark seen failed'));
+      if (id) {
+        await markSeen(db, scope, chat(id)).catch((err) => log.warn({ err }, 'mark seen failed'));
+        await syncMenu(chat(id)).catch((err) => log.warn({ err }, 'command menu failed'));
+      }
       await next();
     });
 
@@ -105,16 +141,7 @@ export class BotManager {
 
     bot.catch((err) => log.warn({ err: err.error }, 'Telegram bot error'));
 
-    void bot.api
-      .setMyCommands([
-        { command: 'my', description: "What's waiting on you" },
-        { command: 'today', description: 'Due today, and anything late' },
-        { command: 'done', description: 'Mark a task done (lists your tasks)' },
-        { command: 'move', description: 'Move a date: /move 12 05/11/2026 18:00 reason' },
-        { command: 'capture', description: 'Note something for the EA' },
-        { command: 'help', description: 'What the bot can do' },
-      ])
-      .catch(() => undefined);
+    void bot.api.setMyCommands(COMMANDS).catch(() => undefined);
 
     bot
       .start({

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { Me } from '@mono/shared';
 import { EmptyState, ErrorState, KpiTile, PageHeader, PageSkeleton } from '@/components/page';
 import { StatusChip } from '@/components/status-chip';
-import { TabStrip } from '@/components/work';
+import { SlipOrTicket, TabStrip } from '@/components/work';
 import { useDueLabel, useParamState } from '@/lib/work';
 import { cn } from '@/lib/utils';
 import { formatShortDateTime } from '@/lib/when';
@@ -71,13 +71,16 @@ export function TicketsPage({ me }: { me: Me }) {
         counts={{ assigned: data?.counts.assigned, mine: data?.counts.mine }}
       />
       {tab === 'raise' ? (
-        <RaiseTicket
-          people={people}
-          meId={me.user.id}
-          tz={tz}
-          fixHours={data?.settings.fixHours ?? 24}
-          onRaised={(id) => set({ tab: 'mine', ticket: id })}
-        />
+        <>
+          <SlipOrTicket current="ticket" />
+          <RaiseTicket
+            people={people}
+            meId={me.user.id}
+            tz={tz}
+            fixHours={data?.settings.fixHours ?? 24}
+            onRaised={(id) => set({ tab: 'mine', ticket: id })}
+          />
+        </>
       ) : list.isPending ? (
         <PageSkeleton />
       ) : list.isError ? (

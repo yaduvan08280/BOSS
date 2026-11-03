@@ -1,5 +1,12 @@
 # Changelog
 
+## Fixes after EA testing (03/11/2026)
+
+- **Weekly schedule:** entries were cut off mid-line in short slots. Hours are taller now, short entries end with "…", and hovering or focusing opens the full text (tooltip too).
+- **People lists:** every people list shows name · designation · department ("Ramesh Gurjar · Truck Driver · Dispatch"), and the EA can delegate to the owner too.
+- **Help slip vs help ticket:** both raise forms open with a short "which one do I need?" card with an example and a link to the other; the menu descriptions say it in one line.
+- **`/capture`:** shows only for the owner and the EA, in `/help`, the hello and Telegram's command menu (each chat gets its own menu, updated when the EA changes). Anyone else typing it is told who can.
+
 ## Fixes after GGM testing (03/11/2026)
 
 **Dates are DD/MM/YYYY everywhere**

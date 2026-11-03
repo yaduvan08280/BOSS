@@ -2,6 +2,7 @@ import { FileText, Loader2, Send } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { OrgPerson, TicketAction, TicketActionInput } from '@mono/shared';
+import { personLabel } from '@/lib/people';
 import { DateTimeInput } from '@/components/ui/date-input';
 import { FileDrop } from '@/components/file-drop';
 import { PageSkeleton } from '@/components/page';
@@ -259,7 +260,7 @@ function TicketDialog({
                 .filter((p) => p.status === 'ACTIVE' && p.id !== ticket.solverId && p.id !== ticket.raiserId)
                 .map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name}
+                    {personLabel(p)}
                   </option>
                 ))}
             </Select>

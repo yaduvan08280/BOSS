@@ -13,6 +13,7 @@ import {
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { weekOf, type OrgPerson, type TaskAction } from '@mono/shared';
+import { personLabel } from '@/lib/people';
 import { DateInput } from '@/components/ui/date-input';
 import { Avatar } from '@/components/brand';
 import { EmptyState, ErrorState, PageSkeleton } from '@/components/page';
@@ -167,7 +168,7 @@ export function TaskList({
           <option value="">{t('task.allDoers')}</option>
           {people.map((p) => (
             <option key={p.id} value={p.id}>
-              {p.name}
+              {personLabel(p)}
             </option>
           ))}
         </Select>

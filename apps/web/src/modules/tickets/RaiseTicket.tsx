@@ -2,6 +2,7 @@ import { Loader2, Send } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ticketCreateSchema, type OrgPerson } from '@mono/shared';
+import { personLabel } from '@/lib/people';
 import { DateTimeInput } from '@/components/ui/date-input';
 import { DictateButton } from '@/components/dictate';
 import { FileDrop } from '@/components/file-drop';
@@ -91,8 +92,7 @@ export function RaiseTicket({
                 .filter((p) => p.status === 'ACTIVE' && p.id !== meId)
                 .map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name}
-                    {p.designationName ? ` · ${p.designationName}` : ''}
+                    {personLabel(p)}
                   </option>
                 ))}
             </Select>

@@ -7,7 +7,7 @@ import { useIsPhone } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import type { EaBoard, EaItem } from './api';
 
-const ROW = 44; // px per hour
+const ROW = 56; // px per hour
 const KIND_TONE: Record<string, string> = {
   meeting: 'bg-status-info-bg text-status-info-fg border-status-info',
   call: 'bg-status-ok-bg text-status-ok-fg border-status-ok',
@@ -146,23 +146,35 @@ export function WeekGrid({
                 ))}
                 {scheduled
                   .filter((i) => i.scheduledDate === d)
-                  .map((i) => (
-                    <button
-                      key={i.id}
-                      onClick={() => onOpen(i)}
-                      style={{
-                        top: (((i.slotStart ?? 0) - from * 60) / 60) * ROW,
-                        height: Math.max(22, ((i.slotMinutes ?? 30) / 60) * ROW - 2),
-                      }}
-                      className={cn(
-                        'absolute inset-x-1 overflow-hidden rounded-[6px] border-l-4 px-1.5 py-0.5 text-left text-[11px] leading-tight shadow-sm',
-                        KIND_TONE[i.kind ?? 'task'],
-                      )}
-                    >
-                      <span className="tabular font-semibold">{minutesToHHmm(i.slotStart ?? 0)}</span>{' '}
-                      {i.text}
-                    </button>
-                  ))}
+                  .map((i) => {
+                    const start = i.slotStart ?? 0;
+                    const height = Math.max(26, ((i.slotMinutes ?? 30) / 60) * ROW - 2);
+                    const lines = Math.max(1, Math.floor((height - 6) / 15));
+                    return (
+                      <button
+                        key={i.id}
+                        onClick={() => onOpen(i)}
+                        title={`${minutesToHHmm(start)}–${minutesToHHmm(start + (i.slotMinutes ?? 30))} ${i.text}`}
+                        style={{ top: ((start - from * 60) / 60) * ROW, height }}
+                        // Short slots show one line; hovering or focusing opens the card to the full text.
+                        className={cn(
+                          'group absolute inset-x-1 overflow-hidden rounded-[6px] border-l-4 px-1.5 py-1 text-left text-[12px] leading-[15px] shadow-sm hover:z-20 hover:!h-auto hover:shadow-lg focus-visible:z-20 focus-visible:!h-auto',
+                          KIND_TONE[i.kind ?? 'task'],
+                        )}
+                      >
+                        <span
+                          className="block overflow-hidden group-hover:!line-clamp-none group-focus-visible:!line-clamp-none"
+                          style={{
+                            display: '-webkit-box',
+                            WebkitBoxOrient: 'vertical',
+                            WebkitLineClamp: lines,
+                          }}
+                        >
+                          <span className="tabular font-semibold">{minutesToHHmm(start)}</span> {i.text}
+                        </span>
+                      </button>
+                    );
+                  })}
               </div>
             ))}
           </div>

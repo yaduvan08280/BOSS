@@ -49,7 +49,7 @@ export async function onStart(
   if (arg && looksLikeCode(arg)) return onCode(db, chatId, arg, appName);
   const me = await whoIs(db, scope, chatId);
   if (me)
-    return `Hello ${me.name}. You're linked to ${appName}.\n\n/my — what's waiting on you\n/today — today's work\n/capture <text> — note something for the EA`;
+    return `Hello ${me.name}. You're linked to ${appName}.\n\n${helpText(await canCapture(db, scope, chatId))}`;
   return `Welcome to ${appName}.\nSend the 8-character code from ${appName} (Profile → Link my Telegram) to connect your account.`;
 }
 
@@ -224,14 +224,17 @@ export async function onAction(db: Db, scope: BotScope, chatId: string, data: st
   return "That button isn't something the bot can do yet — open the app for it.";
 }
 
-const HELP = [
-  '/my — everything waiting on you',
-  '/today — due today, and anything late',
-  '/done 12 what you did — mark task #12 done (just /done lists your tasks)',
-  '/move 12 05/11/2026 18:00 reason — move task #12',
-  '/capture <text> — note something for the EA',
-  'Reply to a task message with a photo to attach proof.',
-].join('\n');
+/** What the bot can do — /capture only for the people who can use it (the owner and the EA). */
+export function helpText(capture: boolean) {
+  return [
+    '/my — everything waiting on you',
+    '/today — due today, and anything late',
+    '/done 12 what you did — mark task #12 done (just /done lists your tasks)',
+    '/move 12 05/11/2026 18:00 reason — move task #12',
+    ...(capture ? ['/capture <text> — note something on the EA board (or just type it)'] : []),
+    'Reply to a task message with a photo to attach proof.',
+  ].join('\n');
+}
 
 /**
  * Every text message the bot gets, in one place: slash commands (with or without @botname),
@@ -253,7 +256,7 @@ export async function onText(
       case 'start':
         return reply(await onStart(db, scope, chatId, args || undefined, appName));
       case 'help':
-        return reply(HELP);
+        return reply(helpText(await canCapture(db, scope, chatId)));
       case 'my':
         return onMy(db, scope, chatId, appName);
       case 'today':
@@ -267,7 +270,7 @@ export async function onText(
       case 'move':
         return reply(await onCommand(db, scope, chatId, 'move', args));
       default:
-        return reply(`I don't know /${name}.\n\n${HELP}`);
+        return reply(`I don't know /${name}.\n\n${helpText(await canCapture(db, scope, chatId))}`);
     }
   }
   if (looksLikeCode(t)) return reply(await onCode(db, chatId, t, appName));

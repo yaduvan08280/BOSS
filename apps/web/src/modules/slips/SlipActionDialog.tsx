@@ -2,6 +2,7 @@ import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { OrgPerson, SlipAction, SlipActionInput } from '@mono/shared';
+import { personLabel } from '@/lib/people';
 import { DateTimeInput } from '@/components/ui/date-input';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
@@ -125,7 +126,7 @@ export function SlipActionDialog({
                     .filter((p) => p.status === 'ACTIVE')
                     .map((p) => (
                       <option key={p.id} value={p.id}>
-                        {p.name}
+                        {personLabel(p)}
                       </option>
                     ))}
                 </Select>

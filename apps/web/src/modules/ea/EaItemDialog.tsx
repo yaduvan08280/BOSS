@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { EA_KINDS, minutesToHHmm, type EaAction, type EaActionInput, type OrgPerson } from '@mono/shared';
+import { personLabel } from '@/lib/people';
 import { DateInput, DateTimeInput, TimeInput } from '@/components/ui/date-input';
 import { StatusChip } from '@/components/status-chip';
 import { Button } from '@/components/ui/button';
@@ -165,10 +166,10 @@ export function EaItemDialog({
               <Select value={doer} onChange={(e) => setDoer(e.target.value)}>
                 <option value="">{t('org.choose')}</option>
                 {people
-                  .filter((p) => p.status === 'ACTIVE' && p.id !== board.ownerId)
+                  .filter((p) => p.status === 'ACTIVE')
                   .map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name}
+                      {personLabel(p)}
                     </option>
                   ))}
               </Select>

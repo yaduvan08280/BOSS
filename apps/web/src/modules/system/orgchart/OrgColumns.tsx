@@ -3,6 +3,7 @@ import { Crown, Plus, UserRound } from 'lucide-react';
 import { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { OrgDepartment, OrgPerson } from '@mono/shared';
+import { personLabel } from '@/lib/people';
 import { Avatar } from '@/components/brand';
 import { Select } from '@/components/ui/form';
 import { cn } from '@/lib/utils';
@@ -144,7 +145,7 @@ export function DeptColumn({
                 <option value="">{t('org.chart.assign')}</option>
                 {candidates.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name}
+                    {personLabel(p)}
                   </option>
                 ))}
               </Select>

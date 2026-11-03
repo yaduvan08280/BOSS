@@ -8,6 +8,7 @@ import {
   type OrgDepartment,
   type OrgPerson,
 } from '@mono/shared';
+import { personLabel } from '@/lib/people';
 import { DateInput, TimeInput } from '@/components/ui/date-input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -327,7 +328,7 @@ export function MasterEditor({
               <option value="">{t('chk.defaultVerifier')}</option>
               {active.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name}
+                  {personLabel(p)}
                 </option>
               ))}
             </Select>

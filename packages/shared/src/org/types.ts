@@ -15,6 +15,7 @@ export type OrgPerson = {
   mainDepartmentId: string | null;
   designationId: string | null;
   designationName: string | null;
+  mainDepartmentName?: string | null;
   reportsToId: string | null;
   reportsToName: string | null;
   branchId: string | null;

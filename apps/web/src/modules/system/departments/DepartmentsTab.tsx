@@ -14,6 +14,7 @@ import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import type { OrgDepartment, OrgPerson } from '@mono/shared';
+import { personLabel } from '@/lib/people';
 import { Avatar } from '@/components/brand';
 import { EmptyState, ErrorState, PageSkeleton } from '@/components/page';
 import { Confirm } from '@/components/ui/dialog';
@@ -215,7 +216,7 @@ function DepartmentCard({ dept, all, people, onSetHod, onAddSub, onOpenSub, onDe
             <option value="">{t('org.departments.noHod')}</option>
             {(hod && !members.includes(hod) ? [hod, ...members] : members).map((p) => (
               <option key={p.id} value={p.id}>
-                {p.name}
+                {personLabel(p)}
               </option>
             ))}
           </Select>

@@ -151,8 +151,8 @@
     "support": "Get help from the MONO team",
     "delegation": "One-time tasks with a doer, a date and a verifier",
     "checklists": "Recurring work that repeats on a schedule",
-    "helpSlips": "Raise a problem with solutions, get a decision",
-    "helpTickets": "Report an issue and track it until it's fixed",
+    "helpSlips": "Problem + your ideas → a decision → a task",
+    "helpTickets": "Something broken → the right person fixes it",
     "ea": "The owner's capture board, sorted by the EA",
     "weeklyMis": "Planned vs done for every person, every week",
     "myFmsSteps": "Process steps waiting on you",
@@ -960,7 +960,17 @@
       "hint": "or drop files here, or paste a screenshot (Ctrl+V)"
     },
     "dueIn": "in {{d}}",
-    "lateBy": "{{d}} late"
+    "lateBy": "{{d}} late",
+    "which": {
+      "slipTitle": "A help slip is for a problem that needs a decision",
+      "slipBody": "You have spotted a problem and you have ideas to fix it, but someone has to choose. Example: \"Forklift battery dies by noon — buy a new one, or charge it at lunch.\" Your HOD checks it, the approver picks a solution, and that becomes a task.",
+      "ticketTitle": "A help ticket is for something broken that a person must fix",
+      "ticketBody": "Something is not working and you know who fixes it. Example: \"Printer jams on A3\" → IT. They reply, fix it with a photo as proof, and you confirm it is fixed. If they are late, it escalates on its own.",
+      "slipInstead": "Need a decision on a problem rather than a repair?",
+      "slipLink": "Raise a help slip",
+      "ticketInstead": "Is something simply broken and needs fixing?",
+      "ticketLink": "Raise a help ticket"
+    }
   },
   "ws": {
     "subtitle_one": "{{count}} thing waiting on you",

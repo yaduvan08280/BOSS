@@ -2,6 +2,7 @@ import { Plus, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { OrgDepartment, OrgPerson } from '@mono/shared';
+import { personLabel } from '@/lib/people';
 import { Avatar } from '@/components/brand';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
@@ -86,7 +87,7 @@ export function SubDepartmentDialog({ deptId, all, people, onClose, onOpen }: Pr
             <option value="">{t('org.departments.noHod')}</option>
             {[...members, ...parentMembers].map((p) => (
               <option key={p.id} value={p.id}>
-                {p.name}
+                {personLabel(p)}
               </option>
             ))}
           </Select>
@@ -99,7 +100,7 @@ export function SubDepartmentDialog({ deptId, all, people, onClose, onOpen }: Pr
               </option>
               {parentMembers.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name}
+                  {personLabel(p)}
                 </option>
               ))}
             </Select>

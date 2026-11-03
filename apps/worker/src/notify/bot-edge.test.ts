@@ -98,6 +98,17 @@ describe('commands', () => {
   });
 });
 
+describe('/capture is only offered to the owner and the EA', () => {
+  it('help and the hello list it for the owner, not for staff', async () => {
+    expect((await onText(db, scope(), ownerChat(), '/help', 'MONO')).text).toContain('/capture');
+    expect((await onText(db, scope(), driverChat(), '/help', 'MONO')).text).not.toContain('/capture');
+    expect((await onText(db, scope(), driverChat(), '/start', 'MONO')).text).not.toContain('/capture');
+    expect((await onText(db, scope(), driverChat(), '/capture fix the gate', 'MONO')).text).toContain(
+      'Only the owner and the EA',
+    );
+  });
+});
+
 describe('/today', () => {
   it('means due before midnight (company time) plus anything late; later work is counted, not hidden', async () => {
     const now = zonedToUtc(localDate(new Date(), TZ), 12 * 60, TZ); // today 12:00 IST

@@ -2,6 +2,7 @@ import { Loader2, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { OrgPerson } from '@mono/shared';
+import { personLabel } from '@/lib/people';
 import { Button } from '@/components/ui/button';
 import { Badge, Field, Select, Switch } from '@/components/ui/form';
 import { useWorkMutation } from '@/lib/work';
@@ -82,7 +83,7 @@ export function SettingsPanel({
             <option value="">{t('engine.default')}</option>
             {people_.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.name}
+                {personLabel(p)}
               </option>
             ))}
           </Select>

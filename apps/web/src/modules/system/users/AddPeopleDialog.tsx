@@ -2,6 +2,7 @@ import { ClipboardPaste, Loader2, UserPlus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parsePeopleList, type OrgDepartment, type OrgPerson } from '@mono/shared';
+import { personLabel } from '@/lib/people';
 import { StatusChip } from '@/components/status-chip';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
@@ -217,7 +218,7 @@ export function AddPeopleDialog({
                 .filter((p) => p.status === 'ACTIVE')
                 .map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name}
+                    {personLabel(p)}
                   </option>
                 ))}
             </Select>

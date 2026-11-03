@@ -2,6 +2,7 @@ import { FileSpreadsheet, Loader2, Send } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { taskCreateSchema, type OrgPerson } from '@mono/shared';
+import { personLabel } from '@/lib/people';
 import { DateTimeInput } from '@/components/ui/date-input';
 import { DictateButton } from '@/components/dictate';
 import { FileDrop } from '@/components/file-drop';
@@ -73,8 +74,7 @@ export function AddTask({
                 .filter((p) => p.id !== meId)
                 .map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name}
-                    {p.designationName ? ` · ${p.designationName}` : ''}
+                    {personLabel(p)}
                   </option>
                 ))}
             </Select>
@@ -90,7 +90,7 @@ export function AddTask({
               <option value="">{t('task.noVerifier')}</option>
               {active.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name}
+                  {personLabel(p)}
                 </option>
               ))}
             </Select>
