@@ -29,6 +29,10 @@ const TELEGRAM_ACTIONS: Record<string, string> = {
   done: 'Done',
   verify: 'Verify',
   move: 'Move date',
+  fmsdone: 'Done',
+  yes: 'Yes',
+  no: 'No',
+  approve: 'Approve',
 };
 
 type Tpl = {

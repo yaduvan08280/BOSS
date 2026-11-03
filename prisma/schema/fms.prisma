@@ -1,0 +1,222 @@
+/// A process (CLAUDE.md §6): edited as a draft, published as frozen versions. Records keep the version they started on.
+model Flow {
+  id                  String    @id @default(cuid(2))
+  companyId           String    @map("company_id")
+  /// PRC-001
+  code                String
+  name                String
+  /// What a run is called: "Order", "Lead", "Complaint"
+  runName             String    @default("Record") @map("run_name")
+  description         String?
+  departmentIds       String[]  @map("department_ids")
+  coordinatorId       String?   @map("coordinator_id")
+  coordinatorBackupId String?   @map("coordinator_backup_id")
+  solverId            String?   @map("solver_id")
+  solverBackupId      String?   @map("solver_backup_id")
+  videoUrl            String?   @map("video_url")
+  /// The working copy the builder edits (FlowDefinition JSON).
+  draft               Json      @default("{}")
+  /// DRAFT (never published) | PUBLISHED | ARCHIVED
+  status              String    @default("DRAFT")
+  /// Latest published version number (0 = never).
+  version             Int       @default(0)
+  currentVersionId    String?   @map("current_version_id")
+  /// The draft has changes not yet published.
+  dirty               Boolean   @default(true)
+  /// Public "share a form" link (start form for customers/vendors).
+  publicToken         String?   @unique @map("public_token")
+  publicEnabled       Boolean   @default(false) @map("public_enabled")
+  createdById         String?   @map("created_by_id")
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  versions FlowVersion[]
+  records  FmsRecord[]
+  kpis     KpiCard[]
+
+  @@unique([companyId, code])
+  @@index([companyId, status])
+  @@map("flows")
+}
+
+model FlowVersion {
+  id            String   @id @default(cuid(2))
+  companyId     String   @map("company_id")
+  flowId        String   @map("flow_id")
+  version       Int
+  definition    Json
+  publishedById String?  @map("published_by_id")
+  publishedAt   DateTime @default(now()) @map("published_at") @db.Timestamptz(3)
+
+  flow    Flow        @relation(fields: [flowId], references: [id])
+  records FmsRecord[]
+
+  @@unique([flowId, version])
+  @@map("flow_versions")
+}
+
+/// One run of a flow (an order, a complaint…).
+model FmsRecord {
+  id            String    @id @default(cuid(2))
+  companyId     String    @map("company_id")
+  flowId        String    @map("flow_id")
+  flowVersionId String    @map("flow_version_id")
+  /// #n per flow
+  number        Int
+  title         String
+  /// Start form values.
+  data          Json      @default("{}")
+  /// RUNNING | ON_HOLD | CLOSED | CANCELLED
+  status        String    @default("RUNNING")
+  holdReason    String?   @map("hold_reason")
+  startedById   String?   @map("started_by_id")
+  /// web | public | api
+  source        String    @default("web")
+  startedAt     DateTime  @default(now()) @map("started_at") @db.Timestamptz(3)
+  closedAt      DateTime? @map("closed_at") @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  flow    Flow             @relation(fields: [flowId], references: [id])
+  version FlowVersion      @relation(fields: [flowVersionId], references: [id])
+  steps   FmsRecordStep[]
+  events  FmsRecordEvent[]
+
+  @@unique([flowId, number])
+  @@index([companyId, status])
+  @@index([companyId, flowId, status])
+  @@map("fms_records")
+}
+
+/// One step of a record, created when the record reaches it.
+model FmsRecordStep {
+  id                String    @id @default(cuid(2))
+  companyId         String    @map("company_id")
+  recordId          String    @map("record_id")
+  stepKey           String    @map("step_key")
+  stepName          String    @map("step_name")
+  /// TASK | DECISION | APPROVAL | OUTSIDE | AUTO
+  type              String
+  /// Position in the flow (for "step 3 of 8").
+  position          Int
+  doerId            String?   @map("doer_id")
+  /// The primary doer when a backup took over (leave / reassignment).
+  originalDoerId    String?   @map("original_doer_id")
+  plannedAt         DateTime  @map("planned_at") @db.Timestamptz(3)
+  startedAt         DateTime  @default(now()) @map("started_at") @db.Timestamptz(3)
+  doneAt            DateTime? @map("done_at") @db.Timestamptz(3)
+  /// OPEN | DONE | SKIPPED
+  status            String    @default("OPEN")
+  data              Json      @default("{}")
+  checklistDone     String[]  @map("checklist_done")
+  /// yes | no | approved | rejected
+  decision          String?
+  note              String?
+  /// Late-handling marks: told the doer + coordinator; escalated to the problem solver.
+  lateNotifiedAt    DateTime? @map("late_notified_at") @db.Timestamptz(3)
+  solverNotifiedAt  DateTime? @map("solver_notified_at") @db.Timestamptz(3)
+  dueSoonNotifiedAt DateTime? @map("due_soon_notified_at") @db.Timestamptz(3)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  record FmsRecord @relation(fields: [recordId], references: [id])
+
+  @@index([companyId, status, plannedAt])
+  @@index([companyId, doerId, status])
+  @@index([recordId, position])
+  @@map("fms_record_steps")
+}
+
+/// History of a record: never edited destructively; corrections add entries.
+model FmsRecordEvent {
+  id        String   @id @default(cuid(2))
+  companyId String   @map("company_id")
+  recordId  String   @map("record_id")
+  /// started | step_done | step_assigned | reassigned | hold | resumed | closed | cancelled | auto | late | note | document
+  type      String
+  stepKey   String?  @map("step_key")
+  actorId   String?  @map("actor_id")
+  note      String?
+  data      Json?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  record FmsRecord @relation(fields: [recordId], references: [id])
+
+  @@index([companyId, recordId, createdAt])
+  @@map("fms_record_events")
+}
+
+/// A kind of numbered paper: Quotation, Proforma invoice, Delivery challan…
+model DocumentType {
+  id        String    @id @default(cuid(2))
+  companyId String    @map("company_id")
+  code      String
+  name      String
+  /// "QUO" → QUO/26-27/0001
+  prefix    String
+  /// Which record fields fill the paper (party, items, total…).
+  mapping   Json      @default("{}")
+  header    String?
+  footer    String?
+  terms     String?
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  documents Document[]
+
+  @@unique([companyId, code])
+  @@map("document_types")
+}
+
+model Document {
+  id          String   @id @default(cuid(2))
+  companyId   String   @map("company_id")
+  typeId      String   @map("type_id")
+  /// QUO/26-27/0001
+  number      String
+  fy          String
+  seq         Int
+  date        DateTime @db.Timestamptz(3)
+  party       String?
+  recordId    String?  @map("record_id")
+  stepKey     String?  @map("step_key")
+  /// Rupees with paise
+  total       Decimal? @db.Decimal(14, 2)
+  /// ISSUED | CANCELLED
+  status      String   @default("ISSUED")
+  data        Json     @default("{}")
+  createdById String?  @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  type DocumentType @relation(fields: [typeId], references: [id])
+
+  @@unique([companyId, number])
+  @@index([companyId, typeId, date])
+  @@index([recordId])
+  @@map("documents")
+}
+
+/// A number on a flow's dashboard: a field, aggregated over a period, compared with the period before.
+model KpiCard {
+  id          String   @id @default(cuid(2))
+  companyId   String   @map("company_id")
+  flowId      String   @map("flow_id")
+  label       String
+  /// "count" | "start:<field>" | "step:<stepKey>:<field>"
+  source      String
+  /// COUNT | TOTAL | AVERAGE | MIN | MAX
+  aggregation String
+  /// TODAY | WEEK | MONTH | FY
+  period      String
+  position    Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  flow Flow @relation(fields: [flowId], references: [id])
+
+  @@index([flowId, position])
+  @@map("kpi_cards")
+}

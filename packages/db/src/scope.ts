@@ -38,6 +38,14 @@ export const COMPANY_SCOPED_MODELS = new Set([
   'TicketEvent',
   'EaItem',
   'JobMark',
+  'Flow',
+  'FlowVersion',
+  'FmsRecord',
+  'FmsRecordStep',
+  'FmsRecordEvent',
+  'DocumentType',
+  'Document',
+  'KpiCard',
 ]);
 
 /** Models with `deletedAt` (soft delete). Kept in sync with the schema by `scope.test.ts`. */
@@ -60,6 +68,9 @@ export const SOFT_DELETE_MODELS = new Set([
   'Slip',
   'Ticket',
   'EaItem',
+  'Flow',
+  'FmsRecord',
+  'DocumentType',
 ]);
 
 const LIST_READS = new Set(['findMany', 'findFirst', 'findFirstOrThrow', 'count', 'aggregate', 'groupBy']);

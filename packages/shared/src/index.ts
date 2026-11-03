@@ -34,3 +34,7 @@ export * from './work/import';
 export * from './work/escalation';
 export * from './work/mis';
 export * from './work/engine-schemas';
+export * from './fms/definition';
+export * from './fms/flow';
+export * from './fms/worktime';
+export * from './fms/fields';

@@ -23,3 +23,5 @@ export { eaJobs } from './modules/ea/jobs';
 export { captureEa, boardOwners } from './modules/ea/service';
 export { moduleSettings } from './modules/work/settings';
 export { sendWeeklyMis } from './modules/mis/jobs';
+export { watchFmsSteps, runFmsWebhooks } from './modules/fms/jobs';
+export { completeStep, startRecord } from './modules/fms/engine';

@@ -11,10 +11,12 @@ import {
   LocalDiskStorage,
   remindChecklists,
   remindUnaccepted,
+  runFmsWebhooks,
   sendWeeklyMis,
   sweepChecklists,
   sweepSlips,
   sweepTickets,
+  watchFmsSteps,
 } from '@mono/api/services';
 import { dispatchPending, type HandlerRegistry } from './jobs/dispatch-events';
 import { notifyForEvent } from './notify/engine';
@@ -112,14 +114,25 @@ await boss.work(QUEUE_WORK_5MIN, async () => {
   const unaccepted = await remindUnaccepted(prisma);
   const slips = await sweepSlips(prisma);
   const tickets = await sweepTickets(prisma);
-  if (created || overdue || unaccepted || slips.late || slips.closed || tickets.escalated || tickets.closed)
-    log.info({ created, overdue, unaccepted, slips, tickets }, 'Work sweep');
+  const fms = await watchFmsSteps(prisma);
+  if (
+    fms ||
+    created ||
+    overdue ||
+    unaccepted ||
+    slips.late ||
+    slips.closed ||
+    tickets.escalated ||
+    tickets.closed
+  )
+    log.info({ created, overdue, unaccepted, slips, tickets, fms }, 'Work sweep');
 });
 await boss.work(QUEUE_WORK_1MIN, async () => {
   await remindChecklists(prisma);
   await expireChecklists(prisma);
   const briefs = await eaJobs(prisma);
   const mis = await sendWeeklyMis(prisma);
+  await runFmsWebhooks(prisma);
   if (briefs || mis) log.info({ briefs, mis }, 'Scheduled sends');
 });
 await boss.schedule(QUEUE_WORK_5MIN, '*/5 * * * *', null, { tz: 'UTC' });

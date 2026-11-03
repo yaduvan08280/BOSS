@@ -1,5 +1,12 @@
 import type { Db } from '@mono/db';
-import { actOnTask, actorFor, effectiveVerifier, moduleSettings, taskByNumber } from '@mono/api/services';
+import {
+  actOnTask,
+  actorFor,
+  completeStep,
+  effectiveVerifier,
+  moduleSettings,
+  taskByNumber,
+} from '@mono/api/services';
 import { addDays, formatShortDateTime, localDate, parseLocalDateTime, zonedToUtc } from '@mono/shared';
 
 /** Work from Telegram: buttons on task messages and the /done, /move commands. Same rules as the web. */
@@ -54,6 +61,24 @@ export async function taskButton(db: Db, me: Who, action: string, taskId: string
     return msg.includes('proof')
       ? `${msg} Reply to the task message with a photo, then press Done again.`
       : msg;
+  }
+}
+
+/** Buttons on FMS step messages: Done, Yes / No (decisions), Approve. Anything with a form needs the app. */
+export async function fmsButton(db: Db, me: Who, action: string, stepId: string): Promise<string> {
+  const actor = await actorFor(db, me.companyId, me.id);
+  if (!actor) return 'Your account is not active.';
+  const decision =
+    action === 'yes' ? 'yes' : action === 'no' ? 'no' : action === 'approve' ? 'approved' : undefined;
+  try {
+    const r = await completeStep(db, actor, stepId, { decision, note: 'From Telegram' });
+    return r.status === 'CLOSED'
+      ? `✅ Done — ${r.title} is complete.`
+      : `✅ Done. ${r.title} moved to the next step.`;
+  } catch (err) {
+    const e = err as { code?: string; message?: string };
+    if (e.code === 'VALIDATION_FAILED') return `${e.message}. Open the app to fill it in.`;
+    return friendly(err);
   }
 }
 
@@ -196,6 +221,23 @@ export async function workSummary(db: Db, me: Who, today: boolean, now = new Dat
         : { label: `✅ Done #${t.number}`, data: `act:done:task:${t.id}` },
     );
   }
+  const fmsSteps = await db.fmsRecordStep.findMany({
+    where: {
+      companyId: me.companyId,
+      doerId: me.id,
+      status: 'OPEN',
+      type: { not: 'AUTO' },
+      record: { status: 'RUNNING', deletedAt: null },
+      ...(due ? { plannedAt: due } : {}),
+    },
+    include: { record: { select: { title: true, number: true, flow: { select: { name: true } } } } },
+    orderBy: { plannedAt: 'asc' },
+    take: 8,
+  });
+  for (const f of fmsSteps)
+    lines.push(
+      `🔁 ${f.record.flow.name}: ${f.record.title} (#${f.record.number}) — ${f.stepName} · ${formatShortDateTime(f.plannedAt, zone)}${f.plannedAt < now ? ' ⚠️ late' : ''}`,
+    );
   for (const r of runs)
     lines.push(
       `☑️ ${r.master.name} · ${r.itemsDone}/${r.itemsTotal} · ${formatShortDateTime(r.plannedAt, zone)}`,

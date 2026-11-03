@@ -32,6 +32,7 @@ import { slipRoutes } from './modules/slip/routes';
 import { ticketRoutes } from './modules/ticket/routes';
 import { eaRoutes } from './modules/ea/routes';
 import { misRoutes } from './modules/mis/routes';
+import { fmsRoutes } from './modules/fms/routes';
 import { LocalDiskStorage, type Storage } from './lib/storage';
 
 export type BuildOptions = {
@@ -101,5 +102,6 @@ export async function buildApp(opts: BuildOptions) {
   await app.register(ticketRoutes);
   await app.register(eaRoutes);
   await app.register(misRoutes, { appName: env.APP_NAME });
+  await app.register(fmsRoutes, { env });
   return app;
 }

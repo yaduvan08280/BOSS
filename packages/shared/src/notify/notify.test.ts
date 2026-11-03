@@ -10,14 +10,14 @@ describe('catalog', () => {
         .map((e) => e.event)
         .sort(),
     ).toEqual(['notify.escalation', 'notify.telegram_code', 'notify.test']);
-    // §7.3, plus phase 4: delegation.accept_late, slip.late, slip.closed, mis.weekly.
+    // §7.3, plus phase 4: delegation.accept_late, slip.late, slip.closed, mis.weekly; phase 5: fms.step_stuck, fms.customer_update.
     const expected = {
       delegation: 11,
       checklist: 6,
       slip: 6,
       ticket: 6,
       ea: 3,
-      fms: 6,
+      fms: 8,
       hr: 8,
       ims: 5,
       crm: 6,

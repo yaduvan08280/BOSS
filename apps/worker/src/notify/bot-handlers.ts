@@ -10,7 +10,7 @@ import {
   redeemLinkCode,
   type Storage,
 } from '@mono/api/services';
-import { doneCommand, moveCommand, taskButton, workSummary, type BotButton } from './bot-work';
+import { doneCommand, fmsButton, moveCommand, taskButton, workSummary, type BotButton } from './bot-work';
 
 /** Bot logic as plain functions (easy to test); telegram-bot.ts only forwards updates to them. */
 export type BotScope = { companyIds: string[] | null };
@@ -221,6 +221,8 @@ export async function onAction(db: Db, scope: BotScope, chatId: string, data: st
   const [, action, entityType, entityId] = data.split(':');
   if (entityType === 'task' && action && entityId)
     return taskButton(db, { id: me.id, companyId: me.companyId }, action, entityId);
+  if (entityType === 'fms_step' && action && entityId)
+    return fmsButton(db, { id: me.id, companyId: me.companyId }, action, entityId);
   return "That button isn't something the bot can do yet — open the app for it.";
 }
 
