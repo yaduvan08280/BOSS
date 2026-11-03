@@ -1,6 +1,13 @@
 import type { Db, Tx } from '@mono/db';
 import { nextCounter } from '@mono/db';
-import { financialYear, formatDate, formatINR, itemsTotal, type ItemLine } from '@mono/shared';
+import {
+  financialYear,
+  formatDate,
+  formatINR,
+  formatLocalDate,
+  itemsTotal,
+  type ItemLine,
+} from '@mono/shared';
 import { renderPdf } from '../../lib/pdf';
 import { AppError } from '../../lib/errors';
 
@@ -87,7 +94,17 @@ export async function documentPdf(db: Db, companyId: string, id: string) {
         ? {
             table: {
               widths: [140, '*'],
-              body: facts.map(([k, v]) => [{ text: k, color: '#666' }, String(v)]),
+              // Dates as DD/MM/YYYY, never the stored YYYY-MM-DD.
+              body: facts.map(([k, v]) => [
+                { text: k, color: '#666' },
+                typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)
+                  ? formatLocalDate(v)
+                  : typeof v === 'boolean'
+                    ? v
+                      ? 'Yes'
+                      : 'No'
+                    : String(v),
+              ]),
             },
             layout: 'noBorders',
             margin: [0, 6, 0, 10],

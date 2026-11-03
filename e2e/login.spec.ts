@@ -40,8 +40,8 @@ test('owner signs in and sees the shell', async ({ page }, info) => {
 
   await expectNoSideScroll(page);
 
-  await page.goto('/fms/builder');
-  await expect(page.getByText(/arrives in phase 5/i)).toBeVisible();
+  await page.goto('/hr/attendance');
+  await expect(page.getByText(/arrives in phase 7/i)).toBeVisible();
   await expectNoSideScroll(page);
   await shot(page, 'placeholder', info.project.name);
 

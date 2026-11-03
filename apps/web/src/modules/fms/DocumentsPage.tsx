@@ -61,13 +61,13 @@ export function DocumentsPage({ me }: { me: Me }) {
           onChange={setTypeId}
           label={(k) => (k === 'all' ? t('fms.doc.all') : (types.find((x) => x.id === k)?.name ?? k))}
         />
-        <div className="flex gap-2">
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
           <Input
             aria-label={t('fms.doc.search')}
             placeholder={t('fms.doc.search')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-56"
+            className="min-w-0 flex-1 sm:w-56 sm:flex-none"
           />
           <Button onClick={() => setEditing({ active: true })}>
             <Plus /> {t('fms.doc.newType')}

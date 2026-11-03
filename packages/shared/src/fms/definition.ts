@@ -116,3 +116,16 @@ export const flowMetaSchema = z.object({
   description: z.string().max(4000).nullish(),
 });
 export type FlowMeta = z.infer<typeof flowMetaSchema>;
+
+/** Changing some details of a flow: every field optional and NO defaults, so unsent fields stay as saved. */
+export const flowMetaPatchSchema = z.object({
+  name: z.string().trim().min(2).max(100).optional(),
+  runName: z.string().trim().min(2).max(40).optional(),
+  departmentIds: z.array(z.string()).max(20).optional(),
+  coordinatorId: z.string().nullish(),
+  coordinatorBackupId: z.string().nullish(),
+  solverId: z.string().nullish(),
+  solverBackupId: z.string().nullish(),
+  videoUrl: z.url().nullish().or(z.literal('')),
+  description: z.string().max(4000).nullish(),
+});

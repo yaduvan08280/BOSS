@@ -1,5 +1,80 @@
 # Changelog
 
+## Phase 5 — FMS: builder, engine, Live FMS, My steps, documents, KPI cards (03/11/2026)
+
+**FMS Builder** (`/fms/builder`)
+- The list has All / Published / Drafts tabs and table or card views. Each row shows its steps, departments, status ("Published v2", "Draft · changes not published") and its actions (edit, publish, duplicate, archive).
+- The editor has four tabs:
+  - Steps: a list with a step editor beside it. Each step has a type (Task, Decision, Approval, Outside, Auto), doers or "whoever started it", a backup, and a planned time. The time counts from the previous step, the start, a date field, or is a fixed time. Steps can also have a checklist, an entry form, required proof and a customer update.
+  - Start form: 17 field types, including items (item, qty, rate, amount), dropdowns and from-a-master.
+  - Details: coordinator and backup, problem solver and backup, departments, training video and KPI cards.
+  - Flowchart: Yes/No branches and dashed rejection lines. A "+" under each step inserts one after it, and a red "!" marks steps that need fixing.
+- The header shows "12 steps · 4 people · Start to end 3.2 days · 1 step to fix", plus the Working shifts or Full calendar choice.
+- Publish refuses a flow until it is ready: every step needs a doer and a time, decisions need both branches, and no step may be orphaned. The errors are named per step.
+- Published versions never change. Running records stay on the version they started with, and editing a published flow makes a draft of the next version.
+
+**Engine**
+- Starting a record checks the start form, numbers the record (#1, #2… per flow), gives it a title from the first fields, and opens step 1 for its doer.
+- With several doers, the step goes to the one with the fewest open steps. A step done by "whoever started it" falls back to the coordinator for public-form records.
+- Completing a step checks its fields, checklist and proof, then records the actual time:
+  - Decision steps take the Yes or No branch.
+  - Approval steps either approve or go to their reject step.
+  - Outside steps wait for the outside party.
+  - Auto steps run on their own: create a numbered document, send a customer update, or call a webhook. Webhooks are retried by the worker every minute.
+- Planned times use working time: only shift hours count (night shifts included), and holidays and weekly offs are skipped. The other choice is the full calendar.
+- Record actions: reassign the open step (the new doer gets it on Telegram), put on hold, resume, and close. Each action writes history with who did it and when.
+- Every 5 minutes the worker checks open steps:
+  - Due soon (an hour before): the doer is reminded.
+  - Late: the doer and the coordinator are told.
+  - Stuck (twice the planned time gone): the problem solver is told. A late step is only told once.
+
+**Live FMS** (`/fms/live`) and **My FMS steps** (`/fms/my-steps`)
+- Live FMS has a flow picker and tabs: Running · Late · Due today · On hold · Closed · Planned vs actual · Performance.
+- A stage strip shows one circle per step with how many records are there and how many are late. The records table shows the record, step n of N, who has it, when it is due and how late it is. "+ New {run name}" opens the start form.
+- The record drawer has four tabs:
+  - Timeline: each step with doer, planned and actual time, On time / Done late / Delayed / Waiting, the data entered and the proof.
+  - Planned vs actual.
+  - Documents.
+  - History.
+  The drawer also has "Do my step", Reassign, Hold / Resume / Close, and a timeline PDF.
+- My FMS steps has two parts: "Flows that start with you" (start one in a tap) and your steps, filtered by Running / Waiting on you / Late / Closed.
+- Telegram:
+  - `/my` lists FMS steps too.
+  - Step messages have Done / Yes / No / Approve buttons. A step that needs fields or proof sends you to the web form instead.
+
+**Documents** (`/documents`)
+- Auto steps create papers numbered per type and per financial year: `INV/26-27/0001`.
+- The list shows the number, type, date, party, which flow and record it came from, the total in ₹, and its status. Documents can be cancelled with a reason, and the number is never reused.
+- Every document is a clean A4 PDF with the company, number, party, line items with totals, and the terms. Dates read DD/MM/YYYY and yes/no answers read Yes/No.
+- Document types (prefix, header, footer, terms) are set up on the same page.
+
+**KPI cards and the public form**
+- KPI cards: pick a field, Count / Total / Average / Min / Max, and a period (Today / This week / This month / This FY). Each card is compared with the period before.
+- Share a form link: customers fill a flow's start form at `/f/{token}` with no login. The form is protected by a rate limit, a hidden honeypot field and a signed sum question ("What is 4 + 7?"). It can be switched off at any time, and the record shows up on Live FMS.
+
+**System Master**
+- The Processes card counts real flows (live, being built, not started).
+- The People card counts load from open FMS steps plus tasks.
+
+**Demo data** (`npm run seed:demo`)
+- The 8 flows from §15. Seven are published with 5 records each, some late and one closed in each. Lead to Order Conversion (12 steps) is a draft.
+- Also 4 document types (QUO, PI, COA, INV) and 2 KPI cards per flow.
+
+**Fixes found while testing**
+- Saving one detail of a flow (say, the training video) reset its run name to "Record" and cleared its departments. Partial saves now change only what was sent, and a test covers it.
+- Dates in the record drawer and in document PDFs read DD/MM/YYYY, never the stored 2026-11-03. An e2e check fails if a stored date comes back.
+- The flowchart opens readable (at least 80 % zoom, from the top) instead of shrinking a long flow to fit.
+- The Documents toolbar no longer overflows a phone screen.
+
+**Verified**
+- 183 unit/integration tests. New ones cover flow validation, readiness, branching, working time (shifts, night shifts, holidays), field checks and the engine. The engine tests run a decision, an approval reject, an auto document, reassigning, hold and close, and check that partial saves keep the rest.
+- 19 browser tests. The Phase 5 acceptance test does it all in the browser:
+  - builds a 6-step flow with a decision in the builder and publishes version 1;
+  - starts an order on Live FMS and completes every step;
+  - downloads the numbered invoice PDF.
+  The others check that every FMS screen fits at 380 px and 1440 px, and that the public form works on a phone.
+- Production stack: the `fms` migration applies. Smoke-tested through Caddy (publish → record → step done → auto `INV/26-27/0001` → PDF, timeline PDF, public form) with no errors in the logs.
+
 ## Fixes after EA testing (03/11/2026)
 
 - **Weekly schedule:** entries were cut off mid-line in short slots. Hours are taller now, short entries end with "…", and hovering or focusing opens the full text (tooltip too).

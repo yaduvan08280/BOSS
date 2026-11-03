@@ -115,7 +115,10 @@ describe('FMS', () => {
       status: 'PUBLISHED',
       version: 1,
     });
+    // Saving one field leaves the others alone (the run name stays "Order").
+    await api.put(`/api/fms/flows/${flow.id}`, { meta: { videoUrl: 'https://youtu.be/x' } });
     const detail = (await api.get(`/api/fms/flows/${flow.id}`)).body;
+    expect(detail).toMatchObject({ runName: 'Order', videoUrl: 'https://youtu.be/x' });
     expect(detail.stats).toMatchObject({ steps: 6, people: 3 });
 
     // Start: required fields are checked; the first step goes to sales, due in 2 h.

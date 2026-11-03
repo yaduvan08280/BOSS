@@ -11,7 +11,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Bot, CircleCheck, Diamond, Plus, Play, ShieldCheck, Truck, User } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { END, nextStepKey, type FlowDefinition, type StepType } from '@mono/shared';
 import { cn } from '@/lib/utils';
@@ -109,7 +109,8 @@ export function FmsChart({
   onInsert: (afterKey: string) => void;
 }) {
   const { t } = useTranslation();
-  const { nodes, edges } = useMemo(() => {
+  const box = useRef<HTMLDivElement>(null);
+  const { nodes, edges, width } = useMemo(() => {
     const g = new Graph();
     g.setGraph({ rankdir: 'TB', nodesep: 40, ranksep: 56, marginx: 20, marginy: 20 });
     g.setDefaultEdgeLabel(() => ({}));
@@ -179,17 +180,21 @@ export function FmsChart({
             },
       };
     });
-    return { nodes, edges };
+    return { nodes, edges, width: g.graph().width ?? 600 };
   }, [def, names, toFix, selected, onSelect, onInsert, t]);
 
   return (
-    <div className="h-[560px] w-full rounded-card border bg-card">
+    <div ref={box} className="h-[560px] w-full rounded-card border bg-card">
       <ReactFlow
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
-        fitView
-        fitViewOptions={{ padding: 0.15, maxZoom: 1 }}
+        onInit={(rf) => {
+          // Readable first: fit the width (not below 80 %), start at the top; scroll for the rest.
+          const w = box.current?.clientWidth ?? 600;
+          const zoom = Math.min(1, Math.max(0.8, (w - 16) / width));
+          void rf.setViewport({ x: Math.max(8, (w - width * zoom) / 2), y: 8, zoom });
+        }}
         minZoom={0.3}
         nodesDraggable={false}
         nodesConnectable={false}

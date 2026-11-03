@@ -177,7 +177,10 @@ export async function seedDemoEngine(db: Db, companyId: string) {
           createdAt: ago(h),
         },
       });
-      await db.slip.update({ where: { id: slip.id }, data: { chosenSolutionId: chosen.id, taskId: task.id } });
+      await db.slip.update({
+        where: { id: slip.id },
+        data: { chosenSolutionId: chosen.id, taskId: task.id },
+      });
     }
     if (decided)
       await log('status', h, {

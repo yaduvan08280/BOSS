@@ -9,6 +9,7 @@ import { bootstrapCompany, hashPassword } from '@mono/api/services';
 import { gstinCheckDigit, hhmmToMinutes } from '@mono/shared';
 import { seedDemoWork } from './seed-demo-work';
 import { seedDemoEngine } from './seed-demo-engine';
+import { seedDemoFms } from './seed-demo-fms';
 
 const PASSWORD = process.env.SEED_DEMO_PASSWORD?.trim() || 'Demo1234';
 const DEPARTMENTS = [
@@ -220,6 +221,7 @@ try {
   if (await seedDemoWork(prisma, company.id)) console.log('Added demo tasks, checklists and holidays.');
   if (await seedDemoEngine(prisma, company.id))
     console.log('Added demo help slips, tickets and the EA board.');
+  if (await seedDemoFms(prisma, company.id)) console.log('Added 8 demo processes with running records.');
 } finally {
   await prisma.$disconnect();
 }

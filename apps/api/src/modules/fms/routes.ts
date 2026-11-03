@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { flowMetaSchema, formatDateTime } from '@mono/shared';
+import { flowMetaPatchSchema, flowMetaSchema, formatDateTime } from '@mono/shared';
 import type { Env } from '../../env';
 import { renderPdf } from '../../lib/pdf';
 import { actorOf } from '../delegation/routes';
@@ -55,7 +55,7 @@ export async function fmsRoutes(app: FastifyInstance, opts: { env: Env }) {
       schema: {
         tags,
         params: idParam,
-        body: z.object({ meta: flowMetaSchema.partial().optional(), definition: z.unknown().optional() }),
+        body: z.object({ meta: flowMetaPatchSchema.optional(), definition: z.unknown().optional() }),
       },
     },
     async (q) => saveFlow(app.prisma, actorOf(q), q.params.id, q.body),

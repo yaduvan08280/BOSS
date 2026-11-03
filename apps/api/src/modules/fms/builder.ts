@@ -3,6 +3,7 @@ import type { Db, Tx } from '@mono/db';
 import { formatNumber, nextCounter } from '@mono/db';
 import {
   flowDefinitionSchema,
+  flowMetaPatchSchema,
   flowMetaSchema,
   mainPathHours,
   readiness,
@@ -160,7 +161,7 @@ export async function saveFlow(
   input: { meta?: Partial<FlowMeta>; definition?: unknown },
 ) {
   need(actor, 'fms.edit', 'build processes');
-  const meta = input.meta ? flowMetaSchema.partial().parse(input.meta) : undefined;
+  const meta = input.meta ? flowMetaPatchSchema.parse(input.meta) : undefined;
   let def: FlowDefinition | undefined;
   if (input.definition !== undefined) {
     const parsed = flowDefinitionSchema.safeParse(input.definition);

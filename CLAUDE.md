@@ -445,7 +445,7 @@ Ubuntu 24.04 LTS on i7-12700 / 48 GB / 1.8 TB. Docker Engine + Compose plugin. S
 | 2 | Notification engine, Telegram, templates, rules, reminders, worker | done (02/11/2026) — live Telegram/WhatsApp delivery needs GGM's own bot token / provider key |
 | 3 | Delegation, checklists, scorecard, R/Y/G | done (02/11/2026) — Dictate uses the browser's speech recognition until phase 6; holiday screens arrive in phase 7 |
 | 4 | Help slips, tickets, EA, weekly MIS, Business Engine flow designer | done (02/11/2026) — MIS PDFs use Helvetica (Hindi names need a Devanagari font later) |
-| 5 | FMS builder, engine, Live FMS, My steps, documents, KPI cards | not started |
+| 5 | FMS builder, engine, Live FMS, My steps, documents, KPI cards | done (03/11/2026) — "Build/Edit with AI" and "Suggest KPI cards" arrive with the AI layer in phase 6; Buddy cover for steps arrives with HR in phase 7 |
 | 6 | AI layer | not started |
 | 7 | HR rules, attendance, leave, Buddy, cover board | not started |
 | 8 | IMS | not started |
@@ -504,3 +504,9 @@ Ubuntu 24.04 LTS on i7-12700 / 48 GB / 1.8 TB. Docker Engine + Compose plugin. S
 47. Every option list filters as you type (the shared Select): all typed words must match, best matches first.
 48. Telegram has no read receipts for bots: any update from a linked chat marks everything delivered there before it as read (this also counts as a reply for escalations). No "Seen" button.
 49. Proof files (task done, ticket fixed, checklist submitted) are sent into Telegram with the verifier's message; every bot command goes through one tested router (`onText`).
+50. FMS flows are edited as one draft; publishing copies it into an immutable `FlowVersion` (v1, v2…). Records keep the version they started on. Partial saves of flow details use a patch schema with no defaults, so only the fields sent change.
+51. FMS planned times count working minutes: shift hours on working days, night shifts across midnight, holidays and weekly offs skipped. "Full calendar" counts every minute.
+52. A step with several doers goes to the one with the fewest open FMS steps. "Whoever started it" steps fall back to the flow's coordinator when nobody signed in started the record (public form).
+53. An FMS step is "due soon" an hour before its planned time and "late" after it (each told once); at 2× the planned duration it is "stuck" and the problem solver is told.
+54. Documents are numbered `{PREFIX}/{FY}/{0001}` per type through `Counter`; cancelled numbers are never reused.
+55. The public form has no captcha service. It uses a rate limit, a honeypot field and a small sum question whose answer is HMAC-signed with `APP_SECRET`.

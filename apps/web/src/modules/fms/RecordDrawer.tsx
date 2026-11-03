@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { useDueLabel, useWorkMutation } from '@/lib/work';
 import { formatDateTime } from '@/lib/when';
 import { RECORD_TONE, useRecord, type RecordDetail, type StepRow } from './api';
+import { showValue } from './show';
 import { StepDialog } from './StepDialog';
 
 const TABS = ['timeline', 'plan', 'documents', 'history'] as const;
@@ -74,14 +75,13 @@ export function RecordDrawer({
                 </p>
               )}
               <div>
-                {Object.entries(r.data).map(([k, v]) => {
-                  const f = r.definition.startFields.find((x) => x.key === k);
-                  if (!f || Array.isArray(v)) return null;
-                  return (
-                    <InfoRow key={k} label={f.label}>
-                      {typeof v === 'boolean' ? (v ? t('fms.yes') : t('fms.no')) : String(v)}
+                {r.definition.startFields.map((f) => {
+                  const shown = showValue(f, r.data[f.key], tz, [t('fms.yes'), t('fms.no')]);
+                  return shown ? (
+                    <InfoRow key={f.key} label={f.label}>
+                      {shown}
                     </InfoRow>
-                  );
+                  ) : null;
                 })}
                 <InfoRow label={t('fms.startedBy')}>
                   {r.startedById ? names.get(r.startedById) : t(`fms.source.${r.source}`)}
@@ -143,8 +143,14 @@ export function RecordDrawer({
                         {Object.entries(s.data).length > 0 && (
                           <div className="mt-1 text-xs text-muted-foreground">
                             {Object.entries(s.data)
-                              .filter(([, v]) => !Array.isArray(v))
-                              .map(([k, v]) => `${k}: ${String(v)}`)
+                              .map(([k, v]) => {
+                                const f = r.definition.steps
+                                  .find((x) => x.key === s.stepKey)
+                                  ?.fields.find((x) => x.key === k);
+                                const shown = showValue(f, v, tz, [t('fms.yes'), t('fms.no')]);
+                                return shown ? `${f?.label ?? k}: ${shown}` : null;
+                              })
+                              .filter(Boolean)
                               .join(' · ')}
                           </div>
                         )}
