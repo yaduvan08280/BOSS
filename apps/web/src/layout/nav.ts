@@ -42,6 +42,7 @@ import {
   Workflow,
   Scale,
 } from 'lucide-react';
+import { hasPermission, type PermissionKey } from '@mono/shared';
 
 export type NavItem = {
   key: string;
@@ -60,6 +61,8 @@ export type NavItem = {
     | 'workspace'
     | 'messaging'
     | 'setup';
+  /** Shown only to people with this permission. */
+  permission?: PermissionKey;
 };
 
 export type NavSection = { key: string; items: NavItem[] };
@@ -99,6 +102,14 @@ export const WORKSPACE_NAV: NavSection[] = [
       { key: 'attendance', path: '/hr/attendance', icon: CalendarCheck, phase: 0, tag: 'hr' },
       { key: 'leave', path: '/hr/leave', icon: CalendarOff, phase: 0, tag: 'hr' },
       { key: 'coverBoard', path: '/hr/cover', icon: Handshake, phase: 0, tag: 'hr' },
+      {
+        key: 'payroll',
+        path: '/hr/payroll',
+        icon: BadgeIndianRupee,
+        phase: 0,
+        tag: 'hr',
+        permission: 'hr.admin',
+      },
     ],
   },
   {
@@ -162,3 +173,7 @@ export function findNavItem(pathname: string): NavItem | undefined {
     i.path === '/' ? pathname === '/' : pathname === i.path || pathname.startsWith(`${i.path}/`),
   ).sort((a, b) => b.path.length - a.path.length)[0];
 }
+
+/** Screens behind a permission (Payroll) are left out of menus, Home and search for everyone else. */
+export const navAllowed = (item: NavItem, permissions: readonly string[]) =>
+  !item.permission || hasPermission(permissions, item.permission);

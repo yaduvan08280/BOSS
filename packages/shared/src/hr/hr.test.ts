@@ -96,6 +96,43 @@ describe('attendance rules (§9.1 defaults: grace 15 min, half day after 150 min
   });
 });
 
+describe('work patterns', () => {
+  const dayOf = { start: 0, end: 24 * 60 };
+  it('daily hours: never late; the day counts by hours, overtime past them', () => {
+    const daily = { kind: 'daily' as const, hours: 8 };
+    expect(day([p('IN', '11:40'), p('OUT', '19:50')], { shift: dayOf, pattern: daily })).toMatchObject({
+      status: 'PRESENT',
+      lateMinutes: 0,
+      workedMinutes: 490,
+      overtimeMinutes: 0,
+    });
+    expect(day([p('IN', '10:00'), p('OUT', '15:00')], { shift: dayOf, pattern: daily }).status).toBe(
+      'HALF_DAY',
+    );
+    expect(day([p('IN', '10:00'), p('OUT', '12:00')], { shift: dayOf, pattern: daily }).status).toBe(
+      'ABSENT',
+    );
+    expect(day([p('IN', '08:00'), p('OUT', '17:00')], { shift: dayOf, pattern: daily }).overtimeMinutes).toBe(
+      60,
+    );
+    // A 6-hour day for a part-timer.
+    expect(
+      day([p('IN', '14:00'), p('OUT', '20:05')], { shift: dayOf, pattern: { kind: 'daily', hours: 6 } })
+        .status,
+    ).toBe('PRESENT');
+  });
+  it('weekly hours: any work makes the day present; no punch on a working day is absent', () => {
+    const weekly = { kind: 'weekly' as const };
+    expect(day([p('IN', '13:00'), p('OUT', '15:30')], { shift: dayOf, pattern: weekly })).toMatchObject({
+      status: 'PRESENT',
+      workedMinutes: 150,
+      overtimeMinutes: 0,
+    });
+    expect(day([], { shift: dayOf, pattern: weekly }).status).toBe('ABSENT');
+    expect(day([p('IN', '13:00')], { shift: dayOf, pattern: weekly }).status).toBe('HALF_DAY');
+  });
+});
+
 describe('HR rules', () => {
   it('fills every answer with the wizard default', () => {
     expect(DEFAULT_HR_RULES).toMatchObject({
@@ -138,6 +175,21 @@ describe('HR rules', () => {
     expect(rulesFor(r, { id: 'ravi', departmentId: 'drivers' })).toMatchObject({
       late: { graceMinutes: 0 },
       punches: { awayFromOffice: 'flag' },
+    });
+  });
+  it('an override changes only its own answers (the company and department answers stay)', () => {
+    const r = hrRulesSchema.parse({
+      late: { fullDayHours: 9 },
+      overrides: [
+        { scope: 'department', id: 'drivers', late: { halfDayAfterMinutes: 240 } },
+        { scope: 'person', id: 'ravi', late: { graceMinutes: 30 } },
+      ],
+    });
+    expect(r.overrides[1]!.late).toEqual({ graceMinutes: 30 });
+    expect(rulesFor(r, { id: 'ravi', departmentId: 'drivers' }).late).toMatchObject({
+      graceMinutes: 30,
+      halfDayAfterMinutes: 240,
+      fullDayHours: 9,
     });
   });
 });

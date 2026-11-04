@@ -88,8 +88,8 @@ export const hrRulesSchema = z.object({
       z.object({
         scope: z.enum(['department', 'person']),
         id: z.string(),
-        late: lateRulesSchema.partial().default({}),
-        punches: punchRulesSchema.partial().default({}),
+        late: overrideOf(lateRulesSchema).default({}),
+        punches: overrideOf(punchRulesSchema).default({}),
       }),
     )
     .max(200)
@@ -100,6 +100,20 @@ export type LateRules = z.infer<typeof lateRulesSchema>;
 export type PunchRules = z.infer<typeof punchRulesSchema>;
 
 export const DEFAULT_HR_RULES: HrRules = hrRulesSchema.parse({});
+
+/**
+ * An override's answers: every field optional and WITHOUT its default. (zod's `.partial()` still fills
+ * defaults in, so one changed answer would reset all the others to the default.)
+ */
+export function overrideOf<S extends z.ZodRawShape>(schema: z.ZodObject<S>) {
+  const shape = Object.fromEntries(
+    Object.entries(schema.shape).map(([k, v]) => [
+      k,
+      (v instanceof z.ZodDefault ? (v.unwrap() as z.ZodType) : (v as z.ZodType)).optional(),
+    ]),
+  );
+  return z.object(shape) as unknown as ReturnType<z.ZodObject<S>['partial']>;
+}
 
 /** The attendance rules for one person: company answers, then their department's, then their own. */
 export function rulesFor(

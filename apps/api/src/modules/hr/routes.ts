@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { leaveRequestSchema, leaveTypeSchema } from '@mono/shared';
+import { leaveQuotasSchema, leaveRequestSchema, leaveTypeSchema, payMonthSchema } from '@mono/shared';
 import { actorOf } from '../delegation/routes';
 import { assignCover, coverBoard } from './absence';
 import { punch } from './attendance';
@@ -16,6 +16,7 @@ import {
   teamDay,
 } from './days';
 import { applyLeave, cancelLeave, decideLeave, previewLeave } from './leave';
+import { closePayRun, payrollMonth, reopenPayRun } from './payroll';
 import {
   deleteHoliday,
   holidaySchema,
@@ -29,6 +30,7 @@ import {
   saveWeeklyOffs,
   weeklyOffSchema,
 } from './setup';
+import { listQuotas, listTerms, readPayRules, savePayRules, saveQuotas, saveTerms } from './terms';
 
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const idParam = z.object({ id: z.string() });
@@ -233,5 +235,44 @@ export async function hrRoutes(app: FastifyInstance) {
       },
     },
     async (q) => assignCover(app.prisma, actorOf(q), { companyId: q.auth!.companyId, ...q.body }),
+  );
+
+  // Pay (HR only, checked in the services: hr.admin or the HR person).
+  const monthParam = z.object({ month: payMonthSchema });
+  r.get('/api/hr/terms', { ...view(), schema: { tags } }, async (q) => listTerms(app.prisma, actorOf(q)));
+  r.put(
+    '/api/hr/terms/:id',
+    { ...view(), schema: { tags, params: idParam, body: z.record(z.string(), z.unknown()) } },
+    async (q) => saveTerms(app.prisma, actorOf(q), q.params.id, q.body),
+  );
+  r.get('/api/hr/pay-rules', { ...view(), schema: { tags } }, async (q) =>
+    readPayRules(app.prisma, actorOf(q)),
+  );
+  r.put(
+    '/api/hr/pay-rules',
+    { ...view(), schema: { tags, body: z.record(z.string(), z.unknown()) } },
+    async (q) => savePayRules(app.prisma, actorOf(q), q.body),
+  );
+  r.get('/api/hr/leave-quotas', { ...view(), schema: { tags } }, async (q) =>
+    listQuotas(app.prisma, actorOf(q)),
+  );
+  r.put(
+    '/api/hr/leave-quotas/:id',
+    { ...view(), schema: { tags, params: idParam, body: leaveQuotasSchema } },
+    async (q) => saveQuotas(app.prisma, actorOf(q), q.params.id, q.body),
+  );
+  r.get('/api/hr/payroll/:month', { ...view(), schema: { tags, params: monthParam } }, async (q) =>
+    payrollMonth(app.prisma, actorOf(q), q.params.month),
+  );
+  r.post('/api/hr/payroll/:month/close', { ...view(), schema: { tags, params: monthParam } }, async (q) =>
+    closePayRun(app.prisma, actorOf(q), q.params.month),
+  );
+  r.post(
+    '/api/hr/payroll/:month/reopen',
+    {
+      ...view(),
+      schema: { tags, params: monthParam, body: z.object({ reason: z.string().trim().min(3).max(300) }) },
+    },
+    async (q) => reopenPayRun(app.prisma, actorOf(q), q.params.month, q.body.reason),
   );
 }

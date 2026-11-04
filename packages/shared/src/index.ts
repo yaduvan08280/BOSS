@@ -47,3 +47,4 @@ export * from './machines/hr';
 export * from './hr/rules';
 export * from './hr/attendance';
 export * from './hr/leave';
+export * from './hr/pay';

@@ -1,5 +1,5 @@
 import type { Db, Tx } from '@mono/db';
-import { DEFAULT_HR_RULES, hrRulesSchema, rulesFor, type HrRules } from '@mono/shared';
+import { DEFAULT_HR_RULES, hrRulesSchema, rulesFor, type HrRules, type WorkPattern } from '@mono/shared';
 import { AppError } from '../../lib/errors';
 import { can, teamOf, type Actor } from '../work/actor';
 
@@ -17,7 +17,13 @@ export type HrPerson = {
   branchId: string | null;
   defaultBuddyId: string | null;
   hodId: string | null;
+  /** For daily / weekly hours, the whole calendar day. */
   shift: { start: number; end: number };
+  pattern: WorkPattern;
+  weeklyHours: number | null;
+  /** Daily / weekly hours: in by this time (minutes from midnight) or absent; null = no absence check. */
+  latestStartMin: number | null;
+  designationId: string | null;
 };
 
 /** A person with what HR needs: their shift (or the default one), branch, department and HOD. */
@@ -29,6 +35,7 @@ export async function hrPerson(db: Db | Tx, companyId: string, userId: string): 
       name: true,
       branchId: true,
       defaultBuddyId: true,
+      designationId: true,
       mainDepartmentId: true,
       shift: { select: { startMin: true, endMin: true, deletedAt: true } },
       mainDepartment: { select: { hodUserId: true, parent: { select: { hodUserId: true } } } },
@@ -45,15 +52,29 @@ export async function hrPerson(db: Db | Tx, companyId: string, userId: string): 
   const s = u.shift && !u.shift.deletedAt ? u.shift : fallback;
   const dept = u.mainDepartment;
   const hod = dept?.hodUserId && dept.hodUserId !== u.id ? dept.hodUserId : (dept?.parent?.hodUserId ?? null);
+  const terms = await db.employeeTerms.findUnique({ where: { userId } });
+  const kind = terms?.pattern === 'daily' || terms?.pattern === 'weekly' ? terms.pattern : 'shift';
+  const pattern: WorkPattern =
+    kind === 'daily'
+      ? { kind, hours: Number(terms?.dailyHours ?? 8) }
+      : kind === 'weekly'
+        ? { kind }
+        : { kind };
+  const fixed = s ? { start: s.startMin, end: s.endMin } : { start: 9 * 60, end: 18 * 60 };
   return {
     id: u.id,
     name: u.name,
     companyId,
+    designationId: u.designationId,
+    pattern,
+    weeklyHours: kind === 'weekly' ? Number(terms?.weeklyHours ?? 48) : null,
+    latestStartMin: kind === 'shift' ? null : (terms?.latestStartMin ?? null),
     departmentId: u.mainDepartmentId,
     branchId: u.branchId,
     defaultBuddyId: u.defaultBuddyId,
     hodId: hod && hod !== u.id ? hod : null,
-    shift: s ? { start: s.startMin, end: s.endMin } : { start: 9 * 60, end: 18 * 60 },
+    // Daily or weekly hours: any time of the day counts.
+    shift: kind === 'shift' ? fixed : { start: 0, end: 24 * 60 },
   };
 }
 

@@ -203,3 +203,67 @@ model Cover {
   @@index([companyId, entityType, entityId])
   @@map("covers")
 }
+
+/// How one person works and is paid. Without a row: the shift pattern and no pay set.
+model EmployeeTerms {
+  id             String   @id @default(cuid(2))
+  companyId      String   @map("company_id")
+  userId         String   @unique @map("user_id")
+  /// shift (fixed shift times) | daily (N hours a day, any time) | weekly (N hours a week)
+  pattern        String   @default("shift")
+  dailyHours     Decimal? @map("daily_hours") @db.Decimal(4, 2)
+  weeklyHours    Decimal? @map("weekly_hours") @db.Decimal(5, 2)
+  /// daily / weekly: the latest time (minutes from midnight) to be in before counting as absent; null = no absence alert
+  latestStartMin Int?     @map("latest_start_min")
+  /// monthly | daily | hourly
+  payBasis       String   @default("monthly") @map("pay_basis")
+  /// paise: per month, per day or per hour (by payBasis)
+  rate           BigInt   @default(0)
+  updatedById    String?  @map("updated_by_id")
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([companyId])
+  @@map("employee_terms")
+}
+
+/// Pay rules of the company (month-day policy, paid offs, day-off work, overtime, late cut) + overrides.
+model PayRules {
+  id          String   @id @default(cuid(2))
+  companyId   String   @unique @map("company_id")
+  rules       Json
+  updatedById String?  @map("updated_by_id")
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("pay_rules")
+}
+
+/// Days of a leave type a designation or a person gets in a year, instead of the type's default.
+model LeaveQuota {
+  id          String  @id @default(cuid(2))
+  companyId   String  @map("company_id")
+  leaveTypeId String  @map("leave_type_id")
+  /// designation | person
+  scope       String
+  refId       String  @map("ref_id")
+  yearlyQuota Decimal @map("yearly_quota") @db.Decimal(5, 1)
+
+  @@unique([leaveTypeId, scope, refId])
+  @@index([companyId])
+  @@map("leave_quotas")
+}
+
+/// A month's pay, closed: the figures are kept as they were, whatever changes later.
+model PayRun {
+  id         String   @id @default(cuid(2))
+  companyId  String   @map("company_id")
+  /// YYYY-MM
+  month      String
+  /// [{ userId, ...the calculated pay }]
+  lines      Json
+  totalPaise BigInt   @map("total_paise")
+  closedById String?  @map("closed_by_id")
+  closedAt   DateTime @default(now()) @map("closed_at") @db.Timestamptz(3)
+
+  @@unique([companyId, month])
+  @@map("pay_runs")
+}

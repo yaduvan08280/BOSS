@@ -4,6 +4,7 @@ import { AppError } from '../../lib/errors';
 import { emitEvent } from '../../lib/events';
 import { claimMark } from '../ea/jobs';
 import type { Actor } from '../work/actor';
+import { absenceMark } from './attendance';
 import { period } from './balance';
 import { companyCalendar } from './calendar';
 import { runCovers, scheduleCovers } from './cover';
@@ -122,13 +123,24 @@ export async function coverBoard(db: Db, actor: Actor, date: string) {
     const p = await hrPerson(db, actor.companyId, u.id);
     const leave = leaves.find((l) => l.userId === u.id);
     let reason: 'leave' | 'absent' | null = leave ? 'leave' : null;
-    if (!reason) {
+    if (!reason && (await punchesAtAll(db, p.id, now))) {
       const cal = await companyCalendar(db, actor.companyId, p.branchId);
-      const working = !cal.holidays.has(date) && cal.workingWeekdays.has(weekdayOf(date));
-      const { start } = shiftWindow(date, p.shift, tz);
-      const past = now.getTime() > start.getTime() + rules.late.graceMinutes * 60_000;
-      if (working && past && (await punchesAtAll(db, p.id, now)) && !(await punchedIn(db, p, date, tz)))
-        reason = 'absent';
+      // The shift of the day, and a night shift from the evening before that is still running.
+      for (const d of [date, addDays(date, -1)]) {
+        const working = !cal.holidays.has(d) && cal.workingWeekdays.has(weekdayOf(d));
+        const { start, end } = shiftWindow(d, p.shift, tz);
+        const due =
+          p.pattern.kind === 'shift'
+            ? start.getTime() + rules.late.graceMinutes * 60_000
+            : p.latestStartMin === null
+              ? null
+              : zonedToUtc(d, p.latestStartMin, tz).getTime();
+        const inShift = d === date || now < end;
+        if (working && inShift && due !== null && now.getTime() > due && !(await punchedIn(db, p, d, tz))) {
+          reason = 'absent';
+          break;
+        }
+      }
     }
     if (!reason) continue;
     const win = leave ? period(leave.from, leave.to, leave.half, p, tz) : { fromAt: dayFrom, toAt: dayTo };
@@ -266,44 +278,46 @@ export async function watchAbsences(db: Db, now = new Date(), onlyCompanyId?: st
     for (const u of users) {
       const p = await hrPerson(db, c.id, u.id);
       const cal = await companyCalendar(db, c.id, p.branchId);
-      if (cal.holidays.has(today) || !cal.workingWeekdays.has(weekdayOf(today))) continue;
-      const { start, end } = shiftWindow(today, p.shift, c.timezone);
-      const mark = start.getTime() + rules.late.halfDayAfterMinutes * 60_000;
-      if (now.getTime() < mark || now >= end) continue;
-      const onLeave = await db.leaveRequest.findFirst({
-        where: { userId: p.id, status: 'APPROVED', from: { lte: today }, to: { gte: today } },
-      });
-      if (onLeave || !(await punchesAtAll(db, p.id, now)) || (await punchedIn(db, p, today, c.timezone)))
-        continue;
-      const items = await openWork(db, p, now, zonedToUtc(addDays(today, 1), 0, c.timezone));
-      if (!items.length) continue;
-      const states = await coverState(db, p, items, now, end);
-      const open = states.filter((s) => s.state === 'none');
-      const late = now.getTime() >= mark + rules.buddyAnswer.absentConfirmHours * 3600_000;
-      if (!late && (await claimMark(db, c.id, `hr.absent:${today}:${p.id}`))) {
-        if (rules.autopilot.absentToBuddy && open.length) {
-          const s = await suggestionsFor(db, p, rules, open, {
-            from: today,
-            to: today,
-            fromAt: now,
-            toAt: end,
-          });
-          const first = s.find((x) => x.suggestions[0])?.suggestions[0];
-          if (first)
-            await assignCover(db, null, {
-              companyId: c.id,
-              userId: p.id,
-              keys: open.map((o) => o.key),
-              buddyId: first.id,
-              date: today,
+      // Yesterday too: a night shift that started last evening is still running after midnight.
+      for (const date of [addDays(today, -1), today]) {
+        if (cal.holidays.has(date) || !cal.workingWeekdays.has(weekdayOf(date))) continue;
+        const { mark, end } = absenceMark(date, p, rules.late.halfDayAfterMinutes, c.timezone);
+        if (!mark || now.getTime() < mark.getTime() || now >= end) continue;
+        const onLeave = await db.leaveRequest.findFirst({
+          where: { userId: p.id, status: 'APPROVED', from: { lte: date }, to: { gte: date } },
+        });
+        if (onLeave || !(await punchesAtAll(db, p.id, now)) || (await punchedIn(db, p, date, c.timezone)))
+          continue;
+        const items = await openWork(db, p, now, end);
+        if (!items.length) continue;
+        const states = await coverState(db, p, items, now, end);
+        const open = states.filter((s) => s.state === 'none');
+        const late = now.getTime() >= mark.getTime() + rules.buddyAnswer.absentConfirmHours * 3600_000;
+        if (!late && (await claimMark(db, c.id, `hr.absent:${date}:${p.id}`))) {
+          if (rules.autopilot.absentToBuddy && open.length) {
+            const s = await suggestionsFor(db, p, rules, open, {
+              from: date,
+              to: date,
+              fromAt: now,
+              toAt: end,
             });
-        } else if (open.length) {
-          await notifyAbsent(db, c.id, p, open.length, false);
+            const first = s.find((x) => x.suggestions[0])?.suggestions[0];
+            if (first)
+              await assignCover(db, null, {
+                companyId: c.id,
+                userId: p.id,
+                keys: open.map((o) => o.key),
+                buddyId: first.id,
+                date,
+              });
+          } else if (open.length) {
+            await notifyAbsent(db, c.id, p, open.length, false);
+          }
+          flagged++;
+        } else if (late && open.length && (await claimMark(db, c.id, `hr.absent2:${date}:${p.id}`))) {
+          await notifyAbsent(db, c.id, p, open.length, true);
+          flagged++;
         }
-        flagged++;
-      } else if (late && open.length && (await claimMark(db, c.id, `hr.absent2:${today}:${p.id}`))) {
-        await notifyAbsent(db, c.id, p, open.length, true);
-        flagged++;
       }
     }
   }

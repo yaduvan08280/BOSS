@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { canOpenSystemMaster, type Me } from '@mono/shared';
 import { api } from '@/lib/api';
-import { ALL_ITEMS, type NavItem } from '@/layout/nav';
+import { ALL_ITEMS, navAllowed, type NavItem } from '@/layout/nav';
 
 export type PeopleHit = {
   id: string;
@@ -44,7 +44,9 @@ export function useSearch(q: string, me: Me) {
   });
   return useMemo<SearchHit[]>(() => {
     if (!needle) return [];
-    const screens: SearchHit[] = ALL_ITEMS.filter((i) => i.key !== 'uiKit' && (i.tag !== 'setup' || admin))
+    const screens: SearchHit[] = ALL_ITEMS.filter(
+      (i) => i.key !== 'uiKit' && navAllowed(i, me.user.permissions) && (i.tag !== 'setup' || admin),
+    )
       .filter((i) =>
         [
           t(`nav.${i.key}`),
@@ -82,5 +84,5 @@ export function useSearch(q: string, me: Me) {
       to: admin ? `/system/users?dept=${d.id}` : '/',
     }));
     return [...screens, ...people, ...departments];
-  }, [needle, debounced, remote.data, admin, t]);
+  }, [needle, debounced, remote.data, admin, me.user.permissions, t]);
 }

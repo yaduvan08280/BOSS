@@ -147,7 +147,8 @@
     "businessDetails": "Business details",
     "appearance": "Appearance",
     "uiKit": "UI kit",
-    "engineDesigner": "Business Engine"
+    "engineDesigner": "Business Engine",
+    "payroll": "Payroll"
   },
   "navDesc": {
     "home": "Search anything, or pick where to start",
@@ -194,7 +195,8 @@
     "businessDetails": "Your business in your words, for the AI",
     "appearance": "Colours, logo and app name",
     "uiKit": "Every colour and building block",
-    "engineDesigner": "How each module flows, and the switches that change it"
+    "engineDesigner": "How each module flows, and the switches that change it",
+    "payroll": "Gross pay from attendance, pay rules and leave a year"
   },
   "home": {
     "heading": "What do you want to do, {{name}}?",
@@ -2581,7 +2583,9 @@
       "badLines": "Lines not read",
       "atWork": "At work",
       "leftWork": "Left for the day",
-      "notInYet": "Not in yet"
+      "notInYet": "Not in yet",
+      "partWeek": "part week",
+      "weekHours": "{{done}} h of {{of}} h"
     },
     "l": {
       "tab": {
@@ -2762,6 +2766,174 @@
       "groupLeave": "Leave & HR",
       "groupBuddy": "Buddy",
       "groupAutopilot": "Autopilot"
+    },
+    "p": {
+      "tab": {
+        "month": "Month's pay",
+        "people": "People",
+        "rules": "Pay rules",
+        "quotas": "Leave a year"
+      },
+      "closedToast": "Month closed",
+      "reopenedToast": "Month opened again",
+      "csvButton": "Download CSV",
+      "reopen": "Open again",
+      "close": "Close the month",
+      "grossOnly": "Gross pay from attendance. PF, ESI, TDS and other deductions are not taken off here — check them with your accountant.",
+      "total": "Gross pay",
+      "people": "People paid",
+      "state": "This month",
+      "closed": "Closed",
+      "open": "Open",
+      "closedBy": "By {{name}} on {{at}}",
+      "toClose": "Ended — close it to keep these figures",
+      "soFar": "So far, up to {{date}}",
+      "empty": "Nobody has pay set yet",
+      "emptyBody": "Set each person's pay in the People tab (or their salary in their HR details).",
+      "search": "Type a name, code or department",
+      "reopenTitle": "Open this month again?",
+      "reopenBody": "The pay is worked out again from attendance. The closed figures stay in the audit log.",
+      "why": "Why is it being opened? *",
+      "gross": "Gross pay",
+      "dayValue": "1 day = {{amount}} ({{n}} days)",
+      "c": {
+        "present": "Present",
+        "absent": "Absent",
+        "leave": "Paid leave",
+        "unpaidLeave": "Unpaid leave",
+        "offWorked": "Day off worked",
+        "late": "Late",
+        "overtime": "Overtime"
+      },
+      "rateOf": {
+        "monthly": "{{amount}} a month",
+        "daily": "{{amount}} a day",
+        "hourly": "{{amount}} an hour"
+      },
+      "hoursDay": "{{n}} h a day",
+      "hoursWeek": "{{n}} h a week",
+      "weekly": "Hours a week",
+      "shiftNamed": "Shift: {{name}}",
+      "pattern": {
+        "shift": "Fixed shift",
+        "daily": "Hours a day",
+        "weekly": "Hours a week"
+      },
+      "warn": {
+        "noRate": "No pay set",
+        "noAttendance": "No attendance this month",
+        "unsettled": "Days still being worked out"
+      },
+      "line": {
+        "base": "Monthly salary",
+        "unpaidDays": "Days not paid",
+        "notJoined": "Before joining",
+        "unpaidOffDays": "Weekly offs and holidays (not paid)",
+        "paidDays": "Days worked",
+        "paidOffDays": "Weekly offs and holidays (paid)",
+        "hours": "Hours worked",
+        "paidLeave": "Paid leave",
+        "dayOffWork": "Worked on a day off",
+        "lateCut": "Late days cut",
+        "shortHours": "Hours short of the week",
+        "overtime": "Overtime"
+      },
+      "csv": {
+        "code": "Code",
+        "name": "Name",
+        "department": "Department",
+        "basis": "Paid by",
+        "rate": "Rate (₹)",
+        "present": "Present",
+        "absent": "Absent",
+        "paidLeave": "Paid leave",
+        "offDaysWorked": "Days off worked",
+        "overtimeHours": "Overtime (h)",
+        "gross": "Gross (₹)",
+        "monthly": "Month",
+        "daily": "Day",
+        "hourly": "Hour"
+      },
+      "termsSaved": "Saved for {{name}}",
+      "termsHint": "How this person works and how they are paid. Only HR sees this.",
+      "q": {
+        "pattern": "How do they work?",
+        "patternHint": "A fixed shift has start and end times. Hours a day or a week can be worked at any time — nobody is late.",
+        "dailyHours": "Hours a day",
+        "dailyHint": "Less than half of this is absent; less than all of it is a half day.",
+        "weeklyHours": "Hours a week",
+        "weeklyHint": "Counted Monday to Sunday. Short weeks are cut from pay by the pay rules; more is overtime.",
+        "latest": "Latest time to start",
+        "latestHint": "Not in by this time on a working day = absent (the HOD hears about it). Leave empty for no alert.",
+        "noAlert": "No alert",
+        "basis": "Paid by",
+        "rate": {
+          "monthly": "Salary a month (₹)",
+          "daily": "Pay a day (₹)",
+          "hourly": "Pay an hour (₹)"
+        },
+        "rateHint": "Gross, before any deductions."
+      },
+      "basis": {
+        "monthly": "Month",
+        "daily": "Day",
+        "hourly": "Hour"
+      },
+      "rulesSaved": "Pay rules saved",
+      "r": {
+        "company": "The company's pay rules",
+        "different": "Different for a team, designation or person",
+        "differentHint": "Only the answers you change here differ; the rest follow the company's. A person's own rule wins over their designation's, and that over their team's.",
+        "designation": "Designation",
+        "pickWho": "Choose who each rule is for",
+        "save": "Save the pay rules",
+        "differs": "different",
+        "monthDays": "A month's salary is for",
+        "monthDaysHint": "This sets one day's pay: salary ÷ the days. With all the days, Sundays and holidays are paid days.",
+        "md": {
+          "calendar": "All days of the month",
+          "working": "Working days only",
+          "fixed": "A fixed number of days"
+        },
+        "fixedDays": "Days in a month",
+        "paidOff": "Weekly offs and holidays are paid",
+        "paidOffHint": "No: a day off isn't paid (for day and hour pay, and a month of all its days).",
+        "dayOffWork": "Working on a weekly off or holiday gives",
+        "dayOffWorkHint": "Half a day's work counts half.",
+        "dow": {
+          "compOff": "A comp-off day",
+          "multiplier": "Extra pay",
+          "fixed": "A fixed amount",
+          "none": "Nothing extra"
+        },
+        "multiplier": "Extra pay",
+        "xDay": "× a day",
+        "fixedAmount": "Amount for a day off worked",
+        "perDayOff": "for each day off worked",
+        "overtime": "Pay overtime",
+        "overtimeHint": "Overtime is counted by the HR rules (past the shift end, or past the day's or week's hours).",
+        "otRate": "Overtime rate",
+        "xHour": "× an hour",
+        "late": "Late days cut pay",
+        "lateHint": "Every so many late days in a month cut some pay.",
+        "lateDays_one": "every {{count}} late day",
+        "lateDays_other": "every {{count}} late days",
+        "off": "Off",
+        "lateCut": "Cut",
+        "dayCut": "day's pay",
+        "short": "Hours short of a week (hours a week)",
+        "shortHint": "For people paid by the week's hours.",
+        "shortDeduct": "Cut at the hourly rate",
+        "shortIgnore": "Don't cut"
+      },
+      "q2": {
+        "hint": "Leave a year for a designation or one person. Everyone else gets the leave type's number. This year's balances change at once.",
+        "saved": "{{type}} saved",
+        "default_one": "Everyone else: {{count}} day a year",
+        "default_other": "Everyone else: {{count}} days a year",
+        "days": "Days a year",
+        "add": "Add a designation or person"
+      }
     }
   }
 }

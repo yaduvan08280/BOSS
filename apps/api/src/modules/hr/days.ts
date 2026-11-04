@@ -3,14 +3,14 @@ import { addDays, daysInMonth, localDate, zonedToUtc } from '@mono/shared';
 import { AppError } from '../../lib/errors';
 import { emitEvent } from '../../lib/events';
 import type { Actor } from '../work/actor';
-import { attendanceDate, auditPunchFix, evaluateDay, settleDay } from './attendance';
+import { attendanceDate, auditPunchFix, evaluateDay, punchWindow, settleDay } from './attendance';
 import { canDecideFor, hrPerson, hrRulesOf, hrScope, personRules } from './people';
 
 const tzOf = async (db: Db, companyId: string) =>
   (await db.company.findUniqueOrThrow({ where: { id: companyId }, select: { timezone: true } })).timezone;
 
 /** A person's month: each settled day, today as it stands, and today's punches. */
-export async function myMonth(db: Db, actor: Actor, month: string, userId = actor.userId) {
+export async function myMonth(db: Db, actor: Actor, month: string, userId = actor.userId, now = new Date()) {
   if (userId !== actor.userId) {
     const s = await hrScope(db, actor);
     if (!s.all && !s.team.includes(userId))
@@ -21,28 +21,28 @@ export async function myMonth(db: Db, actor: Actor, month: string, userId = acto
   const first = `${month}-01`;
   const last = `${month}-${String(daysInMonth(y, m)).padStart(2, '0')}`;
   const p = await hrPerson(db, actor.companyId, userId);
-  const today = localDate(new Date(), tz);
+  // The shift running now: after midnight a night shift is still the evening before's.
+  const today = attendanceDate(now, p, tz);
+  const win = punchWindow(today, p, tz);
   const [days, punches] = await Promise.all([
     db.attendanceDay.findMany({
       where: { userId, date: { gte: first, lte: last } },
       orderBy: { date: 'asc' },
     }),
     db.punch.findMany({
-      where: { userId, at: { gte: zonedToUtc(today, 0, tz), lt: zonedToUtc(addDays(today, 1), 0, tz) } },
+      where: { userId, at: { gte: win.from, lte: win.to } },
       orderBy: { at: 'asc' },
       select: { id: true, type: true, at: true, flagged: true, flagReason: true, source: true },
     }),
   ]);
-  const live =
-    days.some((d) => d.date === today) || today < first || today > last
-      ? null
-      : await evaluateDay(db, actor.companyId, p, today);
+  // Always the current shift (the punch card needs it whichever month is open).
+  const live = await evaluateDay(db, actor.companyId, p, today, now);
   const rules = personRules(await hrRulesOf(db, actor.companyId), p);
   const usedFixes = await db.correctionRequest.count({
     where: { userId, date: { gte: first, lte: last }, status: { not: 'REJECTED' } },
   });
   return {
-    person: { id: p.id, name: p.name, shift: p.shift },
+    person: { id: p.id, name: p.name, shift: p.shift, pattern: p.pattern, weeklyHours: p.weeklyHours },
     days,
     today: live ? { date: today, ...live } : null,
     punches,

@@ -60,6 +60,10 @@ export const COMPANY_SCOPED_MODELS = new Set([
   'LeaveRequest',
   'BuddyRequest',
   'Cover',
+  'EmployeeTerms',
+  'PayRules',
+  'LeaveQuota',
+  'PayRun',
 ]);
 
 /** Models with `deletedAt` (soft delete). Kept in sync with the schema by `scope.test.ts`. */

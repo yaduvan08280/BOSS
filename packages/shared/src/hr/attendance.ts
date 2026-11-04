@@ -26,7 +26,15 @@ export type DayInput = {
   punches: PunchIn[];
   tz: string;
   rules: { late: LateRules; punches: PunchRules };
+  /**
+   * How the person works: a fixed shift (default); N hours a day at any time (no "late"; the day counts by
+   * hours, overtime past them); or N hours a week (any work makes the day present; the week is weighed in pay).
+   * For daily and weekly the shift passed in is the whole calendar day.
+   */
+  pattern?: WorkPattern;
 };
+
+export type WorkPattern = { kind: 'shift' } | { kind: 'daily'; hours: number } | { kind: 'weekly' };
 
 export type DayResult = {
   status: AttendanceStatus;
@@ -68,7 +76,8 @@ export function computeDay(d: DayInput): DayResult {
   const lastOut = firstIn
     ? ([...sorted].reverse().find((p) => p.type === 'OUT' && p.at > firstIn)?.at ?? null)
     : null;
-  const fullDay = d.rules.late.fullDayHours * 60;
+  const pattern = d.pattern ?? { kind: 'shift' };
+  const fullDay = pattern.kind === 'daily' ? Math.round(pattern.hours * 60) : d.rules.late.fullDayHours * 60;
   const base: DayResult = {
     status: 'ABSENT',
     inAt: firstIn,
@@ -83,7 +92,9 @@ export function computeDay(d: DayInput): DayResult {
   if (d.leave === 'full') return { ...base, status: 'ON_LEAVE', reasons: ['On leave'] };
 
   const missedOut = Boolean(firstIn && !lastOut);
-  const outAt = lastOut ?? (missedOut && d.rules.late.missedPunchOut === 'shiftEnd' ? end : null);
+  // "Punch out at shift end" only means something with a shift.
+  const toShiftEnd = d.rules.late.missedPunchOut === 'shiftEnd' && pattern.kind === 'shift';
+  const outAt = lastOut ?? (missedOut && toShiftEnd ? end : null);
   const worked = firstIn && outAt ? Math.max(0, minutes(firstIn, outAt)) : 0;
 
   if (d.kind !== 'working') {
@@ -105,13 +116,18 @@ export function computeDay(d: DayInput): DayResult {
       : { ...base, reasons: ['No punch'] };
 
   const reasons: string[] = [];
-  const late = Math.max(0, minutes(start, firstIn));
+  const late = pattern.kind === 'shift' ? Math.max(0, minutes(start, firstIn)) : 0;
+  // Overtime: past the shift end; for daily hours, past the day's hours; weekly overtime is weighed per week in pay.
+  const past =
+    pattern.kind === 'shift'
+      ? outAt
+        ? minutes(end, outAt)
+        : 0
+      : pattern.kind === 'daily'
+        ? worked - fullDay
+        : 0;
   const overtime =
-    d.rules.punches.overtime &&
-    outAt &&
-    minutes(end, outAt) >= Math.max(1, d.rules.punches.overtimeAfterMinutes)
-      ? minutes(end, outAt)
-      : 0;
+    d.rules.punches.overtime && past >= Math.max(1, d.rules.punches.overtimeAfterMinutes) ? past : 0;
   const out = {
     ...base,
     outAt,
@@ -121,15 +137,17 @@ export function computeDay(d: DayInput): DayResult {
     missedOut,
   };
 
-  // With half a day on leave, half a day of work is a full day's attendance.
-  const needed = d.leave === 'half' ? fullDay / 2 : fullDay;
+  // With half a day on leave, half a day of work is a full day's attendance. Weekly hours: any work counts.
+  const needed = pattern.kind === 'weekly' ? 1 : d.leave === 'half' ? fullDay / 2 : fullDay;
   let status: AttendanceStatus = 'PRESENT';
-  if (missedOut && d.rules.late.missedPunchOut === 'halfDay') {
+  if (missedOut && !toShiftEnd) {
     status = 'HALF_DAY';
     reasons.push('No punch-out: half day until a correction');
   } else if (worked < needed) {
     status = worked >= needed / 2 ? 'HALF_DAY' : 'ABSENT';
     reasons.push(`Worked ${Math.round(worked / 6) / 10} h of ${needed / 60} h`);
+  } else if (pattern.kind === 'weekly') {
+    reasons.push(`Worked ${Math.round(worked / 6) / 10} h`);
   }
   if (late > d.rules.late.graceMinutes && d.leave !== 'half') {
     if (late >= d.rules.late.halfDayAfterMinutes) {
@@ -140,8 +158,7 @@ export function computeDay(d: DayInput): DayResult {
       reasons.push(`${late} min late`);
     }
   }
-  if (missedOut && d.rules.late.missedPunchOut === 'shiftEnd')
-    reasons.push('No punch-out: counted to shift end');
+  if (missedOut && toShiftEnd) reasons.push('No punch-out: counted to shift end');
   if (overtime) reasons.push(`${overtime} min overtime`);
   return { ...out, status, reasons };
 }

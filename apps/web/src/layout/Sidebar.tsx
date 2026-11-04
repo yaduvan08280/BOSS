@@ -5,7 +5,7 @@ import type { Me } from '@mono/shared';
 import { Avatar, BrandMark } from '@/components/brand';
 import { cn } from '@/lib/utils';
 import { useWorkCounts } from '@/modules/workspace/useWorkCounts';
-import type { NavSection } from './nav';
+import { navAllowed, type NavSection } from './nav';
 
 type Props = {
   me: Me;
@@ -51,33 +51,35 @@ export function Sidebar({ me, sections, collapsed = false, onToggle, onNavigate,
               </div>
             )}
             <ul className="space-y-0.5">
-              {section.items.map((item) => (
-                <li key={item.key}>
-                  <NavLink
-                    to={item.path}
-                    end={item.path === '/'}
-                    onClick={onNavigate}
-                    title={collapsed ? t(`nav.${item.key}`) : undefined}
-                    className={({ isActive }) =>
-                      cn(
-                        'flex h-10 items-center gap-3 rounded-control px-3 text-sm transition-colors',
-                        collapsed && 'justify-center px-0',
-                        isActive
-                          ? 'bg-sidebar-active font-semibold text-sidebar-active-foreground'
-                          : 'hover:bg-sidebar-hover',
-                      )
-                    }
-                  >
-                    <item.icon className="size-[18px] shrink-0" aria-hidden />
-                    {!collapsed && <span className="truncate">{t(`nav.${item.key}`)}</span>}
-                    {!collapsed && Boolean(badge[item.key]) && (
-                      <span className="tabular ml-auto rounded-pill bg-sidebar-hover px-1.5 text-[11px] font-semibold">
-                        {badge[item.key]}
-                      </span>
-                    )}
-                  </NavLink>
-                </li>
-              ))}
+              {section.items
+                .filter((i) => navAllowed(i, me.user.permissions))
+                .map((item) => (
+                  <li key={item.key}>
+                    <NavLink
+                      to={item.path}
+                      end={item.path === '/'}
+                      onClick={onNavigate}
+                      title={collapsed ? t(`nav.${item.key}`) : undefined}
+                      className={({ isActive }) =>
+                        cn(
+                          'flex h-10 items-center gap-3 rounded-control px-3 text-sm transition-colors',
+                          collapsed && 'justify-center px-0',
+                          isActive
+                            ? 'bg-sidebar-active font-semibold text-sidebar-active-foreground'
+                            : 'hover:bg-sidebar-hover',
+                        )
+                      }
+                    >
+                      <item.icon className="size-[18px] shrink-0" aria-hidden />
+                      {!collapsed && <span className="truncate">{t(`nav.${item.key}`)}</span>}
+                      {!collapsed && Boolean(badge[item.key]) && (
+                        <span className="tabular ml-auto rounded-pill bg-sidebar-hover px-1.5 text-[11px] font-semibold">
+                          {badge[item.key]}
+                        </span>
+                      )}
+                    </NavLink>
+                  </li>
+                ))}
             </ul>
           </div>
         ))}

@@ -1,6 +1,7 @@
 import type { FastifyError, FastifyInstance } from 'fastify';
 import fp from 'fastify-plugin';
 import { hasZodFastifySchemaValidationErrors, isResponseSerializationError } from 'fastify-type-provider-zod';
+import { z } from 'zod';
 import { TransitionError } from '@mono/shared';
 import { AppError } from '../lib/errors';
 
@@ -18,6 +19,18 @@ export default fp(async function errorsPlugin(app: FastifyInstance) {
       return reply
         .status(transitionStatus[err.code])
         .send({ error: { code: err.code, message: err.message, details: err.details } });
+    }
+    // A schema checked inside a service (stored settings, rule sets) is the user's input too.
+    if ((err as unknown) instanceof z.ZodError) {
+      const issues = (err as unknown as z.ZodError).issues;
+      return reply.status(400).send({
+        error: {
+          code: 'VALIDATION_FAILED',
+          message:
+            issues[0]?.message && issues.length === 1 ? issues[0].message : 'Some fields need attention',
+          details: issues.map((i) => ({ path: `/${i.path.join('/')}`, message: i.message })),
+        },
+      });
     }
     if (hasZodFastifySchemaValidationErrors(err)) {
       return reply.status(400).send({

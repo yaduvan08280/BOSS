@@ -115,8 +115,52 @@ export function MonthGrid({
             </span>
           ))}
       </div>
+      {view.person.pattern?.kind === 'weekly' && view.person.weeklyHours && (
+        <WeekTotals
+          days={days}
+          hours={view.person.weeklyHours}
+          worked={(d) => status(d)?.workedMin ?? (view.today?.date === d ? view.today.workedMinutes : 0)}
+        />
+      )}
       {open && <DayDialog date={open} day={status(open)} view={view} tz={tz} onClose={() => setOpen(null)} />}
     </div>
+  );
+}
+
+/** Weekly hours: each Monday–Sunday week's hours against the target (a part week at the month's edge is marked). */
+function WeekTotals({
+  days,
+  hours,
+  worked,
+}: {
+  days: string[];
+  hours: number;
+  worked: (d: string) => number;
+}) {
+  const { t } = useTranslation();
+  const weeks: string[][] = [];
+  for (const d of days) {
+    if (!weeks.length || weekdayOf(d) === 1) weeks.push([]);
+    weeks[weeks.length - 1]!.push(d);
+  }
+  return (
+    <ul className="space-y-1 border-t pt-3 text-sm">
+      {weeks.map((w) => {
+        const min = w.reduce((n, d) => n + worked(d), 0);
+        const done = min >= hours * 60;
+        return (
+          <li key={w[0]} className="flex items-center justify-between gap-2">
+            <span className="text-muted-foreground">
+              {formatLocalDate(w[0]!).slice(0, 5)} – {formatLocalDate(w[w.length - 1]!).slice(0, 5)}
+              {w.length < 7 && ` · ${t('hr.a.partWeek')}`}
+            </span>
+            <StatusChip tone={done ? 'ok' : 'neutral'}>
+              {t('hr.a.weekHours', { done: Math.round((min / 60) * 10) / 10, of: hours })}
+            </StatusChip>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 

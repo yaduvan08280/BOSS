@@ -1,6 +1,7 @@
 import type { Db, Tx } from '@mono/db';
-import { addDays, DEFAULT_LEAVE_TYPES, leaveYearOf, zonedToUtc } from '@mono/shared';
+import { addDays, DEFAULT_LEAVE_TYPES, leaveYearOf, payPolicyFor, zonedToUtc } from '@mono/shared';
 import { hrRulesOf, type HrPerson } from './people';
+import { payRulesOf, quotaFor } from './terms';
 
 export async function ensureLeaveTypes(db: Db | Tx, companyId: string) {
   if (await db.leaveType.count({ where: { companyId } })) return;
@@ -30,8 +31,21 @@ export async function balancesOf(db: Db | Tx, companyId: string, userId: string,
     where: { companyId, deletedAt: null, active: true },
     orderBy: { code: 'asc' },
   });
+  const user = await db.user.findFirst({
+    where: { id: userId, companyId },
+    select: { id: true, designationId: true, mainDepartmentId: true },
+  });
+  // Working a day off earns a comp-off only when that is the pay rule (else it is paid extra, or nothing).
+  const earnsCompOff =
+    payPolicyFor(await payRulesOf(db, companyId), {
+      id: userId,
+      departmentId: user?.mainDepartmentId ?? null,
+      designationId: user?.designationId ?? null,
+    }).dayOffWork === 'compOff';
   const out = [];
   for (const t of types) {
+    // Their own number, else their designation's, else the leave type's.
+    const quota = user ? await quotaFor(db, t, user) : Number(t.yearlyQuota);
     let b = await db.leaveBalance.findUnique({
       where: { userId_leaveTypeId_year: { userId, leaveTypeId: t.id, year } },
     });
@@ -46,17 +60,21 @@ export async function balancesOf(db: Db | Tx, companyId: string, userId: string,
           userId,
           leaveTypeId: t.id,
           year,
-          allotted: t.yearlyQuota,
+          allotted: quota,
           carried: Math.max(0, Math.min(left, Number(t.carryForward))),
         },
       });
     }
+    if (Number(b.allotted) !== quota && t.code !== 'CO')
+      b = await db.leaveBalance.update({ where: { id: b.id }, data: { allotted: quota } });
     let allotted = Number(b.allotted);
     if (t.code === 'CO') {
       const since = addDays(onDate, -rules.leave.compOffValidDays);
-      allotted = await db.attendanceDay.count({
-        where: { userId, compOff: true, date: { gte: since, lte: onDate } },
-      });
+      allotted = earnsCompOff
+        ? await db.attendanceDay.count({
+            where: { userId, compOff: true, date: { gte: since, lte: onDate } },
+          })
+        : 0;
     }
     const pending = await db.leaveRequest.aggregate({
       where: { userId, leaveTypeId: t.id, status: 'PENDING', from: { gte: `${year}-` } },

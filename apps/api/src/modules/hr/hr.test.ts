@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { addDays, localDate, zonedToUtc } from '@mono/shared';
 import { makeApp, ownerClient, signedIn } from '../../test/helpers';
 import { settleAttendance } from './attendance';
+import { myMonth } from './days';
 import { runCovers } from './cover';
 import { watchAbsences } from './absence';
 import { morningCoverReport } from './report';
@@ -197,6 +198,81 @@ describe('attendance', () => {
     // Members can't import.
     expect((await asha.api.post('/api/hr/attendance/import', { csv })).status).toBe(403);
     void company;
+  });
+});
+
+describe('night shifts', () => {
+  it("after midnight the punch card is still on last evening's shift (so the next punch is OUT)", async () => {
+    const { company, asha } = await hrTeam();
+    const night = await ctx.prisma.shift.create({
+      data: {
+        companyId: company.id,
+        name: 'Night',
+        startMin: 23 * 60,
+        endMin: 7 * 60,
+        weekdays: [1, 2, 3, 4, 5, 6, 7],
+      },
+    });
+    await ctx.prisma.user.update({ where: { id: asha.id }, data: { shiftId: night.id } });
+    const d = addDays(localDate(new Date(), TZ), -1);
+    await ctx.prisma.punch.create({
+      data: { companyId: company.id, userId: asha.id, type: 'IN', at: at(d, '22:55') },
+    });
+    const actor = {
+      companyId: company.id,
+      userId: asha.id,
+      permissions: ['hr.view'],
+      ip: null,
+      userAgent: null,
+    };
+    const morning = at(addDays(d, 1), '06:50');
+    const m = await myMonth(ctx.prisma, actor as never, d.slice(0, 7), asha.id, morning);
+    expect(m.today).toMatchObject({ date: d, final: false });
+    expect(m.punches.map((x) => x.type)).toEqual(['IN']);
+    // The 07:05 punch-out makes last night a full day, on the date it started.
+    await ctx.prisma.punch.create({
+      data: { companyId: company.id, userId: asha.id, type: 'OUT', at: at(addDays(d, 1), '07:05') },
+    });
+    await settleAttendance(ctx.prisma, at(addDays(d, 1), '09:30'), company.id);
+    expect(
+      (
+        await ctx.prisma.attendanceDay.findUniqueOrThrow({
+          where: { userId_date: { userId: asha.id, date: d } },
+        })
+      ).status,
+    ).toBe('PRESENT');
+  });
+
+  it('someone missing a night shift is reported absent after midnight', async () => {
+    const { api, company, asha } = await hrTeam();
+    const night = await ctx.prisma.shift.create({
+      data: {
+        companyId: company.id,
+        name: 'Night',
+        startMin: 23 * 60,
+        endMin: 7 * 60,
+        weekdays: [1, 2, 3, 4, 5, 6, 7],
+      },
+    });
+    await ctx.prisma.user.update({ where: { id: asha.id }, data: { shiftId: night.id } });
+    await api.put('/api/hr/weekly-offs', {
+      days: [1, 2, 3, 4, 5, 6, 7].map((w) => ({ weekday: w, kind: 'WORKING' })),
+    });
+    const d = addDays(localDate(new Date(), TZ), -1);
+    await ctx.prisma.punch.create({
+      data: { companyId: company.id, userId: asha.id, type: 'IN', at: at(addDays(d, -1), '23:00') },
+    });
+    await api.post('/api/tasks', {
+      doerId: asha.id,
+      plannedAt: at(addDays(d, 1), '05:00').toISOString(),
+      description: 'Night stock check',
+    });
+    // 01:45 is past 23:00 + 150 min of the shift that started the evening before.
+    await watchAbsences(ctx.prisma, at(addDays(d, 1), '01:45'), company.id);
+    const ev = await ctx.prisma.domainEvent.findFirst({
+      where: { companyId: company.id, name: 'hr.absent_no_cover' },
+    });
+    expect(ev?.payload).toMatchObject({ personId: asha.id, count: 1 });
   });
 });
 

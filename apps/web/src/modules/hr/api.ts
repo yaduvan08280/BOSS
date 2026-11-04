@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import type { AttendanceStatus, HrRules } from '@mono/shared';
+import type { AttendanceStatus, HrRules, WorkPattern } from '@mono/shared';
 import { api } from '@/lib/api';
 import { useWorkMutation } from '@/lib/work';
 
@@ -16,7 +16,13 @@ export type AttendanceDayRow = {
   reasons: string[];
 };
 export type MonthView = {
-  person: { id: string; name: string; shift: { start: number; end: number } };
+  person: {
+    id: string;
+    name: string;
+    shift: { start: number; end: number };
+    pattern?: WorkPattern;
+    weeklyHours?: number | null;
+  };
   days: AttendanceDayRow[];
   today: {
     date: string;

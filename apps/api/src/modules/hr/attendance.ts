@@ -6,6 +6,7 @@ import {
   localDate,
   shiftWindow,
   weekdayOf,
+  zonedToUtc,
   type DayKind,
   type DayResult,
 } from '@mono/shared';
@@ -24,6 +25,28 @@ export function attendanceDate(at: Date, p: HrPerson, tz: string): string {
   return at.getTime() <= end.getTime() + 4 * 3600_000 ? addDays(today, -1) : today;
 }
 
+/** The punches that belong to a shift date: from 4 hours before it starts to 8 hours after it ends. */
+export function punchWindow(date: string, p: HrPerson, tz: string) {
+  const { start, end } = shiftWindow(date, p.shift, tz);
+  return {
+    from: new Date(start.getTime() - 4 * 3600_000),
+    to: new Date(end.getTime() + 8 * 3600_000),
+    start,
+    end,
+  };
+}
+
+/**
+ * When someone not in yet counts as absent for a shift date, and until when it matters:
+ * a fixed shift — its start + "half day after"; daily / weekly hours — the person's latest start, if set.
+ */
+export function absenceMark(date: string, p: HrPerson, halfDayAfterMinutes: number, tz: string) {
+  const { start, end } = shiftWindow(date, p.shift, tz);
+  if (p.pattern.kind === 'shift')
+    return { mark: new Date(start.getTime() + halfDayAfterMinutes * 60_000), start, end };
+  return { mark: p.latestStartMin === null ? null : zonedToUtc(date, p.latestStartMin, tz), start, end };
+}
+
 /** The day as the rules see it right now (not saved). */
 export async function evaluateDay(
   db: Db | Tx,
@@ -40,12 +63,9 @@ export async function evaluateDay(
       select: { half: true },
     }),
   ]);
-  const { start, end } = shiftWindow(date, p.shift, cal.tz);
+  const { from, to, end } = punchWindow(date, p, cal.tz);
   const punches = await db.punch.findMany({
-    where: {
-      userId: p.id,
-      at: { gte: new Date(start.getTime() - 4 * 3600_000), lte: new Date(end.getTime() + 8 * 3600_000) },
-    },
+    where: { userId: p.id, at: { gte: from, lte: to } },
     orderBy: { at: 'asc' },
   });
   const kind: DayKind = cal.holidays.has(date)
@@ -61,6 +81,7 @@ export async function evaluateDay(
     punches: punches.map((x) => ({ type: x.type as 'IN' | 'OUT', at: x.at })),
     tz: cal.tz,
     rules: personRules(rules, p),
+    pattern: p.pattern,
   });
   // A day is settled two hours after the shift ends (CLAUDE.md §9.2).
   return { ...result, final: now.getTime() >= end.getTime() + 2 * 3600_000 };

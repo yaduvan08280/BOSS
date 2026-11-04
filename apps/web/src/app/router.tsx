@@ -53,6 +53,7 @@ const MastersPage = page(() => import('@/modules/ai/MastersPage'), 'MastersPage'
 const AttendancePage = page(() => import('@/modules/hr/AttendancePage'), 'AttendancePage');
 const LeavePage = page(() => import('@/modules/hr/LeavePage'), 'LeavePage');
 const CoverBoardPage = page(() => import('@/modules/hr/CoverBoardPage'), 'CoverBoardPage');
+const PayrollPage = page(() => import('@/modules/hr/PayrollPage'), 'PayrollPage');
 const RulesWizard = page(() => import('@/modules/hr/RulesWizard'), 'RulesWizard');
 
 const placeholderRoutes = ALL_ITEMS.filter((i) => i.phase > 0).map((i) => ({
@@ -91,6 +92,7 @@ export const router = createBrowserRouter([
       { path: '/hr/attendance', element: <WithMe render={(me) => <AttendancePage me={me} />} /> },
       { path: '/hr/leave', element: <WithMe render={(me) => <LeavePage me={me} />} /> },
       { path: '/hr/cover', element: <WithMe render={(me) => <CoverBoardPage me={me} />} /> },
+      { path: '/hr/payroll', element: <WithMe render={(me) => <PayrollPage me={me} />} /> },
       { path: '/masters/build', element: <WithMe render={(me) => <MastersPage me={me} />} /> },
       { path: '/fms/live', element: <WithMe render={(me) => <LiveFmsPage me={me} />} /> },
       { path: '/fms/my-steps', element: <WithMe render={(me) => <MyStepsPage me={me} />} /> },
