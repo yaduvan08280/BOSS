@@ -533,6 +533,15 @@ const ROWS: Row[] = [
     '{{actor}}: {{item}} {{qty}} ({{reason}})।',
   ],
   [
+    'ims.ows_ready',
+    'team',
+    ['purchase'],
+    'Order list ready',
+    '{{count}} items to order on {{date}} ({{value}}).',
+    'ऑर्डर सूची तैयार',
+    '{{date}} को {{count}} आइटम मँगाने हैं ({{value}})।',
+  ],
+  [
     'ims.dead_stock',
     'team',
     ['owner'],

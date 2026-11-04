@@ -305,7 +305,7 @@ checklist: assigned, reminder, completed, missed, verified, rejected · slip: su
 ticket: raised, replied, resolved, reopened, escalated, closed · ea: captured, daily_brief, weekly_plan ·
 fms: step_assigned, step_due_soon, step_late, record_started, record_closed, approval_needed ·
 hr: punch_flagged, missed_punch, leave_requested, leave_decided, buddy_requested, buddy_answered, absent_no_cover, morning_cover_report ·
-ims: below_min, above_max, max_review_due, adjustment_approval, dead_stock ·
+ims: below_min, above_max, max_review_due, adjustment_approval, dead_stock, ows_ready ·
 crm: call_due, lead_assigned, lead_stuck, order_step_due, payment_due, customer_sleeping.
 
 ### 7.4 Telegram bot
@@ -452,7 +452,7 @@ Ubuntu 24.04 LTS on i7-12700 / 48 GB / 1.8 TB. Docker Engine + Compose plugin. S
 | 5 | FMS builder, engine, Live FMS, My steps, documents, KPI cards | done (03/11/2026) — "Build/Edit with AI" and "Suggest KPI cards" arrive with the AI layer in phase 6; Buddy cover for steps arrives with HR in phase 7 |
 | 6 | AI layer | done (04/11/2026) — acceptance met on DeepSeek (`deepseek-flash`): Lead to Order → 12 valid steps, all assigned. Claude not yet tried (no key). Rows/import for masters arrive in phase 10 |
 | 7 | HR rules, attendance, leave, Buddy, cover board | done (04/11/2026) — biometric devices import by CSV (a device API adapter comes later); the selfie rule is per company/team/person. Added at GGM's request: work patterns (shift / hours a day / hours a week) and gross pay from attendance (month / day / hour) with pay rules and leave by designation; PF/ESI/TDS, payslips and hiring are a later phase |
-| 8 | IMS | not started |
+| 8 | IMS | done (04/11/2026) — FMS stock steps match item lines by code or name (item lines are free text until masters arrive in phase 10); stock is one number per item (transfers record the location) |
 | 9 | Sales CRM | not started |
 | 10 | Masters library, Google Drive, public API, WhatsApp, PWA push, hardening | not started |
 
@@ -532,3 +532,11 @@ Ubuntu 24.04 LTS on i7-12700 / 48 GB / 1.8 TB. Docker Engine + Compose plugin. S
 71. Override schemas never carry defaults (`overrideOf`): zod's `.partial()` keeps each field's default, so an override would otherwise reset every answer it didn't mention. A zod error thrown inside a service is a 400, like route validation.
 72. Pay is HR's: hr.admin or the HR person in the rules sees and changes it, and nobody changes their own pay except the owner (`*`). The Payroll menu item is shown only with hr.admin (`NavItem.permission`). A month can be closed once it has ended and every day is settled. The closed `PayRun` keeps the figures. Reopening needs a reason and deletes the run, with its figures kept in the audit log.
 73. Leave a year can differ by designation or person (`LeaveQuota`): the person's own number, else their designation's, else the leave type's. This year's balance follows at once.
+74. Inventory stock (phase 8) is one number per item, kept on `Item.stock` and changed only by `applyMove` in the same transaction as the `StockMove` row. An issue or negative adjustment can't take it below zero: the check and the change are one `UPDATE … WHERE stock >= qty`. Transfers record from / to and move the item's location, not the quantity. Receipts, issues and transfers apply at once; adjustments (damaged, expired, lost, found, audit count) wait as PENDING for an approver (`adjustMachine`).
+75. Adjustment approvers: the listed approvers (anyone with `ims.approve` when none are listed); the owner always, when that rule is on; never your own, when that rule is on. With "any one of them" off, every listed approver must say yes (the owner's yes is final).
+76. Bands: red below ⅓ of MAX (or under the item's minimum), yellow below ⅔, green up to MAX, purple above it, none without a MAX. A daily `StockSnapshot` keeps each item's stock and the worst band the day saw (red, then purple). The MAX review counts these days. Average daily use is the issues in the window ÷ the window's days, or ÷ the days tracked for a newer item. MAX is rounded up (whole units from 1, three decimals below). Items with no issues in the window get no proposal and keep their MAX.
+77. The MAX review proposes; it never changes an item by itself. The morning job (once a day, `JobMark`) writes PROPOSED reviews for items not reviewed for the review period, and tells the reviewers. A reviewer (or `ims.edit`) applies, sets their own safety factor (MAX from the formula), or skips. Either way the item counts as reviewed for that period.
+78. OWS: short = stock + on order below ⅔ of MAX, or under the minimum. Order quantity = MAX − (stock + on order), rounded up. "On order" counts open purchase-order lines, drafts included, so a list turned into drafts isn't ordered twice. The list opens N days before the order day (`ims.ows_ready`, once per order day). Red items can be ordered any day. One draft is made per vendor. Purchase orders are `PO/{FY}/{0001}` via `Counter`.
+79. Audit cycles are counted from Monday 05/01/2026, every N days (no stored state). Each cycle the top N items by stock value get an `AuditCount`. A difference raises a COUNT adjustment that waits for approval like any other. The owner hears about dead stock once a month.
+80. Turns a year = issues' value in the last 365 days (scaled to a year for an item tracked for less) ÷ average stock value from the daily snapshots. Company turns compare the last 90 days with the 90 before. Inventory figures are sent as strings of paise (decision 9) and quantities as numbers.
+81. An FMS AUTO "stock" step issues (or receives) the record's item lines, matching each line's item by code, then by name. A line that can't be posted is written on the record's history and skipped; a record never stops on stock.

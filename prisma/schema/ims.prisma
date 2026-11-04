@@ -1,0 +1,200 @@
+// Phase 8 — Inventory (CLAUDE.md §10): items, stock moves, daily bands, MAX reviews, purchase orders, audit counts.
+
+/// The four rule sets (MAX & review, OWS, turns & NOS, audit & dead stock) and who does what.
+model ImsRules {
+  id          String   @id @default(cuid(2))
+  companyId   String   @unique @map("company_id")
+  rules       Json
+  updatedById String?  @map("updated_by_id")
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("ims_rules")
+}
+
+model Item {
+  id           String    @id @default(cuid(2))
+  companyId    String    @map("company_id")
+  code         String
+  name         String
+  unit         String    @default("pcs")
+  category     String?
+  location     String?
+  leadTimeDays Int       @default(7) @map("lead_time_days")
+  safetyFactor Decimal   @default(1.5) @map("safety_factor") @db.Decimal(5, 2)
+  /// Worked out by the MAX review (or set by hand); null = not set yet.
+  maxQty       Decimal?  @map("max_qty") @db.Decimal(14, 3)
+  minQty       Decimal?  @map("min_qty") @db.Decimal(14, 3)
+  /// Paise per unit.
+  rate         BigInt    @default(0)
+  vendor       String?
+  /// Current stock: every applied move changes it in the same transaction.
+  stock        Decimal   @default(0) @db.Decimal(14, 3)
+  active       Boolean   @default(true)
+  lastMovedAt  DateTime? @map("last_moved_at") @db.Timestamptz(3)
+  lastReviewAt DateTime? @map("last_review_at") @db.Timestamptz(3)
+  /// The band after the last move (for "turned red / purple" alerts).
+  band         String    @default("none")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  moves     StockMove[]
+  snapshots StockSnapshot[]
+  poLines   PoLine[]
+  reviews   MaxReview[]
+  counts    AuditCount[]
+
+  @@unique([companyId, code])
+  @@index([companyId, band])
+  @@map("items")
+}
+
+/// Every in / out / transfer / adjustment, in one sheet. `qty` is the change in stock (+ in, − out, 0 transfer).
+model StockMove {
+  id           String    @id @default(cuid(2))
+  companyId    String    @map("company_id")
+  itemId       String    @map("item_id")
+  /// IN | OUT | TRANSFER | ADJUST
+  type         String
+  qty          Decimal   @db.Decimal(14, 3)
+  /// Paise per unit at the time (receipts at the PO rate).
+  rate         BigInt?
+  /// ADJUST: DAMAGED | EXPIRED | LOST | FOUND | COUNT
+  reason       String?
+  fromLocation String?   @map("from_location")
+  toLocation   String?   @map("to_location")
+  note         String?
+  /// APPLIED | PENDING (adjustment waiting for approval) | REJECTED
+  status       String    @default("APPLIED")
+  /// purchase_order | fms_record | audit_count | import
+  refType      String?   @map("ref_type")
+  refId        String?   @map("ref_id")
+  /// Stock after this move (applied moves only).
+  balance      Decimal?  @db.Decimal(14, 3)
+  at           DateTime  @default(now()) @db.Timestamptz(3)
+  createdById  String?   @map("created_by_id")
+  /// Approvals so far ([userId]) and who decided it.
+  approvals    String[]  @default([])
+  decidedById  String?   @map("decided_by_id")
+  decidedAt    DateTime? @map("decided_at") @db.Timestamptz(3)
+  decisionNote String?   @map("decision_note")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  item Item @relation(fields: [itemId], references: [id])
+
+  @@index([companyId, at])
+  @@index([itemId, at])
+  @@index([companyId, status])
+  @@map("stock_moves")
+}
+
+/// One row an item a day: the stock at the end, and the worst band the day saw (the MAX review reads these).
+model StockSnapshot {
+  id        String  @id @default(cuid(2))
+  companyId String  @map("company_id")
+  itemId    String  @map("item_id")
+  date      String
+  qty       Decimal @db.Decimal(14, 3)
+  band      String
+
+  item Item @relation(fields: [itemId], references: [id])
+
+  @@unique([itemId, date])
+  @@index([companyId, date])
+  @@map("stock_snapshots")
+}
+
+/// A MAX review: proposed by the job, applied by the reviewer (or changed by hand).
+model MaxReview {
+  id           String    @id @default(cuid(2))
+  companyId    String    @map("company_id")
+  itemId       String    @map("item_id")
+  /// PROPOSED | APPLIED | SKIPPED
+  status       String    @default("PROPOSED")
+  avgDailyUse  Decimal   @map("avg_daily_use") @db.Decimal(14, 3)
+  redDays      Int       @map("red_days")
+  purpleDays   Int       @map("purple_days")
+  /// raised | lowered | kept
+  change       String
+  safetyBefore Decimal   @map("safety_before") @db.Decimal(5, 2)
+  safetyAfter  Decimal   @map("safety_after") @db.Decimal(5, 2)
+  maxBefore    Decimal?  @map("max_before") @db.Decimal(14, 3)
+  maxAfter     Decimal   @map("max_after") @db.Decimal(14, 3)
+  decidedById  String?   @map("decided_by_id")
+  decidedAt    DateTime? @map("decided_at") @db.Timestamptz(3)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  item Item @relation(fields: [itemId], references: [id])
+
+  @@index([companyId, status])
+  @@index([itemId, createdAt])
+  @@map("max_reviews")
+}
+
+model PurchaseOrder {
+  id          String    @id @default(cuid(2))
+  companyId   String    @map("company_id")
+  /// PO/26-27/0001
+  number      String
+  vendor      String
+  /// DRAFT | SENT | PARTLY_RECEIVED | RECEIVED | CANCELLED
+  status      String    @default("DRAFT")
+  /// The date the goods are expected (YYYY-MM-DD).
+  expectedOn  String?   @map("expected_on")
+  note        String?
+  /// Made from the OWS list.
+  fromOws     Boolean   @default(false) @map("from_ows")
+  createdById String?   @map("created_by_id")
+  sentAt      DateTime? @map("sent_at") @db.Timestamptz(3)
+  closedAt    DateTime? @map("closed_at") @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  lines PoLine[]
+
+  @@unique([companyId, number])
+  @@index([companyId, status])
+  @@map("purchase_orders")
+}
+
+model PoLine {
+  id          String  @id @default(cuid(2))
+  companyId   String  @map("company_id")
+  poId        String  @map("po_id")
+  itemId      String  @map("item_id")
+  qty         Decimal @db.Decimal(14, 3)
+  receivedQty Decimal @default(0) @map("received_qty") @db.Decimal(14, 3)
+  /// Paise per unit.
+  rate        BigInt  @default(0)
+
+  po   PurchaseOrder @relation(fields: [poId], references: [id])
+  item Item          @relation(fields: [itemId], references: [id])
+
+  @@index([itemId])
+  @@map("po_lines")
+}
+
+/// An audit count of one item in a cycle (the top items by value each cycle).
+model AuditCount {
+  id          String    @id @default(cuid(2))
+  companyId   String    @map("company_id")
+  itemId      String    @map("item_id")
+  /// The cycle's first day (YYYY-MM-DD).
+  cycle       String
+  /// OPEN | COUNTED | SKIPPED
+  status      String    @default("OPEN")
+  systemQty   Decimal?  @map("system_qty") @db.Decimal(14, 3)
+  countedQty  Decimal?  @map("counted_qty") @db.Decimal(14, 3)
+  countedById String?   @map("counted_by_id")
+  countedAt   DateTime? @map("counted_at") @db.Timestamptz(3)
+  note        String?
+  /// The adjustment raised for a difference.
+  moveId      String?   @map("move_id")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  item Item @relation(fields: [itemId], references: [id])
+
+  @@unique([itemId, cycle])
+  @@index([companyId, cycle])
+  @@map("audit_counts")
+}

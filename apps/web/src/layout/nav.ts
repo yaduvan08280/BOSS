@@ -115,10 +115,10 @@ export const WORKSPACE_NAV: NavSection[] = [
   {
     key: 'inventory',
     items: [
-      { key: 'stock', path: '/ims/stock', icon: Package, phase: 8, tag: 'inventory' },
-      { key: 'purchase', path: '/ims/purchase', icon: ShoppingCart, phase: 8, tag: 'inventory' },
-      { key: 'maxReview', path: '/ims/max-review', icon: Scale, phase: 8, tag: 'inventory' },
-      { key: 'stockAudit', path: '/ims/audit', icon: ScanSearch, phase: 8, tag: 'inventory' },
+      { key: 'stock', path: '/ims/stock', icon: Package, phase: 0, tag: 'inventory' },
+      { key: 'purchase', path: '/ims/purchase', icon: ShoppingCart, phase: 0, tag: 'inventory' },
+      { key: 'maxReview', path: '/ims/max-review', icon: Scale, phase: 0, tag: 'inventory' },
+      { key: 'stockAudit', path: '/ims/audit', icon: ScanSearch, phase: 0, tag: 'inventory' },
     ],
   },
   {
@@ -154,7 +154,7 @@ export const SYSTEM_NAV: NavSection[] = [
       { key: 'roles', path: '/system/roles', icon: ShieldCheck, phase: 0, tag: 'setup' },
       { key: 'orgChart', path: '/system/org-chart', icon: Network, phase: 0, tag: 'setup' },
       { key: 'integration', path: '/system/integration', icon: Plug, phase: 0, tag: 'messaging' },
-      { key: 'inventorySetup', path: '/system/inventory', icon: Package, phase: 8, tag: 'setup' },
+      { key: 'inventorySetup', path: '/system/inventory', icon: Package, phase: 0, tag: 'setup' },
       { key: 'crmSetup', path: '/system/crm', icon: ClipboardCheck, phase: 9, tag: 'setup' },
       { key: 'apiKeys', path: '/system/api-keys', icon: KeyRound, phase: 10, tag: 'setup' },
       { key: 'hrRules', path: '/system/hr-rules', icon: UserCog, phase: 0, tag: 'setup' },

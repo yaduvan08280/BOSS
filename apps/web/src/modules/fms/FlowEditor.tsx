@@ -122,9 +122,11 @@ function Editor({ flow }: { flow: FlowDetail; me: Me }) {
     steps.splice(i + by, 0, x!);
     edit({ ...def, steps });
   };
-  const dateFields = [...def.startFields, ...def.steps.flatMap((s) => s.fields)]
-    .filter((f) => f.type === 'date' || f.type === 'datetime')
-    .map((f) => ({ key: f.key, label: f.label }));
+  const allFields = [...def.startFields, ...def.steps.flatMap((s) => s.fields)].map((f) => ({
+    key: f.key,
+    label: f.label,
+    type: f.type,
+  }));
   const status =
     flow.status === 'PUBLISHED'
       ? flow.dirty || changed
@@ -333,7 +335,7 @@ function Editor({ flow }: { flow: FlowDetail; me: Me }) {
                   steps={def.steps}
                   people={people}
                   docTypes={docTypes}
-                  dateFields={dateFields}
+                  fields={allFields}
                   onChange={setStep}
                   onDelete={() => (
                     edit({ ...def, steps: def.steps.filter((s) => s.key !== step.key) }),

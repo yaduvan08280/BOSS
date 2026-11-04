@@ -35,6 +35,7 @@ import { misRoutes } from './modules/mis/routes';
 import { fmsRoutes } from './modules/fms/routes';
 import { aiRoutes } from './modules/ai/routes';
 import { hrRoutes } from './modules/hr/routes';
+import { imsRoutes } from './modules/ims/routes';
 import { LocalDiskStorage, type Storage } from './lib/storage';
 
 export type BuildOptions = {
@@ -107,5 +108,6 @@ export async function buildApp(opts: BuildOptions) {
   await app.register(fmsRoutes, { env });
   await app.register(aiRoutes, { env });
   await app.register(hrRoutes);
+  await app.register(imsRoutes);
   return app;
 }

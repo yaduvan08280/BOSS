@@ -1,10 +1,11 @@
 import type { FmsRecord, Tx } from '@mono/db';
 import type { FlowDefinition, FlowStep } from '@mono/shared';
 import { emitEvent } from '../../lib/events';
+import { fmsStockMoves } from '../ims/fms';
 import { createDocument } from './documents';
 import { log, payloadOf, type Ctx } from './engine';
 
-/** AUTO steps (CLAUDE.md §6.1): the system sends a message, makes a document, or (later) moves stock. */
+/** AUTO steps (CLAUDE.md §6.1): the system sends a message, makes a document, or moves stock. */
 export function customerContact(def: FlowDefinition, data: Record<string, unknown>) {
   const mobile = def.startFields.find((f) => f.type === 'mobile');
   const email = def.startFields.find((f) => f.type === 'email');
@@ -48,11 +49,10 @@ export async function runAuto(
       },
     );
     await log(tx, record, 'auto', { stepKey: step.key, note: 'Message sent' });
+  } else if (a?.action === 'stock') {
+    const note = await fmsStockMoves(tx, record, step, ctx.def, data);
+    await log(tx, record, 'auto', { stepKey: step.key, note });
   } else {
-    // Stock moves arrive with Inventory (phase 8); until then the step just records that it ran.
-    await log(tx, record, 'auto', {
-      stepKey: step.key,
-      note: a?.action === 'stock' ? 'Stock effect (Inventory comes later)' : 'Done',
-    });
+    await log(tx, record, 'auto', { stepKey: step.key, note: 'Done' });
   }
 }

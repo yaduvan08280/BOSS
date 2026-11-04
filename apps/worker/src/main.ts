@@ -7,6 +7,7 @@ import {
   aiFollowUpText,
   eaJobs,
   expireBuddyRequests,
+  imsSweep,
   morningCoverReport,
   runCovers,
   settleAttendance,
@@ -130,6 +131,8 @@ await boss.work(QUEUE_WORK_5MIN, async () => {
   const settled = await settleAttendance(prisma);
   if (buddies || covers.started || covers.ended || absent || settled)
     log.info({ buddies, covers, absent, settled }, 'HR sweep');
+  // Inventory: daily snapshots and bands, the morning MAX review, audit cycles, the order list, dead stock.
+  await imsSweep(prisma);
   if (
     fms ||
     created ||

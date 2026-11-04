@@ -87,6 +87,10 @@ export const stepSchema = z.object({
       text: z.string().max(1000).optional(),
       documentType: z.string().max(20).optional(),
       url: z.url().optional(),
+      /** stock: issue the item lines out of stock, or receive them in. */
+      direction: z.enum(['IN', 'OUT']).optional(),
+      /** stock: which "items" field holds the lines (default: the first one). */
+      itemsField: z.string().max(40).optional(),
     })
     .optional(),
   /** Send the customer a WhatsApp update when this step is done. */

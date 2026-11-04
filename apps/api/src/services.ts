@@ -36,3 +36,7 @@ export { expireBuddyRequests, answerBuddy } from './modules/hr/buddy';
 export { applyLeave, decideLeave, previewLeave } from './modules/hr/leave';
 export { watchAbsences } from './modules/hr/absence';
 export { morningCoverReport } from './modules/hr/report';
+export { imsSweep } from './modules/ims/jobs';
+export { applyMove } from './modules/ims/moves';
+export { proposeReviews, snapshotAll } from './modules/ims/review';
+export { openCycle, recordCount } from './modules/ims/audit';

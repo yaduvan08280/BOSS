@@ -1,5 +1,77 @@
 # Changelog
 
+## Phase 8 — Inventory (IMS) (04/11/2026)
+
+**Rules** (System Master → Inventory), with the defaults of CLAUDE.md §10.1:
+- **MAX & review:** daily use from the last 120 days (90 / 120 / 180); review every 15 days; raise the safety factor after 3 red days; lower it when purple for 50% of the period; step 0.25; lowest 1. MAX = average daily use × lead time × safety factor.
+- **OWS & purchase:** the order day (Monday) and how many days ahead the list opens (1). Order quantity = MAX − (stock + on order).
+- **Turns & NOS:** NOS under 10 turns a year; NOS target 50% of stock value; turns growth 26% a quarter; the bottom 20% offered for stopping.
+- **Audit & dead stock:** the top 50 items by value counted every 30 days; dead after 365 days without movement.
+- **Who does what:**
+  - store keeper, purchase, reviewer, audit coordinator;
+  - who approves stock adjustments, with the rules "any one of them", "never their own" and "the owner always can".
+
+**Item master** (Inventory → Stock → Item master)
+- Each item has: code, name, unit, category, location, lead time, safety factor, MAX, min, rate and vendor.
+- Opening stock can be entered with the item.
+- **Import from Excel:** paste from Excel or Google Sheets, or open an .xlsx or .csv file. Columns are matched by their headings in any order. Every problem is named by line, and nothing is saved until all lines are right.
+- An item can only be removed when it has no stock and nothing on order; its moves stay in the IMS sheet.
+
+**Stock**
+- **Stock today:**
+  - every item with a red / yellow / green / over-MAX band, a bar of stock against MAX, and what's on order;
+  - the stock value, a search box and band filters.
+- **Stock moves:**
+  - receiving stock, issuing it and transfers apply at once;
+  - adjustments (damaged, expired, lost, found, audit count) wait for an approver;
+  - stock never goes below zero: the check and the change are one database statement, so two people issuing the last unit can't both succeed.
+- **The IMS sheet:** every in and out in one list, with the balance after each move. It can be filtered by kind and dates.
+- **To approve:** pending adjustments, with Approve / Reject for whoever may decide.
+- **Alerts:**
+  - an item turning red tells purchase, with the quantity to order;
+  - going over MAX tells the reviewer.
+
+**MAX review** (Inventory → MAX review)
+- Each morning, items not reviewed for 15 days get a proposal. The proposal is based on the average daily use in the window and the daily bands (the worst band each day saw): the safety factor goes up after enough red days, down after enough purple days, and MAX is worked out again.
+- The reviewer can apply one proposal or all of them, set their own safety factor (MAX is worked out from it), or skip.
+- Items with no use in the window keep their MAX; they show as slow or dead stock instead.
+- "Review now" makes the proposals straight away.
+
+**Purchase** (Inventory → Purchase)
+- **Order list (OWS):** on the order day (and N days before), every short item (stock + on order below ⅔ of MAX, or under its minimum), red ones first.
+  - Untick lines or change quantities, then make the orders: one draft per vendor.
+  - Purchase hears when the list opens.
+- **Purchase orders** (`PO/26-27/0001`):
+  - draft → sent → part received → received, or closed short, or cancelled (only before anything arrives);
+  - receiving goods books stock in at the order's rate;
+  - more than ordered can't be received on the order; extra goes in as a separate stock in.
+
+**Audit** (Inventory → Audit)
+- **Counts:** each cycle the most valuable items in stock are listed to count. A difference becomes an audit-count adjustment that waits for an approver.
+- **Dead stock:** stock that hasn't moved for 365 days, with its value. The owner hears once a month.
+
+**Reports** (Inventory → Stock → Reports)
+- **Stock value** by category.
+- **Movement** in a period (in, out, adjusted, out value).
+- **Turns & NOS:**
+  - turns per item, scaled to a year for items tracked for less;
+  - NOS share against its target;
+  - company turns for the last 90 days against the 90 before and the growth target;
+  - the slowest items, offered for stopping.
+- **Purchase** by vendor (ordered and received).
+
+**FMS:** an AUTO step can now post stock.
+- It issues a record's item lines out of stock, or receives them in.
+- Items are matched by code or name. A line that can't be posted (unknown item, not enough stock) is noted on the record, and the rest still go.
+
+**Also**
+- New notification `ims.ows_ready` ("Order list ready") for purchase, beside the five §7.3 inventory events.
+- The people picker from the FMS builder is now shared (`components/people-picker`).
+
+**Demo data:**
+- 50 items for a quartz-slab plant, with 120 days of issues and receipts and the rules' people. A few items are red and a few over MAX.
+- 16 MAX reviews due, purchase orders in each state, a damage adjustment to approve, this cycle's audit counts, and two dead items.
+
 ## Phase 7 (added) — Work patterns, night shifts, pay from attendance (04/11/2026)
 
 **Night shifts that cross midnight**

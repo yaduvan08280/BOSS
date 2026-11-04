@@ -48,3 +48,6 @@ export * from './hr/rules';
 export * from './hr/attendance';
 export * from './hr/leave';
 export * from './hr/pay';
+export * from './ims/rules';
+export * from './ims/stock';
+export * from './machines/ims';

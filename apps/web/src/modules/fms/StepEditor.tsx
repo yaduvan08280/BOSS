@@ -1,12 +1,12 @@
-import { Trash2, X } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AUTO_ACTIONS, END, STEP_TYPES, type FlowStep, type OrgPerson, type StepTime } from '@mono/shared';
 import { TimeInput } from '@/components/ui/date-input';
 import { Button } from '@/components/ui/button';
 import { Checkbox, Field, Select, Textarea } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { personLabel } from '@/lib/people';
 import { cn } from '@/lib/utils';
+import { PeoplePicker } from '@/components/people-picker';
 import { FieldsEditor } from './FieldsEditor';
 
 type Props = {
@@ -14,67 +14,16 @@ type Props = {
   steps: FlowStep[];
   people: OrgPerson[];
   docTypes: { code: string; name: string }[];
-  dateFields: { key: string; label: string }[];
+  /** Every field of the flow (dates anchor times; item lines feed stock steps). */
+  fields: { key: string; label: string; type: string }[];
   onChange: (s: FlowStep) => void;
   onDelete: () => void;
 };
 
-/** People chips with a type-to-filter picker to add more. */
-function PeoplePicker({
-  ids,
-  people,
-  onChange,
-  label,
-}: {
-  ids: string[];
-  people: OrgPerson[];
-  onChange: (ids: string[]) => void;
-  label: string;
-}) {
-  const { t } = useTranslation();
-  const name = new Map(people.map((p) => [p.id, p.name]));
-  return (
-    <div className="space-y-2">
-      {ids.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {ids.map((id) => (
-            <span
-              key={id}
-              className="inline-flex items-center gap-1 rounded-pill bg-muted py-1 pl-3 pr-1 text-sm"
-            >
-              {name.get(id) ?? '?'}
-              <button
-                type="button"
-                aria-label={t('common.remove')}
-                className="grid size-5 place-items-center rounded-full hover:bg-card"
-                onClick={() => onChange(ids.filter((x) => x !== id))}
-              >
-                <X className="size-3" />
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
-      <Select
-        aria-label={label}
-        value=""
-        onChange={(e) => e.target.value && onChange([...ids, e.target.value])}
-      >
-        <option value="">{t('fms.b.addPerson')}</option>
-        {people
-          .filter((p) => p.status === 'ACTIVE' && !ids.includes(p.id))
-          .map((p) => (
-            <option key={p.id} value={p.id}>
-              {personLabel(p)}
-            </option>
-          ))}
-      </Select>
-    </div>
-  );
-}
-
 /** The selected step: type, who, time, checklist, entry form, documents, proof, where it leads. */
-export function StepEditor({ step, steps, people, docTypes, dateFields, onChange, onDelete }: Props) {
+export function StepEditor({ step, steps, people, docTypes, fields, onChange, onDelete }: Props) {
+  const dateFields = fields.filter((f) => f.type === 'date' || f.type === 'datetime');
+  const itemFields = fields.filter((f) => f.type === 'items');
   const { t } = useTranslation();
   const set = (patch: Partial<FlowStep>) => onChange({ ...step, ...patch });
   const time: StepTime = step.time ?? { value: 1, unit: 'hours', anchor: 'previous' };
@@ -283,6 +232,33 @@ export function StepEditor({ step, steps, people, docTypes, dateFields, onChange
                 </option>
               ))}
             </Select>
+          )}
+          {step.auto?.action === 'stock' && (
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <Select
+                aria-label={t('fms.b.stockWay')}
+                value={step.auto.direction ?? 'OUT'}
+                onChange={(e) => set({ auto: { ...step.auto!, direction: e.target.value as 'IN' | 'OUT' } })}
+              >
+                <option value="OUT">{t('fms.b.stockOut')}</option>
+                <option value="IN">{t('fms.b.stockIn')}</option>
+              </Select>
+              <Select
+                aria-label={t('fms.b.stockLines')}
+                value={step.auto.itemsField ?? ''}
+                onChange={(e) => set({ auto: { ...step.auto!, itemsField: e.target.value || undefined } })}
+              >
+                <option value="">
+                  {itemFields.length ? t('fms.b.stockFirstLines') : t('fms.b.stockNoLines')}
+                </option>
+                {itemFields.map((f) => (
+                  <option key={f.key} value={f.key}>
+                    {f.label}
+                  </option>
+                ))}
+              </Select>
+              <p className="text-xs text-muted-foreground sm:col-span-2">{t('fms.b.stockHint')}</p>
+            </div>
           )}
           {step.auto?.action === 'webhook' && (
             <Input

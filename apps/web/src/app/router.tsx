@@ -54,6 +54,11 @@ const AttendancePage = page(() => import('@/modules/hr/AttendancePage'), 'Attend
 const LeavePage = page(() => import('@/modules/hr/LeavePage'), 'LeavePage');
 const CoverBoardPage = page(() => import('@/modules/hr/CoverBoardPage'), 'CoverBoardPage');
 const PayrollPage = page(() => import('@/modules/hr/PayrollPage'), 'PayrollPage');
+const StockPage = page(() => import('@/modules/ims/StockPage'), 'StockPage');
+const PurchasePage = page(() => import('@/modules/ims/PurchasePage'), 'PurchasePage');
+const MaxReviewPage = page(() => import('@/modules/ims/MaxReviewPage'), 'MaxReviewPage');
+const AuditPage = page(() => import('@/modules/ims/AuditPage'), 'AuditPage');
+const InventorySetup = page(() => import('@/modules/ims/InventorySetup'), 'InventorySetup');
 const RulesWizard = page(() => import('@/modules/hr/RulesWizard'), 'RulesWizard');
 
 const placeholderRoutes = ALL_ITEMS.filter((i) => i.phase > 0).map((i) => ({
@@ -93,6 +98,10 @@ export const router = createBrowserRouter([
       { path: '/hr/leave', element: <WithMe render={(me) => <LeavePage me={me} />} /> },
       { path: '/hr/cover', element: <WithMe render={(me) => <CoverBoardPage me={me} />} /> },
       { path: '/hr/payroll', element: <WithMe render={(me) => <PayrollPage me={me} />} /> },
+      { path: '/ims/stock', element: <WithMe render={(me) => <StockPage me={me} />} /> },
+      { path: '/ims/purchase', element: <WithMe render={(me) => <PurchasePage me={me} />} /> },
+      { path: '/ims/max-review', element: <WithMe render={(me) => <MaxReviewPage me={me} />} /> },
+      { path: '/ims/audit', element: <WithMe render={(me) => <AuditPage me={me} />} /> },
       { path: '/masters/build', element: <WithMe render={(me) => <MastersPage me={me} />} /> },
       { path: '/fms/live', element: <WithMe render={(me) => <LiveFmsPage me={me} />} /> },
       { path: '/fms/my-steps', element: <WithMe render={(me) => <MyStepsPage me={me} />} /> },
@@ -124,6 +133,7 @@ export const router = createBrowserRouter([
               { path: 'appearance', element: <AppearanceTab /> },
               { path: 'business-details', element: <BusinessDetailsPage /> },
               { path: 'hr-rules', element: <RulesWizard /> },
+              { path: 'inventory', element: <InventorySetup /> },
               { path: 'engine', element: <EnginePage /> },
               {
                 path: 'integration',
