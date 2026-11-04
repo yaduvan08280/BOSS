@@ -43,3 +43,4 @@ E2E tests use the demo company (`npm run seed:demo`) and remove what they create
 | `packages/db` | Generated Prisma client, company scoping, counters |
 | `prisma` | Schema (one file per module), migrations, seed |
 | `deploy` | Dockerfiles, compose stack, Caddyfile, backups, INSTALL.md |
+# BOSS
