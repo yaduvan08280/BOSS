@@ -481,7 +481,7 @@ const ROWS: Row[] = [
   [
     'hr.absent_no_cover',
     'team',
-    ['hod'],
+    ['hod', 'owner'],
     '{{person}} is absent with no cover',
     '{{count}} pieces of work have no Buddy today.',
     '{{person}} ग़ैरहाज़िर, कोई कवर नहीं',
@@ -490,7 +490,7 @@ const ROWS: Row[] = [
   [
     'hr.morning_cover_report',
     'team',
-    ['hod', 'owner', 'hr'],
+    ['user'],
     'Who is away today',
     '{{report}}',
     'आज कौन नहीं है',

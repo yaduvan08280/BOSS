@@ -157,7 +157,10 @@ export function LiveFmsPage({ me }: { me: Me }) {
                           <StatusChip tone={RECORD_TONE[r.status]}>{t(`fms.status.${r.status}`)}</StatusChip>
                         )}
                       </div>
-                      <div className="text-sm">{s?.doerId ? names.get(s.doerId) : '—'}</div>
+                      <div className="text-sm">
+                        {s?.doerId ? names.get(s.doerId) : '—'}
+                        {s?.coveredById && ` (${t('hr.covering')})`}
+                      </div>
                       <div
                         className={cn(
                           'flex items-center gap-1 text-xs',

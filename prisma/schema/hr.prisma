@@ -1,0 +1,205 @@
+/// CLAUDE.md §9.1 — the company's HR Rules (wizard answers + per team/person overrides).
+model HrRules {
+  id          String   @id @default(cuid(2))
+  companyId   String   @unique @map("company_id")
+  rules       Json
+  updatedById String?  @map("updated_by_id")
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("hr_rules")
+}
+
+/// Weekly off per weekday (1 = Monday … 7 = Sunday), for the whole company (branchId null) or one branch.
+model WeeklyOff {
+  id        String  @id @default(cuid(2))
+  companyId String  @map("company_id")
+  branchId  String? @map("branch_id")
+  weekday   Int
+  /// WORKING | HALF | OFF
+  kind      String
+
+  @@unique([companyId, branchId, weekday])
+  @@map("weekly_offs")
+}
+
+/// One punch in or out (app with GPS, biometric import, or an approved correction).
+model Punch {
+  id         String   @id @default(cuid(2))
+  companyId  String   @map("company_id")
+  userId     String   @map("user_id")
+  /// IN | OUT
+  type       String
+  at         DateTime @db.Timestamptz(3)
+  lat        Decimal? @db.Decimal(9, 6)
+  lng        Decimal? @db.Decimal(9, 6)
+  accuracy   Int?
+  selfieId   String?  @map("selfie_id")
+  branchId   String?  @map("branch_id")
+  /// app | biometric | correction
+  source     String   @default("app")
+  deviceId   String?  @map("device_id")
+  flagged    Boolean  @default(false)
+  flagReason String?  @map("flag_reason")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([userId, at, type])
+  @@index([companyId, userId, at])
+  @@map("punches")
+}
+
+/// What a day counts as for one person, computed from punches and the rules (recomputed on any change).
+model AttendanceDay {
+  id          String    @id @default(cuid(2))
+  companyId   String    @map("company_id")
+  userId      String    @map("user_id")
+  date        String
+  /// PRESENT | LATE | HALF_DAY | ABSENT | ON_LEAVE | HOLIDAY | WEEKLY_OFF
+  status      String
+  inAt        DateTime? @map("in_at") @db.Timestamptz(3)
+  outAt       DateTime? @map("out_at") @db.Timestamptz(3)
+  workedMin   Int       @default(0) @map("worked_min")
+  lateMin     Int       @default(0) @map("late_min")
+  overtimeMin Int       @default(0) @map("overtime_min")
+  missedOut   Boolean   @default(false) @map("missed_out")
+  compOff     Boolean   @default(false) @map("comp_off")
+  reasons     String[]
+  computedAt  DateTime  @default(now()) @map("computed_at") @db.Timestamptz(3)
+
+  @@unique([userId, date])
+  @@index([companyId, date])
+  @@map("attendance_days")
+}
+
+/// "I forgot to punch": a fix to a day, approved by the HOD (limited per month by the rules).
+model CorrectionRequest {
+  id          String    @id @default(cuid(2))
+  companyId   String    @map("company_id")
+  userId      String    @map("user_id")
+  date        String
+  inAt        DateTime? @map("in_at") @db.Timestamptz(3)
+  outAt       DateTime? @map("out_at") @db.Timestamptz(3)
+  reason      String
+  /// PENDING | APPROVED | REJECTED
+  status      String    @default("PENDING")
+  decidedById String?   @map("decided_by_id")
+  decidedAt   DateTime? @map("decided_at") @db.Timestamptz(3)
+  note        String?
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([companyId, status])
+  @@index([userId, date])
+  @@map("correction_requests")
+}
+
+model LeaveType {
+  id           String    @id @default(cuid(2))
+  companyId    String    @map("company_id")
+  code         String
+  name         String
+  yearlyQuota  Decimal   @map("yearly_quota") @db.Decimal(5, 1)
+  carryForward Decimal   @default(0) @map("carry_forward") @db.Decimal(5, 1)
+  paid         Boolean   @default(true)
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@unique([companyId, code])
+  @@map("leave_types")
+}
+
+/// Days a person has of one leave type in one leave year (year = the year it starts in).
+model LeaveBalance {
+  id          String  @id @default(cuid(2))
+  companyId   String  @map("company_id")
+  userId      String  @map("user_id")
+  leaveTypeId String  @map("leave_type_id")
+  year        Int
+  allotted    Decimal @db.Decimal(5, 1)
+  carried     Decimal @default(0) @db.Decimal(5, 1)
+  used        Decimal @default(0) @db.Decimal(5, 1)
+
+  @@unique([userId, leaveTypeId, year])
+  @@map("leave_balances")
+}
+
+model LeaveRequest {
+  id                   String    @id @default(cuid(2))
+  companyId            String    @map("company_id")
+  number               Int
+  userId               String    @map("user_id")
+  leaveTypeId          String    @map("leave_type_id")
+  from                 String
+  to                   String
+  /// FIRST | SECOND half, or null for whole days
+  half                 String?
+  days                 Decimal   @db.Decimal(5, 1)
+  reason               String
+  /// PENDING | APPROVED | REJECTED | CANCELLED
+  status               String    @default("PENDING")
+  approverId           String?   @map("approver_id")
+  decidedById          String?   @map("decided_by_id")
+  decidedAt            DateTime? @map("decided_at") @db.Timestamptz(3)
+  decisionNote         String?   @map("decision_note")
+  /// The Buddy rule said "warn" and some work still had no Buddy when it was approved.
+  approvedWithoutCover Boolean   @default(false) @map("approved_without_cover")
+  /// The open work in the period when it was asked for: [{ key, entityType, entityId, title }]
+  work                 Json      @default("[]")
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([companyId, number])
+  @@index([companyId, status])
+  @@index([userId, from])
+  @@map("leave_requests")
+}
+
+/// One person asked to cover some work of someone away (leave, or absent without leave).
+model BuddyRequest {
+  id             String    @id @default(cuid(2))
+  companyId      String    @map("company_id")
+  leaveRequestId String?   @map("leave_request_id")
+  /// Absent without leave: the day it is for
+  absenceDate    String?   @map("absence_date")
+  userId         String    @map("user_id")
+  buddyId        String    @map("buddy_id")
+  /// [{ entityType, entityId, title }]
+  items          Json
+  /// ASKED | ACCEPTED | DECLINED | EXPIRED | CANCELLED
+  status         String    @default("ASKED")
+  from           DateTime  @db.Timestamptz(3)
+  to             DateTime  @db.Timestamptz(3)
+  dueAt          DateTime  @map("due_at") @db.Timestamptz(3)
+  answeredAt     DateTime? @map("answered_at") @db.Timestamptz(3)
+  note           String?
+  createdById    String?   @map("created_by_id")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([companyId, status, dueAt])
+  @@index([buddyId, status])
+  @@map("buddy_requests")
+}
+
+/// A piece of work handed to a Buddy for a period ("Covered by …"); returns per the rules when it ends.
+model Cover {
+  id             String    @id @default(cuid(2))
+  companyId      String    @map("company_id")
+  /// task | checklist | fms_step
+  entityType     String    @map("entity_type")
+  entityId       String    @map("entity_id")
+  title          String
+  originalUserId String    @map("original_user_id")
+  buddyUserId    String    @map("buddy_user_id")
+  from           DateTime  @db.Timestamptz(3)
+  to             DateTime  @db.Timestamptz(3)
+  /// SCHEDULED | ACTIVE | RETURNED | KEPT | CANCELLED
+  status         String    @default("SCHEDULED")
+  leaveRequestId String?   @map("leave_request_id")
+  buddyRequestId String?   @map("buddy_request_id")
+  startedAt      DateTime? @map("started_at") @db.Timestamptz(3)
+  endedAt        DateTime? @map("ended_at") @db.Timestamptz(3)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([companyId, status, from])
+  @@index([companyId, entityType, entityId])
+  @@map("covers")
+}

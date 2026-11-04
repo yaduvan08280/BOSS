@@ -97,7 +97,8 @@ function RunList({
                 <div className="min-w-0">
                   <div className="truncate font-medium">{r.master.name}</div>
                   <div className="text-xs text-muted-foreground">
-                    {names.get(r.doerId)} · {formatShortDateTime(r.plannedAt, tz)}
+                    {names.get(r.doerId)}
+                    {r.coveredById && ` (${t('hr.covering')})`} · {formatShortDateTime(r.plannedAt, tz)}
                   </div>
                 </div>
                 <StatusChip tone={TONE[r.status]}>{t(`chk.status.${r.status}`)}</StatusChip>
@@ -131,7 +132,10 @@ function RunList({
                       {r.master.departmentId ? ` · ${depts.get(r.master.departmentId) ?? ''}` : ''}
                     </div>
                   </td>
-                  <td className="px-3 text-xs">{names.get(r.doerId)}</td>
+                  <td className="px-3 text-xs">
+                    {names.get(r.doerId)}
+                    {r.coveredById && ` (${t('hr.covering')})`}
+                  </td>
                   <td className="tabular px-3 text-xs">{formatShortDateTime(r.plannedAt, tz)}</td>
                   <td className="px-3">{due(r)}</td>
                   <td className="px-3">

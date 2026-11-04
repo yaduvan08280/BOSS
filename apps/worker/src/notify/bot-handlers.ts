@@ -13,6 +13,7 @@ import {
 import {
   doneCommand,
   fmsButton,
+  hrButton,
   moveCommand,
   taskButton,
   taskNote,
@@ -231,6 +232,8 @@ export async function onAction(db: Db, scope: BotScope, chatId: string, data: st
     return taskButton(db, { id: me.id, companyId: me.companyId }, action, entityId);
   if (entityType === 'fms_step' && action && entityId)
     return fmsButton(db, { id: me.id, companyId: me.companyId }, action, entityId);
+  if ((entityType === 'buddy_request' || entityType === 'leave_request') && action && entityId)
+    return hrButton(db, { id: me.id, companyId: me.companyId }, action, entityId);
   return "That button isn't something the bot can do yet — open the app for it.";
 }
 

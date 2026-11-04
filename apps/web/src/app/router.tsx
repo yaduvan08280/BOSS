@@ -50,6 +50,10 @@ const AiTab = page(() => import('@/modules/ai/AiTab'), 'AiTab');
 const BusinessDetailsPage = page(() => import('@/modules/ai/BusinessDetailsPage'), 'BusinessDetailsPage');
 const BuildWithAiPage = page(() => import('@/modules/ai/BuildWithAiPage'), 'BuildWithAiPage');
 const MastersPage = page(() => import('@/modules/ai/MastersPage'), 'MastersPage');
+const AttendancePage = page(() => import('@/modules/hr/AttendancePage'), 'AttendancePage');
+const LeavePage = page(() => import('@/modules/hr/LeavePage'), 'LeavePage');
+const CoverBoardPage = page(() => import('@/modules/hr/CoverBoardPage'), 'CoverBoardPage');
+const RulesWizard = page(() => import('@/modules/hr/RulesWizard'), 'RulesWizard');
 
 const placeholderRoutes = ALL_ITEMS.filter((i) => i.phase > 0).map((i) => ({
   path: i.path,
@@ -84,6 +88,9 @@ export const router = createBrowserRouter([
       { path: '/fms/builder/ai', element: <WithMe render={(me) => <BuildWithAiPage me={me} />} /> },
       { path: '/fms/builder/:id', element: <WithMe render={(me) => <FlowEditorPage me={me} />} /> },
       { path: '/masters', element: <WithMe render={(me) => <MastersPage me={me} />} /> },
+      { path: '/hr/attendance', element: <WithMe render={(me) => <AttendancePage me={me} />} /> },
+      { path: '/hr/leave', element: <WithMe render={(me) => <LeavePage me={me} />} /> },
+      { path: '/hr/cover', element: <WithMe render={(me) => <CoverBoardPage me={me} />} /> },
       { path: '/masters/build', element: <WithMe render={(me) => <MastersPage me={me} />} /> },
       { path: '/fms/live', element: <WithMe render={(me) => <LiveFmsPage me={me} />} /> },
       { path: '/fms/my-steps', element: <WithMe render={(me) => <MyStepsPage me={me} />} /> },
@@ -114,6 +121,7 @@ export const router = createBrowserRouter([
               { path: 'org-chart', element: <OrgChartTab /> },
               { path: 'appearance', element: <AppearanceTab /> },
               { path: 'business-details', element: <BusinessDetailsPage /> },
+              { path: 'hr-rules', element: <RulesWizard /> },
               { path: 'engine', element: <EnginePage /> },
               {
                 path: 'integration',

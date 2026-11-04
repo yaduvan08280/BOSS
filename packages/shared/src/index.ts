@@ -43,3 +43,7 @@ export * from './ai/drafts';
 export * from './ai/ask';
 export * from './ai/convert';
 export * from './ai/examples';
+export * from './machines/hr';
+export * from './hr/rules';
+export * from './hr/attendance';
+export * from './hr/leave';

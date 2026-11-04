@@ -103,6 +103,8 @@ model FmsRecordStep {
   doerId            String?   @map("doer_id")
   /// The primary doer when a backup took over (leave / reassignment).
   originalDoerId    String?   @map("original_doer_id")
+  /// A Buddy has this step while its doer is away ("Covered by …")
+  coveredById       String?   @map("covered_by_id")
   plannedAt         DateTime  @map("planned_at") @db.Timestamptz(3)
   startedAt         DateTime  @default(now()) @map("started_at") @db.Timestamptz(3)
   doneAt            DateTime? @map("done_at") @db.Timestamptz(3)

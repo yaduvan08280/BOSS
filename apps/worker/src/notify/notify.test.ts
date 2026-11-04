@@ -217,6 +217,8 @@ describe('outbox sender', () => {
   });
 
   it('sends, retries with backoff, and gives up on permanent errors', async () => {
+    // The sender takes the whole queue: messages other tests left queued would crowd these out.
+    await db.outbox.updateMany({ where: { status: 'QUEUED' }, data: { status: 'SKIPPED', lastError: 'test reset' } });
     const { company } = await newCompany();
     const base = { companyId: company.id, payload: { text: 'hi' } };
     const ok = await db.outbox.create({

@@ -38,6 +38,10 @@ const TELEGRAM_ACTIONS: Record<string, string> = {
   yes: 'Yes',
   no: 'No',
   approve: 'Approve',
+  buddyyes: 'Yes, I will cover',
+  buddyno: "Can't",
+  leaveok: 'Approve',
+  leaveno: 'Reject',
 };
 
 type Tpl = {

@@ -96,9 +96,9 @@ export const WORKSPACE_NAV: NavSection[] = [
   {
     key: 'hr',
     items: [
-      { key: 'attendance', path: '/hr/attendance', icon: CalendarCheck, phase: 7, tag: 'hr' },
-      { key: 'leave', path: '/hr/leave', icon: CalendarOff, phase: 7, tag: 'hr' },
-      { key: 'coverBoard', path: '/hr/cover', icon: Handshake, phase: 7, tag: 'hr' },
+      { key: 'attendance', path: '/hr/attendance', icon: CalendarCheck, phase: 0, tag: 'hr' },
+      { key: 'leave', path: '/hr/leave', icon: CalendarOff, phase: 0, tag: 'hr' },
+      { key: 'coverBoard', path: '/hr/cover', icon: Handshake, phase: 0, tag: 'hr' },
     ],
   },
   {
@@ -146,7 +146,7 @@ export const SYSTEM_NAV: NavSection[] = [
       { key: 'inventorySetup', path: '/system/inventory', icon: Package, phase: 8, tag: 'setup' },
       { key: 'crmSetup', path: '/system/crm', icon: ClipboardCheck, phase: 9, tag: 'setup' },
       { key: 'apiKeys', path: '/system/api-keys', icon: KeyRound, phase: 10, tag: 'setup' },
-      { key: 'hrRules', path: '/system/hr-rules', icon: UserCog, phase: 7, tag: 'setup' },
+      { key: 'hrRules', path: '/system/hr-rules', icon: UserCog, phase: 0, tag: 'setup' },
       { key: 'businessDetails', path: '/system/business-details', icon: Sparkles, phase: 0, tag: 'setup' },
       { key: 'appearance', path: '/system/appearance', icon: Palette, phase: 0, tag: 'setup' },
       { key: 'engineDesigner', path: '/system/engine', icon: Workflow, phase: 0, tag: 'setup' },

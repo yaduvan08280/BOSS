@@ -6,6 +6,11 @@ import { loadEnv } from '@mono/api/env';
 import {
   aiFollowUpText,
   eaJobs,
+  expireBuddyRequests,
+  morningCoverReport,
+  runCovers,
+  settleAttendance,
+  watchAbsences,
   EventListener,
   expireChecklists,
   flagOverdueTasks,
@@ -118,6 +123,13 @@ await boss.work(QUEUE_WORK_5MIN, async () => {
   const slips = await sweepSlips(prisma);
   const tickets = await sweepTickets(prisma);
   const fms = await watchFmsSteps(prisma);
+  // HR: Buddy answers that ran out, covers starting and ending, absences, and settling attendance.
+  const buddies = await expireBuddyRequests(prisma);
+  const covers = await runCovers(prisma);
+  const absent = await watchAbsences(prisma);
+  const settled = await settleAttendance(prisma);
+  if (buddies || covers.started || covers.ended || absent || settled)
+    log.info({ buddies, covers, absent, settled }, 'HR sweep');
   if (
     fms ||
     created ||
@@ -136,6 +148,7 @@ await boss.work(QUEUE_WORK_1MIN, async () => {
   const briefs = await eaJobs(prisma);
   const mis = await sendWeeklyMis(prisma);
   const summaries = await sendDailySummaries(prisma, env.APP_SECRET);
+  await morningCoverReport(prisma);
   await runFmsWebhooks(prisma);
   if (briefs || mis || summaries) log.info({ briefs, mis, summaries }, 'Scheduled sends');
 });

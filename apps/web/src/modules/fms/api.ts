@@ -63,6 +63,8 @@ export type StepRow = {
   position: number;
   doerId: string | null;
   originalDoerId: string | null;
+  /** A Buddy has the step while its doer is away */
+  coveredById: string | null;
   plannedAt: string;
   startedAt: string;
   doneAt: string | null;

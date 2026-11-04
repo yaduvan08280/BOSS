@@ -109,7 +109,8 @@ export function RecordDrawer({
                               {s.position + 1}. {s.stepName}
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              {s.doerId ? names.get(s.doerId) : t('fms.system')} · {t('fms.planned')}{' '}
+                              {s.doerId ? names.get(s.doerId) : t('fms.system')}
+                              {s.coveredById && ` (${t('hr.covering')})`} · {t('fms.planned')}{' '}
                               {formatDateTime(s.plannedAt, tz)}
                               {s.doneAt && ` · ${t('fms.done')} ${formatDateTime(s.doneAt, tz)}`}
                             </div>

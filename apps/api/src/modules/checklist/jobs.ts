@@ -1,6 +1,8 @@
 import type { Db, Prisma } from '@mono/db';
-import { checklistMachine, frequencySchema, localDate, addDays, occurrences, transition } from '@mono/shared';
+import { checklistMachine, frequencySchema, occurrences, transition } from '@mono/shared';
 import { emitEvent } from '../../lib/events';
+import { companyCalendar } from '../hr/calendar';
+import { checklistCovers } from '../hr/cover';
 import { moduleSettings } from '../work/settings';
 import type { Item } from './service';
 
@@ -23,25 +25,11 @@ export async function sweepChecklists(db: Db, now = new Date(), onlyMasterId?: s
       select: { timezone: true },
     });
     const settings = await moduleSettings(db, companyId, 'checklist');
-    const shift = await db.shift.findFirst({
-      where: { companyId, isDefault: true, deletedAt: null },
-      select: { weekdays: true },
-    });
-    const today = localDate(now, company.timezone);
-    const holidays = await db.holiday.findMany({
-      where: {
-        companyId,
-        deletedAt: null,
-        branchId: null,
-        date: { gte: addDays(today, -3), lte: addDays(today, 3) },
-      },
-      select: { date: true },
-    });
-    const cal = {
-      tz: company.timezone,
-      holidays: new Set(holidays.map((h) => h.date)),
-      workingWeekdays: new Set(shift?.weekdays.length ? shift.weekdays : [1, 2, 3, 4, 5, 6, 7]),
-    };
+    // The shared calendar: holidays and weekly offs (or the default shift's days when none are set).
+    const shared = await companyCalendar(db, companyId);
+    const cal = { tz: company.timezone, holidays: shared.holidays, workingWeekdays: shared.workingWeekdays };
+    // A run that falls while its doer is away goes to their Buddy.
+    const buddyFor = await checklistCovers(db, companyId);
 
     for (const m of list) {
       const freq = frequencySchema.safeParse(m.frequency);
@@ -55,7 +43,9 @@ export async function sweepChecklists(db: Db, now = new Date(), onlyMasterId?: s
       );
       const items = m.items as unknown as Item[];
       for (const due of dues) {
-        for (const doerId of m.doerIds) {
+        for (const owner of m.doerIds) {
+          const buddy = buddyFor(m.id, owner, due);
+          const doerId = buddy ?? owner;
           try {
             await db.$transaction(async (tx) => {
               const run = await tx.checklistRun.create({
@@ -63,6 +53,7 @@ export async function sweepChecklists(db: Db, now = new Date(), onlyMasterId?: s
                   companyId,
                   masterId: m.id,
                   doerId,
+                  coveredById: buddy,
                   verifierId: m.verifierId ?? settings.verifierUserId,
                   plannedAt: due,
                   windowEndsAt: new Date(due.getTime() + windowMs),

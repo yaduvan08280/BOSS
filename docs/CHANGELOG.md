@@ -1,5 +1,88 @@
 # Changelog
 
+## Phase 7 — HR: rules, attendance, leave, Buddy, cover board (04/11/2026)
+
+**HR rules wizard** (System Master → HR rules)
+- The 7 steps of CLAUDE.md §9.1 with their defaults:
+  1. late & half day;
+  2. punches & overtime;
+  3. leave & HR;
+  4. Buddy;
+  5. the Buddy's answer;
+  6. autopilot;
+  7. check & save, grouped, with a Change link on each group.
+- Each answer is preset chips plus a −/+ stepper for any other value.
+- "Different for a team or person": a department or one person can have their own grace minutes and away-from-office rule.
+
+**One calendar** (HR → Leave → Holidays)
+- Holidays and weekly offs (Working / Half / Off per weekday, for the company or a branch) now drive everything: FMS due times, checklist runs, leave days and attendance.
+- With no weekly offs set, the default shift's working days still apply, so nothing changes for companies that haven't set them up.
+
+**Attendance** (HR → Attendance)
+- Punch in / out on the phone:
+  - the location is checked against the branch's geofence, and a punch away from the office is blocked or flagged by the rules (a flag tells the HOD);
+  - a selfie is taken when the rules ask for one;
+  - punches made with no connection are kept with their time and sent when the phone is back online.
+- Before the day is settled, the screen shows "At work" / "Not in yet", not a provisional "Half day".
+- Each day is settled two hours after the shift ends: Present / Late / Half day / Absent / On leave / Holiday / Weekly off, with the reasons ("40 min late", "No punch-out: half day until a correction"), plus overtime and comp-offs.
+  - Night shifts count on the date they start.
+  - A missed punch-out tells the person.
+  - Days before someone joined are never marked.
+- My month: a calendar of days with a colour per status; tap a day to see why, and to ask for a correction.
+- **Corrections:** limited per month by the rules (3 by default); the HOD or HR approves, and the day is settled again.
+- **Team:** one day for the team (HOD) or everyone (HR): in and out times, status and flagged punches.
+- **Biometric import (HR):** a device CSV with code or biometric id, DD/MM/YYYY HH:mm, and IN/OUT if given (else first = IN, last = OUT). Repeats are skipped; unknown codes and impossible dates (31/02) are reported.
+
+**Leave** (HR → Leave)
+- Leave types: CL, SL, EL, Comp-off and LWP, with yearly quotas and carry-forward, editable.
+- Balances per leave year (April or January). Comp-off = days earned by working half a day or more on a day off, within the validity window.
+- Apply: kind, first and last day, half day, reason (Dictate works). Only working days are counted. Overlaps and over-balance requests are refused.
+- The form lists **your open work in that period**: tasks due (late ones too), checklists that fall due, FMS steps you hold. Each piece gets a Buddy, the company's suggestion order first:
+  1. the step's backup;
+  2. your default Buddy;
+  3. the least busy free person in your department;
+  4. your HOD.
+  People away, or already covering the most they may, aren't suggested.
+- Buddies are asked on Telegram with **Yes, I will cover / Can't** buttons, and on the web under Buddy requests. An answer is due within the rule's hours; with the autopilot on, a no (or no answer) asks the next person.
+- The HOD gets the request on Telegram with **Approve / Reject**.
+  - "Block approval" refuses while any work has no Buddy.
+  - "Warn only" approves and marks it.
+  - The autopilot can approve a short leave by itself once everything is covered.
+  - Nobody approves their own leave.
+- Calling off a leave gives covered work back at once and returns the days.
+
+**Buddy cover and the cover board** (HR → Cover board)
+- When the leave starts, the work moves to the Buddy and shows **Covered by …**. That applies to tasks, FMS steps and checklist runs; new checklist runs during the leave are made for the Buddy.
+- When it ends, the work goes back by the rule: **work not started goes back** (the default; anything the Buddy did on it counts as started), all of it goes back, or the Buddy keeps it.
+- **Absent without leave:** someone who normally punches and isn't in by the half-day mark is absent. Their HOD is told which work has no Buddy, and the owner too after the confirm time. With the autopilot, the work goes to the first suggested Buddy.
+- The cover board shows today's absentees and people on leave, their open work, and who covers it (covered, asked, or nobody). One click gives a piece to the suggested Buddy, or gives everything to someone.
+- **08:30 morning report** to the owner, HR and the HODs: who is away and which of their work has no Buddy.
+
+**Demo data** (`npm run seed:demo`)
+- Weekly offs, a geofence on the plant, and two weeks of punches (a few late, one missed punch-out, one absence).
+- Arjun Rawat on leave today and tomorrow, his task and process steps covered by Sunita Bansal.
+- Pooja Jain's leave waiting on her Buddy, and a correction waiting for the HOD.
+
+**Fixes found while testing**
+- Plain dates in messages (a leave's first day) showed as 2026-11-06; every message now shows DD/MM/YYYY.
+- A biometric line with the code "EMP-003" was taken for the header row and skipped.
+- "31/02/2026" was read as 3 March; impossible dates are refused.
+- The HOD was counted twice in the Buddy order (as "a free person in the department" too); they come last.
+
+**Verified**
+- 249 unit/integration tests (35 new):
+  - the attendance rules with fixed punch data (grace, half day, missed punch-out, overtime, night shifts, leave, comp-off) and the geofence;
+  - the rules defaults and overrides; leave days, Buddy order and the three state machines;
+  - the API: punches, settling, corrections and their limit, biometric import, balance/overlap/days-off checks, "Block approval", autopilot, cancelling, absence, the cover board, the morning report and permissions.
+- **Phase 7 acceptance, end to end:**
+  1. Asha applies for leave with two open tasks.
+  2. Her Buddy Ravi is asked on Telegram and taps "Yes, I will cover".
+  3. The HOD approves from Telegram.
+  4. When the leave starts, both tasks show "Covered by Ravi".
+  5. After it ends, the task Ravi never touched goes back to Asha, and the one he started stays his.
+- 42 browser tests pass (4 new): every HR screen fits at 380 px and 1440 px; leave across three people's browsers (apply → the Buddy says yes → the HOD approves); the rules wizard saves; a phone punch inside the geofence.
+- Production stack: the `hr` migrations apply, the HR routes answer through Caddy, the worker's HR sweep runs, and the logs are clean.
+
 ## Phase 6 acceptance on DeepSeek (04/11/2026)
 
 - **DeepSeek is a provider choice** (System Master → Integration → AI). The address (`https://api.deepseek.com`) is built in.

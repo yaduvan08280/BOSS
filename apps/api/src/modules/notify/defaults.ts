@@ -24,6 +24,9 @@ const RULE_UPGRADES = [
   { event: 'ticket.escalated', from: ['coordinator', 'hod'], to: ['user'] },
   { event: 'ea.daily_brief', from: ['owner'], to: ['user'] },
   { event: 'ea.weekly_plan', from: ['owner'], to: ['user'] },
+  // Phase 7: the absence notice goes to the owner too (after the confirm time); the morning report is per person.
+  { event: 'hr.absent_no_cover', from: ['hod'], to: ['hod', 'owner'] },
+  { event: 'hr.morning_cover_report', from: ['hod', 'owner', 'hr'], to: ['user'] },
 ];
 
 /** Add a default rule for every event that has no rule yet, and upgrade untouched built-in ones. */

@@ -119,6 +119,8 @@ model ChecklistRun {
   submittedAt  DateTime? @map("submitted_at") @db.Timestamptz(3)
   verifiedAt   DateTime? @map("verified_at") @db.Timestamptz(3)
   remindedAt   DateTime? @map("reminded_at") @db.Timestamptz(3)
+  /// A Buddy does this run while its owner is away ("Covered by …")
+  coveredById  String?   @map("covered_by_id")
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 

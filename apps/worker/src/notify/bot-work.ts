@@ -2,6 +2,8 @@ import type { Db } from '@mono/db';
 import {
   actOnTask,
   actorFor,
+  answerBuddy,
+  decideLeave,
   completeStep,
   effectiveVerifier,
   moduleSettings,
@@ -61,6 +63,30 @@ export async function taskButton(db: Db, me: Who, action: string, taskId: string
     return msg.includes('proof')
       ? `${msg} Reply to the task message with a photo, then press Done again.`
       : msg;
+  }
+}
+
+/** HR buttons: a Buddy says yes or no; the HOD approves or rejects a leave. Same rules as the web. */
+export async function hrButton(db: Db, me: Who, action: string, id: string): Promise<string> {
+  const actor = await actorFor(db, me.companyId, me.id);
+  if (!actor) return 'Your account is not active.';
+  try {
+    if (action === 'buddyyes' || action === 'buddyno') {
+      await answerBuddy(db, actor, id, action === 'buddyyes');
+      return action === 'buddyyes'
+        ? '✅ Thank you — the work comes to you when their leave starts.'
+        : "Noted: you can't cover. They will ask someone else.";
+    }
+    if (action === 'leaveok' || action === 'leaveno') {
+      const r = await decideLeave(db, actor, id, action === 'leaveok');
+      if (action === 'leaveno') return 'Leave not approved.';
+      return r.withoutCover
+        ? '✅ Leave approved. Some work still has no Buddy — see the cover board.'
+        : '✅ Leave approved.';
+    }
+    return 'Please do this in the app.';
+  } catch (err) {
+    return friendly(err);
   }
 }
 

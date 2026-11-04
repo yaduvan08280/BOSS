@@ -23,6 +23,8 @@ export type Run = {
   id: string;
   masterId: string;
   doerId: string;
+  /** A Buddy does the run while its owner is away */
+  coveredById: string | null;
   verifierId: string | null;
   plannedAt: string;
   windowEndsAt: string;

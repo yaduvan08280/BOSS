@@ -1,8 +1,8 @@
 import type { Db } from '@mono/db';
-import { formatDateTime } from '@mono/shared';
+import { formatDateTime, formatLocalDate } from '@mono/shared';
 
-const DATE_KEYS = new Set(['due', 'from', 'to', 'date', 'time', 'last', 'at']);
 const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
  * Variables for templates: every scalar in the payload, user ids turned into names (doerId → doer),
@@ -30,7 +30,8 @@ export async function buildVars(
   for (const [k, v] of Object.entries(payload)) {
     if (v === null || v === undefined || typeof v === 'object') continue;
     const s = String(v);
-    vars[k] = (DATE_KEYS.has(k) || ISO.test(s)) && ISO.test(s) ? formatDateTime(s, ctx.timezone) : s;
+    // Dates read DD/MM/YYYY (with the time when there is one), never the stored form (decision 46).
+    vars[k] = ISO.test(s) ? formatDateTime(s, ctx.timezone) : DAY.test(s) ? formatLocalDate(s) : s;
   }
   for (const [k, id] of userIds)
     if (byId.has(id) && !(k in payload && typeof payload[k] === 'string')) vars[k] = byId.get(id)!;
