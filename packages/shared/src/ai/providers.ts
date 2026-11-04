@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 /** CLAUDE.md §13: one interface, four providers. The company picks one in System Master → Integration → AI. */
-export const AI_PROVIDERS = ['anthropic', 'openai', 'gemini', 'ollama'] as const;
+export const AI_PROVIDERS = ['anthropic', 'openai', 'gemini', 'ollama', 'deepseek'] as const;
 export type AiProvider = (typeof AI_PROVIDERS)[number];
 
 export const STT_PROVIDERS = ['browser', 'openai', 'gemini'] as const;
@@ -17,10 +17,18 @@ export const KNOWN_MODELS: Record<AiProvider, { id: string; label: string; in: n
   openai: [],
   gemini: [],
   ollama: [],
+  // Peak-hour prices (weekdays 06:30–09:30 and 11:30–15:30 IST); off-peak is half, so estimates err high.
+  deepseek: [
+    { id: 'deepseek-flash', label: 'DeepSeek V4.1 Flash', in: 0.3, out: 1.2 },
+    { id: 'deepseek-v4-pro', label: 'DeepSeek V4 Pro', in: 1.32, out: 3.96 },
+  ],
 };
 
 /** The model a new connection starts with (only Anthropic has one; the others are typed in). */
-export const DEFAULT_MODEL: Partial<Record<AiProvider, string>> = { anthropic: 'claude-opus-5-5' };
+export const DEFAULT_MODEL: Partial<Record<AiProvider, string>> = {
+  anthropic: 'claude-opus-5-5',
+  deepseek: 'deepseek-flash',
+};
 
 /** Estimated cost in millionths of a dollar. Local models (Ollama) cost nothing. */
 export function costMicros(
@@ -54,6 +62,11 @@ export const aiConfigInputSchema = z
   })
   .refine((c) => c.provider !== 'ollama' || Boolean(c.baseUrl), {
     message: 'Ollama needs the address it runs on, e.g. http://localhost:11434',
+    path: ['baseUrl'],
+  })
+  // Without an address an OpenAI-compatible key goes to OpenAI itself and is refused there.
+  .refine((c) => c.provider !== 'openai' || !/^deepseek/i.test(c.model) || Boolean(c.baseUrl), {
+    message: 'For DeepSeek, choose DeepSeek above (or set the server address https://api.deepseek.com)',
     path: ['baseUrl'],
   });
 export type AiConfigInput = z.infer<typeof aiConfigInputSchema>;

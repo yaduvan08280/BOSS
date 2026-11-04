@@ -19,9 +19,9 @@ import { can, type Actor } from '../work/actor';
 import { createFlow } from '../fms/builder';
 import { runAi } from './llm';
 import type { Llm, LlmUsage } from './providers';
-import * as BUILD from './prompts/build-flow.v1';
+import * as BUILD from './prompts/build-flow.v2';
 import { companyContext, type CompanyContext } from './prompts/context';
-import * as EDIT from './prompts/edit-flow.v1';
+import * as EDIT from './prompts/edit-flow.v2';
 import * as KPIS from './prompts/kpis.v1';
 import * as MASTER from './prompts/master.v1';
 

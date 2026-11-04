@@ -1,0 +1,268 @@
+{
+  "name": "Dealer Order to Invoice",
+  "runName": "Order",
+  "departments": ["Sales", "Production", "Quality", "Dispatch", "Accounts"],
+  "coordinator": "Rohit Mittal",
+  "solver": "Rajesh Goyal",
+  "startFields": [
+    {
+      "label": "Dealer name",
+      "type": "text",
+      "required": true,
+      "options": []
+    },
+    {
+      "label": "Items with quantity and rate",
+      "type": "items",
+      "required": true,
+      "options": []
+    },
+    {
+      "label": "Promised date",
+      "type": "date",
+      "required": true,
+      "options": []
+    }
+  ],
+  "steps": [
+    {
+      "key": "check_stock",
+      "name": "Check slab stock",
+      "type": "DECISION",
+      "doers": ["Ajay Meena"],
+      "byStarter": false,
+      "time": {
+        "value": 4,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "Stock note",
+          "type": "longtext",
+          "required": false,
+          "options": []
+        }
+      ],
+      "checklist": ["Check slabs required for the order in store"],
+      "proofRequired": false,
+      "yes": "quality_check",
+      "no": "plan_production",
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "plan_production",
+      "name": "Plan and finish production of slabs",
+      "type": "TASK",
+      "doers": ["Ajay Meena"],
+      "byStarter": false,
+      "time": {
+        "value": 3,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "Quantity to produce",
+          "type": "number",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Production completion date",
+          "type": "date",
+          "required": true,
+          "options": []
+        }
+      ],
+      "checklist": ["Schedule slabs on machine", "Finish production"],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "quality_check",
+      "name": "Check slabs and upload photo",
+      "type": "TASK",
+      "doers": ["Harish Joshi"],
+      "byStarter": false,
+      "time": {
+        "value": 4,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "Quality photo",
+          "type": "photo",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Remarks",
+          "type": "text",
+          "required": false,
+          "options": []
+        }
+      ],
+      "checklist": ["Check slab size and finish"],
+      "proofRequired": true,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "book_truck",
+      "name": "Book a truck",
+      "type": "TASK",
+      "doers": ["Mahesh Yadav"],
+      "byStarter": false,
+      "time": {
+        "value": 8,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "Transporter name",
+          "type": "text",
+          "required": true,
+          "options": []
+        }
+      ],
+      "checklist": ["Book truck for the promised date"],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "load_truck",
+      "name": "Load the slabs",
+      "type": "TASK",
+      "doers": ["Ravi Kumar"],
+      "byStarter": false,
+      "time": {
+        "value": 4,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": ["Load slabs as per the order"],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "enter_vehicle_number",
+      "name": "Enter vehicle number",
+      "type": "TASK",
+      "doers": ["Mahesh Yadav"],
+      "byStarter": false,
+      "time": {
+        "value": 1,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "Vehicle number",
+          "type": "text",
+          "required": true,
+          "options": []
+        }
+      ],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "make_invoice",
+      "name": "Make the tax invoice",
+      "type": "AUTO",
+      "doers": [],
+      "byStarter": false,
+      "time": null,
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": "document",
+      "documentType": "INV",
+      "autoText": null,
+      "notifyCustomer": true
+    },
+    {
+      "key": "send_eway_bill",
+      "name": "Send the e-way bill",
+      "type": "TASK",
+      "doers": ["Pooja Jain"],
+      "byStarter": false,
+      "time": {
+        "value": 2,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "E-way bill number",
+          "type": "text",
+          "required": true,
+          "options": []
+        }
+      ],
+      "checklist": ["Generate e-way bill for the invoice", "Send e-way bill to dealer"],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": true
+    }
+  ],
+  "remember": [
+    "Dealer orders first need a stock check by the production head (4 hours); if short, production takes up to 3 days.",
+    "Dispatch books the truck the same day and enters the vehicle number before the invoice is made.",
+    "Accounts must send the e-way bill within 2 hours of the invoice."
+  ]
+}

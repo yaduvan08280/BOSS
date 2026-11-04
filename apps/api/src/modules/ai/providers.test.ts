@@ -8,8 +8,27 @@ import { makeLlm, parseJson } from './providers';
 let server: Server;
 let base = '';
 let reply: string[] = [];
+let lastBody: Record<string, unknown> = {};
+let lastAuth = '';
 beforeAll(async () => {
-  server = createServer((_req, res) => {
+  server = createServer((req, res) => {
+    // OpenAI-compatible (DeepSeek): one JSON answer.
+    if (req.url === '/chat/completions') {
+      let body = '';
+      req.on('data', (c) => (body += c));
+      req.on('end', () => {
+        lastBody = JSON.parse(body) as Record<string, unknown>;
+        lastAuth = req.headers.authorization ?? '';
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            choices: [{ message: { content: '{"ok": true}' } }],
+            usage: { prompt_tokens: 50, completion_tokens: 5 },
+          }),
+        );
+      });
+      return;
+    }
     res.writeHead(200, { 'content-type': 'application/x-ndjson' });
     const parts = [...reply];
     const next = () => {
@@ -48,6 +67,23 @@ describe('Ollama (streamed)', () => {
     await expect(llm.complete({ system: 's', messages: [{ role: 'user', content: 'u' }] })).rejects.toThrow(
       /not found/,
     );
+  });
+});
+
+describe('DeepSeek (OpenAI-compatible)', () => {
+  it('asks for JSON with the key as a bearer token and reads the token counts', async () => {
+    const llm = makeLlm({ provider: 'deepseek', model: 'deepseek-flash', apiKey: 'sk-test', baseUrl: base });
+    const r = await llm.json({
+      system: 's',
+      messages: [{ role: 'user', content: 'u' }],
+      schema: z.object({ ok: z.boolean() }),
+    });
+    expect(r).toEqual({ data: { ok: true }, usage: { inputTokens: 50, outputTokens: 5 } });
+    expect(llm.provider).toBe('deepseek');
+    expect(lastAuth).toBe('Bearer sk-test');
+    expect(lastBody).toMatchObject({ model: 'deepseek-flash', response_format: { type: 'json_object' } });
+    // JSON mode needs the word "JSON" in the prompt.
+    expect(JSON.stringify(lastBody.messages)).toContain('JSON');
   });
 });
 

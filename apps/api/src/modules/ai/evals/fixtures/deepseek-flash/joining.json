@@ -1,0 +1,283 @@
+{
+  "name": "New Employee Joining",
+  "runName": "Joining",
+  "departments": ["HR", "IT", "Admin"],
+  "coordinator": "Kavita Rathore",
+  "solver": "Rajesh Goyal",
+  "startFields": [
+    {
+      "label": "Employee name",
+      "type": "text",
+      "required": true,
+      "options": []
+    },
+    {
+      "label": "Mobile",
+      "type": "mobile",
+      "required": true,
+      "options": []
+    },
+    {
+      "label": "Department",
+      "type": "dropdown",
+      "required": true,
+      "options": [
+        "Accounts",
+        "Admin",
+        "Dispatch",
+        "HR",
+        "IT",
+        "Logistics",
+        "Maintenance",
+        "Management",
+        "Marketing",
+        "Production",
+        "Purchase",
+        "Quality",
+        "Sales",
+        "Store"
+      ]
+    },
+    {
+      "label": "Designation",
+      "type": "text",
+      "required": true,
+      "options": []
+    },
+    {
+      "label": "Joining date",
+      "type": "date",
+      "required": true,
+      "options": []
+    }
+  ],
+  "steps": [
+    {
+      "key": "it_setup",
+      "name": "Create email and MONO login",
+      "type": "TASK",
+      "doers": ["Nikhil Sharma"],
+      "byStarter": false,
+      "time": {
+        "value": 1,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "Email ID created",
+          "type": "text",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Laptop needed",
+          "type": "yesno",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Laptop given",
+          "type": "yesno",
+          "required": false,
+          "options": []
+        }
+      ],
+      "checklist": ["Create official email ID", "Create MONO login", "Arrange laptop if needed"],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "admin_kit",
+      "name": "Keep ID card and uniform ready",
+      "type": "TASK",
+      "doers": ["Anita Verma"],
+      "byStarter": false,
+      "time": {
+        "value": 1,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "ID card ready",
+          "type": "yesno",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Uniform size",
+          "type": "text",
+          "required": false,
+          "options": []
+        }
+      ],
+      "checklist": ["Prepare ID card", "Ready uniform"],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "collect_documents",
+      "name": "Collect and upload joining documents",
+      "type": "TASK",
+      "doers": ["Kavita Rathore"],
+      "byStarter": false,
+      "time": {
+        "value": 8,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "Aadhaar number",
+          "type": "text",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "PAN",
+          "type": "text",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Bank account number",
+          "type": "text",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Documents",
+          "type": "file",
+          "required": true,
+          "options": []
+        }
+      ],
+      "checklist": ["Aadhaar collected", "PAN collected", "Bank details collected", "Documents uploaded"],
+      "proofRequired": true,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "induction",
+      "name": "Give one-day induction",
+      "type": "TASK",
+      "doers": ["HOD"],
+      "byStarter": false,
+      "time": {
+        "value": 1,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "Induction date",
+          "type": "date",
+          "required": true,
+          "options": []
+        }
+      ],
+      "checklist": ["Department introduction", "Work rules explained"],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "assign_buddy",
+      "name": "Assign a buddy",
+      "type": "TASK",
+      "doers": ["HOD"],
+      "byStarter": false,
+      "time": {
+        "value": 1,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "Buddy name",
+          "type": "text",
+          "required": true,
+          "options": []
+        }
+      ],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "week_check",
+      "name": "Check how the new person is doing after 7 days",
+      "type": "TASK",
+      "doers": ["Kavita Rathore"],
+      "byStarter": false,
+      "time": {
+        "value": 7,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "Feedback",
+          "type": "longtext",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Settling well",
+          "type": "yesno",
+          "required": true,
+          "options": []
+        }
+      ],
+      "checklist": ["Speak to new employee", "Speak to buddy/HOD"],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": "end",
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    }
+  ],
+  "remember": [
+    "HR (Kavita Rathore) owns onboarding from offer acceptance until closing the joining after 7 days.",
+    "IT setup and the admin ID card/uniform are readied two days before the joining date.",
+    "The department HOD gives the one-day induction and assigns a buddy on the joining day."
+  ]
+}

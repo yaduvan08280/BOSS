@@ -1,5 +1,20 @@
 # Changelog
 
+## Phase 6 acceptance on DeepSeek (04/11/2026)
+
+- **DeepSeek is a provider choice** (System Master → Integration → AI). The address (`https://api.deepseek.com`) is built in.
+  - Models: `deepseek-flash` (default, $0.30 in / $1.20 out per million tokens at peak) and `deepseek-v4-pro` ($1.32 / $3.96).
+  - Estimates use peak prices; off-peak is half (weekday peaks are 06:30–09:30 and 11:30–15:30 IST).
+- **A DeepSeek model chosen under "OpenAI" without an address is now refused** with a clear message. Before, the key went to OpenAI and failed as "key not accepted"; that is what happened to the first GGM setup.
+- **Build with AI prompt version 2** (`build_flow@2`, `edit_flow@2`; version 1 kept on file):
+  - every step except automatic ones gets a person (a decision goes to whoever knows the answer, an outside wait to whoever follows up);
+  - a branch that "closes the lead" points to the end instead of adding a step to close it.
+- **Acceptance met:** the Lead to Order description became a valid 12-step flow (decision, price approval with its reject route, automatic thank-you), with every step assigned. It opened in the builder, in the browser test, in 17 seconds.
+  - The other four examples have no broken branches. The only open points are roles that aren't one person ("HOD", "Customer care"); a person picks those in the builder.
+  - The five DeepSeek answers are recorded in `evals/fixtures/deepseek-flash/` and checked again by every `npm test`.
+- Cost of today's 13 DeepSeek calls (tests, five drafts, two runs, repair rounds): about $0.09. One Lead to Order draft: about 6,600 tokens in, 4,800 out, $0.008.
+- The dev database got the rule for the new 08:45 summary event. The GGM owner's first AI-written summary arrives tomorrow at 08:45.
+
 ## Phase 6 — AI layer (03/11/2026)
 
 **Connect an AI** (System Master → Integration → AI)

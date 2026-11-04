@@ -1,0 +1,247 @@
+{
+  "name": "Customer complaint to resolution",
+  "runName": "Complaint",
+  "departments": ["Quality", "Sales", "Dispatch"],
+  "coordinator": "Priya Sharma",
+  "solver": "Rohit Mittal",
+  "startFields": [
+    {
+      "label": "Customer name",
+      "type": "text",
+      "required": true,
+      "options": []
+    },
+    {
+      "label": "Customer mobile",
+      "type": "mobile",
+      "required": true,
+      "options": []
+    },
+    {
+      "label": "Order number",
+      "type": "text",
+      "required": true,
+      "options": []
+    },
+    {
+      "label": "Complaint details",
+      "type": "longtext",
+      "required": true,
+      "options": []
+    }
+  ],
+  "steps": [
+    {
+      "key": "inspect_site",
+      "name": "Inspect at customer site and take photos",
+      "type": "TASK",
+      "doers": ["Priya Sharma"],
+      "byStarter": false,
+      "time": {
+        "value": 1,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "Inspection findings",
+          "type": "longtext",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Site photo",
+          "type": "photo",
+          "required": true,
+          "options": []
+        }
+      ],
+      "checklist": [
+        "Visit the customer site",
+        "Check the complained material/order",
+        "Take photos of the issue"
+      ],
+      "proofRequired": true,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "complaint_valid",
+      "name": "Is the complaint correct?",
+      "type": "DECISION",
+      "doers": ["Priya Sharma"],
+      "byStarter": false,
+      "time": {
+        "value": 4,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": "decide_resolution",
+      "no": "explain_reason",
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "decide_resolution",
+      "name": "Decide replacement or credit note",
+      "type": "TASK",
+      "doers": ["Rohit Mittal"],
+      "byStarter": false,
+      "time": {
+        "value": 4,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "Resolution",
+          "type": "dropdown",
+          "required": true,
+          "options": ["Replacement", "Credit note"]
+        },
+        {
+          "label": "Remarks",
+          "type": "text",
+          "required": false,
+          "options": []
+        }
+      ],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "send_replacement",
+      "name": "Send the replacement",
+      "type": "TASK",
+      "doers": ["Mahesh Yadav"],
+      "byStarter": false,
+      "time": {
+        "value": 2,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "Replacement quantity",
+          "type": "number",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Dispatch details",
+          "type": "text",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Dispatch photo",
+          "type": "photo",
+          "required": false,
+          "options": []
+        }
+      ],
+      "checklist": ["Prepare replacement material", "Arrange transport", "Record dispatch details"],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": "follow_up_call",
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": true
+    },
+    {
+      "key": "explain_reason",
+      "name": "Explain the reason to the customer and close",
+      "type": "TASK",
+      "doers": ["Priya Sharma"],
+      "byStarter": false,
+      "time": {
+        "value": 4,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "Reason given to customer",
+          "type": "longtext",
+          "required": true,
+          "options": []
+        }
+      ],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": "end",
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": true
+    },
+    {
+      "key": "follow_up_call",
+      "name": "Call the customer about satisfaction",
+      "type": "TASK",
+      "doers": ["Customer care"],
+      "byStarter": false,
+      "time": {
+        "value": 1,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "Customer satisfied?",
+          "type": "yesno",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Customer remarks",
+          "type": "text",
+          "required": false,
+          "options": []
+        }
+      ],
+      "checklist": ["Call the customer", "Ask if the complaint is resolved"],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": "end",
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    }
+  ],
+  "remember": [
+    "Quality team (Priya Sharma) does site inspection of complaints within 1 day with photos",
+    "Sales head Rohit Mittal decides replacement or credit note within 4 hours",
+    "Dispatch sends replacements within 2 days"
+  ]
+}

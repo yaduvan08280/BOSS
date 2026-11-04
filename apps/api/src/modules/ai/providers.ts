@@ -188,9 +188,13 @@ async function post(url: string, body: unknown, headers: Record<string, string>,
   return (await res.json()) as Record<string, unknown>;
 }
 
-function openai(s: LlmSettings): Llm {
-  const base = (s.baseUrl || 'https://api.openai.com/v1').replace(/\/$/, '');
-  return withJson('openai', s.model, async (req, schema) => {
+function openai(
+  s: LlmSettings,
+  provider: AiProvider = 'openai',
+  defaultBase = 'https://api.openai.com/v1',
+): Llm {
+  const base = (s.baseUrl || defaultBase).replace(/\/$/, '');
+  return withJson(provider, s.model, async (req, schema) => {
     const r = await post(
       `${base}/chat/completions`,
       {
@@ -303,6 +307,9 @@ export function makeLlm(s: LlmSettings): Llm {
       return gemini(s);
     case 'ollama':
       return ollama(s);
+    case 'deepseek':
+      // OpenAI-compatible, at DeepSeek's own address.
+      return openai(s, 'deepseek', 'https://api.deepseek.com');
   }
 }
 

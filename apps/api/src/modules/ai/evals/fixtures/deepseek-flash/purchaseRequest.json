@@ -1,0 +1,323 @@
+{
+  "name": "Purchase Request Process",
+  "runName": "Purchase Request",
+  "departments": ["Purchase", "Store", "Accounts", "Management"],
+  "coordinator": "Amit Khandelwal",
+  "solver": "Rajesh Goyal",
+  "startFields": [],
+  "steps": [
+    {
+      "key": "raise_request",
+      "name": "Raise purchase request",
+      "type": "TASK",
+      "doers": [],
+      "byStarter": true,
+      "time": {
+        "value": 1,
+        "unit": "hours",
+        "from": "start"
+      },
+      "fields": [
+        {
+          "label": "Item",
+          "type": "text",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Quantity",
+          "type": "number",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Reason",
+          "type": "longtext",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Needed by",
+          "type": "date",
+          "required": true,
+          "options": []
+        }
+      ],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "hod_approval",
+      "name": "HOD approval",
+      "type": "APPROVAL",
+      "doers": ["HOD"],
+      "byStarter": false,
+      "time": {
+        "value": 1,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": "raise_request",
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "get_quotes",
+      "name": "Get three quotes and select one",
+      "type": "TASK",
+      "doers": ["Amit Khandelwal"],
+      "byStarter": false,
+      "time": {
+        "value": 2,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "Quote 1 amount",
+          "type": "amount",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Quote 2 amount",
+          "type": "amount",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Quote 3 amount",
+          "type": "amount",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Selected vendor",
+          "type": "text",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Selected amount",
+          "type": "amount",
+          "required": true,
+          "options": []
+        }
+      ],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "check_amount",
+      "name": "Is amount above ₹50,000?",
+      "type": "DECISION",
+      "doers": ["Amit Khandelwal"],
+      "byStarter": false,
+      "time": {
+        "value": 30,
+        "unit": "minutes",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": "owner_approval",
+      "no": "place_order",
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "owner_approval",
+      "name": "Owner approval",
+      "type": "APPROVAL",
+      "doers": ["Rajesh Goyal"],
+      "byStarter": false,
+      "time": {
+        "value": 8,
+        "unit": "hours",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": "get_quotes",
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "place_order",
+      "name": "Place order with vendor",
+      "type": "TASK",
+      "doers": ["Amit Khandelwal"],
+      "byStarter": false,
+      "time": {
+        "value": 1,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "Vendor name",
+          "type": "text",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Order amount",
+          "type": "amount",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Expected delivery date",
+          "type": "date",
+          "required": true,
+          "options": []
+        }
+      ],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "wait_delivery",
+      "name": "Wait for delivery",
+      "type": "OUTSIDE",
+      "doers": ["Amit Khandelwal"],
+      "byStarter": false,
+      "time": {
+        "value": 7,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [],
+      "checklist": [],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "check_goods",
+      "name": "Check goods on arrival",
+      "type": "TASK",
+      "doers": ["Gopal Prajapat"],
+      "byStarter": false,
+      "time": {
+        "value": 1,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "Received quantity",
+          "type": "number",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Bill photo",
+          "type": "file",
+          "required": true,
+          "options": []
+        }
+      ],
+      "checklist": ["Verify item matches order", "Check quantity", "Check quality"],
+      "proofRequired": true,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    },
+    {
+      "key": "pay_vendor",
+      "name": "Pay vendor",
+      "type": "TASK",
+      "doers": ["Pooja Jain"],
+      "byStarter": false,
+      "time": {
+        "value": 7,
+        "unit": "days",
+        "from": "previous"
+      },
+      "fields": [
+        {
+          "label": "Payment reference",
+          "type": "text",
+          "required": true,
+          "options": []
+        },
+        {
+          "label": "Amount paid",
+          "type": "amount",
+          "required": true,
+          "options": []
+        }
+      ],
+      "checklist": ["Verify bill", "Process payment"],
+      "proofRequired": false,
+      "yes": null,
+      "no": null,
+      "next": null,
+      "rejectTo": null,
+      "autoAction": null,
+      "documentType": null,
+      "autoText": null,
+      "notifyCustomer": false
+    }
+  ],
+  "remember": [
+    "HOD approves purchase requests within 1 day",
+    "Purchase gets three quotes within 2 days",
+    "Owner approval required above ₹50,000"
+  ]
+}

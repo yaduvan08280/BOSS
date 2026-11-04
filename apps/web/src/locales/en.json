@@ -2236,13 +2236,15 @@
       "anthropic": "Anthropic (Claude)",
       "openai": "OpenAI",
       "gemini": "Google Gemini",
-      "ollama": "Ollama (own machine)"
+      "ollama": "Ollama (own machine)",
+      "deepseek": "DeepSeek"
     },
     "providerHint": {
       "anthropic": "Recommended",
       "openai": "Or a compatible server",
       "gemini": "Google AI Studio key",
-      "ollama": "Free, runs on your server"
+      "ollama": "Free, runs on your server",
+      "deepseek": "Low cost; address built in"
     },
     "stt": {
       "browser": "The browser (free; best in Chrome)",

@@ -2,7 +2,7 @@ import type { AiFlowDraft } from '@mono/shared';
 import { system as buildSystem } from './build-flow.v1';
 import type { CompanyContext } from './context';
 
-/** "Edit with AI" on a saved flow: the whole flow comes back with the change made. */
+/** Version 1, kept for the record. In use: edit-flow.v2.ts. */
 export const id = 'edit_flow@1';
 
 export function system(c: CompanyContext) {

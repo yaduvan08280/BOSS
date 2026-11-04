@@ -149,7 +149,7 @@ describe('AI layer', () => {
     expect(usage).toMatchObject([
       {
         feature: 'build_flow',
-        prompt: 'build_flow@1',
+        prompt: 'build_flow@2',
         inputTokens: 2_000,
         outputTokens: 500,
         costMicros: 18_000,

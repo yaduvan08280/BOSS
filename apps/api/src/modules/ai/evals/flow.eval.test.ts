@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { AI_FLOW_EXAMPLES, aiFlowDraftSchema, draftToFlow, type AiProvider } from '@mono/shared';
 import { draftWithRepair } from '../flows';
 import { makeLlm } from '../providers';
-import * as BUILD from '../prompts/build-flow.v1';
+import * as BUILD from '../prompts/build-flow.v2';
 import type { CompanyContext } from '../prompts/context';
 
 /**

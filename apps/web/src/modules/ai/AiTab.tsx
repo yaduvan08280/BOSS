@@ -81,7 +81,7 @@ function AiForm({ saved }: { saved: AiConfigView | null }) {
           <CardTitle>{t('ai.set.provider')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
             {AI_PROVIDERS.map((p) => (
               <button
                 key={p}
@@ -119,7 +119,7 @@ function AiForm({ saved }: { saved: AiConfigView | null }) {
                 />
               )}
             </Field>
-            {f.provider !== 'anthropic' && (
+            {f.provider !== 'anthropic' && f.provider !== 'deepseek' && (
               <Field label={t('ai.set.baseUrl')} hint={t(`ai.set.baseUrlHint.${f.provider}`)}>
                 <Input
                   value={f.baseUrl}

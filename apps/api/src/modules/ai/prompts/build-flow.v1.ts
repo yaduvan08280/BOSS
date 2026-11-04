@@ -1,7 +1,7 @@
 import type { AiFlowDraft } from '@mono/shared';
 import { aboutCompany, type CompanyContext } from './context';
 
-/** "Build with AI" (CLAUDE.md §13): a plain description of how work moves → a process draft. */
+/** Version 1, kept for the record (ai_usage rows name it). In use: build-flow.v2.ts. */
 export const id = 'build_flow@1';
 
 export function system(c: CompanyContext) {
