@@ -367,7 +367,9 @@ export async function seedDemoFms(db: Db, companyId: string) {
         const hours = s.time ? (s.time.unit === 'days' ? s.time.value * 24 : s.time.value) : 0;
         const open = !closed && i === reach;
         // Open steps are due later today/tomorrow unless this record is one of the late ones.
-        const plannedAt = open ? new Date(late ? now - (3 + r) * H : Math.max(t + hours * H, now + (2 + r * 5) * H)) : new Date(t + hours * H);
+        const plannedAt = open
+          ? new Date(late ? now - (3 + r) * H : Math.max(t + hours * H, now + (2 + r * 5) * H))
+          : new Date(t + hours * H);
         const doneAt = open ? null : new Date(Math.min(now - H, t + hours * H * (r % 2 ? 1.3 : 0.8)));
         await db.fmsRecordStep.create({
           data: {
