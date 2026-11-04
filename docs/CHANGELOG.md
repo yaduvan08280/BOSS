@@ -1,5 +1,44 @@
 # Changelog
 
+## Phase 7 (added) — Work patterns, night shifts, pay from attendance (04/11/2026)
+
+**Night shifts that cross midnight**
+- After midnight the punch card still shows the night shift that started the evening before (it used to show a new, empty day).
+- Absence alerts and the cover board also count a running night shift from the day it started.
+
+**Work patterns, per person** (HR → Payroll → People)
+- **Fixed shift** (as before).
+- **Hours a day** (e.g. 8 h, any time): nobody is late. Less than half the hours = absent, less than all = half day, more = overtime.
+- **Hours a week** (e.g. 48 h, Monday–Sunday): short weeks are cut by the pay rules, extra hours are overtime. The attendance month shows each week's hours against the target.
+- Hours a day / a week can have a "latest time to start": not in by then on a working day = absent (the HOD is told).
+
+**Pay from attendance** (HR → Payroll; HR only, gross pay)
+- Each person is paid by the **month**, the **day** or the **hour**, at their own rate. Without one, the salary in their HR details counts as a monthly rate.
+- **Pay rules** (company-wide, with overrides for a team, a designation or one person; the most specific wins):
+  - a month's salary is for all days of the month (Sundays and holidays are paid days), working days only, or a fixed number (e.g. 26). This sets one day's pay;
+  - weekly offs and holidays are paid, or not;
+  - working on a weekly off or holiday gives a comp-off (the default, as before), extra pay (× a day's pay, e.g. ×2), a fixed amount, or nothing. Half a day counts half. A comp-off is earned only when that is the rule, so nobody gets both;
+  - overtime pay at × the hourly rate (default ×2);
+  - every N late days cut part of a day's pay (off by default);
+  - hours short of a week are cut at the hourly rate, or not.
+- **Month's pay:** a card per person with the counts (present, absent, leave, days off worked, late, overtime). Opening a card shows every line behind the pay (salary, days not paid, extra for a Sunday worked, overtime…). Includes a search box and a CSV download (opens in Excel).
+  - Days before joining are not paid (the joining date in HR details, else when they were added).
+  - A day with no attendance record at all (before MONO was used) doesn't cut a salary and doesn't pay a day wage; the card says how many such days there are.
+  - A running month counts up to yesterday.
+- **Close the month** once it has ended: the figures are kept as they are, whatever changes later. **Open again** needs a reason; the closed figures stay in the audit log.
+- **Not included:** PF, ESI, TDS and other deductions. Payroll statutory logic must be confirmed by the company's accountant before go-live (CLAUDE.md §9.2).
+
+**Leave a year by designation or person** (HR → Payroll → Leave a year)
+- E.g. machine operators 6 CL, sales executives 10 CL, one person 12.5. Everyone else gets the leave type's number. This year's balances change at once.
+
+**Fixes found on the way**
+- An override (HR rules or pay rules) that changed one answer also reset every other answer to its default: zod's `.partial()` fills in defaults. Overrides now keep only what they change (`overrideOf`).
+- A rule set that failed validation inside a service came back as a 500; it is now a 400 with the problem.
+- The joining and birth dates in a person's HR details used the browser's date picker; they now use MONO's DD/MM/YYYY input.
+
+**Demo data**
+- Pay for Demo Industries: monthly salaries by role, daily wages for operators and fitters, an hourly inspector, Neha on 8 hours a day, Nikhil on 48 hours a week. Pay rules: calendar month with Sundays paid, a Sunday worked pays a day extra (operators twice), overtime ×2, every 3 late days cut half a day. CL: operators 6, sales executives 10.
+
 ## Phase 7 — HR: rules, attendance, leave, Buddy, cover board (04/11/2026)
 
 **HR rules wizard** (System Master → HR rules)

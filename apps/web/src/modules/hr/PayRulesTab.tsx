@@ -1,5 +1,5 @@
 import { Loader2, Plus, Save, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { payPolicySchema, type PayPolicy, type PayRules } from '@mono/shared';
 import { ErrorState, PageSkeleton } from '@/components/page';
@@ -17,18 +17,19 @@ type Scope = PayRules['overrides'][number]['scope'];
 
 /** How attendance turns into pay: the company's answers, and answers that differ for a team, designation or person. */
 export function PayRulesTab() {
-  const { t } = useTranslation();
   const q = usePayRules();
-  const [rules, setRules] = useState<PayRules | null>(null);
-  useEffect(() => {
-    if (q.data) setRules(q.data.rules);
-  }, [q.data]);
+  if (q.isPending) return <PageSkeleton />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  return <RulesForm key={JSON.stringify(q.data.rules)} saved={q.data.rules} />;
+}
+
+function RulesForm({ saved }: { saved: PayRules }) {
+  const { t } = useTranslation();
+  const [rules, setRules] = useState<PayRules>(saved);
   const save = useHrMutation(
-    () => payApi.saveRules(rules!),
+    () => payApi.saveRules(rules),
     () => t('hr.p.rulesSaved'),
   );
-  if (q.isPending || (q.data && !rules)) return <PageSkeleton />;
-  if (q.isError || !rules) return <ErrorState onRetry={() => void q.refetch()} />;
   const company = payPolicySchema.parse(rules);
   const overrides = rules.overrides;
   const put = (i: number, o: PayRules['overrides'][number]) =>

@@ -11,6 +11,7 @@ import { seedDemoWork } from './seed-demo-work';
 import { seedDemoEngine } from './seed-demo-engine';
 import { seedDemoFms } from './seed-demo-fms';
 import { seedDemoHr } from './seed-demo-hr';
+import { seedDemoPay } from './seed-demo-pay';
 
 const PASSWORD = process.env.SEED_DEMO_PASSWORD?.trim() || 'Demo1234';
 const DEPARTMENTS = [
@@ -225,6 +226,8 @@ try {
   if (await seedDemoFms(prisma, company.id)) console.log('Added 8 demo processes with running records.');
   if (await seedDemoHr(prisma, company.id))
     console.log('Added demo attendance, leave with a Buddy, and HR rules.');
+  if (await seedDemoPay(prisma, company.id))
+    console.log('Added demo pay: salaries, daily wages, pay rules and leave by designation.');
 } finally {
   await prisma.$disconnect();
 }

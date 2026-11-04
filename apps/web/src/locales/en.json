@@ -2822,7 +2822,9 @@
       "warn": {
         "noRate": "No pay set",
         "noAttendance": "No attendance this month",
-        "unsettled": "Days still being worked out"
+        "unsettled": "Days still being worked out",
+        "unrecorded_one": "{{count}} day with no record (salary not cut)",
+        "unrecorded_other": "{{count}} days with no record (salary not cut)"
       },
       "line": {
         "base": "Monthly salary",

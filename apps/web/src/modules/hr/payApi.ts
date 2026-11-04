@@ -1,5 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import type { EmployeeTerms, PayBasis, PayResult, PayRules, WorkPattern } from '@mono/shared';
+import {
+  formatINR,
+  type EmployeeTerms,
+  type PayBasis,
+  type PayResult,
+  type PayRules,
+  type WorkPattern,
+} from '@mono/shared';
 import { api } from '@/lib/api';
 
 export type TermsRow = {
@@ -24,7 +31,7 @@ export type PayLine = PayResult & {
   };
   ratePaise: number;
   pattern: WorkPattern;
-  warnings: ('noRate' | 'noAttendance' | 'unsettled')[];
+  warnings: ('noRate' | 'noAttendance' | 'unsettled' | 'unrecorded')[];
 };
 export type PaySheet = {
   month: string;
@@ -66,6 +73,8 @@ export const payApi = {
   reopen: (month: string, reason: string) =>
     api<PaySheet>(`/api/hr/payroll/${month}/reopen`, { method: 'POST', body: { reason } }),
 };
+
+export const inr = (paise: number) => formatINR(Math.round(paise));
 
 /** ₹ from paise for inputs (whole rupees and paise as typed). */
 export const rupees = (paise: number) => Math.round(paise) / 100;

@@ -31,7 +31,7 @@ export type PayLineOut = PayResult & {
   };
   ratePaise: number;
   pattern: WorkPattern;
-  /** noRate: no pay set · noAttendance: never punched this month · unsettled: days still being worked out */
+  /** noRate: no pay set · noAttendance: no record this month · unsettled: days still being worked · unrecorded: some days have no record */
   warnings: string[];
 };
 
@@ -76,7 +76,8 @@ async function workOut(db: Db, companyId: string, month: string, now: Date) {
   const last = lastDay(month);
   const today = localDate(now, tz);
   if (first > today) throw new AppError(400, 'VALIDATION_FAILED', "This month hasn't started yet");
-  const asOf = last < today ? last : today;
+  // A running month counts up to yesterday: today is still being worked.
+  const asOf = last < today ? last : addDays(today, -1);
   const dates: string[] = [];
   for (let d = first; d <= last; d = addDays(d, 1)) dates.push(d);
 
@@ -148,8 +149,10 @@ async function workOut(db: Db, companyId: string, month: string, now: Date) {
       // The last two days may not be settled yet: work them out as they stand.
       if (!rec && date <= asOf && date >= addDays(asOf, -2) && date >= joined) {
         const live = await evaluateDay(db, companyId, p, date, now);
-        rec = { status: live.status, workedMin: live.workedMinutes, overtimeMin: live.overtimeMinutes };
-        if (!live.final) unsettled++;
+        // A day still being worked (today mid-shift) isn't counted yet.
+        if (live.final)
+          rec = { status: live.status, workedMin: live.workedMinutes, overtimeMin: live.overtimeMinutes };
+        else unsettled++;
       }
       if (rec) recorded++;
       days.push({
@@ -176,7 +179,9 @@ async function workOut(db: Db, companyId: string, month: string, now: Date) {
     const warnings: string[] = [];
     if (!ratePaise) warnings.push('noRate');
     if (!recorded && !mine.length) warnings.push('noAttendance');
-    if (unsettled) warnings.push('unsettled');
+    // In a running month today is always still being worked; only an ended month warns.
+    if (unsettled && asOf === last) warnings.push('unsettled');
+    if (result.counts.unrecorded && recorded) warnings.push('unrecorded');
     lines.push({
       user: {
         id: u.id,

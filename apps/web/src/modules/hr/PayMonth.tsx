@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { formatDateTime, formatINR, formatLocalDate } from '@mono/shared';
+import { formatDateTime, formatLocalDate } from '@mono/shared';
 import { EmptyState, ErrorState, KpiTile, PageSkeleton } from '@/components/page';
 import { StatusChip } from '@/components/status-chip';
 import { Button } from '@/components/ui/button';
@@ -20,9 +20,7 @@ import { Input } from '@/components/ui/input';
 import { matchScore } from '@/lib/pick';
 import { cn } from '@/lib/utils';
 import { useHrMutation } from './api';
-import { payApi, payCsv, usePaySheet, type PayLine } from './payApi';
-
-export const inr = (paise: number) => formatINR(Math.round(paise));
+import { inr, payApi, payCsv, usePaySheet, type PayLine } from './payApi';
 
 /** One month's gross pay from attendance: a card a person, the lines behind it, close / reopen, CSV. */
 export function PayMonth({ today, tz }: { today: string; tz: string }) {
@@ -56,7 +54,7 @@ export function PayMonth({ today, tz }: { today: string; tz: string }) {
       t(`hr.p.csv.${k}`, { defaultValue: t(`hr.p.line.${k}`, { defaultValue: k }) }),
     );
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([`﻿${csv}`], { type: 'text/csv' }));
+    a.href = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv' }));
     a.download = `pay-${month}.csv`;
     a.click();
     URL.revokeObjectURL(a.href);
@@ -198,7 +196,7 @@ function PersonPay({ l }: { l: PayLine }) {
           ))}
           {l.warnings.map((w) => (
             <StatusChip key={w} tone="warn">
-              {t(`hr.p.warn.${w}`)}
+              {t(`hr.p.warn.${w}`, { count: c.unrecorded })}
             </StatusChip>
           ))}
         </div>

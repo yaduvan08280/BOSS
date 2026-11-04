@@ -12,8 +12,7 @@ import { Field } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { matchScore } from '@/lib/pick';
 import { useHrMutation } from './api';
-import { BASES, payApi, rupees, useTerms, type TermsRow } from './payApi';
-import { inr } from './PayMonth';
+import { BASES, inr, payApi, rupees, useTerms, type TermsRow } from './payApi';
 import { Chips, NumberChoice, Question } from './ui';
 
 const hhmm = (min: number | null | undefined) =>

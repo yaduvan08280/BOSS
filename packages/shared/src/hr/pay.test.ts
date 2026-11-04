@@ -124,6 +124,15 @@ describe('monthly salary', () => {
       ),
     ).toBe((13 + 2) * 800);
   });
+  it('days with no record: a salary is not cut, a day wage is not paid', () => {
+    const blank = (d: PayDay) =>
+      d.date <= '2026-11-14' && d.kind === 'working' ? { status: null, workedMin: 0 } : {};
+    const monthly = pay(month(blank));
+    expect(monthly.counts.unrecorded).toBe(11);
+    expect(rupees(monthly.grossPaise)).toBe(30_000);
+    // 13 recorded working days + 6 paid days off.
+    expect(rupees(pay(month(blank), {}, 'daily', 80_000).grossPaise)).toBe(19 * 800);
+  });
   it('a running month is not cut for the days still to come', () => {
     const r = computePay({
       basis: 'monthly',

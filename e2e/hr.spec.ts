@@ -71,6 +71,10 @@ test('HR screens fit the screen', async ({ page }, info) => {
     ['/hr/leave?tab=holidays', 'hr-holidays'],
     ['/hr/cover', 'hr-cover'],
     ['/system/hr-rules', 'hr-rules'],
+    ['/hr/payroll', 'hr-payroll'],
+    ['/hr/payroll?tab=people', 'hr-payroll-people'],
+    ['/hr/payroll?tab=rules', 'hr-payroll-rules'],
+    ['/hr/payroll?tab=quotas', 'hr-payroll-quotas'],
   ] as const) {
     await page.goto(path);
     await settled(page);
@@ -207,4 +211,48 @@ test('punch in on the phone at the plant', async ({ browser }, info) => {
   await expectNoSideScroll(page);
   await shot(page, 'hr-punched', info.project.name);
   await ctx.close();
+});
+
+test('payroll: the month from attendance, a person’s pay, and only HR sees it', async ({
+  page,
+  browser,
+}, info) => {
+  test.skip(info.project.name !== 'desktop', 'changes pay data');
+  await signIn(page, OWNER);
+  await page.goto('/hr/payroll');
+  await settled(page);
+  await expect(page.getByText(/PF, ESI, TDS/)).toBeVisible();
+  // A card opens the lines behind the pay.
+  await page.locator('main li').filter({ hasText: 'Pooja Jain' }).first().getByRole('button').first().click();
+  await expect(page.locator('main').getByText('Monthly salary').first()).toBeVisible();
+  await shot(page, 'hr-payroll-lines', info.project.name);
+
+  const terms = (await (await page.request.get('/api/hr/terms')).json()) as {
+    user: { id: string; name: string };
+    terms: object;
+  }[];
+  const harish = terms.find((x) => x.user.name === 'Harish Joshi')!;
+  try {
+    await page.goto('/hr/payroll?tab=people');
+    await page.getByPlaceholder('Type a name, code or department').fill('harish');
+    await page
+      .locator('main li')
+      .filter({ hasText: 'Harish Joshi' })
+      .getByRole('button', { name: 'Edit' })
+      .click();
+    await page.getByRole('radiogroup', { name: 'Paid by' }).getByRole('radio', { name: 'Day' }).click();
+    await page.getByLabel('Pay a day (₹)').fill('900');
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await expect(
+      page.locator('main li').filter({ hasText: 'Harish Joshi' }).getByText('₹900.00 a day'),
+    ).toBeVisible();
+  } finally {
+    await page.request.put(`/api/hr/terms/${harish.user.id}`, { headers: headers(page), data: harish.terms });
+  }
+
+  // Not in a member's menu, and the API says no.
+  const g = await as(browser, GOPAL, info);
+  await expect(g.page.getByRole('link', { name: 'Payroll' })).toHaveCount(0);
+  expect((await g.page.request.get('/api/hr/terms')).status()).toBe(403);
+  await g.close();
 });

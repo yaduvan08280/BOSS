@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { USER_STATUS, type OrgDepartment, type OrgPerson } from '@mono/shared';
 import { Avatar } from '@/components/brand';
 import { Button } from '@/components/ui/button';
+import { DateInput } from '@/components/ui/date-input';
 import { Field, Select } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -194,13 +195,22 @@ export function PersonSheet({
               <div className="grid grid-cols-2 gap-3">
                 {HR_FIELDS.map((k) => (
                   <Field key={k} label={t(`org.hr.${k}`)}>
-                    <Input
-                      value={hr[k] ?? ''}
-                      onChange={(e) => setHr({ ...hr, [k]: e.target.value })}
-                      type={k === 'doj' || k === 'dob' ? 'date' : k === 'salary' ? 'number' : 'text'}
-                      inputMode={k === 'aadhaarLast4' || k === 'salary' ? 'numeric' : undefined}
-                      maxLength={k === 'aadhaarLast4' ? 4 : undefined}
-                    />
+                    {k === 'doj' || k === 'dob' ? (
+                      // DD/MM/YYYY like every date in MONO (the joining date also starts their pay).
+                      <DateInput
+                        value={/^\d{4}-\d{2}-\d{2}$/.test(hr[k] ?? '') ? hr[k]! : ''}
+                        onChange={(v) => setHr({ ...hr, [k]: v })}
+                        aria-label={t(`org.hr.${k}`)}
+                      />
+                    ) : (
+                      <Input
+                        value={hr[k] ?? ''}
+                        onChange={(e) => setHr({ ...hr, [k]: e.target.value })}
+                        type={k === 'salary' ? 'number' : 'text'}
+                        inputMode={k === 'aadhaarLast4' || k === 'salary' ? 'numeric' : undefined}
+                        maxLength={k === 'aadhaarLast4' ? 4 : undefined}
+                      />
+                    )}
                   </Field>
                 ))}
               </div>

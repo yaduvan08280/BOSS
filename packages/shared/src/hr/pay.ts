@@ -66,7 +66,7 @@ export function payPolicyFor(
 export type PayDay = {
   date: string;
   kind: 'working' | 'holiday' | 'weeklyOff';
-  /** What the day counted as; null when there is no record (not settled yet). */
+  /** What the day counted as; null when there is no record (not settled yet, or before MONO was used). */
   status: AttendanceStatus | null;
   workedMin: number;
   overtimeMin: number;
@@ -94,6 +94,8 @@ export type PayResult = {
     offDays: number;
     offDaysWorked: number;
     late: number;
+    /** Working days with no attendance record (MONO not in use yet): a salary isn't cut, a wage isn't paid. */
+    unrecorded: number;
     workedHours: number;
     overtimeHours: number;
   };
@@ -137,7 +139,16 @@ export function computePay(input: {
   const weekly = input.pattern.kind === 'weekly';
 
   // How much of each working day is paid: work done plus paid leave (weekly hours: days don't cut pay, hours do).
-  const c = { present: 0, halfDays: 0, absent: 0, paidLeave: 0, unpaidLeave: 0, offDaysWorked: 0, late: 0 };
+  const c = {
+    present: 0,
+    halfDays: 0,
+    absent: 0,
+    paidLeave: 0,
+    unpaidLeave: 0,
+    offDaysWorked: 0,
+    late: 0,
+    unrecorded: 0,
+  };
   let paidWorking = 0;
   let unpaidWorking = 0;
   let workedMin = 0;
@@ -156,6 +167,12 @@ export function computePay(input: {
       continue;
     }
     const leave = d.leave;
+    // No record of the day: no proof either way. A salary carries on; day and hour pay need the work.
+    if (d.status === null && !leave) {
+      c.unrecorded++;
+      if (input.basis === 'monthly') paidWorking++;
+      continue;
+    }
     const leavePart = leave ? (leave.half ? 0.5 : 1) : 0;
     if (leave?.paid) c.paidLeave += leavePart;
     else if (leave) c.unpaidLeave += leavePart;
@@ -202,10 +219,11 @@ export function computePay(input: {
     if (pol.paidOffDays) add('paidOffDays', offDays, rate * dayHours);
   }
 
-  if (offUnits && pol.dayOffWork === 'multiplier')
-    input.basis === 'hourly'
-      ? add('dayOffWork', offWorkedMin / 60, rate * Math.max(1, pol.dayOffMultiplier))
-      : add('dayOffWork', offUnits, perDay * pol.dayOffMultiplier);
+  if (offUnits && pol.dayOffWork === 'multiplier') {
+    if (input.basis === 'hourly')
+      add('dayOffWork', offWorkedMin / 60, rate * Math.max(1, pol.dayOffMultiplier));
+    else add('dayOffWork', offUnits, perDay * pol.dayOffMultiplier);
+  }
   if (offUnits && pol.dayOffWork === 'fixed') add('dayOffWork', offUnits, pol.dayOffFixedPaise);
 
   if (pol.lateEvery > 0 && c.late >= pol.lateEvery) {
@@ -224,7 +242,7 @@ export function computePay(input: {
     }
     let short = 0;
     for (const list of weeks.values()) {
-      const work = list.filter((d) => d.kind === 'working');
+      const work = list.filter((d) => d.kind === 'working' && (d.status !== null || d.leave));
       const perWorkday = input.weeklyHours / 6;
       const leaveDays = work.reduce((n, d) => n + (d.leave ? (d.leave.half ? 0.5 : 1) : 0), 0);
       const target = Math.max(0, (work.length - leaveDays) * perWorkday) * 60;
@@ -236,11 +254,12 @@ export function computePay(input: {
   }
 
   const overtime = weekly ? weeklyOt : otMin;
-  if (overtime && pol.overtimePay)
-    input.basis === 'hourly'
-      ? // Hourly pay already counts the hours; overtime adds the premium on top.
-        add('overtime', overtime / 60, rate * Math.max(0, pol.overtimeMultiplier - 1))
-      : add('overtime', overtime / 60, hourly * pol.overtimeMultiplier);
+  if (overtime && pol.overtimePay) {
+    // Hourly pay already counts the hours; overtime adds the premium on top.
+    if (input.basis === 'hourly')
+      add('overtime', overtime / 60, rate * Math.max(0, pol.overtimeMultiplier - 1));
+    else add('overtime', overtime / 60, hourly * pol.overtimeMultiplier);
+  }
 
   const gross = Math.max(
     0,
