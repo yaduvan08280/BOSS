@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { matchScore } from '@/lib/pick';
 import { cn } from '@/lib/utils';
 import { inr, useCustomers, useProgress, type CustomerRow } from './api';
-import { CustomerDialog, CustomerSheet, ImportCustomers, TagsDialog } from './CustomerDialogs';
+import { CustomerDialog, CustomerSheet } from './CustomerDialogs';
+import { ImportCustomers, TagsDialog } from './CustomerExtras';
 import { TagChips } from './tags';
 
 /** Sales CRM → Customer Master (§11.2): GP ranks, automatic and own tags, the 80/20 check. */
