@@ -27,6 +27,13 @@ const envSchema = z.object({
   VAPID_SUBJECT: z.string().default(''),
   /** Login attempts allowed per IP per 15 minutes. */
   LOGIN_RATE_LIMIT: z.coerce.number().int().default(10),
+  /** API calls allowed per IP per minute, on top of each route's own limit. Empty = 600 in production, off elsewhere; 0 = off. */
+  API_RATE_LIMIT: z.string().default(''),
+  /** Let webhooks call private / local addresses (development and tests only; never in production). */
+  WEBHOOK_ALLOW_PRIVATE: z
+    .string()
+    .default('')
+    .transform((v) => /^(1|true|yes)$/i.test(v.trim())),
 });
 
 export type Env = z.infer<typeof envSchema> & { cookieSecure: boolean; origin: string };

@@ -2,6 +2,7 @@ import { formatNumber, nextCounter, type Db } from '@mono/db';
 import { SEGMENTS, splitTable } from '@mono/shared';
 import { z } from 'zod';
 import { writeAudit } from '../../lib/audit';
+import { recordChange } from '../../lib/events';
 import { AppError, notFound } from '../../lib/errors';
 import type { Actor } from '../work/actor';
 import { ctxOf, money, need } from './access';
@@ -153,12 +154,21 @@ export async function saveCustomer(db: Db, actor: Actor, input: z.input<typeof c
             ...data,
           },
         });
-    await writeAudit(tx, ctxOf(actor), {
-      action: id ? 'crm.customer_changed' : 'crm.customer_added',
+    await recordChange(tx, ctxOf(actor), {
+      event: id ? 'crm.customer_changed' : 'crm.customer_added',
       entityType: 'customer',
       entityId: row.id,
       before,
       after: c,
+      payload: {
+        code: row.code,
+        name: row.name,
+        city: row.city,
+        mobile: row.mobile,
+        email: row.email,
+        segment: row.segment,
+        creditDays: row.creditDays,
+      },
     });
     return { id: row.id, code: row.code, name: row.name };
   });

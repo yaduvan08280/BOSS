@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { personLabel } from '@/lib/people';
 import { uploadFile, type Uploaded } from '@/lib/upload';
 import { cn } from '@/lib/utils';
+import { MasterPicker } from '@/modules/masters/MasterPicker';
 
 import type { Values } from './payload';
 type Line = { item: string; qty: string; rate: string };
@@ -167,6 +168,11 @@ function FieldInput({
                 </option>
               ))}
           </Select>
+        );
+      // Any master (customers, items, vendors, your own): search and pick; the public form just types.
+      if (!publicForm)
+        return (
+          <MasterPicker source={f.master ?? 'customers'} value={str} onChange={onChange} label={f.label} />
         );
       return <Input value={str} onChange={(e) => onChange(e.target.value)} />;
     case 'location':

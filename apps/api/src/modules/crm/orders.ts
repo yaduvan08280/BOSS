@@ -2,6 +2,7 @@ import { nextCounter, type Db, type Tx } from '@mono/db';
 import { addDays, financialYear, salesOrderMachine, transition, type SalesOrderStatus } from '@mono/shared';
 import { z } from 'zod';
 import { writeAudit } from '../../lib/audit';
+import { emitEvent } from '../../lib/events';
 import { AppError, notFound } from '../../lib/errors';
 import { startRecord } from '../fms/engine';
 import { recordAction } from '../fms/records';
@@ -107,6 +108,22 @@ export async function createOrder(
       entityId: order.id,
       after: { ...o, number },
     });
+    await emitEvent(t, ctxOf(actor), {
+      name: 'crm.order_taken',
+      entityType: 'sales_order',
+      entityId: order.id,
+      payload: {
+        number,
+        customerId: c.id,
+        customer: c.name,
+        orderDate,
+        amountPaise: String(o.amount),
+        gpPaise: String(o.gp ?? 0),
+        items: o.items,
+        promisedOn: promisedOn ?? null,
+        dueOn,
+      },
+    });
     return order;
   };
   const order = tx ? await run(tx) : await db.$transaction(run);
@@ -178,6 +195,12 @@ export async function cancelOrder(db: Db, actor: Actor, id: string, reason: stri
       entityType: 'sales_order',
       entityId: id,
       after: { reason },
+    });
+    await emitEvent(tx, ctxOf(actor), {
+      name: 'crm.order_cancelled',
+      entityType: 'sales_order',
+      entityId: id,
+      payload: { number: o.number, reason },
     });
   });
   // Its after-order record is cancelled through the FMS machine (as an FMS admin would).

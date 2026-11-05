@@ -4,6 +4,7 @@ import { FIELD_TYPES, type FlowField } from '@mono/shared';
 import { Button } from '@/components/ui/button';
 import { Checkbox, Select } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { useMasters } from '@/modules/ai/api';
 import { keyFor } from './keys';
 
 /** Edit a form: label, type, required, choices, help. Keys come from the label and never change after. */
@@ -15,6 +16,7 @@ export function FieldsEditor({
   onChange: (f: FlowField[]) => void;
 }) {
   const { t } = useTranslation();
+  const masters = useMasters();
   const set = (i: number, patch: Partial<FlowField>) =>
     onChange(fields.map((f, j) => (j === i ? { ...f, ...patch } : f)));
   const move = (i: number, by: number) => {
@@ -102,6 +104,11 @@ export function FieldsEditor({
               {['customers', 'items', 'vendors', 'people'].map((m) => (
                 <option key={m} value={m}>
                   {t(`fms.master.${m}`)}
+                </option>
+              ))}
+              {(masters.data ?? []).map((m) => (
+                <option key={m.id} value={`m:${m.id}`}>
+                  {m.name}
                 </option>
               ))}
             </Select>

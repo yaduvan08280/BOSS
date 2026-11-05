@@ -3,6 +3,10 @@
 Business operating system for GGM Minerals. The full specification is in [CLAUDE.md](CLAUDE.md);
 installing on the server is in [deploy/INSTALL.md](deploy/INSTALL.md).
 
+- **New PC with WSL Ubuntu, step by step:** [NEW_SETUP_PROCESS.md](NEW_SETUP_PROCESS.md)
+- **Every feature, its setup and what it depends on:** [FEATURES.md](FEATURES.md)
+- **User guides (printable, also under Support in the app):** [docs/guide](docs/guide/README.md)
+
 ## Develop (WSL2 / Ubuntu)
 
 ```bash
@@ -37,7 +41,7 @@ E2E tests use the demo company (`npm run seed:demo`) and remove what they create
 | Path | What |
 |---|---|
 | `apps/api` | Fastify API: `src/modules/<module>`, plugins (auth, errors, origin check, SSE) |
-| `apps/worker` | pg-boss jobs: dispatches outbox events (notifications plug in here in phase 2) |
+| `apps/worker` | pg-boss jobs: events, notifications, reminders, Telegram bot, webhooks, Google Drive sync |
 | `apps/web` | React 19 + Vite + Tailwind 4 app shell, i18n (en/hi), theme from one colour |
 | `packages/shared` | State-machine helper, money/date/phone formatters, permissions, theme generator, zod schemas |
 | `packages/db` | Generated Prisma client, company scoping, counters |

@@ -1,4 +1,4 @@
-import { createReadStream, createWriteStream } from 'node:fs';
+import { createReadStream, createWriteStream, existsSync } from 'node:fs';
 import { mkdir, rm, stat } from 'node:fs/promises';
 import { dirname, resolve, sep } from 'node:path';
 import { pipeline } from 'node:stream/promises';
@@ -32,6 +32,10 @@ export class LocalDiskStorage implements Storage {
 
   get(key: string): Readable {
     return createReadStream(this.path(key));
+  }
+
+  has(key: string): boolean {
+    return existsSync(this.path(key));
   }
 
   async remove(key: string): Promise<void> {

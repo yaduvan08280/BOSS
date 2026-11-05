@@ -19,6 +19,7 @@ import { sendTelegram, telegramGetMe } from '../../lib/channels/telegram';
 import { AppError } from '../../lib/errors';
 import { recordChange } from '../../lib/events';
 import { inCompanyTx } from '../../lib/tx';
+import { assertPublicUrl } from '../platform/safe-url';
 
 const channelParam = z.object({ channel: z.enum(CHANNEL_KEYS) });
 
@@ -58,6 +59,17 @@ export async function channelRoutes(app: FastifyInstance, opts: { env: Env }) {
           issues: parsed.error.issues,
         });
       const extra: Record<string, unknown> = {};
+      const endpoint = (parsed.data as { endpoint?: string }).endpoint;
+      if (channel === 'whatsapp' && endpoint) {
+        // The provider's address is called from the server: never one inside its own network.
+        const production = env.NODE_ENV === 'production';
+        await assertPublicUrl(endpoint, {
+          production,
+          allowPrivate: env.WEBHOOK_ALLOW_PRIVATE && !production,
+        }).catch((e: Error) => {
+          throw new AppError(400, 'VALIDATION_FAILED', e.message);
+        });
+      }
       if (channel === 'telegram' && 'token' in parsed.data && parsed.data.token) {
         // Check the token right away so a typo is caught here, not at 3 a.m.
         const bot = await telegramGetMe(parsed.data.token).catch((e: Error) => {

@@ -78,6 +78,30 @@ model MasterDef {
   updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(3)
 
+  rows MasterRow[]
+
   @@index([companyId, deletedAt])
   @@map("master_defs")
+}
+
+/// A row of a master (phase 10): the values by field key, its unique key (when the master has one) and the text it shows as.
+model MasterRow {
+  id          String    @id @default(cuid(2))
+  companyId   String    @map("company_id")
+  masterId    String    @map("master_id")
+  data        Json
+  /// The key field's value (null after a delete, so the key can be used again).
+  key         String?
+  /// The display field's value: what pickers show and "from a master" fields keep.
+  label       String
+  createdById String?   @map("created_by_id")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  master MasterDef @relation(fields: [masterId], references: [id])
+
+  @@unique([masterId, key])
+  @@index([companyId, masterId, label])
+  @@map("master_rows")
 }

@@ -1,6 +1,7 @@
 import { Bot, Plus } from 'lucide-react';
 import { useState, Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router';
+import { InstallBanner } from './InstallBanner';
 import { PageSkeleton } from '@/components/page';
 import { useTranslation } from 'react-i18next';
 import { canOpenSystemMaster, type Me } from '@mono/shared';
@@ -91,6 +92,7 @@ export function AppShell({ me }: { me: Me }) {
             </div>
           ) : (
             <Suspense fallback={<PageSkeleton />}>
+              <InstallBanner appName={me.company.appName} />
               <Outlet />
             </Suspense>
           )}

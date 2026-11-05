@@ -4,6 +4,7 @@ import { hasZodFastifySchemaValidationErrors, isResponseSerializationError } fro
 import { z } from 'zod';
 import { TransitionError } from '@mono/shared';
 import { AppError } from '../lib/errors';
+import { recordError } from '../modules/errors/service';
 
 const transitionStatus = { INVALID_TRANSITION: 409, FORBIDDEN_TRANSITION: 403, GUARD_FAILED: 409 } as const;
 
@@ -55,6 +56,15 @@ export default fp(async function errorsPlugin(app: FastifyInstance) {
       return reply.status(err.statusCode).send({ error: { code: 'BAD_REQUEST', message: err.message } });
     }
     request.log.error({ err }, 'Unhandled error');
+    if (app.hasDecorator('prisma'))
+      void recordError(app.prisma, {
+        source: 'api',
+        message: err.message,
+        stack: err.stack ?? null,
+        path: `${request.method} ${request.routeOptions.url ?? request.url.split('?')[0]}`,
+        companyId: request.auth?.companyId ?? null,
+        userId: request.auth?.userId ?? null,
+      });
     return reply
       .status(500)
       .send({ error: { code: 'INTERNAL', message: 'Something went wrong on our side' } });

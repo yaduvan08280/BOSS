@@ -4,7 +4,8 @@ import { ALL_ITEMS } from '@/layout/nav';
 import { LoginPage } from '@/modules/auth/LoginPage';
 import { HomePage } from '@/modules/home/HomePage';
 import { PlaceholderPage } from '@/modules/placeholder/PlaceholderPage';
-import { Authed, DrivePlaceholder, SystemOnly, WithMe } from './guards';
+import { Authed, SystemOnly, WithMe } from './guards';
+import { RouteError } from './RouteError';
 import { page } from './lazy';
 
 // Every screen but sign-in and Home loads on first visit, so phones download only what they open.
@@ -45,6 +46,11 @@ const DepartmentsTab = page(() => import('@/modules/system/departments/Departmen
 const OrgChartTab = page(() => import('@/modules/system/orgchart/OrgChartTab'), 'OrgChartTab');
 const RolesTab = page(() => import('@/modules/system/roles/RolesTab'), 'RolesTab');
 const SystemMasterLayout = page(() => import('@/modules/system/SystemMasterPage'), 'SystemMasterLayout');
+const DriveTab = page(() => import('@/modules/system/integration/DriveTab'), 'DriveTab');
+const SupportPage = page(() => import('@/modules/support/SupportPage'), 'SupportPage');
+const GuidePage = page(() => import('@/modules/support/SupportPage'), 'GuidePage');
+const ErrorsTab = page(() => import('@/modules/system/errors/ErrorsTab'), 'ErrorsTab');
+const ApiKeysTab = page(() => import('@/modules/system/apikeys/ApiKeysTab'), 'ApiKeysTab');
 const UsersTab = page(() => import('@/modules/system/users/UsersTab'), 'UsersTab');
 const AiTab = page(() => import('@/modules/ai/AiTab'), 'AiTab');
 const BusinessDetailsPage = page(() => import('@/modules/ai/BusinessDetailsPage'), 'BusinessDetailsPage');
@@ -69,6 +75,8 @@ const CrmCollections = page(() => import('@/modules/crm/CollectionsPage'), 'Coll
 const CrmNbd = page(() => import('@/modules/crm/NbdPage'), 'NbdPage');
 const CrmMeca = page(() => import('@/modules/crm/MecaPage'), 'MecaPage');
 const CrmFieldsTab = page(() => import('@/modules/crm/CrmFieldsTab'), 'CrmFieldsTab');
+const MasterRowsPage = page(() => import('@/modules/masters/MasterRowsPage'), 'MasterRowsPage');
+const LibraryPage = page(() => import('@/modules/masters/LibraryPage'), 'LibraryPage');
 const RulesWizard = page(() => import('@/modules/hr/RulesWizard'), 'RulesWizard');
 
 const placeholderRoutes = ALL_ITEMS.filter((i) => i.phase > 0).map((i) => ({
@@ -89,10 +97,13 @@ export const router = createBrowserRouter([
   },
   {
     element: <Authed />,
+    errorElement: <RouteError />,
     children: [
       { index: true, element: <WithMe render={(me) => <HomePage me={me} />} /> },
       { path: '/account', element: <WithMe render={(me) => <AccountPage me={me} />} /> },
       { path: '/notifications', element: <NotificationsPage /> },
+      { path: '/support', element: <SupportPage /> },
+      { path: '/support/guide/:slug', element: <GuidePage /> },
       { path: '/delegation', element: <WithMe render={(me) => <DelegationPage me={me} />} /> },
       { path: '/checklists', element: <WithMe render={(me) => <ChecklistsPage me={me} />} /> },
       { path: '/workspace', element: <WithMe render={(me) => <WorkspacePage me={me} />} /> },
@@ -122,6 +133,8 @@ export const router = createBrowserRouter([
       { path: '/crm/nbd', element: <WithMe render={(me) => <CrmNbd me={me} />} /> },
       { path: '/crm/meca', element: <WithMe render={(me) => <CrmMeca me={me} />} /> },
       { path: '/masters/build', element: <WithMe render={(me) => <MastersPage me={me} />} /> },
+      { path: '/masters/library', element: <WithMe render={(me) => <LibraryPage me={me} />} /> },
+      { path: '/masters/:id', element: <WithMe render={(me) => <MasterRowsPage me={me} />} /> },
       { path: '/fms/live', element: <WithMe render={(me) => <LiveFmsPage me={me} />} /> },
       { path: '/fms/my-steps', element: <WithMe render={(me) => <MyStepsPage me={me} />} /> },
       { path: '/documents', element: <WithMe render={(me) => <DocumentsPage me={me} />} /> },
@@ -155,6 +168,8 @@ export const router = createBrowserRouter([
               { path: 'inventory', element: <InventorySetup /> },
               { path: 'crm', element: <CrmFieldsTab /> },
               { path: 'engine', element: <EnginePage /> },
+              { path: 'api-keys', element: <ApiKeysTab /> },
+              { path: 'errors', element: <ErrorsTab /> },
               {
                 path: 'integration',
                 element: <IntegrationTab />,
@@ -166,7 +181,7 @@ export const router = createBrowserRouter([
                   { path: 'rules', element: <RulesTab /> },
                   { path: 'reminders', element: <RemindersTab /> },
                   { path: 'ai', element: <AiTab /> },
-                  { path: 'drive', element: <DrivePlaceholder /> },
+                  { path: 'drive', element: <DriveTab /> },
                 ],
               },
               ...placeholderRoutes.filter((r) => r.path.startsWith('/system')),

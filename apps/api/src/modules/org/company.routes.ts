@@ -22,6 +22,31 @@ export async function companyRoutes(app: FastifyInstance, opts: { env: Env }) {
   const admin = () => ({ onRequest: [app.requirePermission('core.admin')] });
   const provider = gstProvider(opts.env.GST_API_PROVIDER, opts.env.GST_API_KEY);
 
+  // Support page (everyone signed in): whom to call — the company's points of contact and its admins.
+  r.get('/api/org/support', { onRequest: [app.authenticate], schema: { tags: ['org'] } }, async (request) => {
+    const companyId = request.auth!.companyId;
+    const contacts = await request.db.companyContact.findMany({
+      where: { deletedAt: null },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+      select: { id: true, role: true, name: true, phone: true, email: true },
+    });
+    const admins = await app.prisma.user.findMany({
+      where: { companyId, deletedAt: null, status: 'ACTIVE', role: { key: { in: ['OWNER', 'ADMIN'] } } },
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true, mobile: true, email: true, role: { select: { name: true } } },
+    });
+    return {
+      contacts,
+      admins: admins.map((a) => ({
+        id: a.id,
+        name: a.name,
+        mobile: a.mobile,
+        email: a.email,
+        role: a.role.name,
+      })),
+    };
+  });
+
   r.get('/api/org/company', { ...admin(), schema: { tags: ['org'] } }, async (request) => {
     const company = await app.prisma.company.findUniqueOrThrow({ where: { id: request.auth!.companyId } });
     const contacts = await request.db.companyContact.findMany({

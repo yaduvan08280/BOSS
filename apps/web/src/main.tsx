@@ -8,11 +8,15 @@ import '@/lib/i18n';
 import { cachedTheme, applyTheme } from '@/lib/theme';
 import { applyStoredTextSize } from '@/layout/useLargeText';
 import { router } from '@/app/router';
+import { captureInstallPrompt } from '@/lib/install';
+import { watchErrors } from '@/lib/report-error';
 
 // Paint the last-used theme before React renders, so reloads don't flash default colours.
 const cached = cachedTheme();
 applyTheme(cached.settings, cached.mode);
 applyStoredTextSize();
+captureInstallPrompt();
+watchErrors();
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { refetchOnWindowFocus: true, staleTime: 30_000 } },

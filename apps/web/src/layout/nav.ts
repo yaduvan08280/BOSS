@@ -1,4 +1,5 @@
 import {
+  Bug,
   BadgeIndianRupee,
   Blocks,
   Boxes,
@@ -74,7 +75,7 @@ export const WORKSPACE_NAV: NavSection[] = [
     items: [
       { key: 'home', path: '/', icon: House, phase: 0, tag: 'workspace' },
       { key: 'myWorkspace', path: '/workspace', icon: Inbox, phase: 0, tag: 'workspace' },
-      { key: 'support', path: '/support', icon: LifeBuoy, phase: 10, tag: 'workspace' },
+      { key: 'support', path: '/support', icon: LifeBuoy, phase: 0, tag: 'workspace' },
     ],
   },
   {
@@ -140,7 +141,7 @@ export const WORKSPACE_NAV: NavSection[] = [
     key: 'masters',
     items: [
       { key: 'myMasters', path: '/masters', icon: Boxes, phase: 0, tag: 'masters' },
-      { key: 'masterLibrary', path: '/masters/library', icon: LibraryBig, phase: 10, tag: 'masters' },
+      { key: 'masterLibrary', path: '/masters/library', icon: LibraryBig, phase: 0, tag: 'masters' },
       { key: 'buildMaster', path: '/masters/build', icon: Sparkles, phase: 0, tag: 'masters' },
     ],
   },
@@ -158,10 +159,11 @@ export const SYSTEM_NAV: NavSection[] = [
       { key: 'integration', path: '/system/integration', icon: Plug, phase: 0, tag: 'messaging' },
       { key: 'inventorySetup', path: '/system/inventory', icon: Package, phase: 0, tag: 'setup' },
       { key: 'crmSetup', path: '/system/crm', icon: ClipboardCheck, phase: 0, tag: 'setup' },
-      { key: 'apiKeys', path: '/system/api-keys', icon: KeyRound, phase: 10, tag: 'setup' },
+      { key: 'apiKeys', path: '/system/api-keys', icon: KeyRound, phase: 0, tag: 'setup' },
       { key: 'hrRules', path: '/system/hr-rules', icon: UserCog, phase: 0, tag: 'setup' },
       { key: 'businessDetails', path: '/system/business-details', icon: Sparkles, phase: 0, tag: 'setup' },
       { key: 'appearance', path: '/system/appearance', icon: Palette, phase: 0, tag: 'setup' },
+      { key: 'errors', path: '/system/errors', icon: Bug, phase: 0, tag: 'setup' },
       { key: 'engineDesigner', path: '/system/engine', icon: Workflow, phase: 0, tag: 'setup' },
       { key: 'uiKit', path: '/dev/ui', icon: Palette, phase: 0, tag: 'setup' },
     ],

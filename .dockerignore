@@ -5,6 +5,7 @@
 .env.*
 .git
 docs
+!docs/guide
 e2e
 test-results
 playwright-report

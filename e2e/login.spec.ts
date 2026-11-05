@@ -40,10 +40,14 @@ test('owner signs in and sees the shell', async ({ page }, info) => {
 
   await expectNoSideScroll(page);
 
-  await page.goto('/masters/library');
-  await expect(page.getByText(/arrives in phase 10/i)).toBeVisible();
+  // No screen is a placeholder any more: Support has contacts, a ticket shortcut and the printable guides.
+  await page.goto('/support');
+  await expect(page.getByRole('link', { name: /raise a help ticket/i })).toBeVisible();
+  await page.getByRole('link', { name: /getting started/i }).click();
+  await expect(page.getByRole('heading', { name: /getting started/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /print/i })).toBeVisible();
   await expectNoSideScroll(page);
-  await shot(page, 'placeholder', info.project.name);
+  await shot(page, 'support', info.project.name);
 
   await page.goto('/system');
   await expect(page.getByRole('heading', { name: 'System Master' })).toBeVisible();

@@ -44,3 +44,7 @@ export { crmSweep } from './modules/crm/jobs';
 export { createOrder } from './modules/crm/orders';
 export { syncAfterOrderFlow } from './modules/crm/setup';
 export { generateCalls } from './modules/crm/calls';
+export { netOf, queueWebhooks, sendWebhooks, type WebhookNet } from './modules/platform/webhooks';
+export { DriveAwareStorage, syncDrive } from './modules/integrations/drive-files';
+export { driveEnvOf } from './modules/integrations/drive';
+export { recordError } from './modules/errors/service';

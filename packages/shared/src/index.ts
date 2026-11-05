@@ -56,3 +56,5 @@ export * from './crm/plan';
 export * from './crm/config';
 export * from './crm/scot';
 export * from './machines/crm';
+export * from './masters/library';
+export * from './platform/events';

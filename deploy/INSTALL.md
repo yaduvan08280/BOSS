@@ -169,18 +169,64 @@ nano .env      # RCLONE_REMOTE=gdrive:mono-backups
 ./deploy/compose.sh exec backup backup.sh      # last line should say "copying to gdrive:mono-backups"
 ```
 
+### Keep `.env` safe (you need it to restore)
+
+The backup holds the data; `.env` holds the keys. Saved bot tokens, AI keys, the Google Drive connection and webhook
+secrets are encrypted with `APP_SECRET`, so **a restore needs the same `APP_SECRET`**. After the first start, save a
+copy of `.env` in your password manager (or print it and lock it away). Do **not** put it in the same Google Drive
+folder as the backups.
+
 ### Restore from a backup
 
-This **replaces** the current database. Stop the app first:
+`./deploy/restore.sh` does everything below; run it without a date to list the backups:
 
 ```bash
 cd ~/mono
-./deploy/compose.sh stop api worker web
-ls /srv/mono/backups                           # pick a file, e.g. mono-db-20261031-0230.dump
-./deploy/compose.sh exec backup sh -c 'dropdb mono && createdb mono && pg_restore --no-owner -d mono /backups/mono-db-20261031-0230.dump'
-sudo tar -xzf /srv/mono/backups/mono-uploads-20261031-0230.tar.gz -C /srv/mono/uploads
-./deploy/compose.sh up -d
+./deploy/restore.sh                    # lists the backups, newest first
+./deploy/restore.sh 20261105-0230      # type yes when asked
 ```
+
+It stops the app, restores the database and the uploaded files from that night, starts MONO again (applying any
+newer migrations), and prints the number of companies and people and the time of the last change. If it ends with
+"APP_SECRET is not the one the backup was made with", put the original `APP_SECRET` back in `.env` and run
+`./deploy/compose.sh up -d --force-recreate api worker`.
+
+### Restore on a new machine (disk died, new server)
+
+Follow these steps exactly, in order. Nothing else is needed.
+
+1. Do **section 1** (Docker) and **section 2** (get the code) on the new machine.
+2. Put back the `.env` you saved (password manager) as `~/mono/.env`. Check `DATA_DIR` (normally `/srv/mono`).
+   Do not run the `sed` lines of section 3: they would make a **new** `APP_SECRET`.
+3. Do **section 4** (data folders).
+4. Copy the backup files into `/srv/mono/backups`. From Google Drive (if you set up rclone, section 9):
+   ```bash
+   sudo mkdir -p /srv/mono/rclone && sudo nano /srv/mono/rclone/rclone.conf   # paste the saved rclone.conf, or run "rclone config" again
+   docker run --rm -v /srv/mono/rclone:/config/rclone -v /srv/mono/backups:/backups rclone/rclone:1.75.2 copy gdrive:mono-backups /backups --include 'mono-*'
+   ```
+   Or from a USB disk: `sudo cp /media/$USER/<disk>/mono-*-20261105-0230.* /srv/mono/backups/`
+5. Restore the newest backup:
+   ```bash
+   cd ~/mono
+   ./deploy/restore.sh                   # shows what is there
+   ./deploy/restore.sh 20261105-0230     # the newest; type yes
+   ```
+6. Check: `curl -s http://localhost:8080/api/health` says `"status":"ok"`; sign in at `http://localhost:8080`
+   (or through the tunnel); yesterday's tasks and people are there.
+7. Do **section 6** (Cloudflare Tunnel) if the tunnel token is not in `.env` yet. The public address stays the same.
+
+Files that were moved to the company's **Google Drive** (System Master → Integration → Google Drive) are not in the
+uploads archive; they stay in Drive and open again as soon as the restore is done (same `APP_SECRET`).
+
+### Restore drill (do it twice a year)
+
+Practise on a spare PC or a virtual machine, so the steps are known before a real failure: install Ubuntu 24.04,
+follow "Restore on a new machine" with last night's backup, sign in, and open a few records with photos. Write the
+date in the table below. (The first drill was done on 05/11/2026 with the Docker stack on a fresh data folder.)
+
+| Date | Backup used | Time taken | Result |
+|---|---|---|---|
+| 05/11/2026 | test stack backup `20261105-1734`, restored into an empty data folder with `restore.sh` | 35 seconds | OK — 2 companies, 26 people, 205 tasks, the uploaded file (same checksum), sign-in and an API key all back |
 
 ## 10. Day-to-day commands
 

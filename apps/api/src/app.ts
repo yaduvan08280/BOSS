@@ -10,6 +10,7 @@ import { EventListener } from './lib/events';
 import authPlugin from './plugins/auth';
 import errorsPlugin from './plugins/errors';
 import originPlugin from './plugins/origin';
+import ceilingPlugin from './plugins/ceiling';
 import { sseRoutes } from './plugins/sse';
 import { authRoutes } from './modules/auth/routes';
 import { healthRoutes } from './modules/health/routes';
@@ -37,7 +38,14 @@ import { aiRoutes } from './modules/ai/routes';
 import { hrRoutes } from './modules/hr/routes';
 import { imsRoutes } from './modules/ims/routes';
 import { crmRoutes } from './modules/crm/routes';
+import { masterRoutes } from './modules/masters/routes';
+import { platformRoutes } from './modules/platform/routes';
+import { v1Routes } from './modules/platform/v1';
 import { LocalDiskStorage, type Storage } from './lib/storage';
+import { DriveAwareStorage } from './modules/integrations/drive-files';
+import { driveEnvOf } from './modules/integrations/drive';
+import { integrationRoutes } from './modules/integrations/routes';
+import { errorRoutes } from './modules/errors/routes';
 
 export type BuildOptions = {
   env: Env;
@@ -73,21 +81,42 @@ export async function buildApp(opts: BuildOptions) {
   await app.register(errorsPlugin);
   await app.register(cookie);
   await app.register(rateLimit, { global: false });
+  // A ceiling per IP for every API call (routes keep their own limits too). Behind Caddy the IP is the real
+  // client's (CF-Connecting-IP), so one busy office doesn't share a single limit.
+  await app.register(ceilingPlugin, {
+    perMinute:
+      env.API_RATE_LIMIT === '' ? (env.NODE_ENV === 'production' ? 600 : 0) : Number(env.API_RATE_LIMIT) || 0,
+  });
   await app.register(originPlugin, { allowed: [env.origin] });
   await app.register(authPlugin, { secret: env.APP_SECRET });
 
-  if (env.NODE_ENV !== 'production') {
-    await app.register(swagger, {
-      openapi: { info: { title: `${env.APP_NAME} API`, version: '0.1.0' } },
-      transform: jsonSchemaTransform,
-    });
-    await app.register(swaggerUi, { routePrefix: '/api/docs' });
-  }
+  // OpenAPI docs at /api/docs. In production only the public API (/api/v1) is shown; the app's own routes are hidden.
+  const production = env.NODE_ENV === 'production';
+  await app.register(swagger, {
+    openapi: {
+      info: {
+        title: `${env.APP_NAME} API`,
+        version: '1.0.0',
+        description: `The public API is under /api/v1. Send your key (System Master → API Keys) as \`Authorization: Bearer mono_…\` or \`X-Api-Key\`. Money is in paise, sent as strings; dates are YYYY-MM-DD. 120 calls a minute per key.`,
+      },
+      servers: [{ url: env.origin }],
+      components: { securitySchemes: { apiKey: { type: 'http', scheme: 'bearer', bearerFormat: 'mono_…' } } },
+    },
+    transform: (args) => {
+      const out = jsonSchemaTransform(args);
+      const hidden = production && !args.url.startsWith('/api/v1');
+      return hidden ? { ...out, schema: { ...out.schema, hide: true } } : out;
+    },
+  });
+  await app.register(swaggerUi, { routePrefix: '/api/docs' });
 
   await app.register(healthRoutes);
   await app.register(authRoutes, { env });
   await app.register(sseRoutes, { listener });
-  await app.register(fileRoutes, { storage: opts.storage ?? new LocalDiskStorage(env.UPLOAD_DIR) });
+  await app.register(fileRoutes, {
+    storage:
+      opts.storage ?? new DriveAwareStorage(new LocalDiskStorage(env.UPLOAD_DIR), prisma, driveEnvOf(env)),
+  });
   await app.register(companyRoutes, { env });
   await app.register(setupRoutes);
   await app.register(departmentRoutes);
@@ -111,5 +140,18 @@ export async function buildApp(opts: BuildOptions) {
   await app.register(hrRoutes);
   await app.register(imsRoutes);
   await app.register(crmRoutes);
+  await app.register(masterRoutes);
+  await app.register(platformRoutes, { env });
+  await app.register(v1Routes);
+  await app.register(integrationRoutes, { env });
+  await app.register(errorRoutes);
+  // The public API's OpenAPI document (only /api/v1 paths), for code generators and tools like Postman.
+  app.get('/api/v1/openapi.json', { schema: { hide: true } }, async () => {
+    const spec = app.swagger() as { paths?: Record<string, unknown> };
+    const paths = Object.fromEntries(
+      Object.entries(spec.paths ?? {}).filter(([p]) => p.startsWith('/api/v1/')),
+    );
+    return { ...spec, paths };
+  });
   return app;
 }

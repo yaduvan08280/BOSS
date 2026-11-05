@@ -82,6 +82,12 @@ export const COMPANY_SCOPED_MODELS = new Set([
   'Call',
   'Lead',
   'LeadEvent',
+  'MasterRow',
+  'ApiKey',
+  'Webhook',
+  'WebhookDelivery',
+  'DriveConnection',
+  'ErrorEvent',
 ]);
 
 /** Models with `deletedAt` (soft delete). Kept in sync with the schema by `scope.test.ts`. */
@@ -111,6 +117,8 @@ export const SOFT_DELETE_MODELS = new Set([
   'LeaveType',
   'Item',
   'Customer',
+  'MasterRow',
+  'Webhook',
 ]);
 
 const LIST_READS = new Set(['findMany', 'findFirst', 'findFirstOrThrow', 'count', 'aggregate', 'groupBy']);

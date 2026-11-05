@@ -12,7 +12,7 @@ export const masterDefSchema = z.object({
   fields: z.array(fieldSchema).min(1, 'Add at least one field').max(60),
   keyField: z.string().max(40).nullish(),
   displayField: z.string().max(40).nullish(),
-  source: z.enum(['ai', 'own']).default('own'),
+  source: z.enum(['ai', 'own', 'library']).default('own'),
 });
 export type MasterDefInput = z.infer<typeof masterDefSchema>;
 

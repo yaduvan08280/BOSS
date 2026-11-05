@@ -37,7 +37,12 @@ export function checkFields(
         else values[f.key] = v;
         break;
       case 'date':
-        if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v))
+        // A real calendar date (31/02 is not).
+        if (
+          typeof v !== 'string' ||
+          !/^\d{4}-\d{2}-\d{2}$/.test(v) ||
+          new Date(`${v}T00:00:00Z`).toISOString().slice(0, 10) !== v
+        )
           errors[f.key] = `${f.label}: use a DD/MM/YYYY date`;
         else values[f.key] = v;
         break;

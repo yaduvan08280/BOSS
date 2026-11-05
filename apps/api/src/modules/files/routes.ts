@@ -4,6 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { AppError, notFound } from '../../lib/errors';
 import type { Storage } from '../../lib/storage';
+import { looksLike } from './sniff';
 
 /** Images, documents and voice notes. SVG/HTML are refused (they could run scripts when opened). */
 const TYPES: Record<string, string> = {
@@ -43,6 +44,20 @@ export async function fileRoutes(app: FastifyInstance, opts: { storage: Storage 
     if (file.file.truncated) {
       await opts.storage.remove(path);
       throw new AppError(400, 'BAD_REQUEST', 'The file is larger than 10 MB');
+    }
+    // The content must match the claimed type (first 1 KB), so a renamed program or web page is refused.
+    let head = Buffer.alloc(0);
+    for await (const c of opts.storage.get(path)) {
+      head = Buffer.concat([head, Buffer.from(c as Uint8Array)]);
+      if (head.length >= 1024) break;
+    }
+    if (!size || !looksLike(mime, head)) {
+      await opts.storage.remove(path);
+      throw new AppError(
+        400,
+        'BAD_REQUEST',
+        "This file isn't what its name says. Use a photo, PDF, Excel/Word file or a voice note",
+      );
     }
     const row = await request.db.attachment.create({
       data: {

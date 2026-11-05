@@ -108,6 +108,25 @@ export async function applyMove(tx: Tx, ctx: ActorContext, a: MoveArgs, moveId?:
         data: { companyId: ctx.companyId, itemId: item.id, createdById: ctx.actorId, ...data },
       });
   await snapshot(tx, ctx.companyId, item.id, stock, band, localDate(at, await tzOf(tx, ctx.companyId)));
+  await emitEvent(tx, ctx, {
+    name: 'ims.stock_moved',
+    entityType: 'item',
+    entityId: item.id,
+    payload: {
+      moveId: move.id,
+      code: item.code,
+      item: item.name,
+      unit: item.unit,
+      type: a.type,
+      qty: a.delta,
+      stock,
+      band,
+      reason: a.reason ?? null,
+      refType: a.refType ?? null,
+      refId: a.refId ?? null,
+      at: at.toISOString(),
+    },
+  });
   await bandAlert(tx, ctx, after, item.band as Band, band, stock);
   return { move, stock, band };
 }

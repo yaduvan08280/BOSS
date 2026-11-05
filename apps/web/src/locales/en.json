@@ -149,7 +149,8 @@
     "uiKit": "UI kit",
     "engineDesigner": "Business Engine",
     "payroll": "Payroll",
-    "crmPlan": "Plan & setup"
+    "crmPlan": "Plan & setup",
+    "errors": "Errors"
   },
   "navDesc": {
     "home": "Search anything, or pick where to start",
@@ -198,7 +199,8 @@
     "uiKit": "Every colour and building block",
     "engineDesigner": "How each module flows, and the switches that change it",
     "payroll": "Gross pay from attendance, pay rules and leave a year",
-    "crmPlan": "The year plan and the 15-page CRM setup"
+    "crmPlan": "The year plan and the 15-page CRM setup",
+    "errors": "What went wrong, where and how often"
   },
   "home": {
     "heading": "What do you want to do, {{name}}?",
@@ -731,7 +733,6 @@
     "secretSaved": "Saved. Leave empty to keep it.",
     "secretOnce": "Stored encrypted. It won't be shown again.",
     "sendTest": "Send test",
-    "driveSoon": "Connecting your own Google Drive for uploads arrives in phase 10. Until then files stay on the MONO server and are included in the nightly backup.",
     "wa": {
       "step1": "Step 1 · Provider",
       "step2": "Step 2 · Credentials",
@@ -3871,6 +3872,235 @@
       "required": "Required",
       "newField": "Field",
       "add": "Add a field"
+    }
+  },
+  "masters": {
+    "add": "Add a row",
+    "count_one": "{{count}} row",
+    "count_other": "{{count}} rows",
+    "empty": "No rows yet",
+    "emptyBody": "Add rows one by one, or import them from Excel, a CSV, a paste or a Google Sheet.",
+    "import": "Import",
+    "importHint": "Put the field names in the first row: {{fields}}. Dates as DD/MM/YYYY. All rows are added, or none if something needs fixing.",
+    "importRows_one": "Import {{count}} row",
+    "importRows_other": "Import {{count}} rows",
+    "imported_one": "{{count}} row added",
+    "imported_other": "{{count}} rows added",
+    "line": "Line {{n}}",
+    "open": "Open",
+    "paste": "Or paste rows here (from Excel or Google Sheets)",
+    "pick": "Pick from the list",
+    "readSheet": "Read the sheet",
+    "removeBody": "It leaves the list. Records that already use it keep their text, and its key can be used again.",
+    "removeTitle": "Delete {{name}}?",
+    "removed": "Row deleted",
+    "rowsSubtitle": "Enter it once. Every module reads the same rows.",
+    "saved": "{{name}} saved",
+    "search": "Search rows",
+    "sheet": "Google Sheet link",
+    "sheetHint": "Share the sheet as \"Anyone with the link can view\" first.",
+    "lib": {
+      "all": "All industries",
+      "have": "In your masters",
+      "inMasters": "Already in My Masters",
+      "industry": "Industry",
+      "made": "{{name}} added to your masters",
+      "subtitle": "Ready-made masters by industry. Pick one and it is yours, fields and all.",
+      "tagline": "Enter it once. Every module reads the same customer, item and person.",
+      "use": "Use this"
+    }
+  },
+  "keys": {
+    "active": "Active",
+    "copy": "Copy",
+    "docs": "API documentation",
+    "empty": "No API keys yet",
+    "emptyBody": "Make a key for each outside tool (Tally connector, a website form, a sheet script) so you can stop one without touching the others.",
+    "generate": "Generate API key",
+    "lastUsed": "Last used {{when}}",
+    "made": "Made by {{who}} on {{when}}",
+    "name": "What is this key for?",
+    "nameHint": "For example \"Tally connector\" or \"Website enquiry form\".",
+    "neverUsed": "Never used",
+    "onceHint": "Copy it now and keep it somewhere safe. It is shown only this once; after this you see only its last 4 characters.",
+    "revoke": "Revoke",
+    "revokeBody": "Anything using this key stops working at once. This can't be undone; make a new key instead.",
+    "revokeTitle": "Revoke \"{{name}}\"?",
+    "revoked": "Key revoked",
+    "revokedChip": "Revoked",
+    "savedIt": "I have saved it",
+    "search": "Search keys",
+    "server": "Server address",
+    "serverHint": "Outside tools call this address with a key. The key works with the rights of the person who made it.",
+    "title": "API keys",
+    "yourKey": "Your new key: {{name}}"
+  },
+  "hooks": {
+    "active": "On (send events)",
+    "add": "Add a webhook",
+    "counts": "{{sent}} sent · {{failed}} failed · {{pending}} waiting",
+    "description": "Note (optional)",
+    "edit": "Change webhook",
+    "empty": "No webhooks yet",
+    "emptyBody": "A webhook tells another system the moment something happens, for example a new order or a stock move.",
+    "events_one": "Events to send ({{count}} chosen)",
+    "events_other": "Events to send ({{count}} chosen)",
+    "everything": "Everything",
+    "filter": "Filter events",
+    "log": "Deliveries",
+    "newSecret": "New secret",
+    "noDeliveries": "Nothing sent yet.",
+    "off": "Off",
+    "on": "On",
+    "removeTitle": "Delete this webhook?",
+    "removed": "Webhook deleted",
+    "saved": "Webhook saved",
+    "secretTitle": "Signing secret",
+    "subtitle": "Chosen events are posted to your address, signed with a secret, and retried if your side is down.",
+    "test": "Send a test",
+    "testFailed": "The test didn't arrive: {{why}}",
+    "testOk": "Test delivered (HTTP {{status}})",
+    "title": "Webhooks",
+    "tries_one": "{{count}} try",
+    "tries_other": "{{count}} tries",
+    "url": "Address (URL)",
+    "urlHint": "An https:// address on the internet. Addresses inside your own network are refused.",
+    "st": {
+      "PENDING": "Waiting",
+      "SENT": "Sent",
+      "FAILED": "Failed"
+    }
+  },
+  "drive": {
+    "clientId": "Client ID",
+    "clientSecret": "Client secret",
+    "connect": "Connect Drive",
+    "counts": "{{on}} files in Drive · {{waiting}} waiting to move",
+    "openFolder": "Open the folder",
+    "ownerOnly": "Only the account owner can connect Google Drive.",
+    "pause": "Stop sending files",
+    "paused": "New files stay on the server again. Files already in Drive still open.",
+    "reconnect": "Connect again",
+    "secretHint": "Kept encrypted on the server and never shown again.",
+    "since": "since {{when}}",
+    "tickFirst": "Tick steps 1 to 3 when they are done.",
+    "where": "Where your files go",
+    "nowServer": "Right now, files are kept on the {{app}} server and are part of the nightly backup.",
+    "nowDrive": "New files go to the \"{{folder}}\" folder in {{account}}'s Google Drive. Older files stay where they are.",
+    "back": {
+      "connected": "Google Drive is connected",
+      "error": "Google Drive could not be connected. See the message on this page.",
+      "expired": "That sign-in took too long or was already used. Press Connect Drive again.",
+      "owner": "Only the account owner can connect Google Drive.",
+      "denied": "Google was not allowed access. Press Connect Drive and choose Allow.",
+      "signin": "Sign in to MONO first, then press Connect Drive again."
+    },
+    "st": {
+      "none": "On the server",
+      "waiting": "Waiting for Google",
+      "connected": "Google Drive",
+      "error": "Needs attention",
+      "off": "Stopped"
+    },
+    "step": {
+      "project": {
+        "title": "Make a Google Cloud project and turn on the Google Drive API",
+        "body": "Sign in with the company's Google account. Create a project (any name, e.g. MONO), then press Enable on \"Google Drive API\".",
+        "link": "Open Google Drive API"
+      },
+      "consent": {
+        "title": "Set up the OAuth consent screen and publish it",
+        "body": "Audience: External. Add the scope below (only files this app makes). Then press \"Publish app\": while it is in Testing, Google disconnects after 7 days.",
+        "link": "Open the consent screen"
+      },
+      "client": {
+        "title": "Create an OAuth client (Web application)",
+        "body": "Clients → Create client → Web application. Under \"Authorised redirect URIs\" paste this address exactly, then Create.",
+        "link": "Open Clients"
+      },
+      "connect": {
+        "title": "Paste the Client ID and secret, then connect"
+      }
+    },
+    "faq": {
+      "title": "Questions",
+      "see": {
+        "q": "What can {{app}} see in my Drive?",
+        "a": "Only the files {{app}} puts there itself (Google's \"drive.file\" permission). It cannot open or list anything else."
+      },
+      "existing": {
+        "q": "What happens to files uploaded before?",
+        "a": "They stay on the {{app}} server and in its backups. Only new files move to Drive, about a minute after upload."
+      },
+      "pause": {
+        "q": "Can I stop it later?",
+        "a": "Yes. Stop sending files keeps new uploads on the server again. Files already in Drive still open from {{app}}."
+      },
+      "publish": {
+        "q": "Why must the app be published?",
+        "a": "Google ends sign-ins of apps in Testing after 7 days. Publishing your own internal app needs no review for this permission."
+      },
+      "cost": {
+        "q": "Does it cost anything?",
+        "a": "No. It uses your Drive storage (15 GB free per Google account, more with Google Workspace)."
+      },
+      "backup": {
+        "q": "Are Drive files in the nightly backup?",
+        "a": "No, Google keeps them. The backup keeps the database (which knows every file) and files still on the server."
+      }
+    }
+  },
+  "pwa": {
+    "install": "Install {{app}} on this device",
+    "hint": "Opens like an app, faster, with notifications.",
+    "iosHint": "Tap Share, then \"Add to Home Screen\".",
+    "installButton": "Install"
+  },
+  "errors": {
+    "crashed": "This screen stopped working",
+    "crashedBody": "It has been reported. Reload to try again; your saved work is safe.",
+    "details": "Details",
+    "last": "last {{when}}",
+    "newVersion": "A new version is ready",
+    "newVersionBody": "Reload to get it.",
+    "none": "No errors",
+    "noneBody": "Nothing has gone wrong. Errors from the server, the worker and people's browsers show up here.",
+    "reload": "Reload",
+    "resolve": "Mark fixed",
+    "resolved": "Marked fixed",
+    "search": "Search errors",
+    "showResolved": "Show fixed ones",
+    "subtitle": "Errors are grouped by kind and counted. A fixed one comes back if it happens again.",
+    "times_one": "{{count}} time",
+    "times_other": "{{count}} times",
+    "src": {
+      "api": "Server",
+      "worker": "Worker",
+      "web": "Browser"
+    }
+  },
+  "support": {
+    "subtitle": "Whom to ask, a help ticket, and the guides for every module.",
+    "ask": "Ask a person",
+    "ticket": "Something not working?",
+    "ticketBody": "Raise a help ticket: the right person fixes it, and you see where it stands.",
+    "raise": "Raise a help ticket",
+    "guides": "User guides (printable)",
+    "allGuides": "All guides",
+    "print": "Print",
+    "guide": {
+      "getting_started": "Getting started",
+      "delegation": "Delegation (tasks)",
+      "checklists": "Checklists",
+      "slips_and_tickets": "Help slips and help tickets",
+      "ea_and_mis": "EA board and weekly MIS",
+      "processes": "Processes (FMS)",
+      "hr": "HR: attendance, leave, Buddy, pay",
+      "inventory": "Inventory (IMS)",
+      "sales_crm": "Sales CRM",
+      "masters": "Masters",
+      "system_master": "System Master (setup)",
+      "integrations": "Integrations, API and webhooks"
     }
   }
 }

@@ -1,3 +1,4 @@
+import { assertPublicUrl } from '../platform/safe-url';
 import type { Db } from '@mono/db';
 import { emitEvent } from '../../lib/events';
 import { parseDefinition, fmsLink } from './engine';
@@ -83,7 +84,11 @@ export async function watchFmsSteps(db: Db, now = new Date()) {
 }
 
 /** AUTO webhook steps: POST the record to the URL; on success (or after 5 failed tries) the record moves on. */
-export async function runFmsWebhooks(db: Db, f: typeof fetch = fetch) {
+export async function runFmsWebhooks(
+  db: Db,
+  f: typeof fetch = fetch,
+  net?: { production: boolean; allowPrivate?: boolean },
+) {
   const steps = await db.fmsRecordStep.findMany({
     where: { status: 'OPEN', type: 'AUTO', record: { status: 'RUNNING', deletedAt: null } },
     include: { record: { include: { version: true, flow: { select: { name: true } } } } },
@@ -101,7 +106,10 @@ export async function runFmsWebhooks(db: Db, f: typeof fetch = fetch) {
       where: { recordId: s.recordId, stepKey: s.stepKey, type: 'webhook_failed' },
     });
     try {
+      // Never into the server's own network (SSRF); never follow a redirect there either.
+      if (net) await assertPublicUrl(url, net);
       const res = await f(url, {
+        redirect: 'manual',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

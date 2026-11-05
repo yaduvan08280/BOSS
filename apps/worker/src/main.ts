@@ -10,6 +10,13 @@ import {
   imsSweep,
   crmSweep,
   morningCoverReport,
+  recordError,
+  DriveAwareStorage,
+  driveEnvOf,
+  syncDrive,
+  netOf,
+  queueWebhooks,
+  sendWebhooks,
   runCovers,
   settleAttendance,
   watchAbsences,
@@ -41,7 +48,22 @@ const log = pino({
 
 const prisma = createPrisma(env.DATABASE_URL);
 const boss = new PgBoss({ connectionString: env.DATABASE_URL, schema: 'pgboss' });
-boss.on('error', (err) => log.error({ err }, 'pg-boss error'));
+/** Log a worker error and keep it in System Master → Errors. */
+const report = (where: string) => (err: unknown) => {
+  log.error({ err }, where);
+  const e = err instanceof Error ? err : new Error(String(err));
+  void recordError(prisma, { source: 'worker', message: e.message, stack: e.stack ?? null, path: where });
+};
+/** A job body whose errors are reported, then passed on so pg-boss retries it. */
+const watched = (where: string, fn: () => Promise<void>) => async () => {
+  try {
+    await fn();
+  } catch (err) {
+    report(where)(err);
+    throw err;
+  }
+};
+boss.on('error', report('pg-boss error'));
 
 const QUEUE_DISPATCH = 'events.dispatch';
 const QUEUE_ESCALATIONS = 'notify.escalations';
@@ -50,7 +72,8 @@ const QUEUE_WORK_1MIN = 'work.every1min';
 const HEARTBEAT_FILE = '/tmp/mono-worker-alive';
 const OUTBOX_POLL_MS = 10_000;
 
-const storage = new LocalDiskStorage(env.UPLOAD_DIR);
+const disk = new LocalDiskStorage(env.UPLOAD_DIR);
+const storage = new DriveAwareStorage(disk, prisma, driveEnvOf(env));
 const bots = new BotManager(prisma, env, storage, log);
 
 // ---- Outbox: send as soon as something is queued, and poll for delayed / retried messages ----
@@ -70,14 +93,32 @@ async function drainOutbox() {
       }
     } while (again);
   } catch (err) {
-    log.error({ err }, 'Outbox send failed');
+    report('Outbox send failed')(err);
   } finally {
     sending = false;
   }
 }
 
+// ---- Outgoing webhooks (public API): queued per event, sent at once and retried every minute ----
+const net = netOf(env);
+let hooking = false;
+async function drainWebhooks() {
+  if (hooking) return;
+  hooking = true;
+  try {
+    await sendWebhooks(prisma, net);
+  } catch (err) {
+    report('Webhook send failed')(err);
+  } finally {
+    hooking = false;
+  }
+}
+
 const handlers: HandlerRegistry = {
   '*': [
+    async (event, db) => {
+      if (await queueWebhooks(db, event)) setImmediate(() => void drainWebhooks());
+    },
     async (event, db) => {
       await notifyForEvent(event, {
         db,
@@ -100,65 +141,80 @@ await boss.start();
 await boss.createQueue(QUEUE_DISPATCH, { policy: 'singleton' });
 await boss.createQueue(QUEUE_ESCALATIONS, { policy: 'singleton' });
 
-await boss.work(QUEUE_DISPATCH, async () => {
-  while ((await dispatchPending(prisma, handlers)) > 0) {
-    // keep draining until the outbox of events is empty
-  }
-});
+await boss.work(
+  QUEUE_DISPATCH,
+  watched(QUEUE_DISPATCH, async () => {
+    while ((await dispatchPending(prisma, handlers)) > 0) {
+      // keep draining until the outbox of events is empty
+    }
+  }),
+);
 // Safety net for events whose NOTIFY was missed (worker restarting, etc.).
 await boss.schedule(QUEUE_DISPATCH, '* * * * *', null, { tz: 'UTC' });
 
-await boss.work(QUEUE_ESCALATIONS, async () => {
-  const r = await processEscalations(prisma);
-  if (r.escalated) log.info(r, 'Escalations sent');
-});
+await boss.work(
+  QUEUE_ESCALATIONS,
+  watched(QUEUE_ESCALATIONS, async () => {
+    const r = await processEscalations(prisma);
+    if (r.escalated) log.info(r, 'Escalations sent');
+  }),
+);
 await boss.schedule(QUEUE_ESCALATIONS, '* * * * *', null, { tz: 'UTC' });
 
 // Every 5 minutes: checklist sweep, overdue tasks, late slips, ticket escalations.
 // Every minute: checklist reminders and misses, the EA board's day and briefs, Monday's MIS, the AI summary.
 await boss.createQueue(QUEUE_WORK_5MIN, { policy: 'singleton' });
 await boss.createQueue(QUEUE_WORK_1MIN, { policy: 'singleton' });
-await boss.work(QUEUE_WORK_5MIN, async () => {
-  const created = await sweepChecklists(prisma);
-  const overdue = await flagOverdueTasks(prisma);
-  const unaccepted = await remindUnaccepted(prisma);
-  const slips = await sweepSlips(prisma);
-  const tickets = await sweepTickets(prisma);
-  const fms = await watchFmsSteps(prisma);
-  // HR: Buddy answers that ran out, covers starting and ending, absences, and settling attendance.
-  const buddies = await expireBuddyRequests(prisma);
-  const covers = await runCovers(prisma);
-  const absent = await watchAbsences(prisma);
-  const settled = await settleAttendance(prisma);
-  if (buddies || covers.started || covers.ended || absent || settled)
-    log.info({ buddies, covers, absent, settled }, 'HR sweep');
-  // Inventory: daily snapshots and bands, the morning MAX review, audit cycles, the order list, dead stock.
-  await imsSweep(prisma);
-  // Sales CRM: orders done, the day's calls, stuck leads, customers going quiet.
-  const crmCalls = await crmSweep(prisma);
-  if (crmCalls) log.info({ crmCalls }, 'CRM calls made');
-  if (
-    fms ||
-    created ||
-    overdue ||
-    unaccepted ||
-    slips.late ||
-    slips.closed ||
-    tickets.escalated ||
-    tickets.closed
-  )
-    log.info({ created, overdue, unaccepted, slips, tickets, fms }, 'Work sweep');
-});
-await boss.work(QUEUE_WORK_1MIN, async () => {
-  await remindChecklists(prisma);
-  await expireChecklists(prisma);
-  const briefs = await eaJobs(prisma);
-  const mis = await sendWeeklyMis(prisma);
-  const summaries = await sendDailySummaries(prisma, env.APP_SECRET);
-  await morningCoverReport(prisma);
-  await runFmsWebhooks(prisma);
-  if (briefs || mis || summaries) log.info({ briefs, mis, summaries }, 'Scheduled sends');
-});
+await boss.work(
+  QUEUE_WORK_5MIN,
+  watched(QUEUE_WORK_5MIN, async () => {
+    const created = await sweepChecklists(prisma);
+    const overdue = await flagOverdueTasks(prisma);
+    const unaccepted = await remindUnaccepted(prisma);
+    const slips = await sweepSlips(prisma);
+    const tickets = await sweepTickets(prisma);
+    const fms = await watchFmsSteps(prisma);
+    // HR: Buddy answers that ran out, covers starting and ending, absences, and settling attendance.
+    const buddies = await expireBuddyRequests(prisma);
+    const covers = await runCovers(prisma);
+    const absent = await watchAbsences(prisma);
+    const settled = await settleAttendance(prisma);
+    if (buddies || covers.started || covers.ended || absent || settled)
+      log.info({ buddies, covers, absent, settled }, 'HR sweep');
+    // Inventory: daily snapshots and bands, the morning MAX review, audit cycles, the order list, dead stock.
+    await imsSweep(prisma);
+    // Sales CRM: orders done, the day's calls, stuck leads, customers going quiet.
+    const crmCalls = await crmSweep(prisma);
+    if (crmCalls) log.info({ crmCalls }, 'CRM calls made');
+    if (
+      fms ||
+      created ||
+      overdue ||
+      unaccepted ||
+      slips.late ||
+      slips.closed ||
+      tickets.escalated ||
+      tickets.closed
+    )
+      log.info({ created, overdue, unaccepted, slips, tickets, fms }, 'Work sweep');
+  }),
+);
+await boss.work(
+  QUEUE_WORK_1MIN,
+  watched(QUEUE_WORK_1MIN, async () => {
+    await remindChecklists(prisma);
+    await expireChecklists(prisma);
+    const briefs = await eaJobs(prisma);
+    const mis = await sendWeeklyMis(prisma);
+    const summaries = await sendDailySummaries(prisma, env.APP_SECRET);
+    await morningCoverReport(prisma);
+    await runFmsWebhooks(prisma, fetch, net);
+    await drainWebhooks();
+    const toDrive = await syncDrive(prisma, driveEnvOf(env), disk);
+    if (toDrive) log.info({ toDrive }, 'Files moved to Google Drive');
+    if (briefs || mis || summaries) log.info({ briefs, mis, summaries }, 'Scheduled sends');
+  }),
+);
 await boss.schedule(QUEUE_WORK_5MIN, '*/5 * * * *', null, { tz: 'UTC' });
 await boss.schedule(QUEUE_WORK_1MIN, '* * * * *', null, { tz: 'UTC' });
 await boss.send(QUEUE_WORK_5MIN, null).catch(() => undefined);
@@ -173,7 +229,7 @@ listener.on('event', () => {
 await listener.start();
 
 const outboxTimer = setInterval(() => void drainOutbox(), OUTBOX_POLL_MS);
-await bots.sync().catch((err) => log.error({ err }, 'Telegram bots could not start'));
+await bots.sync().catch(report('Telegram bots could not start'));
 
 // Docker healthcheck reads this file's age.
 const beat = () => writeFile(HEARTBEAT_FILE, new Date().toISOString()).catch(() => undefined);

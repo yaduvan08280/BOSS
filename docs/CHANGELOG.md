@@ -1,5 +1,49 @@
 # Changelog
 
+## Phase 10 — Masters, public API, Google Drive, PWA, hardening (05/11/2026)
+
+**Masters**
+- **Master Library** (Masters → Master Library): 12 ready masters by industry (Vendors, Products, Raw materials, Machines, Spare parts, Vehicles, Sites, Transporters, Services, Brands, Stores, Documents). "Use this" makes it yours, fields and all.
+- **Rows** for every master (My Masters → Open): add, change, delete (the key is freed), search; a unique key per master and a display field.
+- **Import** from an Excel file, a CSV, a paste, or a **Google Sheet link** ("anyone with the link can view"): headings by label or key, DD/MM/YYYY dates, yes/no and lists understood; all or nothing, every problem named by line.
+- **"From a master" fields** in processes now search Customers, Items, Vendors, People or any master of your own as you type. Dates in forms must be real calendar dates (31/02 is refused).
+
+**Public API and webhooks** (System Master → API Keys)
+- The server address, **API keys** shown once (only a hash is kept), last used, revoke. A key acts as the person who made it, with that person's current rights.
+- **`/api/v1`**: me, customers (list / add / change), items, stock moves, orders (list / take), processes (list, start a record, read it, mark a step done), masters and rows. 120 calls a minute per key. OpenAPI docs at `/api/docs` (production shows only the public API) and `/api/v1/openapi.json`.
+- **Webhooks**: pick events (one by one, `crm.*`, or everything) → signed JSON posts (HMAC-SHA256 over timestamp + body), retried after 30 s, 2 min, 8 min, 32 min and ~2 h, then failed; a delivery log, "Send a test", "New secret". New data events: customer added / changed, order taken / cancelled, payment received, stock moved, master rows.
+
+**Google Drive** (System Master → Integration → Google Drive)
+- "Where your files go", the four guided steps with ticks (project + Drive API, consent screen with the `drive.file` scope and publishing, OAuth client with the exact redirect address to copy, Client ID + secret → Connect Drive) and a FAQ.
+- Only the owner connects. New uploads are saved on the server, then moved to the "{APP} Files" folder about a minute later; older files stay where they are; everything still opens from MONO. "Stop sending files" keeps new uploads on the server.
+
+**Phone app (PWA)**
+- An install card ("Install MONO on this device") with the browser's own install, or the Share → Add to Home Screen steps on iPhone; hidden once installed or closed for 30 days. (Push opt-in and the offline punch queue were already in place.)
+
+**Hardening**
+- Security review against the OWASP Top 10 (`docs/security-review.md`).
+- Content-Security-Policy, HSTS and Cross-Origin-Opener-Policy on the web app.
+- Uploads must really be what they claim (file signatures checked); renamed programs and web pages are refused.
+- Outgoing calls (webhooks, FMS webhook steps, the WhatsApp provider address) can't reach the server's own network.
+- A ceiling of 600 API calls per IP per minute in production, on top of each route's own limit.
+- **Error monitoring**: server, worker and browser errors are grouped, counted and shown in System Master → **Errors** (mark fixed; it reopens if it happens again). A crashed screen says so and offers Reload.
+- A start-up check warns when `APP_SECRET` can't read the saved secrets (e.g. after restoring with a new `.env`).
+- **Load test** (`deploy/k6/`): 50 people at once — results in `deploy/k6/README.md`.
+
+**Backup and restore**
+- `./deploy/restore.sh` lists the backups and restores one (database + uploaded files), starts MONO and prints a summary.
+- INSTALL.md: keep `.env` safe, restore from a backup, **restore on a new machine** step by step, and a drill log.
+
+**Guides and Support**
+- Printable user guides for every module in `docs/guide/` (getting started, delegation, checklists, slips and tickets, EA and MIS, processes, HR, inventory, sales CRM, masters, System Master, integrations and API).
+- **Support** page (the last placeholder): the company's contacts and admins (tap to call / email), Raise a help ticket, and every guide readable in the app with a Print button.
+- `NEW_SETUP_PROCESS.md` (a new PC with WSL Ubuntu, command by command) and `FEATURES.md` (every feature, its setup and what it depends on).
+
+**Checked**
+- Load test on the Docker stack: 50 users for 3 minutes, 9,972 requests, 0 failed, p95 23 ms (reads) / 41 ms (writes).
+- Restore drill: last backup restored with `restore.sh` into an empty data folder in 35 s — companies, people, tasks, the uploaded file (same checksum), sign-in and API keys all back.
+- The production build passes the new end-to-end tests with no Content-Security-Policy violations.
+
 ## Phase 9 — Sales CRM (05/11/2026)
 
 **Plan & setup** (Sales CRM → Plan & setup): the 15-page journey, with the FY, the plan's status and progress ("x of 15 pages done").

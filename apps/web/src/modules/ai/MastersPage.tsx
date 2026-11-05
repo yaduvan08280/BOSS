@@ -1,6 +1,6 @@
-import { Boxes, Loader2, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { Boxes, Loader2, Pencil, Plus, Sparkles, Table2, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { useLocation } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { hasPermission, type Me } from '@mono/shared';
 import { DictateButton } from '@/components/dictate';
@@ -17,7 +17,6 @@ const EMPTY: MasterDraft = { name: '', description: '', fields: [], keyField: nu
 
 /**
  * Masters (CLAUDE.md §8): lists the whole company picks from. This phase: define them (by hand or with AI).
- * Rows, Excel import and the Master Library come in phase 10.
  */
 export function MastersPage({ me }: { me: Me }) {
   const { t } = useTranslation();
@@ -77,33 +76,39 @@ export function MastersPage({ me }: { me: Me }) {
                   </span>
                 ))}
               </div>
-              {canEdit && (
-                <div className="flex gap-1">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() =>
-                      setEditing({ draft: m, id: m.id, source: m.source === 'ai' ? 'ai' : 'own' })
-                    }
-                  >
-                    <Pencil /> {t('common.edit')}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() =>
-                      window.confirm(t('ai.master.confirmDelete', { name: m.name })) && remove.mutate(m.id)
-                    }
-                  >
-                    <Trash2 /> {t('common.delete')}
-                  </Button>
-                </div>
-              )}
+              <div className="flex flex-wrap gap-1">
+                <Button asChild size="sm" variant="secondary">
+                  <Link to={`/masters/${m.id}`}>
+                    <Table2 /> {t('masters.open')}
+                  </Link>
+                </Button>
+                {canEdit && (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() =>
+                        setEditing({ draft: m, id: m.id, source: m.source === 'ai' ? 'ai' : 'own' })
+                      }
+                    >
+                      <Pencil /> {t('common.edit')}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() =>
+                        window.confirm(t('ai.master.confirmDelete', { name: m.name })) && remove.mutate(m.id)
+                      }
+                    >
+                      <Trash2 /> {t('common.delete')}
+                    </Button>
+                  </>
+                )}
+              </div>
             </li>
           ))}
         </ul>
       )}
-      <p className="text-xs text-muted-foreground">{t('ai.master.later')}</p>
       {asking && (
         <AskMaster
           onClose={() => setAsking(false)}

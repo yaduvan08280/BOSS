@@ -149,6 +149,12 @@ export async function recordPayment(db: Db, actor: Actor, input: z.input<typeof 
       entityId: row.id,
       after: p,
     });
+    await emitEvent(tx, ctxOf(actor), {
+      name: 'crm.payment_received',
+      entityType: 'payment',
+      entityId: row.id,
+      payload: { customerId: c.id, customer: c.name, amountPaise: String(p.amount) },
+    });
     return { id: row.id };
   });
 }
