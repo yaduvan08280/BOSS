@@ -51,3 +51,8 @@ export * from './hr/pay';
 export * from './ims/rules';
 export * from './ims/stock';
 export * from './machines/ims';
+export * from './crm/split';
+export * from './crm/plan';
+export * from './crm/config';
+export * from './crm/scot';
+export * from './machines/crm';

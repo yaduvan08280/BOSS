@@ -1,0 +1,247 @@
+// Phase 9 — Sales CRM (CLAUDE.md §11): the year plan, CRM settings, customers, orders, payments, calls, leads.
+
+/// One year plan per company per FY: the inputs (the views are worked out from them), and its approval.
+model CrmPlan {
+  id            String    @id @default(cuid(2))
+  companyId     String    @map("company_id")
+  /// First year of the FY (2026 = FY 2026-27).
+  fy            Int
+  /// DRAFT | PENDING | APPROVED
+  status        String    @default("DRAFT")
+  data          Json
+  updatedById   String?   @map("updated_by_id")
+  submittedById String?   @map("submitted_by_id")
+  submittedAt   DateTime? @map("submitted_at") @db.Timestamptz(3)
+  approvedById  String?   @map("approved_by_id")
+  approvedAt    DateTime? @map("approved_at") @db.Timestamptz(3)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([companyId, fy])
+  @@map("crm_plans")
+}
+
+/// The CRM configuration pages (business type, seats, split, customer rules, after-order steps, NBD, SCOT, tags, fields).
+model CrmSettings {
+  id               String   @id @default(cuid(2))
+  companyId        String   @unique @map("company_id")
+  config           Json
+  /// The FMS flow the after-order steps run on.
+  afterOrderFlowId String?  @map("after_order_flow_id")
+  updatedById      String?  @map("updated_by_id")
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("crm_settings")
+}
+
+model Customer {
+  id            String    @id @default(cuid(2))
+  companyId     String    @map("company_id")
+  /// CUS-001
+  code          String
+  name          String
+  city          String?
+  mobile        String?
+  email         String?
+  /// dealer | distributor | contractor | oem | institution | retail
+  segment       String?
+  handledById   String?   @map("handled_by_id")
+  creditDays    Int       @default(30) @map("credit_days")
+  /// One of the owner's own customers.
+  ownerCustomer Boolean   @default(false) @map("owner_customer")
+  /// Marked lost on a call (else lost by days without an order).
+  lostAt        DateTime? @map("lost_at") @db.Timestamptz(3)
+  lostReason    String?   @map("lost_reason")
+  /// Your own fields (System Master → Sales CRM).
+  fields        Json      @default("{}")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  orders   SalesOrder[]
+  payments Payment[]
+  calls    Call[]
+  tags     CustomerTag[]
+  notes    CollectionNote[]
+
+  @@unique([companyId, code])
+  @@index([companyId, name])
+  @@map("customers")
+}
+
+/// Your own tags on a customer (automatic tags are worked out, never stored).
+model CustomerTag {
+  id         String @id @default(cuid(2))
+  companyId  String @map("company_id")
+  customerId String @map("customer_id")
+  tag        String
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@unique([customerId, tag])
+  @@index([companyId, tag])
+  @@map("customer_tags")
+}
+
+model SalesOrder {
+  id         String   @id @default(cuid(2))
+  companyId  String   @map("company_id")
+  /// SO/26-27/0001
+  number     String
+  customerId String   @map("customer_id")
+  /// The order date (YYYY-MM-DD).
+  orderDate  String   @map("order_date")
+  /// Paise, before GST.
+  amount     BigInt
+  gp         BigInt   @default(0)
+  /// [{ item, qty, rate }]
+  items      Json     @default("[]")
+  /// The date promised to the customer and when payment falls due (YYYY-MM-DD).
+  promisedOn String?  @map("promised_on")
+  dueOn      String   @map("due_on")
+  note       String?
+  /// OPEN | DONE | CANCELLED
+  status     String   @default("OPEN")
+  takenById  String?  @map("taken_by_id")
+  callId     String?  @map("call_id")
+  /// The after-order FMS record.
+  recordId   String?  @map("record_id")
+  fields     Json     @default("{}")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@unique([companyId, number])
+  @@index([companyId, orderDate])
+  @@index([customerId, orderDate])
+  @@map("sales_orders")
+}
+
+model Payment {
+  id          String   @id @default(cuid(2))
+  companyId   String   @map("company_id")
+  customerId  String   @map("customer_id")
+  orderId     String?  @map("order_id")
+  amount      BigInt
+  /// YYYY-MM-DD
+  date        String
+  mode        String?
+  reference   String?
+  note        String?
+  createdById String?  @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([companyId, date])
+  @@index([customerId])
+  @@map("payments")
+}
+
+/// The collections follow-up log: notes, promised dates, statements sent.
+model CollectionNote {
+  id             String   @id @default(cuid(2))
+  companyId      String   @map("company_id")
+  customerId     String   @map("customer_id")
+  /// note | promise | statement
+  kind           String   @default("note")
+  note           String?
+  promisedOn     String?  @map("promised_on")
+  promisedAmount BigInt?  @map("promised_amount")
+  byId           String?  @map("by_id")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([customerId, createdAt])
+  @@map("collection_notes")
+}
+
+/// A call to a customer: SCOT (their usual order is due) or win-back (sleeping / lost).
+model Call {
+  id         String    @id @default(cuid(2))
+  companyId  String    @map("company_id")
+  customerId String    @map("customer_id")
+  /// The Sales Coordinator who calls.
+  scId       String?   @map("sc_id")
+  /// YYYY-MM-DD
+  dueOn      String    @map("due_on")
+  /// scot | winback
+  kind       String    @default("scot")
+  /// OPEN | DONE | CANCELLED
+  status     String    @default("OPEN")
+  /// ORDER | LATER | NOT_NOW | LOST
+  result     String?
+  resultAt   DateTime? @map("result_at") @db.Timestamptz(3)
+  doneById   String?   @map("done_by_id")
+  note       String?
+  nextOn     String?   @map("next_on")
+  orderId    String?   @map("order_id")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([companyId, status, dueOn])
+  @@index([customerId, status])
+  @@map("calls")
+}
+
+model Lead {
+  id           String    @id @default(cuid(2))
+  companyId    String    @map("company_id")
+  number       Int
+  /// The person we talk to.
+  name         String
+  company      String?
+  mobile       String?
+  email        String?
+  city         String?
+  source       String?
+  requirement  String?
+  /// Expected value, paise.
+  value        BigInt    @default(0)
+  /// When they will buy (free text or a date).
+  buyWhen      String?   @map("buy_when")
+  /// ENQUIRY | OPEN | WON | LOST | NOT_QUALIFIED
+  status       String    @default("ENQUIRY")
+  /// The funnel stage key while OPEN.
+  stage        String?
+  stageSince   DateTime  @default(now()) @map("stage_since") @db.Timestamptz(3)
+  /// The qualify answers: { question: yes/no }
+  qualify      Json      @default("{}")
+  ownerId      String?   @map("owner_id")
+  nextAction   String?   @map("next_action")
+  nextActionOn String?   @map("next_action_on")
+  lostReason   String?   @map("lost_reason")
+  customerId   String?   @map("customer_id")
+  fields       Json      @default("{}")
+  createdById  String?   @map("created_by_id")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  closedAt     DateTime? @map("closed_at") @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  events LeadEvent[]
+
+  @@unique([companyId, number])
+  @@index([companyId, status, stage])
+  @@map("leads")
+}
+
+model LeadEvent {
+  id        String   @id @default(cuid(2))
+  companyId String   @map("company_id")
+  leadId    String   @map("lead_id")
+  /// created | qualified | disqualified | moved | won | lost | reopened | note
+  type      String
+  fromStage String?  @map("from_stage")
+  toStage   String?  @map("to_stage")
+  note      String?
+  byId      String?  @map("by_id")
+  at        DateTime @default(now()) @db.Timestamptz(3)
+
+  lead Lead @relation(fields: [leadId], references: [id])
+
+  @@index([leadId, at])
+  @@map("lead_events")
+}

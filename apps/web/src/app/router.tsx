@@ -59,6 +59,16 @@ const PurchasePage = page(() => import('@/modules/ims/PurchasePage'), 'PurchaseP
 const MaxReviewPage = page(() => import('@/modules/ims/MaxReviewPage'), 'MaxReviewPage');
 const AuditPage = page(() => import('@/modules/ims/AuditPage'), 'AuditPage');
 const InventorySetup = page(() => import('@/modules/ims/InventorySetup'), 'InventorySetup');
+const CrmDashboard = page(() => import('@/modules/crm/DashboardPage'), 'DashboardPage');
+const CrmSetup = page(() => import('@/modules/crm/SetupPage'), 'SetupPage');
+const CrmCustomers = page(() => import('@/modules/crm/CustomersPage'), 'CustomersPage');
+const CrmScot = page(() => import('@/modules/crm/ScotPage'), 'ScotPage');
+const CrmCalls = page(() => import('@/modules/crm/CallsPage'), 'CallsPage');
+const CrmOrders = page(() => import('@/modules/crm/OrdersPage'), 'OrdersPage');
+const CrmCollections = page(() => import('@/modules/crm/CollectionsPage'), 'CollectionsPage');
+const CrmNbd = page(() => import('@/modules/crm/NbdPage'), 'NbdPage');
+const CrmMeca = page(() => import('@/modules/crm/MecaPage'), 'MecaPage');
+const CrmFieldsTab = page(() => import('@/modules/crm/CrmFieldsTab'), 'CrmFieldsTab');
 const RulesWizard = page(() => import('@/modules/hr/RulesWizard'), 'RulesWizard');
 
 const placeholderRoutes = ALL_ITEMS.filter((i) => i.phase > 0).map((i) => ({
@@ -102,6 +112,15 @@ export const router = createBrowserRouter([
       { path: '/ims/purchase', element: <WithMe render={(me) => <PurchasePage me={me} />} /> },
       { path: '/ims/max-review', element: <WithMe render={(me) => <MaxReviewPage me={me} />} /> },
       { path: '/ims/audit', element: <WithMe render={(me) => <AuditPage me={me} />} /> },
+      { path: '/crm', element: <WithMe render={(me) => <CrmDashboard me={me} />} /> },
+      { path: '/crm/setup', element: <WithMe render={(me) => <CrmSetup me={me} />} /> },
+      { path: '/crm/customers', element: <WithMe render={(me) => <CrmCustomers me={me} />} /> },
+      { path: '/crm/scot', element: <WithMe render={(me) => <CrmScot me={me} />} /> },
+      { path: '/crm/calls', element: <WithMe render={(me) => <CrmCalls me={me} />} /> },
+      { path: '/crm/orders', element: <WithMe render={(me) => <CrmOrders me={me} />} /> },
+      { path: '/crm/collections', element: <WithMe render={(me) => <CrmCollections me={me} />} /> },
+      { path: '/crm/nbd', element: <WithMe render={(me) => <CrmNbd me={me} />} /> },
+      { path: '/crm/meca', element: <WithMe render={(me) => <CrmMeca me={me} />} /> },
       { path: '/masters/build', element: <WithMe render={(me) => <MastersPage me={me} />} /> },
       { path: '/fms/live', element: <WithMe render={(me) => <LiveFmsPage me={me} />} /> },
       { path: '/fms/my-steps', element: <WithMe render={(me) => <MyStepsPage me={me} />} /> },
@@ -134,6 +153,7 @@ export const router = createBrowserRouter([
               { path: 'business-details', element: <BusinessDetailsPage /> },
               { path: 'hr-rules', element: <RulesWizard /> },
               { path: 'inventory', element: <InventorySetup /> },
+              { path: 'crm', element: <CrmFieldsTab /> },
               { path: 'engine', element: <EnginePage /> },
               {
                 path: 'integration',

@@ -8,6 +8,7 @@ import {
   eaJobs,
   expireBuddyRequests,
   imsSweep,
+  crmSweep,
   morningCoverReport,
   runCovers,
   settleAttendance,
@@ -133,6 +134,9 @@ await boss.work(QUEUE_WORK_5MIN, async () => {
     log.info({ buddies, covers, absent, settled }, 'HR sweep');
   // Inventory: daily snapshots and bands, the morning MAX review, audit cycles, the order list, dead stock.
   await imsSweep(prisma);
+  // Sales CRM: orders done, the day's calls, stuck leads, customers going quiet.
+  const crmCalls = await crmSweep(prisma);
+  if (crmCalls) log.info({ crmCalls }, 'CRM calls made');
   if (
     fms ||
     created ||

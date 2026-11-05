@@ -40,3 +40,7 @@ export { imsSweep } from './modules/ims/jobs';
 export { applyMove } from './modules/ims/moves';
 export { proposeReviews, snapshotAll } from './modules/ims/review';
 export { openCycle, recordCount } from './modules/ims/audit';
+export { crmSweep } from './modules/crm/jobs';
+export { createOrder } from './modules/crm/orders';
+export { syncAfterOrderFlow } from './modules/crm/setup';
+export { generateCalls } from './modules/crm/calls';

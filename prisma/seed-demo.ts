@@ -13,6 +13,7 @@ import { seedDemoFms } from './seed-demo-fms';
 import { seedDemoHr } from './seed-demo-hr';
 import { seedDemoPay } from './seed-demo-pay';
 import { seedDemoIms } from './seed-demo-ims';
+import { seedDemoCrm } from './seed-demo-crm';
 
 const PASSWORD = process.env.SEED_DEMO_PASSWORD?.trim() || 'Demo1234';
 const DEPARTMENTS = [
@@ -233,6 +234,8 @@ try {
     console.log(
       'Added demo inventory: 50 items with 120 days of stock history, orders, reviews and an audit.',
     );
+  if (await seedDemoCrm(prisma, company.id))
+    console.log('Added demo sales CRM: an approved ₹7.5 Cr plan, 24 customers with order history, 20 leads.');
 } finally {
   await prisma.$disconnect();
 }

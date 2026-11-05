@@ -1,5 +1,71 @@
 # Changelog
 
+## Phase 9 — Sales CRM (05/11/2026)
+
+**Plan & setup** (Sales CRM → Plan & setup): the 15-page journey, with the FY, the plan's status and progress ("x of 15 pages done").
+- **Plan the year:**
+  - **Year target:** last year's turnover and GP, then grow by % or type an exact amount, plus the margin and the rounding; with month and week figures and last year against this year.
+  - **Quarters:** each quarter's growth over the one before; fine-tune with − / +.
+  - **Months:** shaped by working days, seasons and growth inside each quarter. "Change October" asks whether to change the year total or keep it and adjust the other months.
+  - **Weeks:** Monday–Sunday, part weeks joinable; a day-by-day dialog (equal, or ± % per day).
+  - **Every level adds up to the paisa:** one exact split (largest remainder, whole ₹1,000 / ₹10,000 / ₹1 L units when rounding) is used throughout. It is proved by property tests over thousands of random plans, plus a two-way split for the seats × months table.
+- **CRM configuration:**
+  - business type; whom you sell to; seats & people (11 seats, one person may hold several);
+  - target split: CRR / NBD share, the owner's own clients, each person's month-by-month target and a science check;
+  - customer rules (new / sleeping / lost / vampire);
+  - after the order: the steps are published as a real FMS flow, and each step's doer is whoever sits in its seat;
+  - NBD: lead sources, enquiry form fields, qualify questions, stages with planned days.
+- **Settings:**
+  - holidays and weekly off (the HR calendar, shared);
+  - seasons (peak / good / slow, with a "year at a glance" strip);
+  - round figures.
+- **Approval:** send for approval → the owner approves (or sends back) → approved plans are locked until unlocked ("It will need approval once more").
+
+**Daily screens**
+- **Dashboard:**
+  - this month's target, achieved and pace, gap and working days left;
+  - tiles with 30-day sparklines and the change on last month;
+  - revenue against target by month, and how much of the year is done.
+  - "Viewing as" a seat or a person; people without CRM rights see their own.
+- **Customer Master:**
+  - GP rank and 12 months' sales and GP;
+  - automatic tags (top / bottom 20%, new, sleeping, lost, vampire, owner's) and your own tags (name + colour), with the 80/20 check;
+  - the customer card shows the SCOT rhythm, orders for 12 months and a new order;
+  - add, edit, import.
+- **SCOT sheet:**
+  - each regular customer's rhythm from their orders (average order, usual gap, usual date of the month, next order due, the day to call — N days before, moved off holidays);
+  - calls per day for 30 days, and SCOT against the CRR target.
+- **Today's Calls:**
+  - made each morning: SCOT calls when their day comes, and win-back calls for sleeping and lost customers;
+  - cards or a grid; one-tap results: order taken (→ CRM Orders + the after-order flow), call later, not now (next cycle), lost (why → win-back).
+- **CRM Orders:** a kanban by after-order step. A card opens the order's FMS record, where the step is done; orders finish when the record closes.
+- **Collections:**
+  - receivables by age, with payments set against the oldest orders first;
+  - due today, promises (and broken ones), the follow-up log, payments;
+  - statements sent to the customer (WhatsApp / email).
+- **NBD funnel:**
+  - enquiries to qualify (every question yes, a value, the next action and its date);
+  - a stage kanban with days in stage against the plan (stuck), next actions;
+  - won (→ a customer) or lost.
+- **MeCA / MCAP:** each sales seat's weeks — new leads, conversion, average sale, calls made against planned, orders against the week's target — graded R/Y/G.
+- **System Master → Sales CRM:** your own fields per record type (lead, quotation, customer, order).
+
+**Messages:**
+- `crm.call_due` to the SC for a new SCOT call;
+- `crm.lead_assigned` and `crm.lead_stuck` (once per stage) to the lead's owner;
+- `crm.customer_sleeping` once a customer goes quiet;
+- `crm.payment_due` (the statement) to the customer.
+
+**Also**
+- The HR holidays screen sizes to the space it gets (it also sits inside the CRM journey).
+- A new `MONTHS_EDITED` error asks before a change works hand-set months out again.
+
+**Demo data:**
+- an approved FY 2026-27 plan: ₹5 Cr + 50% = ₹7.5 Cr, rounded to ₹10,000, adding up to the rupee;
+- seats filled; the after-order flow published;
+- 24 Rajasthan customers with 13 months of orders and payments (every rhythm, sleeping, lost, vampires, the owner's own);
+- running orders on the kanban, 20 leads across the funnel, today's calls.
+
 ## Phase 8 — Inventory (IMS) (04/11/2026)
 
 **Rules** (System Master → Inventory), with the defaults of CLAUDE.md §10.1:

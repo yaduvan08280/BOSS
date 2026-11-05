@@ -43,118 +43,120 @@ export function HolidaysTab({ me }: { me: Me }) {
   if (q.isPending) return <PageSkeleton />;
   if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_380px]">
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('hr.h.title', { fy: fy.label })}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {admin && (
-            <div className="grid grid-cols-1 gap-2 rounded-control border p-3 sm:grid-cols-[160px_1fr_140px_auto_auto] sm:items-end">
-              <Field label={t('hr.h.date')}>
-                <DateInput value={h.date} onChange={(v) => setH({ ...h, date: v })} />
-              </Field>
-              <Field label={t('hr.h.name')}>
-                <Input
-                  value={h.name}
-                  onChange={(e) => setH({ ...h, name: e.target.value })}
-                  placeholder="Diwali"
-                />
-              </Field>
-              <Field label={t('hr.h.type')}>
-                <Select value={h.type} onChange={(e) => setH({ ...h, type: e.target.value })}>
-                  {['FESTIVAL', 'NATIONAL', 'OPTIONAL'].map((x) => (
-                    <option key={x} value={x}>
-                      {t(`hr.h.kind.${x}`)}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-              <label className="flex h-10 items-center gap-2 text-sm">
-                <Switch
-                  checked={h.halfDay}
-                  onCheckedChange={(v) => setH({ ...h, halfDay: v })}
-                  aria-label={t('hr.h.half')}
-                />{' '}
-                {t('hr.h.half')}
-              </label>
-              <Button
-                disabled={!h.date || h.name.trim().length < 2 || add.isPending}
-                onClick={() =>
-                  add.mutate(undefined, {
-                    onSuccess: () => setH({ date: '', name: '', type: 'FESTIVAL', halfDay: false }),
-                  })
-                }
-              >
-                {add.isPending ? <Loader2 className="animate-spin" /> : <Plus />} {t('hr.h.add')}
-              </Button>
-            </div>
-          )}
-          {q.data.holidays.length ? (
-            <ul className="divide-y text-sm">
-              {q.data.holidays.map((x) => (
-                <li key={x.id} className="flex items-center justify-between gap-2 py-2">
-                  <span>
-                    <span className="font-medium tabular-nums">{formatLocalDate(x.date)}</span> · {x.name}
-                    <span className="text-muted-foreground">
-                      {' '}
-                      · {t(`hr.h.kind.${x.type}`)}
-                      {x.halfDay ? ` · ${t('hr.h.half')}` : ''}
+    <div className="@container">
+      <div className="grid grid-cols-1 gap-4 @5xl:grid-cols-[1fr_380px]">
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('hr.h.title', { fy: fy.label })}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {admin && (
+              <div className="grid grid-cols-1 gap-2 rounded-control border p-3 @xl:grid-cols-[160px_1fr_140px_auto_auto] @xl:items-end">
+                <Field label={t('hr.h.date')}>
+                  <DateInput value={h.date} onChange={(v) => setH({ ...h, date: v })} />
+                </Field>
+                <Field label={t('hr.h.name')}>
+                  <Input
+                    value={h.name}
+                    onChange={(e) => setH({ ...h, name: e.target.value })}
+                    placeholder="Diwali"
+                  />
+                </Field>
+                <Field label={t('hr.h.type')}>
+                  <Select value={h.type} onChange={(e) => setH({ ...h, type: e.target.value })}>
+                    {['FESTIVAL', 'NATIONAL', 'OPTIONAL'].map((x) => (
+                      <option key={x} value={x}>
+                        {t(`hr.h.kind.${x}`)}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <label className="flex h-10 items-center gap-2 text-sm">
+                  <Switch
+                    checked={h.halfDay}
+                    onCheckedChange={(v) => setH({ ...h, halfDay: v })}
+                    aria-label={t('hr.h.half')}
+                  />{' '}
+                  {t('hr.h.half')}
+                </label>
+                <Button
+                  disabled={!h.date || h.name.trim().length < 2 || add.isPending}
+                  onClick={() =>
+                    add.mutate(undefined, {
+                      onSuccess: () => setH({ date: '', name: '', type: 'FESTIVAL', halfDay: false }),
+                    })
+                  }
+                >
+                  {add.isPending ? <Loader2 className="animate-spin" /> : <Plus />} {t('hr.h.add')}
+                </Button>
+              </div>
+            )}
+            {q.data.holidays.length ? (
+              <ul className="divide-y text-sm">
+                {q.data.holidays.map((x) => (
+                  <li key={x.id} className="flex items-center justify-between gap-2 py-2">
+                    <span>
+                      <span className="font-medium tabular-nums">{formatLocalDate(x.date)}</span> · {x.name}
+                      <span className="text-muted-foreground">
+                        {' '}
+                        · {t(`hr.h.kind.${x.type}`)}
+                        {x.halfDay ? ` · ${t('hr.h.half')}` : ''}
+                      </span>
                     </span>
-                  </span>
-                  {admin && (
-                    <Button
-                      size="icon-sm"
-                      variant="ghost"
-                      aria-label={t('common.delete')}
-                      onClick={() => del.mutate(x.id)}
-                    >
-                      <Trash2 />
-                    </Button>
-                  )}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-muted-foreground">{t('hr.h.none')}</p>
-          )}
-        </CardContent>
-      </Card>
-      <Card className="self-start">
-        <CardHeader>
-          <CardTitle>{t('hr.h.weekly')}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {DAYS.map((d, i) => (
-            <div key={d} className="flex items-center justify-between gap-2">
-              <span className="w-10 text-sm font-medium">{t(`hr.day.${d}`)}</span>
-              {admin ? (
-                <Chips
-                  label={t(`hr.day.${d}`)}
-                  value={current[i]!}
-                  onChange={(v) => setWeek(current.map((k, j) => (j === i ? v : k)))}
-                  options={(['WORKING', 'HALF', 'OFF'] as const).map((k) => ({
-                    value: k,
-                    label: t(`hr.h.${k}`),
-                  }))}
-                />
-              ) : (
-                <span className="text-sm text-muted-foreground">{t(`hr.h.${current[i]}`)}</span>
-              )}
-            </div>
-          ))}
-          {admin && (
-            <Button
-              variant="primary"
-              disabled={!week || saveWeek.isPending}
-              onClick={() => saveWeek.mutate(undefined, { onSuccess: () => setWeek(null) })}
-            >
-              {t('common.save')}
-            </Button>
-          )}
-          <p className="text-xs text-muted-foreground">{t('hr.h.weeklyHint')}</p>
-        </CardContent>
-      </Card>
+                    {admin && (
+                      <Button
+                        size="icon-sm"
+                        variant="ghost"
+                        aria-label={t('common.delete')}
+                        onClick={() => del.mutate(x.id)}
+                      >
+                        <Trash2 />
+                      </Button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">{t('hr.h.none')}</p>
+            )}
+          </CardContent>
+        </Card>
+        <Card className="self-start">
+          <CardHeader>
+            <CardTitle>{t('hr.h.weekly')}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {DAYS.map((d, i) => (
+              <div key={d} className="flex items-center justify-between gap-2">
+                <span className="w-10 text-sm font-medium">{t(`hr.day.${d}`)}</span>
+                {admin ? (
+                  <Chips
+                    label={t(`hr.day.${d}`)}
+                    value={current[i]!}
+                    onChange={(v) => setWeek(current.map((k, j) => (j === i ? v : k)))}
+                    options={(['WORKING', 'HALF', 'OFF'] as const).map((k) => ({
+                      value: k,
+                      label: t(`hr.h.${k}`),
+                    }))}
+                  />
+                ) : (
+                  <span className="text-sm text-muted-foreground">{t(`hr.h.${current[i]}`)}</span>
+                )}
+              </div>
+            ))}
+            {admin && (
+              <Button
+                variant="primary"
+                disabled={!week || saveWeek.isPending}
+                onClick={() => saveWeek.mutate(undefined, { onSuccess: () => setWeek(null) })}
+              >
+                {t('common.save')}
+              </Button>
+            )}
+            <p className="text-xs text-muted-foreground">{t('hr.h.weeklyHint')}</p>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
