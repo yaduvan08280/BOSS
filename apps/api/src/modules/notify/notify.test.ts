@@ -15,7 +15,8 @@ describe('secrets at rest', () => {
     const sealed = encryptJson({ pass: 'p@ss' }, SECRET);
     expect(sealed).not.toContain('p@ss');
     expect(decryptJson(sealed, SECRET)).toEqual({ pass: 'p@ss' });
-    const tampered = sealed.slice(0, -4) + (sealed.endsWith('A') ? 'B' : 'A') + sealed.slice(-3);
+    const tampered = sealed.slice(0, -4) + (sealed.at(-4) === 'A' ? 'B' : 'A') + sealed.slice(-3);
+    expect(tampered).not.toBe(sealed);
     expect(() => decryptJson(tampered, SECRET)).toThrow();
     expect(() => decryptJson(sealed, 'another-secret-that-is-long-enough-123')).toThrow();
   });
