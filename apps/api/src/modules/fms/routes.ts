@@ -23,6 +23,7 @@ import { documentPdf } from './documents';
 import { completeStep, parseDefinition, startRecord } from './engine';
 import { AppError } from '../../lib/errors';
 import { publicFormRoutes } from './public';
+import { fmsPeopleReport } from './people-report';
 import { flowReport, kpiValues, LIVE_TABS, liveFms, myFms, recordDetail } from './queries';
 import { reassignStep, recordAction } from './records';
 
@@ -95,6 +96,15 @@ export async function fmsRoutes(app: FastifyInstance, opts: { env: Env }) {
       },
     },
     async (q) => flowReport(app.prisma, actorOf(q), q.params.id, q.query.days),
+  );
+  // Delegation sheet → FMS report. Everyone may open it: the people shown follow the caller (see fmsPeopleReport).
+  r.get(
+    '/api/fms/reports/people',
+    {
+      onRequest: [app.authenticate],
+      schema: { tags, querystring: z.object({ at: z.iso.datetime({ offset: true }).optional() }) },
+    },
+    async (q) => fmsPeopleReport(app.prisma, actorOf(q), q.query.at ? new Date(q.query.at) : new Date()),
   );
 
   // ---- Records

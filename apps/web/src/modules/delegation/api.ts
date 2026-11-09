@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import type { KpiKey, KpiState, TaskAction, TaskActionInput, TaskStatus } from '@mono/shared';
+import type { FmsWeekRow, KpiKey, KpiState, TaskAction, TaskActionInput, TaskStatus } from '@mono/shared';
 import { api, ApiError } from '@/lib/api';
 
 export type TaskRow = {
@@ -121,6 +121,17 @@ export const useScorecard = (at: string) =>
       api<{ week: { start: string; end: string }; rows: ScoreRow[] }>(
         `/api/tasks/reports/scorecard?${qs({ at })}`,
       ),
+  });
+export type FmsReportData = {
+  week: { start: string; end: string };
+  total: FmsWeekRow;
+  rows: (FmsWeekRow & { personId: string; name: string })[];
+  flows: (FmsWeekRow & { flowId: string; name: string })[];
+};
+export const useFmsReport = (at: string) =>
+  useQuery({
+    queryKey: ['tasks', 'fms-report', at],
+    queryFn: () => api<FmsReportData>(`/api/fms/reports/people?${qs({ at })}`),
   });
 export const useRyg = (from: string, to: string) =>
   useQuery({

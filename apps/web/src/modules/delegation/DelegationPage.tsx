@@ -1,14 +1,15 @@
-import { CheckCircle2, ClipboardList, Gauge, ShieldCheck, Timer, Workflow } from 'lucide-react';
+import { CheckCircle2, ClipboardList, Gauge, ShieldCheck, Timer } from 'lucide-react';
 import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import type { Me } from '@mono/shared';
 import { Badge } from '@/components/ui/form';
-import { EmptyState, KpiTile, PageHeader } from '@/components/page';
+import { KpiTile, PageHeader } from '@/components/page';
 import { useModuleSettings } from '@/lib/work';
 import { cn } from '@/lib/utils';
 import { useUsers } from '@/modules/system/api';
 import { AddTask } from './AddTask';
 import { useTasks, useTiles } from './api';
+import { FmsReport } from './FmsReport';
 import { Reports } from './Reports';
 import { TaskDrawer } from './TaskDrawer';
 import { TaskList } from './TaskList';
@@ -108,9 +109,7 @@ export function DelegationPage({ me }: { me: Me }) {
           onOpen={(id) => set({ task: id })}
         />
       )}
-      {tab === 'fms' && (
-        <EmptyState icon={Workflow} title={t('common.comingIn', { phase: 5 })} body={t('task.fmsSoon')} />
-      )}
+      {tab === 'fms' && <FmsReport tz={tz} />}
       {tab === 'scorecard' && <Reports tz={tz} />}
       {open && <TaskDrawer id={open} people={people} tz={tz} onClose={() => set({ task: null })} />}
     </div>

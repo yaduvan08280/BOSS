@@ -6,6 +6,7 @@ import { ErrorState, KpiTile, PageSkeleton } from '@/components/page';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useRyg, useScorecard } from './api';
+import { download } from './csv';
 
 const STATE: Record<KpiState, string> = {
   meets: 'bg-status-ok-bg text-status-ok-fg',
@@ -14,15 +15,6 @@ const STATE: Record<KpiState, string> = {
   noData: 'bg-muted text-muted-foreground',
 };
 const pct = (n: number | null) => (n === null ? '—' : `${n}%`);
-
-function download(name: string, rows: (string | number)[][]) {
-  const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv' }));
-  a.download = name;
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
 
 export function Reports({ tz }: { tz: string }) {
   const { t } = useTranslation();

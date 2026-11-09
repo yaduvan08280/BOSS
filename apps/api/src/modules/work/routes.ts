@@ -13,7 +13,9 @@ import { AppError } from '../../lib/errors';
 import { recordChange } from '../../lib/events';
 import { inCompanyTx } from '../../lib/tx';
 import { checkPerson } from './actor';
+import { actorOf } from '../delegation/routes';
 import { pendingCounts } from './counts';
+import { personOpenWork } from './open-work';
 import { moduleSettings } from './settings';
 
 const moduleParam = z.object({
@@ -30,6 +32,13 @@ export async function workRoutes(app: FastifyInstance) {
 
   r.get('/api/work/counts', { onRequest: [app.authenticate], schema: { tags: ['work'] } }, async (request) =>
     pendingCounts(app.prisma, request.auth!.companyId, request.auth!.userId),
+  );
+
+  // Org chart → person: their open work. Who may look is checked inside (admins, their HOD, themselves).
+  r.get(
+    '/api/work/people/:id/open',
+    { onRequest: [app.authenticate], schema: { tags: ['work'], params: z.object({ id: z.string() }) } },
+    async (request) => personOpenWork(app.prisma, actorOf(request), request.params.id),
   );
 
   r.get(

@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { cn, safeStorage } from '@/lib/utils';
 import { useMe } from '@/modules/auth/session';
 import { del, post, useDepartments, useDesignations, useOrgMutation, useRoles, useUsers } from '../api';
+import { ShownCodes, type ShownCode } from '../integration/ShownCodes';
 import { AddPeopleDialog } from './AddPeopleDialog';
 import { PersonSheet } from './PersonSheet';
 import { TempPasswords, type TempPassword } from './TempPasswords';
@@ -39,6 +40,7 @@ export function UsersTab() {
   const [deleting, setDeleting] = useState<OrgPerson | null>(null);
   const [resetting, setResetting] = useState<OrgPerson | null>(null);
   const [passwords, setPasswords] = useState<TempPassword[]>([]);
+  const [codes, setCodes] = useState<ShownCode[]>([]);
   const [newDept, setNewDept] = useState<string | null>(null);
   const canAdmin = hasPermission(me.user.permissions, 'org.admin');
   const canHr = hasPermission(me.user.permissions, 'hr.admin');
@@ -60,6 +62,13 @@ export function UsersTab() {
     ),
   );
   const createDept = useOrgMutation((name: string) => post('/api/org/departments', { name }));
+  // Telegram link codes for the ticked people (already linked ones are skipped by the API).
+  const canTelegram = hasPermission(me.user.permissions, 'integrations.admin');
+  const sendCodes = useOrgMutation(
+    (userIds: string[]) =>
+      post<{ sent: number; shown: ShownCode[] }>('/api/notify/telegram/send-codes', { userIds }),
+    { success: (r) => t('notify.tg.codesSent', { count: r.sent }) },
+  );
 
   const deptMap = useMemo(() => new Map((depts.data ?? []).map((d) => [d.id, d])), [depts.data]);
   const all = useMemo(() => users.data ?? [], [users.data]);
@@ -271,9 +280,22 @@ export function UsersTab() {
             <Button size="sm" onClick={() => runBulk({ action: 'enableLogin', userIds: ids, enabled: true })}>
               {t('org.users.enableLogin')}
             </Button>
-            <Button size="sm" onClick={() => toast.info(t('org.users.telegramSoon'))}>
-              <Send /> {t('org.users.sendTelegram')}
-            </Button>
+            {canTelegram && (
+              <Button
+                size="sm"
+                disabled={sendCodes.isPending}
+                onClick={() =>
+                  sendCodes.mutate(ids, {
+                    onSuccess: (r) => {
+                      setCodes(r.shown);
+                      setSelected(new Set());
+                    },
+                  })
+                }
+              >
+                <Send /> {t('org.users.sendTelegram')}
+              </Button>
+            )}
             <Button
               size="icon-sm"
               variant="ghost"
@@ -346,6 +368,7 @@ export function UsersTab() {
         onConfirm={() => resetting && confirmReset(resetting)}
       />
       <TempPasswords items={passwords} onClose={() => setPasswords([])} />
+      <ShownCodes codes={codes} onClose={() => setCodes([])} />
     </div>
   );
 }

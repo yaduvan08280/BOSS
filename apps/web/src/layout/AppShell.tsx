@@ -1,4 +1,4 @@
-import { Bot, Plus } from 'lucide-react';
+import { Bot } from 'lucide-react';
 import { useState, Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router';
 import { InstallBanner } from './InstallBanner';
@@ -10,7 +10,9 @@ import { cn, safeStorage } from '@/lib/utils';
 import { useLiveEvents, useLogout, useUpdatePreferences } from '@/modules/auth/session';
 import { ChangePasswordCard } from '@/modules/account/AccountPage';
 import { CommandPalette } from '@/modules/search/CommandPalette';
+import { AssistantSheet } from './AssistantSheet';
 import { BottomTabs } from './BottomTabs';
+import { CaptureSheet } from './CaptureSheet';
 import { findNavItem, SYSTEM_NAV, WORKSPACE_NAV } from './nav';
 import { Sidebar } from './Sidebar';
 import { TopBar, WorkspaceSwitch } from './TopBar';
@@ -22,8 +24,14 @@ export function AppShell({ me }: { me: Me }) {
   const { pathname } = useLocation();
   const [collapsed, setCollapsed] = useState(() => safeStorage.get(COLLAPSE_KEY) === '1');
   const [drawer, setDrawer] = useState(false);
-  const [assistant, setAssistant] = useState(false);
-  const [capture, setCapture] = useState(false);
+  // The assistant and capture panels stay open only on the page they were opened on, so a link inside
+  // them that opens another page doesn't leave the panel covering it.
+  const [assistantOn, setAssistantOn] = useState<string | null>(null);
+  const [captureOn, setCaptureOn] = useState<string | null>(null);
+  const assistant = assistantOn === pathname;
+  const capture = captureOn === pathname;
+  const setAssistant = (open: boolean) => setAssistantOn(open ? pathname : null);
+  const setCapture = (open: boolean) => setCaptureOn(open ? pathname : null);
   const logout = useLogout();
   const prefs = useUpdatePreferences();
   useLiveEvents(true);
@@ -115,25 +123,8 @@ export function AppShell({ me }: { me: Me }) {
         alerts={me.counters.unreadNotifications}
       />
 
-      <Sheet open={assistant} onOpenChange={setAssistant}>
-        <SheetContent side="right" title={t('shell.assistant')}>
-          <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
-            <div className="grid size-16 place-items-center rounded-card bg-accent-soft text-accent-soft-foreground">
-              <Bot className="size-7" />
-            </div>
-            <p className="max-w-xs text-sm text-muted-foreground">{t('shell.assistantSoon')}</p>
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      <Sheet open={capture} onOpenChange={setCapture}>
-        <SheetContent side="bottom" title={t('shell.capture')}>
-          <div className="flex items-center gap-3 p-5 pb-8 text-sm text-muted-foreground">
-            <Plus className="size-5 shrink-0" />
-            {t('shell.captureSoon')}
-          </div>
-        </SheetContent>
-      </Sheet>
+      <AssistantSheet me={me} open={assistant} onOpenChange={setAssistant} />
+      <CaptureSheet me={me} open={capture} onOpenChange={setCapture} />
     </div>
   );
 }

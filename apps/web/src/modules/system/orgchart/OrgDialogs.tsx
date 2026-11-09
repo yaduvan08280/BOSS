@@ -1,4 +1,4 @@
-import { ClipboardList, Mail, Phone } from 'lucide-react';
+import { Mail, Phone } from 'lucide-react';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import type { OrgDepartment, OrgPerson } from '@mono/shared';
@@ -7,6 +7,7 @@ import { StatusChip } from '@/components/status-chip';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { OpenWork } from './OpenWork';
 
 export type PendingMove = { person: OrgPerson; from: OrgDepartment | null; to: OrgDepartment };
 
@@ -122,12 +123,7 @@ export function PersonPanel({
               person.loginEnabled ? (person.mobile ?? person.email) : t('org.users.loginOff'),
             )}
           </div>
-          <div className="rounded-card border bg-muted/40 p-4">
-            <div className="flex items-center gap-2 text-sm font-semibold">
-              <ClipboardList className="size-4" /> {t('org.chart.openWork')}
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">{t('org.chart.openWorkSoon')}</p>
-          </div>
+          <OpenWork personId={person.id} />
           <Button asChild className="w-full">
             <Link to={`/system/users?dept=${person.mainDepartmentId ?? ''}`}>
               {t('org.chart.editInUsers')}

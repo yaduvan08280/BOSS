@@ -2,6 +2,7 @@ import type { Db } from '@mono/db';
 import { formatDate, misRow, weekOf, type MisRow } from '@mono/shared';
 import { renderPdf } from '../../lib/pdf';
 import { effectiveVerifier } from '../delegation/service';
+import { weekSteps } from '../fms/people-report';
 import { can, teamOf, type Actor } from '../work/actor';
 import { moduleSettings } from '../work/settings';
 
@@ -39,7 +40,7 @@ export async function misFor(
   const ids = people.map((p) => p.id);
   const s = await moduleSettings(db, companyId, 'delegation');
   const range = { gte: week.from, lt: week.to };
-  const [tasks, runs, tickets] = await Promise.all([
+  const [tasks, runs, tickets, steps] = await Promise.all([
     db.task.findMany({
       where: {
         companyId,
@@ -64,10 +65,11 @@ export async function misFor(
       where: { companyId, deletedAt: null, solverId: { in: ids }, plannedFixAt: range },
       select: { solverId: true, status: true, plannedFixAt: true, resolvedAt: true },
     }),
+    weekSteps(db, companyId, ids, week),
   ]);
   const scored = tasks.map((t) => ({ ...t, verifierId: effectiveVerifier(t, s) }));
   const rows: MisPerson[] = people.map((p) => ({
-    ...misRow(p.id, { tasks: scored, runs, tickets }, week, now, s.verifyWithinMinutes),
+    ...misRow(p.id, { tasks: scored, runs, tickets, steps }, week, now, s.verifyWithinMinutes),
     name: p.name,
     department: p.mainDepartment?.name ?? null,
   }));
@@ -97,6 +99,7 @@ export async function misPdf(
     'Verified in time',
     'Checklists',
     'Tickets',
+    'FMS steps',
     'Score',
   ];
   const body = report.rows.map((r) => [
@@ -108,6 +111,7 @@ export async function misPdf(
     cell(r.verifications),
     cell(r.checklists),
     cell(r.tickets),
+    cell(r.fms),
     { text: r.score === null ? '—' : `${r.score}%`, bold: true },
   ]);
   const range = `${formatDate(`${report.week.start}T12:00:00Z`, 'UTC')} – ${formatDate(`${report.week.end}T12:00:00Z`, 'UTC')}`;
@@ -122,13 +126,13 @@ export async function misPdf(
       {
         table: {
           headerRows: 1,
-          widths: ['*', 80, 34, 62, 62, 70, 62, 62, 40],
+          widths: ['*', 76, 34, 58, 58, 66, 58, 58, 58, 40],
           body: [head.map((h) => ({ text: h, bold: true, fillColor: '#f2efe7' })), ...body],
         },
         layout: 'lightHorizontalLines',
       },
       {
-        text: '% of what was due that week (up to now for the current week). FMS steps arrive with processes.',
+        text: '% of what was due that week (up to now for the current week). FMS steps: on time, each counted once — in the week done, or while open in the week due.',
         color: '#888',
         fontSize: 8,
         margin: [0, 10, 0, 0],

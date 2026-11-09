@@ -1,5 +1,18 @@
 # Changelog
 
+## Fix — leftover "arrives in phase N" notices replaced (09/11/2026)
+
+Five spots still showed a placeholder for features that were already built. Each now works:
+
+- **Delegation sheet → FMS report**: this week's process steps per person and per process, with the same week picker as the Scorecard: due this week, done, on time, late, still open, on-time %, and CSV export. Each step counts once: in the week it was done, or, while still open, in the week it fell due. Steps of records on hold don't count. Admins see everyone, HODs their team, everyone else themselves. A process name opens it in Live FMS. API: `GET /api/fms/reports/people?at=`.
+- **AI assistant button** (bottom right): asks questions through the same Ask as Home, with example questions and a "Build a process with AI" link for people who can edit flows. If AI isn't connected it says so, with a Connect AI button for owners and admins.
+- **Phone "+ Capture"**: one line onto the EA board for the board's owner, its EA and EA editors, plus shortcuts to give a task, raise a help slip or raise a help ticket (each shown only with the right to do it).
+- **Org chart → a person → Open work**: their open tasks, checklist runs, process steps and help tickets, late ones first, each opening where it lives. API: `GET /api/work/people/:id/open` (admins anyone, HODs their team, everyone else themselves).
+- **Users → tick people → Send Telegram codes**: sends link codes to the ticked people who aren't linked yet (people without a mobile or email get their code shown to hand over). Shown only with Integration admin rights.
+- **UI kit → Theme playground**: "Save as company theme" saves the theme for everyone and keeps the logo, app name and defaults from Appearance.
+- The assistant and capture panels close when a link in them opens another page.
+- **Weekly MIS → FMS steps on time** is filled in (screen, phone cards, Excel, PDF) with the same counting as the FMS report, and counts towards each person's score. People with no process steps that week aren't marked down: the score averages only the parts with data.
+
 ## Fix — accidental password reset and owner lockout (09/11/2026)
 
 - **Reset password asks first** (System Master → Users, table and cards): "Reset {name}'s password?" says they are signed out on every device and their password stops working. Before, a double-click on the Add people backdrop could close the dialog on the first click and reset the row behind it on the second, with no question.

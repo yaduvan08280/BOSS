@@ -79,7 +79,21 @@
     "system": "Same as device",
     "largerText": "Larger text",
     "assistant": "AI assistant",
-    "assistantSoon": "The assistant arrives in phase 6. It will answer questions about your data and draft processes for you.",
+    "ai": {
+      "subtitle": "Ask about your company's work in plain words",
+      "placeholder": "Ask a question…",
+      "ask": "Ask",
+      "try": "Try",
+      "example": {
+        "overdue": "Which tasks are overdue?",
+        "leave": "Who is on leave this week?",
+        "stock": "Which items are below their minimum stock?"
+      },
+      "build": "Build a process with AI",
+      "noAccess": "Your role doesn't include the AI assistant. Ask your admin if you need it.",
+      "notConnected": "AI isn't connected yet. An owner or admin can connect it in System Master → Integration → AI.",
+      "connect": "Connect AI"
+    },
     "help": "Help",
     "signOut": "Sign out",
     "collapseMenu": "Collapse menu",
@@ -89,7 +103,13 @@
     "alerts": "Alerts",
     "home": "Home",
     "myWork": "My work",
-    "captureSoon": "Quick capture arrives with the EA board in phase 4.",
+    "captureEa": "Quick capture to the EA board",
+    "quick": {
+      "task": "Give a task",
+      "slip": "Raise a help slip",
+      "ticket": "Raise a help ticket"
+    },
+    "captureNothing": "Nothing to capture with your role. Ask your admin if you need to give tasks or raise tickets.",
     "noNotifications": "You're all caught up."
   },
   "section": {
@@ -289,7 +309,8 @@
     "title": "UI kit",
     "subtitle": "Every colour and building block, in the current theme",
     "playground": "Theme playground",
-    "playgroundHint": "Preview only. Saving the company theme arrives in phase 1 (System Master → Appearance).",
+    "playgroundHint": "Try a look, then save it as the company theme for everyone. Logo and app name are in System Master → Appearance.",
+    "save": "Save as company theme",
     "seed": "Theme colour",
     "warmth": "Warmth of greys",
     "corners": "Corners",
@@ -450,7 +471,6 @@
       "setRole": "Set role",
       "enableLogin": "Enable login",
       "sendTelegram": "Send Telegram codes",
-      "telegramSoon": "Telegram codes arrive in phase 2.",
       "bulkDone_one": "{{count}} person updated",
       "bulkDone_other": "{{count}} people updated",
       "bulkSkipped_one": "{{count}} person has no mobile or email, so no login",
@@ -578,7 +598,28 @@
       "added": "{{name}} now also works in {{to}}",
       "madeHod": "{{name}} is now HOD of {{dept}}",
       "openWork": "Open work",
-      "openWorkSoon": "Tasks, checklists and process steps show here from phase 3.",
+      "work": {
+        "none": "Nothing open. All caught up.",
+        "failed": "Their work couldn't be loaded.",
+        "late_one": "{{count}} late",
+        "late_other": "{{count}} late",
+        "task_one": "{{count}} task",
+        "task_other": "{{count}} tasks",
+        "checklist_one": "{{count}} checklist",
+        "checklist_other": "{{count}} checklists",
+        "fms_one": "{{count}} process step",
+        "fms_other": "{{count}} process steps",
+        "ticket_one": "{{count}} help ticket",
+        "ticket_other": "{{count}} help tickets",
+        "more_one": "and {{count}} more",
+        "more_other": "and {{count}} more",
+        "kind": {
+          "task": "Task",
+          "checklist": "Checklist",
+          "fms": "Process step",
+          "ticket": "Help ticket"
+        }
+      },
       "editInUsers": "Edit in Users"
     },
     "look": {
@@ -1218,7 +1259,26 @@
     "firstPlanned": "First planned for",
     "doneOn": "Done on",
     "proofNeeded": "Proof needed",
-    "fmsSoon": "Steps from processes (FMS) appear here with phase 5.",
+    "fmsRep": {
+      "col": {
+        "due": "Due this week",
+        "done": "Done",
+        "onTime": "On time",
+        "late": "Late",
+        "open": "Still open",
+        "onTimePct": "On time %"
+      },
+      "graded": "of {{n}} steps graded",
+      "dueNote": "process steps planned this week",
+      "lateNote": "done late, or open past due",
+      "openNote": "running and not due yet",
+      "byPerson": "By person",
+      "byFlow": "By process",
+      "flow": "Process",
+      "emptyTitle": "No process steps this week",
+      "emptyBody": "Steps from your processes (FMS) show here once someone has one due or done in the week.",
+      "legend": "Each step counts once: in the week it was done, or, while still open, in the week it fell due. On time = done by its planned time. Steps of records on hold don't count."
+    },
     "importHint": "Paste rows or open a CSV/Excel file. Columns: doer, planned date (DD/MM/YYYY HH:mm), task, verifier, proof (yes/no).",
     "openFile": "Open CSV or Excel",
     "importN_one": "Add {{count}} task",
@@ -1630,7 +1690,7 @@
       "verifications": "Verified in time",
       "checklists": "Checklists",
       "tickets": "Tickets fixed in time",
-      "fms": "FMS steps",
+      "fms": "FMS steps on time",
       "score": "Score"
     },
     "excel": "Excel",

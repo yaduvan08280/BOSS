@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils';
 
 type Row = MisRow & { name: string; department: string | null };
 type Report = { week: { start: string; end: string }; rows: Row[] };
-const PARTS = ['done', 'onTime', 'verifications', 'checklists', 'tickets'] as const;
+const PARTS = ['done', 'onTime', 'verifications', 'checklists', 'tickets', 'fms'] as const;
 const partOf = (r: Row, k: (typeof PARTS)[number]): MisPart =>
   k === 'done' ? r.tasks.done : k === 'onTime' ? r.tasks.onTime : r[k];
 
@@ -64,6 +64,7 @@ export function MisPage({ me }: { me: Me }) {
       'Verified in time %',
       'Checklists %',
       'Tickets %',
+      'FMS steps %',
       'Score',
     ];
     const rows = r.rows.map((x) => [
@@ -165,7 +166,6 @@ export function MisPage({ me }: { me: Me }) {
                     {t(`mis.col.${k}`)}
                   </th>
                 ))}
-                <th className="px-3 font-medium">{t('mis.col.fms')}</th>
                 <th className="px-3 font-medium">{t('mis.col.score')}</th>
               </tr>
             </thead>
@@ -182,7 +182,6 @@ export function MisPage({ me }: { me: Me }) {
                       <Pct p={partOf(x, k)} />
                     </td>
                   ))}
-                  <td className="px-3 text-muted-foreground">—</td>
                   <td className="px-3">
                     <Pct p={x.score} strong />
                   </td>

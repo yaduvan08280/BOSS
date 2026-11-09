@@ -1,3 +1,5 @@
+import { fmsWeekRow, type FmsStepFact } from './fms-report';
+
 /** Weekly MIS (CLAUDE.md §5.6): one row per person, across modules. Percentages are of what was due. */
 export type MisTask = {
   doerId: string;
@@ -9,6 +11,8 @@ export type MisTask = {
 };
 export type MisRun = { doerId: string; plannedAt: Date; status: string };
 export type MisTicket = { solverId: string; status: string; plannedFixAt: Date; resolvedAt: Date | null };
+/** An FMS step the person holds (graded like Delegation → FMS report, decision 101). */
+export type MisStep = FmsStepFact & { doerId: string };
 
 export type MisPart = { total: number; good: number; pct: number | null };
 export type MisRow = {
@@ -17,8 +21,8 @@ export type MisRow = {
   verifications: MisPart;
   checklists: MisPart;
   tickets: MisPart;
-  /** FMS steps on time: phase 5. */
-  fms: MisPart | null;
+  /** FMS steps on time: graded once, in the week done or (still open) the week due. */
+  fms: MisPart;
   score: number | null;
 };
 
@@ -30,7 +34,7 @@ const part = (total: number, good: number): MisPart => ({
 
 export function misRow(
   personId: string,
-  data: { tasks: MisTask[]; runs: MisRun[]; tickets: MisTicket[] },
+  data: { tasks: MisTask[]; runs: MisRun[]; tickets: MisTicket[]; steps?: MisStep[] },
   week: { from: Date; to: Date },
   now: Date,
   verifySlaMinutes: number,
@@ -63,6 +67,12 @@ export function misRow(
   );
   const fixedInTime = tickets.filter((t) => t.resolvedAt && t.resolvedAt <= t.plannedFixAt);
 
+  const steps = fmsWeekRow(
+    (data.steps ?? []).filter((s) => s.doerId === personId),
+    week,
+    now,
+  );
+
   const row: MisRow = {
     personId,
     tasks: {
@@ -73,10 +83,10 @@ export function misRow(
     verifications: part(handedIn.length, verifiedInTime.length),
     checklists: part(runs.length, runsDone.length),
     tickets: part(tickets.length, fixedInTime.length),
-    fms: null,
+    fms: part(steps.onTime + steps.late, steps.onTime),
     score: null,
   };
-  const pcts = [row.tasks.done, row.tasks.onTime, row.verifications, row.checklists, row.tickets]
+  const pcts = [row.tasks.done, row.tasks.onTime, row.verifications, row.checklists, row.tickets, row.fms]
     .map((p) => p.pct)
     .filter((p): p is number => p !== null);
   row.score = pcts.length ? Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length) : null;
