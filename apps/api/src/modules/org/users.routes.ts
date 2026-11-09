@@ -212,6 +212,14 @@ export async function userRoutes(app: FastifyInstance) {
     async (request) =>
       inCompanyTx(request, async (tx, ctx) => {
         const user = await findPerson(tx, request.params.id);
+        // A reset replaces the password with a one-time one and signs the person out: never do that to
+        // yourself by accident (the sole Owner would be left with only a password shown once).
+        if (user.id === ctx.actorId)
+          throw new AppError(
+            400,
+            'BAD_REQUEST',
+            "You can't reset your own password here. Use Profile → Change password.",
+          );
         if (user.role.key === 'OWNER' && !isOwner(request))
           throw forbidden("Only an Owner can reset an Owner's password");
         if (!user.mobile && !user.email)

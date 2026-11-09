@@ -1,20 +1,15 @@
 import type { Db } from '@mono/db';
-import { looksLikeEmail, normalizeMobile, type Me } from '@mono/shared';
+import type { Me } from '@mono/shared';
 import { readAppearance } from '../org/company.routes';
 import { pendingCounts } from '../work/counts';
 import type { ActorContext } from '../../lib/audit';
 import { AppError, unauthenticated } from '../../lib/errors';
+import { identifierWhere } from '../../lib/identifier';
 import { recordChange } from '../../lib/events';
 import { hashPassword, verifyPassword } from '../../lib/password';
 import { hashToken, newRefreshToken, REFRESH_TTL_SECONDS } from '../../lib/tokens';
 
 type ClientInfo = { ip: string | null; userAgent: string | null };
-
-function identifierWhere(identifier: string) {
-  if (looksLikeEmail(identifier)) return { email: identifier.trim().toLowerCase() };
-  const mobile = normalizeMobile(identifier);
-  return mobile ? { mobile } : null;
-}
 
 /**
  * Check credentials. One identifier can exist in several companies: if the password matches more than

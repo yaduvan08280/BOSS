@@ -57,7 +57,7 @@ In `nano`, set at least these lines (Ctrl+O to save, Ctrl+X to exit):
 | `SEED_OWNER_NAME` | `Nikhil` | |
 | `SEED_OWNER_MOBILE` | `98xxxxxxxx` | The owner logs in with this mobile... |
 | `SEED_OWNER_EMAIL` | `itadmin@ggminerals.com` | ...or this email. |
-| `SEED_OWNER_PASSWORD` | a strong password | Change it after the first login (Profile → Change password). |
+| `SEED_OWNER_PASSWORD` | a strong password | At least 8 characters with a letter and a number (the seed refuses a weaker one). Change it after the first login (Profile → Change password). |
 | `DATA_DIR` | `/srv/mono` | Database, uploads and backups live here. |
 | `COMPOSE_PROFILES` | `tunnel` | Turns on Cloudflare Tunnel (step 6). Leave empty until you have a token. |
 
@@ -244,10 +244,37 @@ Logs rotate automatically (5 × 10 MB per service).
 
 | Symptom | Check |
 |---|---|
-| `migrate` exited with an error | `./deploy/compose.sh logs migrate`. Usually a `.env` value: `SEED_OWNER_PASSWORD` or `SEED_OWNER_MOBILE`/`EMAIL` missing. |
+| `migrate` exited with an error | `./deploy/compose.sh logs migrate`. Usually a `.env` value: `SEED_OWNER_PASSWORD` missing or too weak (8+ characters with a letter and a number), or `SEED_OWNER_MOBILE`/`EMAIL` missing. |
 | Sign-in says "Request blocked: unknown origin" | `BASE_URL` in `.env` must match the address in the browser exactly (https, no trailing slash). Then `./deploy/compose.sh up -d`. |
 | Signed in, but sent back to the login page | Same cause: `BASE_URL` must start with `https://` when using the tunnel. |
 | Tunnel not connecting | `./deploy/compose.sh logs cloudflared`. Check the token and that `COMPOSE_PROFILES=tunnel`. |
 | `api` unhealthy | `./deploy/compose.sh logs api | tail -50`. "Invalid environment" lists the exact settings to fix. |
 | Telegram bot silent | `./deploy/compose.sh logs worker | grep -i telegram`. \"terminated by other getUpdates\" means the same token runs somewhere else. |
 | Disk filling up | `du -sh /srv/mono/*` and `docker system prune` (removes old images only). |
+| The owner can't sign in (forgot the password, or it was reset by mistake) | See **Locked out: reset a password from the server** below. |
+
+### Locked out: reset a password from the server
+
+Inside the app only an Owner can reset an Owner's password, and the login page has no reset, so if the
+only Owner can't sign in nobody in the app can help. Re-running the seed doesn't help either: it skips a
+company that already exists. Reset the password from the server instead (works for any person):
+
+```bash
+./deploy/compose.sh exec api node apps/api/dist/reset-password.js 98xxxxxxxx
+```
+
+Use the person's login mobile or email. It prints a **one-time password, shown only once**:
+
+- the old password stops working and every device they were signed in on is signed out;
+- at the next sign-in they must choose their own password (8+ characters with a letter and a number);
+- their login is switched on, and the reset is written to the audit log (with no person as the actor).
+
+If the same mobile or email is used in more than one company, the command lists them; add the company:
+
+```bash
+./deploy/compose.sh exec api node apps/api/dist/reset-password.js 98xxxxxxxx --company ggm-minerals
+```
+
+The command refuses someone marked left or inactive (an Owner can make them active again in the app).
+Everyone else who forgets a password: an Owner or Admin resets it in System Master → Users (key icon).
+To change your own password while signed in, use Profile → Change password.

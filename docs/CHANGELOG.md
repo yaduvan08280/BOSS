@@ -1,5 +1,15 @@
 # Changelog
 
+## Fix — accidental password reset and owner lockout (09/11/2026)
+
+- **Reset password asks first** (System Master → Users, table and cards): "Reset {name}'s password?" says they are signed out on every device and their password stops working. Before, a double-click on the Add people backdrop could close the dialog on the first click and reset the row behind it on the second, with no question.
+- **No resetting your own password** from Users: the API refuses it (`POST /api/org/users/:id/reset-password` → 400, "Use Profile → Change password"), and your own row's key icon opens Profile instead.
+- **Add people → One by one closes after a successful add** (like Paste a list), with a "{name} added" toast. Adding many people at once is what Paste a list is for.
+- **Locked-out owner recovery from the server**: `./deploy/compose.sh exec api node apps/api/dist/reset-password.js <mobile-or-email> [--company <slug>]` (dev: `npm run reset-password -- …`) gives a one-time password, turns login on, signs the person out everywhere and writes the audit log. See INSTALL.md → Troubleshooting.
+- **The seed refuses a weak owner password** when it creates a company (8+ characters with a letter and a number, the same rule as Change password). An existing company ignores it, so restarts never fail.
+- `passwordChangedAt` stays "when the person last chose their own password": a reset (one-time password) doesn't set it; Change password does.
+- The Add people button has an accessible name on phones (icon only there).
+
 ## Phase 10 — Masters, public API, Google Drive, PWA, hardening (05/11/2026)
 
 **Masters**

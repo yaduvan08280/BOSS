@@ -54,16 +54,18 @@ export function AddPeopleDialog({
   const deptNames = new Set(departments.map((d) => d.name.toLowerCase()));
   const desigNames = new Set(designations.map((d) => d.name.toLowerCase()));
 
-  const createOne = useOrgMutation((body: typeof form) =>
-    post<{ person: OrgPerson; tempPassword: string | null }>('/api/org/users', {
-      ...body,
-      mobile: body.mobile || null,
-      email: body.email || null,
-      mainDepartmentId: body.mainDepartmentId || null,
-      designationId: body.designationId || null,
-      reportsToId: body.reportsToId || null,
-      roleId: body.roleId || undefined,
-    }),
+  const createOne = useOrgMutation(
+    (body: typeof form) =>
+      post<{ person: OrgPerson; tempPassword: string | null }>('/api/org/users', {
+        ...body,
+        mobile: body.mobile || null,
+        email: body.email || null,
+        mainDepartmentId: body.mainDepartmentId || null,
+        designationId: body.designationId || null,
+        reportsToId: body.reportsToId || null,
+        roleId: body.roleId || undefined,
+      }),
+    { success: (r) => t('org.users.personAdded', { name: r.person.name }) },
   );
   const createMany = useOrgMutation(
     (people: unknown) =>
@@ -74,10 +76,13 @@ export function AddPeopleDialog({
     { silentError: true, success: (r) => t('org.users.imported', { count: r.created }) },
   );
 
+  // A single add closes the dialog (like a pasted list does), so nothing is left open behind the
+  // one-time password. Adding many people at once is what "Paste a list" is for.
   const submitOne = () =>
     createOne.mutate(form, {
       onSuccess: (r) => {
         setForm({ ...EMPTY, mainDepartmentId: form.mainDepartmentId });
+        onClose();
         if (r.tempPassword)
           onPasswords([
             { name: r.person.name, login: r.person.mobile ?? r.person.email, tempPassword: r.tempPassword },

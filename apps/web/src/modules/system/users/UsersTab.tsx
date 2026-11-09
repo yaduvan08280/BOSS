@@ -37,6 +37,7 @@ export function UsersTab() {
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<OrgPerson | null>(null);
   const [deleting, setDeleting] = useState<OrgPerson | null>(null);
+  const [resetting, setResetting] = useState<OrgPerson | null>(null);
   const [passwords, setPasswords] = useState<TempPassword[]>([]);
   const [newDept, setNewDept] = useState<string | null>(null);
   const canAdmin = hasPermission(me.user.permissions, 'org.admin');
@@ -91,6 +92,7 @@ export function UsersTab() {
     selected,
     toggle,
     canAdmin,
+    meId: me.user.id,
     open: setEditing,
     remove: setDeleting,
     setLogin: (p, on) =>
@@ -102,12 +104,13 @@ export function UsersTab() {
             setPasswords([{ name: p.name, login: p.mobile ?? p.email, tempPassword: r.tempPassword }]),
         },
       ),
-    reset: (p) =>
-      reset.mutate(p, {
-        onSuccess: (r) =>
-          setPasswords([{ name: p.name, login: p.mobile ?? p.email, tempPassword: r.tempPassword }]),
-      }),
+    reset: setResetting,
   };
+  const confirmReset = (p: OrgPerson) =>
+    reset.mutate(p, {
+      onSuccess: (r) =>
+        setPasswords([{ name: p.name, login: p.mobile ?? p.email, tempPassword: r.tempPassword }]),
+    });
   const runBulk = (body: BulkAction) =>
     bulk.mutate(body, {
       onSuccess: (r) => {
@@ -176,7 +179,7 @@ export function UsersTab() {
               <option value="hr">{t('org.users.hrCols')}</option>
             </Select>
           )}
-          <Button variant="primary" onClick={() => setAdding(true)}>
+          <Button variant="primary" onClick={() => setAdding(true)} aria-label={t('org.users.add')}>
             <UserPlus /> <span className="hidden sm:inline">{t('org.users.add')}</span>
           </Button>
         </div>
@@ -332,6 +335,15 @@ export function UsersTab() {
         confirm={t('org.delete')}
         danger
         onConfirm={() => deleting && remove.mutate(deleting)}
+      />
+      <Confirm
+        open={!!resetting}
+        onOpenChange={(o) => !o && setResetting(null)}
+        title={t('org.users.resetTitle', { name: resetting?.name })}
+        body={t('org.users.resetBody', { name: resetting?.name })}
+        confirm={t('org.users.resetPassword')}
+        danger
+        onConfirm={() => resetting && confirmReset(resetting)}
       />
       <TempPasswords items={passwords} onClose={() => setPasswords([])} />
     </div>

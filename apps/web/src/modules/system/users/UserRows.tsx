@@ -1,5 +1,6 @@
 import { Crown, KeyRound, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import type { OrgDepartment, OrgPerson } from '@mono/shared';
 import { Avatar } from '@/components/brand';
 import { StatusChip } from '@/components/status-chip';
@@ -12,9 +13,12 @@ export type RowActions = {
   toggle: (id: string) => void;
   open: (p: OrgPerson) => void;
   setLogin: (p: OrgPerson, on: boolean) => void;
+  /** Asks first (Confirm in UsersTab); never offered on the signed-in person's own row. */
   reset: (p: OrgPerson) => void;
   remove: (p: OrgPerson) => void;
   canAdmin: boolean;
+  /** The signed-in person: they change their own password in Profile, not here. */
+  meId: string;
 };
 
 const TONE = { ACTIVE: 'ok', INACTIVE: 'neutral', LEFT: 'bad' } as const;
@@ -29,6 +33,33 @@ function DeptChips({ ids, depts }: { ids: string[]; depts: Map<string, OrgDepart
         </span>
       ))}
     </div>
+  );
+}
+
+/**
+ * Key icon. Someone else: asks before resetting (it signs them out). Yourself: no reset here — it would
+ * replace your own password with a one-time one — so the icon leads to Profile → Change password.
+ */
+function PasswordButton({ p, a }: { p: OrgPerson; a: RowActions }) {
+  const { t } = useTranslation();
+  if (p.id === a.meId)
+    return (
+      <Button asChild variant="ghost" size="icon-sm" title={t('org.users.ownPassword')}>
+        <Link to="/account" aria-label={t('org.users.ownPassword')}>
+          <KeyRound />
+        </Link>
+      </Button>
+    );
+  return (
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      title={t('org.users.resetPassword')}
+      aria-label={t('org.users.resetPasswordOf', { name: p.name })}
+      onClick={() => a.reset(p)}
+    >
+      <KeyRound />
+    </Button>
   );
 }
 
@@ -127,14 +158,7 @@ export function UsersTable({
                   <td className="px-3">
                     {a.canAdmin && (
                       <div className="flex">
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          title={t('org.users.resetPassword')}
-                          onClick={() => a.reset(p)}
-                        >
-                          <KeyRound />
-                        </Button>
+                        <PasswordButton p={p} a={a} />
                         <Button
                           variant="ghost"
                           size="icon-sm"
@@ -224,14 +248,7 @@ export function UserCards({
             </span>
             {a.canAdmin && (
               <>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  title={t('org.users.resetPassword')}
-                  onClick={() => a.reset(p)}
-                >
-                  <KeyRound />
-                </Button>
+                <PasswordButton p={p} a={a} />
                 <Button variant="ghost" size="icon-sm" title={t('org.delete')} onClick={() => a.remove(p)}>
                   <Trash2 />
                 </Button>

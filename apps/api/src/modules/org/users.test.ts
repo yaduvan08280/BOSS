@@ -92,6 +92,80 @@ describe('users', () => {
   });
 });
 
+describe('password reset safety', () => {
+  it('refuses to reset your own password and points to Profile; you stay signed in', async () => {
+    const { api, owner, mobile, password } = await ownerClient(ctx.app);
+    const res = await api.post(`/api/org/users/${owner.id}/reset-password`);
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toContain('Profile → Change password');
+    expect((await api.get('/api/auth/me')).status).toBe(200);
+    // The password still works and nothing was flagged.
+    const again = await signedIn(ctx.app, mobile, password);
+    expect((await again.get('/api/auth/me')).body.user.mustChangePassword).toBe(false);
+    const row = await ctx.prisma.user.findUniqueOrThrow({ where: { id: owner.id } });
+    expect(row.mustChangePassword).toBe(false);
+  });
+
+  it('an Admin cannot reset an Owner; another Owner can, and not their own', async () => {
+    const { api, owner } = await ownerClient(ctx.app);
+    const roles = (await api.get('/api/org/roles')).body.roles as { id: string; key: string }[];
+    const byKey = (k: string) => roles.find((r) => r.key === k)!.id;
+    const adminMobile = rnd();
+    const admin = (
+      await api.post('/api/org/users', {
+        name: 'Anil Admin',
+        mobile: adminMobile,
+        roleId: byKey('ADMIN'),
+        loginEnabled: true,
+      })
+    ).body;
+    const ownerMobile = rnd();
+    const second = (
+      await api.post('/api/org/users', {
+        name: 'Second Owner',
+        mobile: ownerMobile,
+        roleId: byKey('OWNER'),
+        loginEnabled: true,
+      })
+    ).body;
+    const asAdmin = await signedIn(ctx.app, adminMobile, admin.tempPassword);
+    await asAdmin.post('/api/auth/change-password', {
+      currentPassword: admin.tempPassword,
+      newPassword: 'Admin12345',
+    });
+    expect((await asAdmin.post(`/api/org/users/${owner.id}/reset-password`)).status).toBe(403);
+    expect((await asAdmin.post(`/api/org/users/${admin.person.id}/reset-password`)).status).toBe(400);
+
+    const asOwner2 = await signedIn(ctx.app, ownerMobile, second.tempPassword);
+    await asOwner2.post('/api/auth/change-password', {
+      currentPassword: second.tempPassword,
+      newPassword: 'Owner12345',
+    });
+    expect((await asOwner2.post(`/api/org/users/${second.person.id}/reset-password`)).status).toBe(400);
+    const ok = await asOwner2.post(`/api/org/users/${owner.id}/reset-password`);
+    expect(ok.status).toBe(200);
+    expect((await api.get('/api/auth/me')).status).toBe(401);
+  });
+
+  it('leaves passwordChangedAt alone: a one-time password is not one the person chose', async () => {
+    const { api } = await ownerClient(ctx.app);
+    const mobile = rnd();
+    const first = (await api.post('/api/org/users', { name: 'Ravi', mobile, loginEnabled: true })).body;
+    const ravi = await signedIn(ctx.app, mobile, first.tempPassword);
+    await ravi.post('/api/auth/change-password', {
+      currentPassword: first.tempPassword,
+      newPassword: 'Ravi123456',
+    });
+    const chosen = (await ctx.prisma.user.findUniqueOrThrow({ where: { id: first.person.id } }))
+      .passwordChangedAt;
+    expect(chosen).toBeInstanceOf(Date);
+    expect((await api.post(`/api/org/users/${first.person.id}/reset-password`)).status).toBe(200);
+    const after = await ctx.prisma.user.findUniqueOrThrow({ where: { id: first.person.id } });
+    expect(after.passwordChangedAt).toEqual(chosen);
+    expect(after.mustChangePassword).toBe(true);
+  });
+});
+
 describe('permissions and company isolation', () => {
   it('a Member can look but not change; HR details stay hidden', async () => {
     const { api } = await ownerClient(ctx.app);

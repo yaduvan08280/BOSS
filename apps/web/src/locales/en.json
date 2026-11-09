@@ -473,6 +473,11 @@
       "login": "Login",
       "loginId": "Login ID",
       "resetPassword": "Reset password",
+      "resetPasswordOf": "Reset {{name}}'s password",
+      "resetTitle": "Reset {{name}}'s password?",
+      "resetBody": "{{name}} is signed out on every device straight away and their current password stops working. You get a one-time password to give them; it is shown only once.",
+      "ownPassword": "Your own password: change it in Profile → Change password",
+      "personAdded": "{{name}} added",
       "branch": "Branch",
       "shift": "Shift",
       "hrDetails": "HR details",
@@ -1632,7 +1637,7 @@
     "empty": "No one to show",
     "tasksN_one": "{{count}} task",
     "tasksN_other": "{{count}} tasks",
-    "legend": "% of what was due that week (up to now for this week). Green 90%+, amber 70%+, red below. FMS steps arrive with processes. Sent every Monday at 09:00 to the owner and HODs."
+    "legend": "% of what was due that week (up to now for this week). Green 90%+, amber 70%+, red below. FMS steps: each counted once — in the week done, or while open in the week due. Sent every Monday at 09:00 to the owner and HODs."
   },
   "engine": {
     "modules": "Modules",

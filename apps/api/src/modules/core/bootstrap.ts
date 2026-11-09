@@ -5,6 +5,7 @@ import {
   DEFAULT_THEME,
   hhmmToMinutes,
   normalizeMobile,
+  passwordRule,
 } from '@mono/shared';
 import { recordChange } from '../../lib/events';
 import { hashPassword } from '../../lib/password';
@@ -41,6 +42,7 @@ export function slugify(name: string): string {
 /**
  * Create a company with its built-in roles, a default shift and its owner (login enabled).
  * Idempotent by slug: if the company exists, returns it untouched.
+ * The owner password must pass `passwordRule` (8+ characters, a letter and a number).
  */
 export async function bootstrapCompany(db: Db, input: BootstrapInput) {
   const slug = slugify(input.companyName);
@@ -56,6 +58,13 @@ export async function bootstrapCompany(db: Db, input: BootstrapInput) {
     throw new Error(`Owner mobile "${input.ownerMobile}" is not a valid number`);
   const email = input.ownerEmail?.trim().toLowerCase() || null;
   if (!mobile && !email) throw new Error('The owner needs a mobile number or an email to log in');
+  // Same rule as Profile → Change password. Checked only when the company is created: an existing
+  // company ignores the password, so a restart never fails on an old .env value.
+  const strong = passwordRule.safeParse(input.ownerPassword);
+  if (!strong.success)
+    throw new Error(
+      `The owner password (SEED_OWNER_PASSWORD) is too weak: ${strong.error.issues.map((i) => i.message).join('; ')}`,
+    );
   const passwordHash = await hashPassword(input.ownerPassword);
 
   return db.$transaction(async (tx) => {
