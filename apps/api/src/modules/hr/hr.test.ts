@@ -1,7 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { addDays, localDate, zonedToUtc } from '@mono/shared';
+import { addDays, localDate, weekdayOf, zonedToUtc } from '@mono/shared';
 import { makeApp, ownerClient, signedIn } from '../../test/helpers';
 import { settleAttendance } from './attendance';
+import { companyCalendar } from './calendar';
 import { myMonth } from './days';
 import { runCovers } from './cover';
 import { watchAbsences } from './absence';
@@ -214,7 +215,13 @@ describe('night shifts', () => {
       },
     });
     await ctx.prisma.user.update({ where: { id: asha.id }, data: { shiftId: night.id } });
-    const d = addDays(localDate(new Date(), TZ), -1);
+    // Weekly offs come from the company calendar, not the shift's weekdays (decision 63), so plain
+    // "yesterday" is a weekly off on Mondays. Take the latest evening before today that starts on a
+    // working day and runs into another one.
+    const cal = await companyCalendar(ctx.prisma, company.id);
+    const works = (x: string) => cal.workingWeekdays.has(weekdayOf(x)) && !cal.holidays.has(x);
+    let d = addDays(localDate(new Date(), TZ), -1);
+    while (!works(d) || !works(addDays(d, 1))) d = addDays(d, -1);
     await ctx.prisma.punch.create({
       data: { companyId: company.id, userId: asha.id, type: 'IN', at: at(d, '22:55') },
     });
