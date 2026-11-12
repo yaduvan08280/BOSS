@@ -27,11 +27,11 @@ MONO left open for later (#17); **every** industry on the list gets a proof pack
 
 | Phase | Name | Needs | Why this order |
 |---|---|---|---|
-| 11 | **Linked fields** (value lists, "Write…", fields from other FMS, auto-fill, cascading, stock from any step) **+ custom record types and report builder** | — | Every later module's forms use it |
-| 12 | **Branches, legal entities, countries, franchises** (scopes, routing, people across branches, per-entity HR / tax / currency / numbering, transfers design) — built in stages A–D (§3.12) | 11 | Every later module stores a branch and respects who may see it |
+| 11 | **Answered 12/11/2026:** group reports in INR; one exchange rate per currency per month, typed by an accountant (no rate feed) | 12 |
+| 12 | **Answered 12/11/2026:** outlets abroad are supplied locally; transfers never cross a border (no customs or export papers in MONO) | 12 |
 | 12M | **Money core** (parties, tax profiles, bills and credit notes, receivables and payables, cash books, vouchers for Tally) | 12 (stages A–B) | Transfer invoices, POS bills, folios, banquet bills and royalties all use one bill engine |
-| 13 | **Inventory v2** (locations per branch, units, batches/expiry, recipes, central-kitchen production, indents, transfers in transit, wastage, variance, bar ml) **+ serials, attributes, second unit, barcodes, price lists** | 12, 12M | POS, bar and banquets consume stock through recipes |
-| 14 | **Hospitality setup + Menu** (outlets, floors/tables, rooms, taxes, printers, payment modes, menu, modifiers) | 13 | POS, reservations and the hotel read this setup |
+| 13 | **Answered 12/11/2026:** the real list comes later from the hotel owner. Phase 12 is built and tested on a sample group (two Indian entities, one franchise, one foreign entity); the real structure is entered from the set-up screens | 12 |
+| 14 | **Answered 12/11/2026:** no fixed default — the owner decides who approves. Approval routing is a setting the owner controls, per module (and per entity / branch where needed): who approves first, who second, from what amount | 12 |
 | 15 | **POS, KOT, kitchen display, billing, payments, day close** | 14 | The money path for restaurant and bar |
 | 16 | **Table reservations, waitlist, guest profiles** | 14, 15 | A seated booking opens a POS order |
 | 17 | **Hotel: bookings, front desk, folio, night audit, housekeeping, rates** | 14, 15 (room service posts to folio) | |
@@ -99,8 +99,8 @@ Checked in the code on 12/11/2026:
 | 6 | Every write from a device carries an **idempotency key**; orders, tables, bills and bookings carry a **version** | A retry or the offline queue never creates a second bill; two stewards never overwrite each other | 12M / 15 |
 | 7 | Number series handed out without a queue forming (a short lock per series; blocks per device offline) | Bill numbers are the busiest counter in the system | 12M |
 | 8 | Big tables (audit log, events, stock moves, bill lines, punches) split by month; indexes on branch + business date; old months archived | They grow without limit and every list reads them | 13 |
-| 9 | Heavy reports and exports run in the worker with a time budget, optionally on a **read copy** of the database | A year-end report must not slow the dinner service | 13 / 20 |
-| 10 | A **Health** screen for admins: response times, queue depth, database pool, slow queries, disk, last backup | You cannot fix what you cannot see | 12 |
+| 9 | **Answered 12/11/2026:** franchises live inside one MONO company with hard isolation (a kind of entity; the group sees brand reports and royalty figures) | 12 |
+| 10 | **Answered 12/11/2026:** yes — each legal entity carries its own currency, time zone, tax regime and financial year; Indian entities keep non-negotiables 7–8 as they are | 12 |
 
 **Three supported shapes**, written up in INSTALL.md with the size each handles:
 one box (today: all services on one machine) · one cloud server with a managed database · several API and worker
