@@ -20,6 +20,7 @@ import {
   queueWebhooks,
   sendWebhooks,
   runCovers,
+  applyBranchMoves,
   settleAttendance,
   watchAbsences,
   EventListener,
@@ -180,6 +181,9 @@ await boss.work(
     const buddies = await expireBuddyRequests(prisma);
     const covers = await runCovers(prisma);
     const absent = await watchAbsences(prisma);
+    // People whose move to another branch takes effect today switch over.
+    const moved = await applyBranchMoves(prisma);
+    if (moved) log.info({ moved }, 'Branch moves applied');
     const settled = await settleAttendance(prisma);
     if (buddies || covers.started || covers.ended || absent || settled)
       log.info({ buddies, covers, absent, settled }, 'HR sweep');

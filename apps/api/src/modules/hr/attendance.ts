@@ -1,3 +1,4 @@
+import { branchHistory } from '../branches/history';
 import type { Db, Tx } from '@mono/db';
 import {
   addDays,
@@ -104,10 +105,12 @@ export async function settleDay(db: Db | Tx, companyId: string, p: HrPerson, dat
     computedAt: new Date(),
   };
   const before = await db.attendanceDay.findUnique({ where: { userId_date: { userId: p.id, date } } });
+  // The day belongs to the branch the person worked at on that day (phase 12).
+  const branchId = (await branchHistory(db, companyId, [p.id])).on(p.id, date);
   await db.attendanceDay.upsert({
     where: { userId_date: { userId: p.id, date } },
-    create: { companyId, userId: p.id, date, ...data },
-    update: data,
+    create: { companyId, userId: p.id, date, branchId, ...data },
+    update: { ...data, branchId },
   });
   return { saved: true, result: r, first: !before };
 }

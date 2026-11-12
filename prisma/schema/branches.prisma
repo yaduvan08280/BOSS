@@ -88,6 +88,24 @@ model UserBranch {
 }
 
 /// The head of a department at one branch (the Kitchen head at Outlet 3); `Department.hodUserId` stays group-wide.
+/// Where a person works from a date (phase 12, stage B): a move takes effect on its day. The stay ends when the
+/// next one begins. `fromBranchId` is where they were before the first recorded move.
+model BranchStay {
+  id           String   @id @default(cuid(2))
+  companyId    String   @map("company_id")
+  userId       String   @map("user_id")
+  branchId     String?  @map("branch_id")
+  /// YYYY-MM-DD in the company's time zone.
+  from         String
+  fromBranchId String?  @map("from_branch_id")
+  createdById  String?  @map("created_by_id")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([userId, from])
+  @@index([companyId, from])
+  @@map("branch_stays")
+}
+
 model DepartmentHead {
   id           String   @id @default(cuid(2))
   companyId    String   @map("company_id")

@@ -1,5 +1,12 @@
 import type { Db, Tx } from '@mono/db';
-import type { EntityInput, LocationInput, ManagersInput, RegionInput } from '@mono/shared';
+import {
+  localDate,
+  type EntityInput,
+  type LocationInput,
+  type ManagersInput,
+  type RegionInput,
+} from '@mono/shared';
+import { recordMove } from './history';
 import { AppError, notFound } from '../../lib/errors';
 import { recordChange } from '../../lib/events';
 import { can, type Actor } from '../work/actor';
@@ -274,7 +281,7 @@ export async function setPersonBranches(
   db: Db,
   actor: Actor,
   userId: string,
-  input: { homeBranchId?: string | null; alsoBranchIds: string[] },
+  input: { homeBranchId?: string | null; alsoBranchIds: string[]; from?: string },
 ) {
   needEdit(actor);
   return db.$transaction(async (tx) => {
@@ -285,8 +292,27 @@ export async function setPersonBranches(
     const before = (await tx.userBranch.findMany({ where: { companyId: actor.companyId, userId } })).map(
       (x) => x.branchId,
     );
-    if (input.homeBranchId !== undefined)
-      await tx.user.update({ where: { id: userId }, data: { branchId: input.homeBranchId } });
+    if (input.homeBranchId !== undefined && (input.homeBranchId !== person.branchId || input.from)) {
+      // A move takes effect on its day (today when none is named); the home branch switches over on that day.
+      const company = await tx.company.findUniqueOrThrow({
+        where: { id: actor.companyId },
+        select: { timezone: true },
+      });
+      const today = localDate(new Date(), company.timezone);
+      const now = await recordMove(
+        tx,
+        {
+          companyId: actor.companyId,
+          userId,
+          branchId: input.homeBranchId,
+          from: input.from,
+          today,
+          actorId: actor.userId,
+        },
+        person.branchId,
+      );
+      if (now !== person.branchId) await tx.user.update({ where: { id: userId }, data: { branchId: now } });
+    }
     await tx.userBranch.deleteMany({ where: { companyId: actor.companyId, userId } });
     if (also.length)
       await tx.userBranch.createMany({

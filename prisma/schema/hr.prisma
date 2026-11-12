@@ -63,6 +63,8 @@ model AttendanceDay {
   missedOut   Boolean   @default(false) @map("missed_out")
   compOff     Boolean   @default(false) @map("comp_off")
   reasons     String[]
+  /// The branch the person worked at on this day (phase 12): a move mid-month splits days and cost.
+  branchId    String?   @map("branch_id")
   computedAt  DateTime  @default(now()) @map("computed_at") @db.Timestamptz(3)
 
   @@unique([userId, date])

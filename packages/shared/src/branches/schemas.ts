@@ -119,6 +119,11 @@ export type ManagersInput = z.infer<typeof managersSchema>;
 export const personBranchesSchema = z.object({
   homeBranchId: id.nullish(),
   alsoBranchIds: z.array(id).max(60),
+  /** The day the move to the home branch takes effect (YYYY-MM-DD). Left out = today. */
+  from: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
 });
 
 export const departmentHeadSchema = z.object({ departmentId: id, branchId: id, userId: id.nullable() });

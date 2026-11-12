@@ -70,6 +70,8 @@ export const BRANCH_FREE_MODELS: Record<string, string> = {
   UserBranch: 'set-up data: who works where',
   DepartmentHead: 'set-up data: who heads what',
   ApprovalRoute: 'set-up data: the owner’s routing',
+  BranchStay: 'set-up data: where a person works from which day',
+  AttendanceDay: 'attendance is listed by HR scope (HR all, an HOD their team, everyone themselves)',
   ModuleBranchSetting: 'set-up data: a branch’s own flow-designer people',
 };
 

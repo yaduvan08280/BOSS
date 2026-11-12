@@ -12,11 +12,13 @@ import {
   type PayDay,
   type PayResult,
   type WorkPattern,
+  splitExact,
 } from '@mono/shared';
 import { writeAudit } from '../../lib/audit';
 import { AppError } from '../../lib/errors';
 import type { Actor } from '../work/actor';
 import { evaluateDay } from './attendance';
+import { branchHistory } from '../branches/history';
 import { companyCalendar, type CompanyCalendar } from './calendar';
 import { hrPerson, hrRulesOf, personRules } from './people';
 import { needHr, payRulesOf } from './terms';
@@ -33,6 +35,11 @@ export type PayLineOut = PayResult & {
   pattern: WorkPattern;
   /** noRate: no pay set · noAttendance: no record this month · unsettled: days still being worked · unrecorded: some days have no record */
   warnings: string[];
+  /**
+   * The gross split over the branches the person worked at this month (phase 12): days employed at each, and
+   * its share of the cost. One entry for someone who did not move.
+   */
+  byBranch?: { branchId: string | null; days: number; paise: number }[];
 };
 
 /**
@@ -123,6 +130,11 @@ async function workOut(db: Db, companyId: string, month: string, now: Date) {
     return calendars.get(branchId)!;
   };
 
+  const history = await branchHistory(
+    db,
+    companyId,
+    users.map((u) => u.id),
+  );
   const lines: PayLineOut[] = [];
   for (const u of users) {
     const t = termsOf.get(u.id);
@@ -194,9 +206,26 @@ async function workOut(db: Db, companyId: string, month: string, now: Date) {
       pattern: p.pattern,
       warnings,
       ...result,
+      byBranch: splitByBranch(
+        result.grossPaise,
+        days.filter((d) => d.employed && d.date <= asOf).map((d) => history.on(u.id, d.date)),
+      ),
     });
   }
   return { asOf, lines, totalPaise: lines.reduce((n, l) => n + l.grossPaise, 0) };
+}
+
+/** A gross amount shared over branches by the days at each; the parts always add up to the gross. */
+export function splitByBranch(grossPaise: number, branchOfEachDay: (string | null)[]) {
+  const days = new Map<string | null, number>();
+  for (const b of branchOfEachDay) days.set(b, (days.get(b) ?? 0) + 1);
+  const at = [...days.entries()];
+  if (!at.length) return [];
+  const parts = splitExact(
+    Math.max(0, Math.round(grossPaise)),
+    at.map(([, n]) => n),
+  );
+  return at.map(([branchId, n], i) => ({ branchId, days: n, paise: parts[i]! }));
 }
 
 /** Close a month that has ended: its figures are kept as they are, whatever changes later. */

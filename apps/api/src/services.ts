@@ -57,3 +57,4 @@ export { runBackfills as runReportBackfills } from './modules/reports/backfill';
 export { sendScheduledReports } from './modules/reports/schedule';
 export { saveReport } from './modules/reports/service';
 export { chainFor, placeHolders } from './modules/branches/approvals';
+export { applyBranchMoves } from './modules/branches/history';

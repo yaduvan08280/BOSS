@@ -6,11 +6,13 @@ import {
   bulkActionSchema,
   bulkCreateSchema,
   hasPermission,
+  localDate,
   userCreateSchema,
   userUpdateSchema,
 } from '@mono/shared';
 import { AppError, forbidden, notFound } from '../../lib/errors';
 import { recordChange } from '../../lib/events';
+import { recordMove } from '../branches/history';
 import { hashPassword } from '../../lib/password';
 import { inCompanyTx } from '../../lib/tx';
 import { assertGroupWide, assertMyPeople, myBranchFor } from './users.branch';
@@ -127,7 +129,28 @@ export async function userRoutes(app: FastifyInstance) {
         assertMyPeople(request, [before]);
         const { alsoWorksIn, hr, status, roleId, loginEnabled: _ignored, ...rest } = request.body;
         const data: Prisma.UserUncheckedUpdateInput = { ...rest };
-        if (rest.branchId !== undefined) data.branchId = myBranchFor(request, rest.branchId);
+        if (rest.branchId !== undefined) {
+          data.branchId = myBranchFor(request, rest.branchId);
+          // Changing the branch here is a move from today, kept in the person's branch history (phase 12).
+          if ((data.branchId ?? null) !== before.branchId) {
+            const company = await tx.company.findUniqueOrThrow({
+              where: { id: ctx.companyId },
+              select: { timezone: true },
+            });
+            await recordMove(
+              tx,
+              {
+                companyId: ctx.companyId,
+                userId: before.id,
+                branchId: (data.branchId as string | null | undefined) ?? null,
+                from: undefined,
+                today: localDate(new Date(), company.timezone),
+                actorId: ctx.actorId,
+              },
+              before.branchId,
+            );
+          }
+        }
         if (rest.mobile !== undefined || rest.email !== undefined) {
           const ids = cleanIdentifiers({
             mobile: rest.mobile ?? before.mobile,

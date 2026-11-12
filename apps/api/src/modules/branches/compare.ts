@@ -53,9 +53,10 @@ export async function compareOutlets(db: Db, actor: Actor, from: Date, to: Date)
         companyId,
         date: { gte: localDate(from, company.timezone), lt: localDate(to, company.timezone) },
         status: { in: ['PRESENT', 'LATE', 'HALF_DAY', 'ABSENT'] },
-        userId: { in: people.map((p) => p.id) },
+        // A day counts where it was worked (its own branch once stamped), else at the person's home branch.
+        OR: [{ branchId: { in: ids } }, { branchId: null, userId: { in: people.map((p) => p.id) } }],
       },
-      select: { status: true, userId: true },
+      select: { status: true, userId: true, branchId: true },
     }),
     db.checklistRun.groupBy({
       by: ['branchId', 'status'],
@@ -72,7 +73,7 @@ export async function compareOutlets(db: Db, actor: Actor, from: Date, to: Date)
     }),
   ]);
   const rows = branches.map((b): OutletRow => {
-    const att = days.filter((d) => home.get(d.userId) === b.id);
+    const att = days.filter((d) => (d.branchId ?? home.get(d.userId)) === b.id);
     const worked = att.filter((d) => d.status !== 'ABSENT').length;
     const count = (status: string) =>
       runs.find((r) => r.branchId === b.id && r.status === status)?._count ?? 0;
