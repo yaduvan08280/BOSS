@@ -1,4 +1,4 @@
-import { Prisma, type Db } from '@mono/db';
+import { Prisma, withReachOf, type Db } from '@mono/db';
 import {
   localDate,
   reportDefinitionSchema,
@@ -10,6 +10,7 @@ import {
 import { AppError } from '../../lib/errors';
 import { emitEvent } from '../../lib/events';
 import { claimMark } from '../ea/jobs';
+import { reachOfUser } from '../branches/reach';
 import { actorFor } from '../work/actor';
 import { runReport, type ReportResult } from './engine';
 
@@ -92,7 +93,11 @@ export async function sendScheduledReports(db: Db, now = new Date()): Promise<nu
     let summary: string;
     try {
       if (!owner) throw new AppError(403, 'FORBIDDEN', 'the person who made it is no longer active');
-      summary = reportSummary(await runReport(db, owner, reportDefinitionSchema.parse(r.definition), 50));
+      // Run as its maker: with their rights and their reach (phase 12), though no person is signed in here.
+      const reach = await reachOfUser(db, r.companyId, r.ownerId);
+      summary = reportSummary(
+        await withReachOf(reach, () => runReport(db, owner, reportDefinitionSchema.parse(r.definition), 50)),
+      );
     } catch (e) {
       const why = e instanceof AppError ? e.message : 'it could not be worked out';
       await tell(r.ownerId, `This report could not be sent: ${why}. Open it and save it again.`);

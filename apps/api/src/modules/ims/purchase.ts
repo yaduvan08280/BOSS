@@ -15,6 +15,7 @@ import { can, type Actor } from '../work/actor';
 import { ctxOf, imsRulesOf, need } from './access';
 import { onOrderOf } from './items';
 import { applyMove, tzOf } from './moves';
+import { homeBranchOf } from '../branches/reach';
 
 const n = (d: unknown) => (d === null || d === undefined ? null : Number(d));
 
@@ -115,6 +116,7 @@ export async function createPo(db: Db, actor: Actor, input: z.input<typeof poSch
     const po = await tx.purchaseOrder.create({
       data: {
         companyId: actor.companyId,
+        branchId: await homeBranchOf(tx, actor.companyId, actor.userId),
         number: await newNumber(tx, db, actor.companyId),
         vendor: p.vendor,
         expectedOn: p.expectedOn ?? null,
@@ -160,6 +162,7 @@ export async function ordersFromOws(db: Db, actor: Actor, input: z.input<typeof 
       const po = await tx.purchaseOrder.create({
         data: {
           companyId: actor.companyId,
+          branchId: await homeBranchOf(tx, actor.companyId, actor.userId),
           number: await newNumber(tx, db, actor.companyId),
           vendor,
           fromOws: true,

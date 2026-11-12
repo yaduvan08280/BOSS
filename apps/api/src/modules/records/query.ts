@@ -1,4 +1,4 @@
-import { Prisma, type Db } from '@mono/db';
+import { Prisma, type Db, reachSql } from '@mono/db';
 import {
   addDays,
   filterOpsFor,
@@ -81,6 +81,8 @@ export function whereOf(
 ): Prisma.Sql {
   const parts: Prisma.Sql[] = [
     sql`r.company_id = ${scope.companyId}`,
+    // Reach (phase 12): only the branches this person sees, and their own records.
+    reachSql('records'),
     sql`r.type_id = ${scope.typeId}`,
     sql`r.deleted_at IS NULL`,
   ];

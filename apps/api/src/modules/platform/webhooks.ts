@@ -9,6 +9,7 @@ import type { Env } from '../../env';
 import type { Actor } from '../work/actor';
 import { needAdmin } from './keys';
 import { assertPublicUrl } from './safe-url';
+import { reachOfUser } from '../branches/reach';
 
 const ctxOf = (actor: Actor) => ({ ...actor, actorId: actor.userId });
 
@@ -253,15 +254,55 @@ export async function testWebhook(db: Db, actor: Actor, net: WebhookNet, id: str
   }
 }
 
+/** The branch of the record an event is about, for the kinds of record that carry one. */
+async function branchOfEvent(db: Db, event: DomainEvent): Promise<string | null> {
+  const id = event.entityId;
+  if (!id) return null;
+  const where = { id, companyId: event.companyId };
+  const select = { branchId: true };
+  switch (event.entityType) {
+    case 'task':
+      return (await db.task.findFirst({ where, select }))?.branchId ?? null;
+    case 'checklist_run':
+      return (await db.checklistRun.findFirst({ where, select }))?.branchId ?? null;
+    case 'slip':
+      return (await db.slip.findFirst({ where, select }))?.branchId ?? null;
+    case 'ticket':
+      return (await db.ticket.findFirst({ where, select }))?.branchId ?? null;
+    case 'fms_record':
+      return (await db.fmsRecord.findFirst({ where, select }))?.branchId ?? null;
+    case 'record':
+      return (await db.recordEntry.findFirst({ where, select }))?.branchId ?? null;
+    case 'purchase_order':
+      return (await db.purchaseOrder.findFirst({ where, select }))?.branchId ?? null;
+    case 'sales_order':
+      return (await db.salesOrder.findFirst({ where, select }))?.branchId ?? null;
+    default:
+      return null;
+  }
+}
+
 /** Worker, for every event: a delivery for each active webhook that wants it (once per webhook and event). */
 export async function queueWebhooks(db: Db, event: DomainEvent) {
   if (PRIVATE_EVENTS.test(event.name)) return 0;
   const hooks = await db.webhook.findMany({
     where: { companyId: event.companyId, active: true, deletedAt: null },
-    select: { id: true, events: true },
+    select: { id: true, events: true, createdById: true },
   });
-  const want = hooks.filter((h) => matchesEvent(h.events, event.name));
+  let want = hooks.filter((h) => matchesEvent(h.events, event.name));
   if (!want.length) return 0;
+  // A webhook carries its maker's reach (phase 12): an event about a record of a branch its maker can't see is
+  // not sent to it. Events about things with no branch go to everyone, as before.
+  const branchId = await branchOfEvent(db, event);
+  if (branchId) {
+    const kept = [];
+    for (const h of want) {
+      const reach = h.createdById ? await reachOfUser(db, event.companyId, h.createdById) : null;
+      if (!reach || reach.branchIds === null || reach.branchIds.includes(branchId)) kept.push(h);
+    }
+    want = kept;
+    if (!want.length) return 0;
+  }
   const r = await db.webhookDelivery.createMany({
     data: want.map((h) => ({
       companyId: event.companyId,

@@ -17,6 +17,7 @@ import { emitEvent } from '../../lib/events';
 import { createTask, proofOf } from '../delegation/service';
 import { attachUploads, can, checkPerson, hodFor, ownerOf, teamOf, type Actor } from '../work/actor';
 import { moduleSettings } from '../work/settings';
+import { homeBranchOf } from '../branches/reach';
 
 const short = (s: string) => (s.length > 80 ? `${s.slice(0, 77)}…` : s);
 const link = (s: { id: string }) => `/help-slips?slip=${s.id}`;
@@ -106,6 +107,7 @@ export async function createSlip(db: Db, actor: Actor, input: SlipCreateInput) {
     const slip = await tx.slip.create({
       data: {
         companyId: actor.companyId,
+        branchId: await homeBranchOf(tx, actor.companyId, actor.userId),
         number: await nextCounter(tx, actor.companyId, 'slip'),
         problem: input.problem,
         raiserId: actor.userId,

@@ -19,6 +19,7 @@ import { fyNow, recordCode, takeNumbers } from './numbering';
 import { queryRecords } from './query';
 import { formScope } from './records';
 import { toCsv, toXlsx, type Cell } from './xlsx';
+import { homeBranchOf } from '../branches/reach';
 
 export const IMPORT_MAX_ROWS = 2000;
 export const EXPORT_MAX_ROWS = 10_000;
@@ -171,6 +172,7 @@ export async function importRecords(db: Db, actor: Actor, typeId: string, table:
       const fy = await fyNow(tx, actor.companyId);
       const first = await takeNumbers(tx, actor.companyId, t.id, fy, rows.length);
       const data = [];
+      const branchId = await homeBranchOf(tx, actor.companyId, actor.userId);
       for (const [k, row] of rows.entries()) {
         try {
           // A stage may refuse here what it could not see before (the same unique value twice in one file).
@@ -185,6 +187,7 @@ export async function importRecords(db: Db, actor: Actor, typeId: string, table:
         data.push({
           id: row.id,
           companyId: actor.companyId,
+          branchId,
           typeId: t.id,
           number: first + k,
           fy,

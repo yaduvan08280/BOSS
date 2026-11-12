@@ -21,6 +21,7 @@ import {
   telegramActions,
   type Ctx,
 } from './engine-helpers';
+import { homeBranchOf } from '../branches/reach';
 
 export { fmsLink, log, mayDo, parseDefinition, payloadOf, recordData, type Ctx } from './engine-helpers';
 
@@ -169,6 +170,8 @@ export async function startRecordIn(tx: Tx, input: StartInput) {
       data: {
         id,
         companyId: flow.companyId,
+        // A record belongs to the starter's branch (none for the public form) — phase 12.
+        branchId: await homeBranchOf(tx, flow.companyId, input.startedById),
         flowId: flow.id,
         flowVersionId: flow.currentVersionId,
         number,

@@ -98,3 +98,13 @@ export async function homeBranchOf(db: Db | Tx, companyId: string, userId: strin
   const u = await db.user.findFirst({ where: { id: userId, companyId }, select: { branchId: true } });
   return u?.branchId ?? null;
 }
+
+/** A person's reach outside a web request (the worker: webhooks, scheduled reports). Null = they are gone. */
+export async function reachOfUser(db: Db | Tx, companyId: string, userId: string): Promise<Reach | null> {
+  const u = await db.user.findFirst({
+    where: { id: userId, companyId, deletedAt: null },
+    select: { role: { select: { permissions: true, reach: true } } },
+  });
+  if (!u) return null;
+  return reachFor(db, { companyId, userId, permissions: u.role.permissions, reach: u.role.reach });
+}

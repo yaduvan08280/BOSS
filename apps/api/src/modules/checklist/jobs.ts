@@ -5,6 +5,7 @@ import { companyCalendar } from '../hr/calendar';
 import { checklistCovers } from '../hr/cover';
 import { moduleSettings } from '../work/settings';
 import type { Item } from './service';
+import { homeBranchOf } from '../branches/reach';
 
 const LEAD_MS = 24 * 3600_000;
 
@@ -51,6 +52,8 @@ export async function sweepChecklists(db: Db, now = new Date(), onlyMasterId?: s
               const run = await tx.checklistRun.create({
                 data: {
                   companyId,
+                  // The template's branch, else the branch of the person whose run it is (phase 12).
+                  branchId: m.branchId ?? (await homeBranchOf(tx, companyId, owner)),
                   masterId: m.id,
                   doerId,
                   coveredById: buddy,

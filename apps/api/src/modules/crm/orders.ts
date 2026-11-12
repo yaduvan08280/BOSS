@@ -8,6 +8,7 @@ import { startRecord } from '../fms/engine';
 import { recordAction } from '../fms/records';
 import type { Actor } from '../work/actor';
 import { crmConfigOf, ctxOf, fyCalendar, money, need } from './access';
+import { homeBranchOf } from '../branches/reach';
 
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 export const orderSchema = z.object({
@@ -88,6 +89,7 @@ export async function createOrder(
     const order = await t.salesOrder.create({
       data: {
         companyId: actor.companyId,
+        branchId: await homeBranchOf(t, actor.companyId, actor.userId),
         number,
         customerId: c.id,
         orderDate,

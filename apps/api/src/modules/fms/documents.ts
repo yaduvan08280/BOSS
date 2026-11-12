@@ -15,6 +15,7 @@ import {
 import { renderPdf } from '../../lib/pdf';
 import { AppError } from '../../lib/errors';
 import { pathReaders, recordValues } from './show';
+import { homeBranchOf } from '../branches/reach';
 
 /** QUO/26-27/0001 — numbered per document type, per financial year (CLAUDE.md §6.2 Documents). */
 export async function createDocument(
@@ -43,9 +44,18 @@ export async function createDocument(
   const fy = financialYear(date, company.timezone, company.fyStartMonth ?? 4).short;
   const seq = await nextCounter(tx, input.companyId, `doc:${type.code}`, fy);
   const total = itemsTotal(input.data);
+  // A paper belongs to its record's branch; one made by hand, to its maker's (phase 12).
+  const record = input.recordId
+    ? await tx.fmsRecord.findFirst({
+        where: { id: input.recordId, companyId: input.companyId },
+        select: { branchId: true },
+      })
+    : null;
+  const branchId = record ? record.branchId : await homeBranchOf(tx, input.companyId, input.createdById);
   return tx.document.create({
     data: {
       companyId: input.companyId,
+      branchId,
       typeId: type.id,
       number: `${type.prefix}/${fy}/${String(seq).padStart(4, '0')}`,
       fy,

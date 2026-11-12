@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import type { PrismaClient } from './generated/client';
+import { Prisma, type PrismaClient } from './generated/client';
 
 /**
  * Reach (phase 12, plan §3.3): how far the person behind the current request sees. `branchIds: null` means the
@@ -99,4 +99,24 @@ export function withReach<T extends PrismaClient>(db: T): T {
       },
     },
   }) as unknown as T;
+}
+
+/**
+ * The same fence for hand-written SQL (record lists, reports): a condition on the row aliased `r`, or TRUE when
+ * the current request sees the whole group. `mine` are the columns that make a row the person's own; process
+ * records also count a step that is theirs.
+ */
+export function reachSql(table: 'records' | 'fms_records'): Prisma.Sql {
+  const reach = currentReach();
+  if (!reach || reach.branchIds === null) return Prisma.sql`TRUE`;
+  const inBranches = reach.branchIds.length
+    ? Prisma.sql`r.branch_id IN (${Prisma.join(reach.branchIds)})`
+    : Prisma.sql`FALSE`;
+  if (reach.strict) return Prisma.sql`(r.branch_id IS NULL OR ${inBranches})`;
+  const own =
+    table === 'records'
+      ? Prisma.sql`r.created_by_id = ${reach.userId}`
+      : Prisma.sql`(r.started_by_id = ${reach.userId} OR EXISTS (
+          SELECT 1 FROM fms_record_steps s WHERE s.record_id = r.id AND s.doer_id = ${reach.userId}))`;
+  return Prisma.sql`(r.branch_id IS NULL OR ${inBranches} OR ${own})`;
 }

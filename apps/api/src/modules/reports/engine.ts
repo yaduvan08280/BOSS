@@ -1,4 +1,4 @@
-import { Prisma, type Db } from '@mono/db';
+import { Prisma, reachSql, type Db } from '@mono/db';
 import {
   addDays,
   checkReport,
@@ -239,6 +239,8 @@ export async function runReport(
   const where = Prisma.join(
     [
       sql`r.company_id = ${actor.companyId}`,
+      // Reach (phase 12): a report never counts what its reader may not see.
+      reachSql(flow ? 'fms_records' : 'records'),
       flow ? sql`r.flow_id = ${src.id}` : sql`r.type_id = ${src.id}`,
       sql`r.deleted_at IS NULL`,
       ...(flow ? [sql`r.status <> 'CANCELLED'`] : []),

@@ -17,6 +17,7 @@ import { emitEvent } from '../../lib/events';
 import { proofOf } from '../delegation/service';
 import { attachUploads, can, checkPerson, teamOf, type Actor } from '../work/actor';
 import { moduleSettings } from '../work/settings';
+import { homeBranchOf } from '../branches/reach';
 
 const short = (s: string) => (s.length > 80 ? `${s.slice(0, 77)}…` : s);
 export const ticketLink = (t: { id: string }) => `/help-tickets?ticket=${t.id}`;
@@ -72,6 +73,7 @@ export async function createTicket(db: Db, actor: Actor, input: TicketCreateInpu
     const t = await tx.ticket.create({
       data: {
         companyId: actor.companyId,
+        branchId: await homeBranchOf(tx, actor.companyId, actor.userId),
         number: await nextCounter(tx, actor.companyId, 'ticket'),
         title: input.title,
         description: input.description,
