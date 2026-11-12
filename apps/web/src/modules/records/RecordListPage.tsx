@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 import { useUsers } from '@/modules/system/api';
 import { downloadExport, useRecordList, useRecordType, type ListParams, type RecordTypeView } from './api';
 import { RecordFormDialog } from './drawer/RecordFormDialog';
-import { columnLabel } from './list/cells';
+import { columnLabel } from './list/columns';
 import { ColumnsDialog } from './list/ColumnsDialog';
 import { FiltersDialog } from './list/FiltersDialog';
 import { ImportDialog } from './list/ImportDialog';

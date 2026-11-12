@@ -28,7 +28,10 @@ async function seeded() {
   await w.api.post(`/api/records/entries/${recs[4]!.id}/move`, { action: 'visit' });
   const list = async (query: Record<string, unknown> = {}, api = w.api) => {
     const qs = new URLSearchParams(
-      Object.entries(query).map(([k, v]) => [k, typeof v === 'string' ? v : JSON.stringify(v)]),
+      Object.entries(query).map(([k, v]): [string, string] => [
+        k,
+        typeof v === 'string' ? v : JSON.stringify(v),
+      ]),
     );
     return api.get(`/api/records/types/${typeId}/records?${qs}`);
   };

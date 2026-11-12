@@ -12,7 +12,8 @@ import { formatShortDateTime } from '@/lib/when';
 import { recordsApi, useRecord, useRecordsMutation, type RecordDetail } from './api';
 import { FilesTab, HistoryTab, NotesTab } from './drawer/DrawerTabs';
 import { RecordFormDialog } from './drawer/RecordFormDialog';
-import { fieldText, RecordStatusChip } from './list/cells';
+import { RecordStatusChip } from './list/cells';
+import { fieldText } from './list/columns';
 
 const TABS = ['notes', 'history', 'files'] as const;
 type Move = RecordDetail['moves'][number];

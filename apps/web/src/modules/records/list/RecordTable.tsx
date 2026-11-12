@@ -4,7 +4,8 @@ import { listable, type RecordDefinition } from '@mono/shared';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { ListParams, RecordList } from '../api';
-import { BUILTIN, columnLabel, RecordCell } from './cells';
+import { RecordCell } from './cells';
+import { columnLabel } from './columns';
 
 const sortable = (def: RecordDefinition, c: string) =>
   ['code', 'title', 'status', 'createdAt'].includes(c) || def.fields.some((f) => f.key === c && listable(f));
@@ -163,5 +164,3 @@ export function RecordTable({
     </div>
   );
 }
-
-export { BUILTIN };

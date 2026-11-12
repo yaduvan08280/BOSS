@@ -5,7 +5,7 @@ import { listable, type RecordDefinition } from '@mono/shared';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/form';
-import { BUILTIN, columnLabel } from './cells';
+import { BUILTIN, columnLabel } from './columns';
 
 const MAX = 12;
 

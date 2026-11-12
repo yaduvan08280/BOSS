@@ -148,6 +148,8 @@ export function toXlsx(sheetName: string, rows: Cell[][]): Buffer {
   return zip(files(cleanName(sheetName), rows));
 }
 
+const BOM = String.fromCharCode(0xfeff);
+
 /** CSV with a BOM, so Excel reads Hindi correctly (the way the other exports do). */
 export function toCsv(rows: Cell[][]): string {
   const cell = (v: Cell) => {
@@ -156,5 +158,5 @@ export function toCsv(rows: Cell[][]): string {
     if (typeof v === 'string' && /^[=+\-@\t\r]/.test(s)) s = `'${s}`;
     return `"${s.replace(/"/g, '""')}"`;
   };
-  return `﻿${rows.map((r) => r.map(cell).join(',')).join('\r\n')}`;
+  return BOM + rows.map((r) => r.map(cell).join(',')).join('\r\n');
 }

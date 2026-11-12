@@ -1,5 +1,6 @@
 import { financialYear } from '@mono/shared';
-import { makeApp, ownerClient, signedIn } from '../../test/helpers';
+import type { makeApp } from '../../test/helpers';
+import { ownerClient, signedIn } from '../../test/helpers';
 
 type App = Awaited<ReturnType<typeof makeApp>>['app'];
 export type Client = Awaited<ReturnType<typeof signedIn>>;

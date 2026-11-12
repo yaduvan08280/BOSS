@@ -16,7 +16,7 @@ import { Dialog } from '@/components/ui/dialog';
 import { Field, Select } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import type { ListParams } from '../api';
-import { columnLabel } from './cells';
+import { columnLabel } from './columns';
 
 const NO_VALUE: RecordFilterOp[] = ['filled', 'empty'];
 
