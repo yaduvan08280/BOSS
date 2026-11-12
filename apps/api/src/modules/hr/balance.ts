@@ -33,7 +33,7 @@ export async function balancesOf(db: Db | Tx, companyId: string, userId: string,
   });
   const user = await db.user.findFirst({
     where: { id: userId, companyId },
-    select: { id: true, designationId: true, mainDepartmentId: true },
+    select: { id: true, designationId: true, mainDepartmentId: true, branch: { select: { entityId: true } } },
   });
   // Working a day off earns a comp-off only when that is the pay rule (else it is paid extra, or nothing).
   const earnsCompOff =
@@ -41,11 +41,14 @@ export async function balancesOf(db: Db | Tx, companyId: string, userId: string,
       id: userId,
       departmentId: user?.mainDepartmentId ?? null,
       designationId: user?.designationId ?? null,
+      entityId: user?.branch?.entityId ?? null,
     }).dayOffWork === 'compOff';
   const out = [];
   for (const t of types) {
     // Their own number, else their designation's, else the leave type's.
-    const quota = user ? await quotaFor(db, t, user) : Number(t.yearlyQuota);
+    const quota = user
+      ? await quotaFor(db, t, { ...user, entityId: user.branch?.entityId ?? null })
+      : Number(t.yearlyQuota);
     let b = await db.leaveBalance.findUnique({
       where: { userId_leaveTypeId_year: { userId, leaveTypeId: t.id, year } },
     });

@@ -165,6 +165,9 @@ export type HrCalendar = {
     type: string;
     halfDay: boolean;
     branchId: string | null;
+    entityId?: string | null;
+    state?: string | null;
+    country?: string | null;
   }[];
   weeklyOffs: { weekday: number; kind: 'WORKING' | 'HALF' | 'OFF'; branchId: string | null }[];
   branches: { id: string; name: string }[];

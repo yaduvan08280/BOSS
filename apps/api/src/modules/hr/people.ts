@@ -101,24 +101,34 @@ export async function hrScope(
   actor: Actor,
 ): Promise<{ all: boolean; team: string[]; branchPeople: string[] }> {
   if (await isHr(db, actor)) return { all: true, team: [], branchPeople: [] };
-  const hrOf = await db.branchManager.findMany({
-    where: { companyId: actor.companyId, userId: actor.userId, role: 'HR', branchId: { not: null } },
-    select: { branchId: true },
+  // The branches this person runs (manager) or is the HR person of: they see those people's attendance and
+  // cover; only the HR person decides their leave (unless the owner's approval route says otherwise).
+  const runs = await db.branchManager.findMany({
+    where: {
+      companyId: actor.companyId,
+      userId: actor.userId,
+      role: { in: ['MANAGER', 'HR'] },
+      branchId: { not: null },
+    },
+    select: { branchId: true, role: true },
   });
-  const branchPeople = hrOf.length
-    ? (
-        await db.user.findMany({
-          where: {
-            companyId: actor.companyId,
-            deletedAt: null,
-            branchId: { in: hrOf.map((b) => b.branchId!) },
-            NOT: { id: actor.userId },
-          },
-          select: { id: true },
-        })
-      ).map((u) => u.id)
-    : [];
-  const team = await teamOf(db, actor.companyId, actor.userId);
+  const peopleAt = async (branchIds: string[]) =>
+    branchIds.length
+      ? (
+          await db.user.findMany({
+            where: {
+              companyId: actor.companyId,
+              deletedAt: null,
+              branchId: { in: branchIds },
+              NOT: { id: actor.userId },
+            },
+            select: { id: true },
+          })
+        ).map((u) => u.id)
+      : [];
+  const branchPeople = await peopleAt(runs.filter((r) => r.role === 'HR').map((r) => r.branchId!));
+  const managed = await peopleAt(runs.filter((r) => r.role === 'MANAGER').map((r) => r.branchId!));
+  const team = [...(await teamOf(db, actor.companyId, actor.userId)), ...managed];
   return { all: false, team: [...new Set([...team, ...branchPeople])], branchPeople };
 }
 

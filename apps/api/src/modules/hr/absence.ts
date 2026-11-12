@@ -1,4 +1,4 @@
-import type { Db } from '@mono/db';
+import { currentReach, type Db } from '@mono/db';
 import { addDays, formatLocalDate, localDate, shiftWindow, weekdayOf, zonedToUtc } from '@mono/shared';
 import { AppError } from '../../lib/errors';
 import { emitEvent } from '../../lib/events';
@@ -87,6 +87,7 @@ export async function coverState(db: Db, p: HrPerson, items: WorkItem[], fromAt:
 export async function coverBoard(db: Db, actor: Actor, date: string) {
   const scope = await hrScope(db, actor);
   if (!scope.all && !scope.team.length) throw new AppError(403, 'FORBIDDEN', 'You have no team to cover');
+  const branches = currentReach()?.branchIds ?? null;
   const tz = await tzOf(db, actor.companyId);
   const rules = await hrRulesOf(db, actor.companyId);
   const now = new Date();
@@ -98,6 +99,8 @@ export async function coverBoard(db: Db, actor: Actor, date: string) {
       deletedAt: null,
       status: 'ACTIVE',
       ...(scope.all ? {} : { id: { in: scope.team } }),
+      // The board of the branches being looked at (the top bar's switcher, or an area manager's reach).
+      ...(branches ? { branchId: { in: branches } } : {}),
     },
     select: { id: true, mainDepartment: { select: { name: true } } },
   });

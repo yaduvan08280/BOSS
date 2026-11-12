@@ -21,6 +21,20 @@ export async function companyCalendar(
   companyId: string,
   branchId: string | null = null,
 ): Promise<CompanyCalendar> {
+  // Where the branch is: its entity, state and country decide which holidays are its own (phase 12).
+  const branch = branchId
+    ? await db.branch.findFirst({
+        where: { id: branchId, companyId },
+        select: { entityId: true, state: true },
+      })
+    : null;
+  const entity = branch?.entityId
+    ? await db.legalEntity.findFirst({
+        where: { id: branch.entityId, companyId },
+        select: { id: true, state: true, country: true },
+      })
+    : null;
+  const state = branch?.state ?? entity?.state ?? null;
   const [company, shift, holidays, offs] = await Promise.all([
     db.company.findUniqueOrThrow({ where: { id: companyId }, select: { timezone: true } }),
     db.shift.findFirst({
@@ -28,7 +42,18 @@ export async function companyCalendar(
       orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
     }),
     db.holiday.findMany({
-      where: { companyId, deletedAt: null, OR: [{ branchId: null }, ...(branchId ? [{ branchId }] : [])] },
+      where: {
+        companyId,
+        deletedAt: null,
+        OR: [
+          // Everyone's holidays …
+          { branchId: null, entityId: null, state: null, country: null },
+          // … and this branch's own, its entity's, its state's and its country's.
+          ...(branchId ? [{ branchId }] : []),
+          ...(entity ? [{ entityId: entity.id }, { country: entity.country, state: null }] : []),
+          ...(state ? [{ state: { equals: state, mode: 'insensitive' as const } }] : []),
+        ],
+      },
       select: { date: true, halfDay: true },
     }),
     db.weeklyOff.findMany({

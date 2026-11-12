@@ -234,5 +234,12 @@
     "noBranch": "No branch",
     "days_one": "{{count}} day",
     "days_other": "{{count}} days"
+  },
+  "holidayFor": {
+    "label": "For",
+    "everyone": "Everyone",
+    "country": "Country: {{name}}",
+    "state": "State: {{name}}",
+    "only": "only {{name}}"
   }
 }

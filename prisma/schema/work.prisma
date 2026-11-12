@@ -174,6 +174,11 @@ model Holiday {
   type      String    @default("FESTIVAL")
   halfDay   Boolean   @default(false) @map("half_day")
   branchId  String?   @map("branch_id")
+  /// Phase 12: who the holiday is for when it is not one branch's — a legal entity, a state, or a country.
+  /// All empty = everyone.
+  entityId  String?   @map("entity_id")
+  state     String?
+  country   String?
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
 

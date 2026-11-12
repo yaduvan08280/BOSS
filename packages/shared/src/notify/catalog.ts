@@ -427,7 +427,7 @@ const ROWS: Row[] = [
   [
     'hr.punch_flagged',
     'team',
-    ['hod'],
+    ['hod', 'branch_hr'],
     'Punch flagged: {{person}}',
     '{{person}} punched {{type}} at {{time}}: {{reason}}',
     'पंच पर सवाल: {{person}}',
@@ -481,7 +481,7 @@ const ROWS: Row[] = [
   [
     'hr.absent_no_cover',
     'team',
-    ['hod', 'owner'],
+    ['hod', 'branch_manager', 'branch_hr', 'owner'],
     '{{person}} is absent with no cover',
     '{{count}} pieces of work have no Buddy today.',
     '{{person}} ग़ैरहाज़िर, कोई कवर नहीं',

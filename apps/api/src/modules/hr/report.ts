@@ -23,7 +23,7 @@ export async function morningCoverReport(db: Db, now = new Date(), onlyCompanyId
       where: { companyId: c.id, status: 'APPROVED', from: { lte: today }, to: { gte: today } },
     });
     if (!leaves.length || !(await claimMark(db, c.id, `hr.morning:${today}`))) continue;
-    const lines: { hod: string | null; text: string }[] = [];
+    const lines: { hod: string | null; branchId: string | null; text: string }[] = [];
     for (const l of leaves) {
       const p = await hrPerson(db, c.id, l.userId);
       const win = period(l.from, l.to, l.half, p, c.timezone);
@@ -38,6 +38,7 @@ export async function morningCoverReport(db: Db, now = new Date(), onlyCompanyId
       ).length;
       lines.push({
         hod: p.hodId,
+        branchId: p.branchId,
         text: `• ${p.name} (till ${formatLocalDate(l.to)}): ${items.length} piece(s) of work${open ? `, ${open} with no Buddy` : ', all covered'}`,
       });
     }
@@ -55,8 +56,19 @@ export async function morningCoverReport(db: Db, now = new Date(), onlyCompanyId
         id,
         lines.map((l) => l.text),
       );
-    for (const l of lines)
-      if (l.hod && !everyone.has(l.hod)) to.set(l.hod, [...(to.get(l.hod) ?? []), l.text]);
+    const give = (userId: string, text: string) => {
+      if (everyone.has(userId) || to.get(userId)?.includes(text)) return;
+      to.set(userId, [...(to.get(userId) ?? []), text]);
+    };
+    // Each branch's managers and HR person get their own branch's lines (phase 12).
+    const runs = await db.branchManager.findMany({
+      where: { companyId: c.id, role: { in: ['MANAGER', 'HR'] }, branchId: { not: null } },
+      select: { userId: true, branchId: true },
+    });
+    for (const l of lines) {
+      if (l.hod) give(l.hod, l.text);
+      for (const r of runs) if (r.branchId === l.branchId) give(r.userId, l.text);
+    }
     for (const [userId, list] of to) {
       await db.$transaction((tx) =>
         emitEvent(

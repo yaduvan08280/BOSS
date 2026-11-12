@@ -68,6 +68,13 @@ export const holidaySchema = z.object({
   type: z.enum(['FESTIVAL', 'NATIONAL', 'OPTIONAL']).default('FESTIVAL'),
   halfDay: z.boolean().default(false),
   branchId: z.string().nullish(),
+  /** Not one branch's: a legal entity's, a state's ("Rajasthan") or a country's ("IN", "AE"). */
+  entityId: z.string().nullish(),
+  state: z.string().trim().max(80).nullish(),
+  country: z
+    .string()
+    .regex(/^[A-Z]{2}$/)
+    .nullish(),
 });
 
 /** Holidays of a year (FY or calendar) and the weekly offs: everyone reads them; HR changes them. */
@@ -94,6 +101,9 @@ export async function saveHoliday(db: Db, actor: Actor, input: z.infer<typeof ho
         deletedAt: null,
         date: input.date,
         branchId: input.branchId ?? null,
+        entityId: input.entityId ?? null,
+        state: input.state || null,
+        country: input.country ?? null,
         NOT: id ? { id } : undefined,
       },
     });
@@ -104,6 +114,9 @@ export async function saveHoliday(db: Db, actor: Actor, input: z.infer<typeof ho
       type: input.type,
       halfDay: input.halfDay,
       branchId: input.branchId ?? null,
+      entityId: input.entityId ?? null,
+      state: input.state || null,
+      country: input.country ?? null,
     };
     const row = id
       ? await tx.holiday.update({ where: { id }, data })

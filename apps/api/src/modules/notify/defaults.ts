@@ -27,6 +27,13 @@ const RULE_UPGRADES = [
   // Phase 7: the absence notice goes to the owner too (after the confirm time); the morning report is per person.
   { event: 'hr.absent_no_cover', from: ['hod'], to: ['hod', 'owner'] },
   { event: 'hr.morning_cover_report', from: ['hod', 'owner', 'hr'], to: ['user'] },
+  // Phase 12: a branch's managers and HR person hear about their own branch (nobody, where there are no branches).
+  {
+    event: 'hr.absent_no_cover',
+    from: ['hod', 'owner'],
+    to: ['hod', 'branch_manager', 'branch_hr', 'owner'],
+  },
+  { event: 'hr.punch_flagged', from: ['hod'], to: ['hod', 'branch_hr'] },
 ];
 
 /** Add a default rule for every event that has no rule yet, and upgrade untouched built-in ones. */

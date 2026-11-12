@@ -165,11 +165,14 @@ export async function savePayRules(db: Db, actor: Actor, input: unknown) {
   return readPayRules(db, actor);
 }
 
-/** Days of a leave type for one person a year: their own number, else their designation's, else the type's. */
+/**
+ * Days of a leave type for one person a year: their own number, else their designation's, else their legal
+ * entity's, else the type's.
+ */
 export async function quotaFor(
   db: Db | Tx,
   leaveType: { id: string; yearlyQuota: unknown },
-  p: { id: string; designationId: string | null },
+  p: { id: string; designationId: string | null; entityId?: string | null },
 ) {
   const rows = await db.leaveQuota.findMany({
     where: {
@@ -177,10 +180,14 @@ export async function quotaFor(
       OR: [
         { scope: 'person', refId: p.id },
         ...(p.designationId ? [{ scope: 'designation', refId: p.designationId }] : []),
+        ...(p.entityId ? [{ scope: 'entity', refId: p.entityId }] : []),
       ],
     },
   });
-  const own = rows.find((r) => r.scope === 'person') ?? rows.find((r) => r.scope === 'designation');
+  const own =
+    rows.find((r) => r.scope === 'person') ??
+    rows.find((r) => r.scope === 'designation') ??
+    rows.find((r) => r.scope === 'entity');
   return Number(own?.yearlyQuota ?? leaveType.yearlyQuota);
 }
 
@@ -189,7 +196,7 @@ export async function listQuotas(db: Db, actor: Actor) {
   const rows = await db.leaveQuota.findMany({ where: { companyId: actor.companyId } });
   return rows.map((r) => ({
     leaveTypeId: r.leaveTypeId,
-    scope: r.scope as 'designation' | 'person',
+    scope: r.scope as 'entity' | 'designation' | 'person',
     refId: r.refId,
     yearlyQuota: Number(r.yearlyQuota),
   }));
@@ -212,6 +219,12 @@ export async function saveQuotas(
     throw new AppError(400, 'VALIDATION_FAILED', 'The same designation or person is in the list twice');
   const g = quotas.filter((q) => q.scope === 'designation').map((q) => q.refId);
   const p = quotas.filter((q) => q.scope === 'person').map((q) => q.refId);
+  const e = quotas.filter((q) => q.scope === 'entity').map((q) => q.refId);
+  if (
+    e.length &&
+    (await db.legalEntity.count({ where: { companyId, id: { in: e }, deletedAt: null } })) !== e.length
+  )
+    throw new AppError(400, 'VALIDATION_FAILED', 'A legal entity in the list is not in the company');
   const [gn, pn] = await Promise.all([
     g.length ? db.designation.count({ where: { companyId, id: { in: g }, deletedAt: null } }) : 0,
     p.length ? db.user.count({ where: { companyId, id: { in: p }, deletedAt: null } }) : 0,

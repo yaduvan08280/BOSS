@@ -345,7 +345,8 @@ export const leaveQuotasSchema = z.object({
   quotas: z
     .array(
       z.object({
-        scope: z.enum(['designation', 'person']),
+        // Phase 12: a legal entity's own number (a state's or country's leave), below designation and person.
+        scope: z.enum(['entity', 'designation', 'person']),
         refId: z.string().min(1),
         yearlyQuota: z.number().min(0).max(365).multipleOf(0.5),
       }),

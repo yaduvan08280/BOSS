@@ -234,5 +234,12 @@
     "noBranch": "कोई शाखा नहीं",
     "days_one": "{{count}} दिन",
     "days_other": "{{count}} दिन"
+  },
+  "holidayFor": {
+    "label": "किसके लिए",
+    "everyone": "सबके लिए",
+    "country": "देश: {{name}}",
+    "state": "राज्य: {{name}}",
+    "only": "केवल {{name}}"
   }
 }

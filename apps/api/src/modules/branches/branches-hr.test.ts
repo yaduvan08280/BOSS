@@ -149,4 +149,137 @@ describe('HR per entity and branch (phase 12, stage B)', () => {
     expect((await pay(ajmer.id)).closed).toBeNull();
     expect((await pay(g.entity.id)).closed).not.toBeNull();
   });
+  it('G32: holidays for a country, a state, an entity or one branch; leave days a year per entity', async () => {
+    const w = await world(ctx.app);
+    const { g } = await twoOutlets(ctx.prisma, w);
+    const dubai = await ok<{ id: string }>(
+      w.api.post('/api/branches/entities', { name: 'GGM Gulf LLC', country: 'AE', currency: 'AED' }),
+    );
+    const marina = await ok<{ id: string }>(
+      w.api.post('/api/org/branches', { name: 'Marina Dubai', type: 'OUTLET', entityId: dubai.id }),
+    );
+    await ok(
+      w.api.patch(`/api/org/branches/${g.b.rooftop.id}`, { name: 'Rooftop Jaipur', state: 'Rajasthan' }),
+    );
+    const holiday = (date: string, name: string, more: object = {}) =>
+      ok(w.api.post('/api/hr/holidays', { date, name, ...more }));
+    await holiday('2031-01-01', 'New Year');
+    await holiday('2031-01-26', 'Republic Day', { country: 'IN', type: 'NATIONAL' });
+    await holiday('2031-12-02', 'UAE National Day', { country: 'AE', type: 'NATIONAL' });
+    await holiday('2031-03-30', 'Rajasthan Day', { state: 'Rajasthan' });
+    await holiday('2031-05-05', 'GGM Hotels founders day', { entityId: g.entity.id });
+    await holiday('2031-06-06', 'Lake fair', { branchId: g.b.lake.id });
+    const { companyCalendar } = await import('../hr/calendar');
+    const days = async (branchId: string | null) =>
+      [...(await companyCalendar(ctx.prisma, w.companyId, branchId)).holidays]
+        .filter((d) => d.startsWith('2031'))
+        .sort();
+    // Rooftop (India, Rajasthan, GGM Hotels): everyone's, India's, Rajasthan's and its entity's.
+    expect(await days(g.b.rooftop.id)).toEqual(['2031-01-01', '2031-01-26', '2031-03-30', '2031-05-05']);
+    // The lake (same entity; the entity's state is Rajasthan): the same, plus its own fair.
+    expect(await days(g.b.lake.id)).toEqual([
+      '2031-01-01',
+      '2031-01-26',
+      '2031-03-30',
+      '2031-05-05',
+      '2031-06-06',
+    ]);
+    // Dubai: everyone's and the UAE's — not India's.
+    expect(await days(marina.id)).toEqual(['2031-01-01', '2031-12-02']);
+    // Someone with no branch: only what is everyone's.
+    expect(await days(null)).toEqual(['2031-01-01']);
+
+    // Leave a year: Dubai gives 30 days of EL where the company gives its own number.
+    const gulfCook = await g.at('Cook Marina', marina.id);
+    const jaipurCook = await g.at('Cook Rooftop', g.b.rooftop.id);
+    const types = await ok<{ id: string; code: string; yearlyQuota: number }[]>(
+      w.api.get('/api/hr/leave/types'),
+    );
+    const el = types.find((t) => t.code === 'EL')!;
+    await ok(
+      w.api.put(`/api/hr/leave-quotas/${el.id}`, {
+        quotas: [{ scope: 'entity', refId: dubai.id, yearlyQuota: 30 }],
+      }),
+    );
+    const { balancesOf } = await import('../hr/balance');
+    const quota = async (userId: string) =>
+      (await balancesOf(ctx.prisma, w.companyId, userId, localDate(new Date(), TZ))).balances.find(
+        (b) => b.code === 'EL',
+      )!.allotted;
+    expect(await quota(gulfCook.id)).toBe(30);
+    expect(await quota(jaipurCook.id)).toBe(Number(el.yearlyQuota));
+  });
+  it("G33: the cover board and the morning report are per branch, for that branch's manager and HR person", async () => {
+    const w = await world(ctx.app);
+    const { g } = await twoOutlets(ctx.prisma, w);
+    const today = localDate(new Date(), TZ);
+    const rooftopMgr = await w.person('Mira Rooftop Manager');
+    const lakeHr = await w.person('Hema Lake HR');
+    await ok(
+      w.api.put('/api/branches/managers', {
+        branchId: g.b.rooftop.id,
+        role: 'MANAGER',
+        userIds: [rooftopMgr.id],
+      }),
+    );
+    await ok(
+      w.api.put('/api/branches/managers', { branchId: g.b.lake.id, role: 'HR', userIds: [lakeHr.id] }),
+    );
+    const cookRooftop = await g.at('Cook Rooftop', g.b.rooftop.id);
+    const cookLake = await g.at('Cook Lake', g.b.lake.id);
+    const type = await ctx.prisma.leaveType.create({
+      data: { companyId: w.companyId, code: 'XL', name: 'Extra leave', yearlyQuota: 8 },
+    });
+    let n = 0;
+    for (const userId of [cookRooftop.id, cookLake.id])
+      await ctx.prisma.leaveRequest.create({
+        data: {
+          companyId: w.companyId,
+          number: ++n,
+          userId,
+          leaveTypeId: type.id,
+          from: today,
+          to: today,
+          days: 1,
+          reason: 'x',
+          status: 'APPROVED',
+        },
+      });
+    // The board: each sees their own branch; the owner both — or one, with the switcher.
+    const board = async (api: World['api'], only?: string) =>
+      (
+        await ok<{ away: { person: { name: string } }[] }>(
+          api.get(`/api/hr/cover?date=${today}`, only ? { 'x-mono-branch': only } : undefined),
+        )
+      ).away
+        .map((a) => a.person.name)
+        .sort();
+    expect(await board(rooftopMgr.api)).toEqual(['Cook Rooftop']);
+    expect(await board(lakeHr.api)).toEqual(['Cook Lake']);
+    expect(await board(w.api)).toEqual(['Cook Lake', 'Cook Rooftop']);
+    expect(await board(w.api, g.b.lake.id)).toEqual(['Cook Lake']);
+
+    // The morning report: the owner gets everyone; each branch's manager / HR person only their own branch.
+    const { morningCoverReport } = await import('../hr/report');
+    const { zonedToUtc } = await import('@mono/shared');
+    await morningCoverReport(ctx.prisma, zonedToUtc(today, 9 * 60, TZ), w.companyId);
+    const sent = await ctx.prisma.domainEvent.findMany({
+      where: { companyId: w.companyId, name: 'hr.morning_cover_report' },
+    });
+    const reportOf = (userId: string) =>
+      (
+        sent.find((e) => (e.payload as { userId: string }).userId === userId)?.payload as
+          { report: string } | undefined
+      )?.report ?? '';
+    expect(reportOf(w.owner.id)).toMatch(/Cook Rooftop[\s\S]*Cook Lake|Cook Lake[\s\S]*Cook Rooftop/);
+    expect(reportOf(rooftopMgr.id)).toContain('Cook Rooftop');
+    expect(reportOf(rooftopMgr.id)).not.toContain('Cook Lake');
+    expect(reportOf(lakeHr.id)).toContain('Cook Lake');
+    expect(reportOf(lakeHr.id)).not.toContain('Cook Rooftop');
+    // The absence alert's built-in rule now names the branch's manager and HR person.
+    const rule = await ctx.prisma.notificationRule.findFirstOrThrow({
+      where: { companyId: w.companyId, event: 'hr.absent_no_cover' },
+    });
+    expect(rule.recipients).toEqual(['hod', 'branch_manager', 'branch_hr', 'owner']);
+  });
 });

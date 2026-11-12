@@ -1,3 +1,4 @@
+import { useStructure } from '@/modules/system/branches/api';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -23,8 +24,34 @@ export function HolidaysTab({ me }: { me: Me }) {
   const to = `${fy.end}-03-31`;
   const q = useHrCalendar(from, to);
   const [h, setH] = useState({ date: '', name: '', type: 'FESTIVAL', halfDay: false });
+  // Who a holiday is for (phase 12): everyone, a country, a state, a legal entity or one branch.
+  const [who, setWho] = useState('');
+  const structure = useStructure();
+  const entities = structure.data?.entities ?? [];
+  const branches = structure.data?.branches ?? [];
+  const countries = [...new Set(entities.map((e) => e.country))];
+  const states = [
+    ...new Set([...entities, ...branches].map((x) => x.state).filter((x): x is string => Boolean(x))),
+  ];
+  const forWhom = () => ({
+    country: who.startsWith('c:') ? who.slice(2) : null,
+    state: who.startsWith('s:') ? who.slice(2) : null,
+    entityId: who.startsWith('e:') ? who.slice(2) : null,
+    branchId: who.startsWith('b:') ? who.slice(2) : null,
+  });
+  const whoLabel = (x: {
+    branchId: string | null;
+    entityId?: string | null;
+    state?: string | null;
+    country?: string | null;
+  }) =>
+    x.branchId
+      ? branches.find((b) => b.id === x.branchId)?.name
+      : x.entityId
+        ? entities.find((e) => e.id === x.entityId)?.name
+        : (x.state ?? x.country ?? null);
   const add = useHrMutation(
-    () => hrApi.saveHoliday(h),
+    () => hrApi.saveHoliday({ ...h, ...forWhom() }),
     () => t('org.saved'),
   );
   const del = useHrMutation(
@@ -71,6 +98,33 @@ export function HolidaysTab({ me }: { me: Me }) {
                     ))}
                   </Select>
                 </Field>
+                {(entities.length > 0 || branches.length > 1) && (
+                  <Field label={t('holidayFor.label')}>
+                    <Select value={who} onChange={(e) => setWho(e.target.value)}>
+                      <option value="">{t('holidayFor.everyone')}</option>
+                      {countries.map((c) => (
+                        <option key={c} value={`c:${c}`}>
+                          {t('holidayFor.country', { name: c })}
+                        </option>
+                      ))}
+                      {states.map((s) => (
+                        <option key={s} value={`s:${s}`}>
+                          {t('holidayFor.state', { name: s })}
+                        </option>
+                      ))}
+                      {entities.map((e) => (
+                        <option key={e.id} value={`e:${e.id}`}>
+                          {e.name}
+                        </option>
+                      ))}
+                      {branches.map((b) => (
+                        <option key={b.id} value={`b:${b.id}`}>
+                          {b.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                )}
                 <label className="flex h-10 items-center gap-2 text-sm">
                   <Switch
                     checked={h.halfDay}
@@ -101,6 +155,7 @@ export function HolidaysTab({ me }: { me: Me }) {
                         {' '}
                         · {t(`hr.h.kind.${x.type}`)}
                         {x.halfDay ? ` · ${t('hr.h.half')}` : ''}
+                        {whoLabel(x) ? ` · ${t('holidayFor.only', { name: whoLabel(x) })}` : ''}
                       </span>
                     </span>
                     {admin && (
