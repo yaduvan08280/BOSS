@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseRef } from '@mono/shared';
 import { Input } from '@/components/ui/input';
@@ -70,6 +70,16 @@ export function ItemPicker({
   const items = useItems(q.trim(), open);
   const list = items.data ?? [];
   const typed = q.trim();
+  // In a short dialog the list would be cut off: bring it into view when it opens and when its choices arrive.
+  const listRef = useRef<HTMLUListElement>(null);
+  useEffect(() => {
+    const el = listRef.current;
+    if (!open || !el) return;
+    let box = el.parentElement;
+    while (box && !/auto|scroll/.test(getComputedStyle(box).overflowY)) box = box.parentElement;
+    const over = box ? el.getBoundingClientRect().bottom - box.getBoundingClientRect().bottom : 0;
+    if (box && over > 0) box.scrollTop += over + 8;
+  }, [open, list.length]);
   const choose = (i: ItemOption) => (onPick(i), setOpen(false));
   const write = () => (onTyped(typed), setOpen(false));
   return (
@@ -82,7 +92,11 @@ export function ItemPicker({
         value={open ? q : value}
         placeholder={value || t('stockSteps.line.pick')}
         onFocus={() => (setQ(picked ? '' : value), setOpen(true))}
-        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        // Close a moment after focus leaves (a click on a choice lands first) — but not if focus came straight back.
+        onBlur={(e) => {
+          const input = e.currentTarget;
+          setTimeout(() => document.activeElement !== input && setOpen(false), 150);
+        }}
         onChange={(e) => setQ(e.target.value)}
         onKeyDown={(e) => {
           if (e.key !== 'Enter') return;
@@ -93,6 +107,7 @@ export function ItemPicker({
       />
       {open && (
         <ul
+          ref={listRef}
           role="listbox"
           className="absolute z-30 mt-1 max-h-64 w-full min-w-56 overflow-auto rounded-control border bg-card p-1 shadow-lg"
         >

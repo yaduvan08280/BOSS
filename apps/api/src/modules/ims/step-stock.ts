@@ -258,7 +258,8 @@ export async function previewStepStock(db: Db, actor: Actor, stepId: string, typ
   return db.$transaction(async (tx) => {
     const row = await tx.fmsRecordStep.findFirst({ where: { id: stepId, companyId: actor.companyId } });
     if (!row) throw notFound('Step');
-    if (row.status !== 'OPEN') throw new AppError(409, 'CONFLICT', 'This step is already done');
+    // A step that is already done has nothing left to preview.
+    if (row.status !== 'OPEN') return { stock: null };
     const record = await tx.fmsRecord.findUniqueOrThrow({ where: { id: row.recordId } });
     const flow = await tx.flow.findUniqueOrThrow({ where: { id: record.flowId } });
     if (!mayDo(actor, flow, row.doerId)) throw new AppError(403, 'FORBIDDEN', 'This step is not yours');
