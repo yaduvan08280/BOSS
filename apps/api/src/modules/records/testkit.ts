@@ -12,12 +12,16 @@ export async function world(app: App) {
   const o = await ownerClient(app);
   const roles = (await o.api.get('/api/org/roles')).body.roles as { id: string; key: string | null }[];
   const role = (key: string) => roles.find((r) => r.key === key)!.id;
+  /** `roleKey`: a built-in role (MEMBER, HOD …) or the id of a custom role. */
   const person = async (name: string, roleKey = 'MEMBER') => {
     const m = mobile();
-    const r = (await o.api.post('/api/org/users', { name, mobile: m, loginEnabled: true, roleId: role(roleKey) }))
-      .body;
+    const roleId = roles.find((x) => x.key === roleKey)?.id ?? roleKey;
+    const r = (await o.api.post('/api/org/users', { name, mobile: m, loginEnabled: true, roleId })).body;
     const api = await signedIn(app, m, r.tempPassword);
-    await api.post('/api/auth/change-password', { currentPassword: r.tempPassword, newPassword: 'Record12345' });
+    await api.post('/api/auth/change-password', {
+      currentPassword: r.tempPassword,
+      newPassword: 'Record12345',
+    });
     return { api, id: r.person.id as string };
   };
   return { ...o, role, person, companyId: o.company.id };
@@ -59,7 +63,14 @@ export const siteVisit = (over: Record<string, unknown> = {}) => ({
         who: ['approve'],
         noteRequired: true,
       },
-      { from: 'planned', action: 'cancel', label: 'Cancel', to: 'cancelled', who: ['creator'], noteRequired: true },
+      {
+        from: 'planned',
+        action: 'cancel',
+        label: 'Cancel',
+        to: 'cancelled',
+        who: ['creator'],
+        noteRequired: true,
+      },
     ],
   },
   menu: { section: 'systems', icon: 'map-pin' },

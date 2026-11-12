@@ -14,11 +14,21 @@ describe('custom record types', () => {
     const w = await world(ctx.app);
     const typeId = await makeType(w.api);
     const type = (await w.api.get(`/api/records/types/${typeId}`)).body;
-    expect(type).toMatchObject({ name: 'Site visit', code: 'site_visit', prefix: 'SV', status: 'ACTIVE', records: 0 });
+    expect(type).toMatchObject({
+      name: 'Site visit',
+      code: 'site_visit',
+      prefix: 'SV',
+      status: 'ACTIVE',
+      records: 0,
+    });
     // Left out: everyone views, makes and edits; heads of department approve.
     expect(type.permissions).toEqual({ view: ['*'], create: ['*'], edit: ['*'], approve: [w.role('HOD')] });
 
-    const a = await makeRecord(w.api, typeId, { site: 'Tonk mine', visit_on: '2026-11-20', cost: '1,250.50' });
+    const a = await makeRecord(w.api, typeId, {
+      site: 'Tonk mine',
+      visit_on: '2026-11-20',
+      cost: '1,250.50',
+    });
     const b = await makeRecord(w.api, typeId, { site: 'Niwai factory' });
     expect(a).toMatchObject({ code: `SV/${FY}/0001`, title: 'Tonk mine', status: 'planned' });
     expect(b.code).toBe(`SV/${FY}/0002`);
@@ -36,9 +46,15 @@ describe('custom record types', () => {
     const detail = (await w.api.get(`/api/records/entries/${a.id}`)).body;
     expect(detail.record).toMatchObject({ code: `SV/${FY}/0001`, data: { site: 'Tonk mine', cost: 1250.5 } });
     // Every change wrote an audit row and a domain event that webhooks can carry.
-    const events = await ctx.prisma.domainEvent.findMany({ where: { companyId: w.companyId, entityId: a.id } });
+    const events = await ctx.prisma.domainEvent.findMany({
+      where: { companyId: w.companyId, entityId: a.id },
+    });
     expect(events.map((e) => e.name)).toEqual(['record.created']);
-    expect(events[0]!.payload).toMatchObject({ code: `SV/${FY}/0001`, type: 'Site visit', status: 'planned' });
+    expect(events[0]!.payload).toMatchObject({
+      code: `SV/${FY}/0001`,
+      type: 'Site visit',
+      status: 'planned',
+    });
     const audit = await ctx.prisma.auditLog.findMany({
       where: { companyId: w.companyId, entityType: { in: ['record', 'record_type'] } },
     });
@@ -93,7 +109,9 @@ describe('custom record types', () => {
       ...def,
       // An empty field goes, a new one comes, text becomes long text, a status nobody stands in goes.
       fields: [
-        ...def.fields.filter((f) => f.key !== 'visit_on').map((f) => (f.key === 'site' ? { ...f, type: 'longtext' } : f)),
+        ...def.fields
+          .filter((f) => f.key !== 'visit_on')
+          .map((f) => (f.key === 'site' ? { ...f, type: 'longtext' } : f)),
         { key: 'engineer', label: 'Engineer', type: 'master', master: 'people' },
       ],
       statuses: def.statuses.filter((s) => s.key !== 'cancelled'),
@@ -101,7 +119,9 @@ describe('custom record types', () => {
     });
     expect(fine.status).toBe(200);
     // Details change without touching the definition (a patch has no defaults).
-    expect((await w.api.patch(`/api/records/types/${typeId}`, { pluralName: 'Visits', prefix: 'VST' })).status).toBe(200);
+    expect(
+      (await w.api.patch(`/api/records/types/${typeId}`, { pluralName: 'Visits', prefix: 'VST' })).status,
+    ).toBe(200);
     const type = (await w.api.get(`/api/records/types/${typeId}`)).body;
     expect(type).toMatchObject({ pluralName: 'Visits', prefix: 'VST', records: 1 });
     expect(type.definition.fields.map((f: { key: string }) => f.key)).toContain('engineer');
@@ -111,7 +131,9 @@ describe('custom record types', () => {
     // Archived: kept with its records, no new ones. A type with records can't be deleted.
     expect((await w.api.post(`/api/records/types/${typeId}/archive`)).body.status).toBe('ARCHIVED');
     expect((await w.api.post(`/api/records/types/${typeId}/archive`)).status).toBe(409);
-    expect((await w.api.post(`/api/records/types/${typeId}/records`, { data: { site: 'X' } })).status).toBe(409);
+    expect((await w.api.post(`/api/records/types/${typeId}/records`, { data: { site: 'X' } })).status).toBe(
+      409,
+    );
     expect((await w.api.del(`/api/records/types/${typeId}`)).status).toBe(409);
     expect((await w.api.post(`/api/records/types/${typeId}/restore`)).body.status).toBe('ACTIVE');
     // One nobody used is deleted, and its name and prefix are free again.
@@ -121,7 +143,7 @@ describe('custom record types', () => {
     await makeType(w.api, siteVisit({ name: 'Trip', pluralName: 'Trips', prefix: 'TR' }));
   });
 
-  it('U2: moves are allowed or refused by the type\'s own table, by who may make them, and leave a history', async () => {
+  it("U2: moves are allowed or refused by the type's own table, by who may make them, and leave a history", async () => {
     const w = await world(ctx.app);
     const typeId = await makeType(w.api);
     const gopal = await w.person('Gopal Prajapat');
@@ -131,7 +153,9 @@ describe('custom record types', () => {
     const move = (api: typeof w.api, action: string, note?: string) =>
       api.post(`/api/records/entries/${rec.id}/move`, { action, ...(note ? { note } : {}) });
     const moves = async (api: typeof w.api) =>
-      ((await api.get(`/api/records/entries/${rec.id}`)).body.moves as { action: string }[]).map((m) => m.action);
+      ((await api.get(`/api/records/entries/${rec.id}`)).body.moves as { action: string }[]).map(
+        (m) => m.action,
+      );
 
     // The creator may visit or cancel; another editor only visits; an approver has nothing to do yet.
     expect(await moves(gopal.api)).toEqual(['visit', 'cancel']);
@@ -157,8 +181,12 @@ describe('custom record types', () => {
     const late = await move(w.api, 'visit');
     expect(late.status).toBe(409);
     expect(late.body.error.message).toBe('This site visit is Approved: nothing more can be done with it');
-    expect((await gopal.api.patch(`/api/records/entries/${rec.id}`, { data: { site: 'Changed' } })).status).toBe(409);
-    expect((await ravi.api.post(`/api/records/entries/${rec.id}/notes`, { note: 'Well done' })).status).toBe(200);
+    expect(
+      (await gopal.api.patch(`/api/records/entries/${rec.id}`, { data: { site: 'Changed' } })).status,
+    ).toBe(409);
+    expect((await ravi.api.post(`/api/records/entries/${rec.id}/notes`, { note: 'Well done' })).status).toBe(
+      200,
+    );
     expect((await ravi.api.post(`/api/records/entries/${rec.id}/notes`, { note: '  ' })).status).toBe(400);
     // A closed record is deleted only by an admin.
     expect((await gopal.api.del(`/api/records/entries/${rec.id}`)).status).toBe(403);
@@ -167,8 +195,9 @@ describe('custom record types', () => {
     expect(detail.record.status).toBe('approved');
     expect(detail.can).toEqual({ edit: false, files: true, delete: false });
     expect(
-      detail.events.map((e: { type: string; by: string; fromStatus: string; toStatus: string; note: string }) =>
-        [e.type, e.by, e.fromStatus, e.toStatus, e.note].filter(Boolean).join(' | '),
+      detail.events.map(
+        (e: { type: string; by: string; fromStatus: string; toStatus: string; note: string }) =>
+          [e.type, e.by, e.fromStatus, e.toStatus, e.note].filter(Boolean).join(' | '),
       ),
     ).toEqual([
       'created | Gopal Prajapat',
@@ -199,11 +228,16 @@ describe('custom record types', () => {
     });
     try {
       expect((await w.api.post(`/api/records/entries/${rec.id}/move`, { action: 'visit' })).status).toBe(200);
-      expect((await w.api.post(`/api/records/entries/${rec.id}/move`, { action: 'approve' })).status).toBe(500);
+      expect((await w.api.post(`/api/records/entries/${rec.id}/move`, { action: 'approve' })).status).toBe(
+        500,
+      );
     } finally {
       statusHooks.length = 0;
     }
-    expect(seen).toEqual([`SV/${FY}/0001: planned → visited (visit)`, `SV/${FY}/0001: visited → approved (approve)`]);
+    expect(seen).toEqual([
+      `SV/${FY}/0001: planned → visited (visit)`,
+      `SV/${FY}/0001: visited → approved (approve)`,
+    ]);
     expect((await w.api.get(`/api/records/entries/${rec.id}`)).body.record.status).toBe('visited');
   });
 
@@ -224,7 +258,12 @@ describe('custom record types', () => {
         },
       }),
     );
-    const rec = await makeRecord(w.api, typeId, { site: 'Tonk mine', permit_no: 'P-77', city: 'Tonk', route: 'NH52' });
+    const rec = await makeRecord(w.api, typeId, {
+      site: 'Tonk mine',
+      permit_no: 'P-77',
+      city: 'Tonk',
+      route: 'NH52',
+    });
     const saved = await w.api.patch(`/api/records/entries/${rec.id}`, {
       data: { site: 'Tonk mine', permit_no: 'P-78', city: 'Jaipur', route: 'NH52' },
     });
