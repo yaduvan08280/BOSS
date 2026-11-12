@@ -1,6 +1,7 @@
 import { END, type FlowDefinition, type FlowField, type FlowStep } from '../fms/definition';
 import { validateFlow, type FlowIssue } from '../fms/flow';
-import type { AiField, AiFlowDraft, AiStep } from './drafts';
+import type { RecordDefinition, RecordMove } from '../records/definition';
+import type { AiField, AiFlowDraft, AiRecordType, AiStep } from './drafts';
 
 export type PersonRef = { id: string; name: string; designation?: string | null; department?: string | null };
 export type Unmatched = { where: string; name: string };
@@ -323,3 +324,77 @@ export const diffIsEmpty = (d: FlowDiff) =>
   !d.changed.length &&
   !d.startFieldsAdded.length &&
   !d.startFieldsRemoved.length;
+
+/** A record type as the screens save it (nothing is saved here: the editor opens on it, for a person to accept). */
+export type RecordTypeDraft = {
+  name: string;
+  pluralName: string;
+  prefix: string;
+  description: string;
+  definition: RecordDefinition;
+};
+
+/**
+ * The AI's record type as a definition: keys made from the labels, statuses and moves joined by label (whatever
+ * the capitals), a move to or from a status that is not there dropped, button keys unique per status.
+ */
+export function toRecordType(draft: AiRecordType): RecordTypeDraft {
+  const fields = toFields(draft.fields);
+  const tableKeys = new Set(fields.map((f) => f.key));
+  const tables = draft.tables
+    .filter((t) => t.label.trim() && t.fields.length)
+    .slice(0, 8)
+    .map((t) => ({
+      key: uniqueKey(slugKey(t.label), tableKeys),
+      label: t.label.trim().slice(0, 60),
+      fields: toFields(t.fields).slice(0, 20),
+    }));
+  const statusKeys = new Set<string>();
+  const statuses = draft.statuses
+    .filter((s) => s.label.trim())
+    .slice(0, 12)
+    .map((s) => ({
+      key: uniqueKey(slugKey(s.label), statusKeys),
+      label: s.label.trim().slice(0, 40),
+      kind: s.kind,
+      ...(s.final ? { final: true } : {}),
+    }));
+  const statusOf = (label: string) => statuses.find((s) => norm(s.label) === norm(label))?.key;
+  const taken = new Map<string, Set<string>>();
+  const moves: RecordMove[] = [];
+  for (const m of draft.moves.slice(0, 30)) {
+    const from = statusOf(m.from);
+    const to = statusOf(m.to);
+    if (!from || !to || from === to || !m.label.trim()) continue;
+    if (!taken.has(from)) taken.set(from, new Set());
+    moves.push({
+      from,
+      action: uniqueKey(slugKey(m.label), taken.get(from)!),
+      label: m.label.trim().slice(0, 40),
+      to,
+      who: [m.who],
+      ...(m.noteRequired ? { noteRequired: true } : {}),
+    });
+  }
+  const title = draft.titleField
+    ? fields.find((f) => norm(f.label) === norm(draft.titleField!))?.key
+    : undefined;
+  const prefix = draft.prefix
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(0, 6);
+  return {
+    name: draft.name.trim().slice(0, 60),
+    pluralName: (draft.pluralName.trim() || `${draft.name.trim()}s`).slice(0, 60),
+    prefix,
+    description: draft.description.trim().slice(0, 300),
+    definition: {
+      fields,
+      tables,
+      statuses,
+      start: statusOf(draft.start) ?? statuses[0]?.key ?? 'open',
+      moves,
+      ...(title ? { displayField: title } : {}),
+    },
+  };
+}

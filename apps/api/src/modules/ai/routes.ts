@@ -15,6 +15,7 @@ import { createFromDraft, draftFlow, draftMaster, editFlowWithAi, rememberFacts,
 import type { AiSecrets } from './llm';
 import { deleteMaster, listMasters, masterDefSchema, saveMaster } from './masters';
 import { transcribeAudio } from './providers';
+import { draftRecordType } from './records';
 
 const idParam = z.object({ id: z.string() });
 /** AI calls cost money: a person gets a sensible number per minute. */
@@ -151,6 +152,17 @@ export async function aiRoutes(app: FastifyInstance, opts: { env: Env }) {
       schema: { tags, body: z.object({ text: z.string().trim().min(5).max(4_000) }) },
     },
     async (q) => draftMaster(app.prisma, actorOf(q), secret, q.body.text),
+  );
+
+  // "Build a record type with AI": a draft for the type editor — nothing is saved here.
+  r.post(
+    '/api/ai/record-types/draft',
+    {
+      ...signedIn(),
+      config: perMinute(8),
+      schema: { tags, body: z.object({ text: z.string().trim().min(10).max(4_000) }) },
+    },
+    async (q) => draftRecordType(app.prisma, actorOf(q), secret, q.body.text),
   );
 
   r.post(

@@ -1,7 +1,7 @@
-import { ArrowLeft, CircleAlert, CircleCheck, Loader2 } from 'lucide-react';
+import { ArrowLeft, CircleAlert, CircleCheck, Loader2, Sparkles } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import { hasPermission, type Me, type RecordTypeInput } from '@mono/shared';
 import { ErrorState, PageSkeleton } from '@/components/page';
 import { StatusChip } from '@/components/status-chip';
@@ -10,6 +10,7 @@ import { TabStrip } from '@/components/work';
 import { ApiError } from '@/lib/api';
 import { FieldsEditor } from '@/modules/fms/FieldsEditor';
 import { useRoles } from '@/modules/system/api';
+import type { AiTypeDraft } from './AiDraftDialog';
 import { recordsApi, useRecordsMutation, useRecordType, type RecordTypeView } from './api';
 import { DetailsTab } from './editor/DetailsTab';
 import { blankDraft, draftOf, problemsOf, type Draft } from './editor/draft';
@@ -36,9 +37,25 @@ function Editor({ type }: { type?: RecordTypeView }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const roles = useRoles().data?.roles ?? [];
-  const [draft, setDraft] = useState<Draft>(() => (type ? draftOf(type) : blankDraft()));
+  // "Build with AI" opens the editor on its draft: unsaved, for a person to check, change and save.
+  const ai = (useLocation().state as { aiDraft?: AiTypeDraft } | null)?.aiDraft;
+  const fromAi = !type && Boolean(ai);
+  const [draft, setDraft] = useState<Draft>(() =>
+    type
+      ? draftOf(type)
+      : ai
+        ? {
+            ...blankDraft(),
+            name: ai.name,
+            pluralName: ai.pluralName,
+            prefix: ai.prefix,
+            description: ai.description,
+            definition: ai.definition,
+          }
+        : blankDraft(),
+  );
   const [tab, setTab] = useState<Tab>('details');
-  const [dirty, setDirty] = useState(false);
+  const [dirty, setDirty] = useState(fromAi);
   const [refused, setRefused] = useState<string[]>([]);
   const set = (patch: Partial<Draft>) => {
     setDraft((d) => ({ ...d, ...patch }));
@@ -117,6 +134,12 @@ function Editor({ type }: { type?: RecordTypeView }) {
           {save.isPending && <Loader2 className="animate-spin" />} {t('common.save')}
         </Button>
       </div>
+      {fromAi && (
+        <p className="flex items-center gap-2 rounded-card border bg-card p-3 text-sm">
+          <Sparkles className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+          {t('recordsReach.ai.drafted')}
+        </p>
+      )}
       {all.length > 0 ? (
         <div
           role="alert"

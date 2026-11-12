@@ -20,6 +20,31 @@
       "words": "Fixed words for {{field}}",
       "wordsPh": "Type the words",
       "needed": "The process needs this to start"
+    },
+    "ai": {
+      "button": "Build with AI",
+      "title": "Build a record type with AI",
+      "body": "Say what you keep a record of, what you note down about it, and the stages it goes through. You check and change the draft before anything is saved.",
+      "placeholder": "e.g. A site visit to a customer: site, customer, date, what was found. It is planned, then confirmed by the manager, then closed. It can be cancelled with a reason.",
+      "go": "Draft it",
+      "working": "Drafting…",
+      "notConnected": "AI is not connected yet.",
+      "connect": "Connect AI in System Master",
+      "drafted": "Drafted by AI. Nothing is saved yet — check every tab, change what is not right, then press Save.",
+      "ex": {
+        "siteVisit": {
+          "label": "Site visit",
+          "text": "A site visit to a customer: site, customer, visit date, kind of visit (survey or repair), cost, and a list of findings with a quantity. It is planned, then confirmed by the manager, then closed. It can be cancelled with a reason."
+        },
+        "trip": {
+          "label": "Vehicle trip",
+          "text": "A vehicle trip: vehicle, driver, from, to, start date and time, kilometres, diesel amount, and remarks. A trip is planned, started, finished, then checked by accounts. A planned trip can be cancelled with a reason."
+        },
+        "prescription": {
+          "label": "Prescription",
+          "text": "A prescription: patient name, mobile, doctor, date, and lines of medicines with dose and days. It is new, then dispensed, then closed. It can be rejected with a reason when a medicine is not in stock."
+        }
+      }
     }
   }
 }

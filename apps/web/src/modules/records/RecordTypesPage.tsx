@@ -1,4 +1,4 @@
-import { Archive, ArchiveRestore, List, Pencil, Plus, Shapes, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, List, Pencil, Plus, Shapes, Sparkles, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -8,6 +8,7 @@ import { StatusChip } from '@/components/status-chip';
 import { Button } from '@/modules/records/ui';
 import { Card } from '@/components/ui/card';
 import { Confirm } from '@/components/ui/dialog';
+import { AiDraftDialog } from './AiDraftDialog';
 import { recordsApi, useRecordsMutation, useRecordTypes, type RecordTypeView } from './api';
 import { RECORD_ICON } from './icons';
 import { RECORD_MENU_SECTIONS } from './menu';
@@ -17,6 +18,7 @@ export function RecordTypesPage({ me }: { me: Me }) {
   const { t } = useTranslation();
   const q = useRecordTypes();
   const [removing, setRemoving] = useState<RecordTypeView | null>(null);
+  const [asking, setAsking] = useState(false);
   const archive = useRecordsMutation(
     (x: RecordTypeView) =>
       x.status === 'ACTIVE' ? recordsApi.archiveType(x.id) : recordsApi.restoreType(x.id),
@@ -31,11 +33,16 @@ export function RecordTypesPage({ me }: { me: Me }) {
   if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
   const { types, canAdmin } = q.data;
   const add = canAdmin && (
-    <Button asChild>
-      <Link to="/records/types/new">
-        <Plus /> {t('records.types.new')}
-      </Link>
-    </Button>
+    <div className="flex flex-wrap gap-2">
+      <Button onClick={() => setAsking(true)}>
+        <Sparkles /> {t('recordsReach.ai.button')}
+      </Button>
+      <Button asChild>
+        <Link to="/records/types/new">
+          <Plus /> {t('records.types.new')}
+        </Link>
+      </Button>
+    </div>
   );
   return (
     <div className="space-y-5">
@@ -149,6 +156,7 @@ export function RecordTypesPage({ me }: { me: Me }) {
         danger
         onConfirm={() => removing && remove.mutate(removing.id, { onSettled: () => setRemoving(null) })}
       />
+      {asking && <AiDraftDialog onClose={() => setAsking(false)} />}
     </div>
   );
 }
