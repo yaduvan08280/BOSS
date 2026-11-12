@@ -6,6 +6,7 @@ import { canOpenSystemMaster, type Language, type Me, type ThemeMode } from '@mo
 import { BrandMark } from '@/components/brand';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { BranchSwitcher } from './BranchSwitcher';
 import { NotificationBell } from './NotificationBell';
 import { UserMenu } from './UserMenu';
 
@@ -95,6 +96,7 @@ export function TopBar({ me, title, subtitle, inSystem, onOpenMenu, ...menu }: P
             <div className="hidden truncate text-xs text-muted-foreground sm:block">{subtitle}</div>
           )}
         </div>
+        <BranchSwitcher className="hidden w-52 md:flex" />
         {showSwitch && <WorkspaceSwitch inSystem={inSystem} className="hidden md:inline-flex" />}
         <div className="flex items-center">
           <Button asChild variant="ghost" size="icon" className="hidden text-muted-foreground sm:inline-flex">
@@ -126,6 +128,8 @@ export function TopBar({ me, title, subtitle, inSystem, onOpenMenu, ...menu }: P
           </div>
         </div>
       </div>
+      {/* Phones: the branch switcher gets its own row under the bar. */}
+      <BranchSwitcher className="px-4 pb-2 md:hidden" />
     </header>
   );
 }

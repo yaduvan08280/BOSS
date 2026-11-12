@@ -43,6 +43,7 @@ const CompanySetupTab = page(() => import('@/modules/system/company/CompanySetup
 const Designations = page(() => import('@/modules/system/company/Designations'), 'Designations');
 const Shifts = page(() => import('@/modules/system/company/Shifts'), 'Shifts');
 const DepartmentsTab = page(() => import('@/modules/system/departments/DepartmentsTab'), 'DepartmentsTab');
+const BranchesTab = page(() => import('@/modules/system/branches/BranchesTab'), 'BranchesTab');
 const OrgChartTab = page(() => import('@/modules/system/orgchart/OrgChartTab'), 'OrgChartTab');
 const RolesTab = page(() => import('@/modules/system/roles/RolesTab'), 'RolesTab');
 const SystemMasterLayout = page(() => import('@/modules/system/SystemMasterPage'), 'SystemMasterLayout');
@@ -176,6 +177,7 @@ export const router = createBrowserRouter([
               { path: 'users', element: <UsersTab /> },
               { path: 'roles', element: <RolesTab /> },
               { path: 'org-chart', element: <OrgChartTab /> },
+              { path: 'branches', element: <BranchesTab /> },
               { path: 'appearance', element: <AppearanceTab /> },
               { path: 'business-details', element: <BusinessDetailsPage /> },
               { path: 'hr-rules', element: <RulesWizard /> },

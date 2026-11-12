@@ -385,7 +385,9 @@ describe('leave and Buddy rules', () => {
       ...rules,
       autopilot: { ...rules.autopilot, autoPick: true, autoApproveShort: true },
     });
-    const day = addDays(localDate(new Date(), TZ), 2);
+    // Two days ahead, or three when that is a Sunday (the weekly off).
+    const two = addDays(localDate(new Date(), TZ), 2);
+    const day = new Date(`${two}T00:00:00Z`).getUTCDay() === 0 ? addDays(two, 1) : two;
     const task = (
       await api.post('/api/tasks', {
         doerId: asha.id,

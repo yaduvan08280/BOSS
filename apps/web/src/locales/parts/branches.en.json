@@ -1,0 +1,121 @@
+{
+  "nav.groupBranches": "Branches",
+  "navDesc.groupBranches": "Entities, regions, branches, who runs them and who approves what",
+  "branches": {
+    "switcher": "Branch shown",
+    "allMine": "All my branches",
+    "part": {
+      "structure": "Structure",
+      "approvals": "Who approves"
+    },
+    "entity": {
+      "one": "Legal entity",
+      "many": "Legal entities",
+      "hint": "Each company of the group, and each franchise partner, with its own tax number.",
+      "add": "Add an entity",
+      "edit": "Edit the entity",
+      "none": "No entity",
+      "kind": "Kind",
+      "kindHint": "A franchise sees only its own branches.",
+      "OWN": "Our company",
+      "FRANCHISE": "Franchise",
+      "country": "Country",
+      "countryHint": "Two letters: IN, AE",
+      "currency": "Currency",
+      "currencyHint": "Three letters: INR, AED",
+      "taxId": "Tax number (GSTIN / TRN)",
+      "emptyTitle": "No legal entities yet",
+      "emptyBody": "Add one for each company or franchise partner. A single company needs none."
+    },
+    "region": {
+      "one": "Region",
+      "many": "Regions",
+      "hint": "Group branches by area, as deep as you need (State → City → Zone).",
+      "add": "Add a region",
+      "edit": "Edit the region",
+      "none": "No region",
+      "parent": "Inside",
+      "noParent": "Top level",
+      "namePh": "e.g. Rajasthan, Jaipur",
+      "emptyTitle": "No regions yet",
+      "emptyBody": "Regions let an area manager look after several branches."
+    },
+    "branch": {
+      "many": "Branches",
+      "hint": "Every outlet, kitchen, store, office and hotel, with the people who run it."
+    },
+    "type": {
+      "label": "What it is",
+      "OUTLET": "Outlet",
+      "KITCHEN": "Kitchen",
+      "STORE": "Store",
+      "OFFICE": "Office",
+      "HOTEL": "Hotel"
+    },
+    "timezone": "Time zone",
+    "timezoneHint": "Only for a branch outside the company's time zone, like Asia/Dubai.",
+    "managers": "Branch managers",
+    "managersHint": "They see this branch's work and are asked first where a route says \"Branch manager\".",
+    "hrPeople": "HR for this branch",
+    "areaManagers": "Area managers",
+    "areaManagersHint": "They see every branch of this region and the regions inside it.",
+    "managersAre": "Managed by {{names}}",
+    "noManager": "No manager yet",
+    "areaManagersAre": "Area manager: {{names}}",
+    "noAreaManager": "No area manager",
+    "who": {
+      "branch_manager": "Branch manager",
+      "area_manager": "Area manager",
+      "department_head": "Department head",
+      "branch_hr": "Branch HR",
+      "hr": "HR person",
+      "owner": "Owner",
+      "user": "A named person"
+    },
+    "kind": {
+      "hr.leave": "Leave",
+      "hr.correction": "Attendance corrections",
+      "ims.adjustment": "Stock adjustments",
+      "slip": "Help slips",
+      "ticket": "Help ticket escalation"
+    },
+    "unset": {
+      "hr.leave": "Not set: the person's HOD decides, and HR can decide any leave.",
+      "hr.correction": "Not set: the person's HOD or HR decides.",
+      "ims.adjustment": "Not set: the approvers listed in Inventory decide.",
+      "slip": "Not set: the receiver and approver chosen in the Help Slip flow.",
+      "ticket": "Not set: the coordinator, then the HOD and the owner."
+    },
+    "route": {
+      "intro": "You decide who approves. For each kind of request, set who is asked first, who next, and from what amount. One answer decides the request. The owner can always decide.",
+      "set": "Set who approves",
+      "addOverride": "For one branch or entity",
+      "title": "Who approves: {{kind}}",
+      "place": "Applies to",
+      "placeHint": "A branch's own steps win over its entity's, and those over the group's.",
+      "wholeGroup": "Whole group",
+      "entityOnly": "Only {{name}} (entity)",
+      "branchOnly": "Only {{name}} (branch)",
+      "step": "Step {{n}}",
+      "who": "Who decides",
+      "person": "Person",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "addStep": "Add a step",
+      "upAfter": "Goes up after (hours)",
+      "never": "Never",
+      "fromAmount": "From amount (₹)",
+      "anyAmount": "Any amount",
+      "skipIfEmpty": "If nobody holds this place, go to the next step (otherwise the request waits here)",
+      "rules": "Nobody decides their own request. With \"from amount\", a request of that size starts at that step and the steps before it are left out.",
+      "fromNote": "from ₹{{amount}}",
+      "upNote_one": "goes up after {{count}} hour",
+      "upNote_other": "goes up after {{count}} hours",
+      "check": "Who would decide?",
+      "checkHint": "Pick a person to see who their request would go to, by the routes saved now.",
+      "checkPerson": "Request from…",
+      "checkAmount": "Amount (₹)",
+      "nobody": "nobody"
+    }
+  }
+}
