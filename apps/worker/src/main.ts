@@ -14,6 +14,7 @@ import {
   DriveAwareStorage,
   driveEnvOf,
   runReportBackfills,
+  sendScheduledReports,
   syncDrive,
   netOf,
   queueWebhooks,
@@ -211,6 +212,8 @@ await boss.work(
     await morningCoverReport(prisma);
     await runFmsWebhooks(prisma, fetch, net);
     await drainWebhooks();
+    const reports = await sendScheduledReports(prisma);
+    if (reports) log.info({ reports }, 'Scheduled reports sent');
     const copies = await runReportBackfills(prisma);
     if (copies) log.info({ copies }, 'Reportable values copied');
     const toDrive = await syncDrive(prisma, driveEnvOf(env), disk);

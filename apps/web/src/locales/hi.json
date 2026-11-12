@@ -712,6 +712,7 @@
       "record_created": "रिकॉर्ड जोड़ा गया",
       "record_status_changed": "रिकॉर्ड की स्थिति बदली",
       "record_note": "रिकॉर्ड पर नोट",
+      "report_scheduled": "तय समय की रिपोर्ट",
       "slip_late": "हेल्प स्लिप बहुत देर से रुकी",
       "slip_closed": "हेल्प स्लिप बंद",
       "mis_weekly": "साप्ताहिक MIS",
@@ -763,7 +764,8 @@
       "ims": "इन्वेंटरी",
       "crm": "ग्राहक/विक्रेता",
       "ai": "AI",
-      "record": "रिकॉर्ड"
+      "record": "रिकॉर्ड",
+      "report": "रिपोर्ट"
     },
     "tab": {
       "whatsapp": "WhatsApp API",

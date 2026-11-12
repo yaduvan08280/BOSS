@@ -9,6 +9,7 @@ import {
   REPORT_LOOKS,
   type Me,
   type ReportDefinition,
+  type ReportSchedule,
 } from '@mono/shared';
 import { ErrorState, PageSkeleton } from '@/components/page';
 import { Confirm } from '@/components/ui/dialog';
@@ -31,6 +32,7 @@ import {
 } from './api';
 import { Block, ColumnsPart, FiltersPart, GroupPart, MeasuresPart } from './BuilderParts';
 import { ResultView } from './ResultView';
+import { SchedulePart } from './SchedulePart';
 
 /**
  * The report builder (plan §2.7): source → columns → filters → group → totals → look, with the result beside
@@ -81,6 +83,7 @@ function Builder({
   const [name, setName] = useState(saved?.name ?? '');
   const [def, setDef] = useState<ReportDefinition>(start);
   const [shared, setShared] = useState<string[]>(saved?.sharedRoles ?? []);
+  const [schedule, setSchedule] = useState<ReportSchedule | null>(saved?.schedule ?? null);
   const [removing, setRemoving] = useState(false);
   const [refused, setRefused] = useState<string | null>(null);
 
@@ -95,7 +98,7 @@ function Builder({
   };
   const save = useReportsMutation(
     () => {
-      const input = { name: name.trim(), definition: def, sharedRoles: shared };
+      const input = { name: name.trim(), definition: def, sharedRoles: shared, schedule };
       return id ? reportsApi.update(id, input) : reportsApi.create(input);
     },
     () => t('reports.saved', { name: name.trim() }),
@@ -235,6 +238,7 @@ function Builder({
                 })}
               </div>
             </Block>
+            <SchedulePart schedule={schedule} onChange={setSchedule} me={me.user.id} />
           </div>
           <div className="min-w-0 space-y-3">
             {problems.length > 0 ? (

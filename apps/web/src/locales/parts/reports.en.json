@@ -97,6 +97,30 @@
       "look": "Show as",
       "share": "Share with",
       "shareHint": "People with these roles can open the report (they can't change it). They see only what they may see in its source."
+    },
+    "s": {
+      "title": "Send it by itself",
+      "hint": "The people chosen get a message with the report's numbers and a link, at this time (company time).",
+      "every": "How often",
+      "never": "Don't send",
+      "day": "Every day",
+      "week": "Every week",
+      "month": "Every month",
+      "at": "At what time",
+      "weekday": "On which day",
+      "monthDay": "On which day of the month",
+      "dayN": "Day {{n}}",
+      "addPerson": "Add a person",
+      "removePerson": "Remove {{name}}",
+      "wd": {
+        "1": "Monday",
+        "2": "Tuesday",
+        "3": "Wednesday",
+        "4": "Thursday",
+        "5": "Friday",
+        "6": "Saturday",
+        "7": "Sunday"
+      }
     }
   }
 }

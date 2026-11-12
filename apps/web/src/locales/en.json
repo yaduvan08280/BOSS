@@ -712,6 +712,7 @@
       "record_created": "Record added",
       "record_status_changed": "Record status changed",
       "record_note": "Note on a record",
+      "report_scheduled": "Scheduled report",
       "slip_late": "Help slip waiting too long",
       "slip_closed": "Help slip closed",
       "mis_weekly": "Weekly MIS",
@@ -763,7 +764,8 @@
       "ims": "Inventory",
       "crm": "Client/Vendor",
       "ai": "AI",
-      "record": "Records"
+      "record": "Records",
+      "report": "Reports"
     },
     "tab": {
       "whatsapp": "WhatsApp API",

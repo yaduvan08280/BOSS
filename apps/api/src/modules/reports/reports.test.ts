@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { asHeader, cookieHeader, makeApp, ORIGIN } from '../../test/helpers';
 import { publish, start, task } from '../forms/test-kit';
 import { makeRecord, makeType, siteVisit, world } from '../records/testkit';
+import { dueOn, sendScheduledReports } from './schedule';
 
 let ctx: Awaited<ReturnType<typeof makeApp>>;
 beforeAll(async () => {
@@ -346,5 +347,78 @@ describe('the report builder (plan §2.7)', () => {
     expect((await hod.api.del(`/api/reports/${id}`)).status).toBe(200);
     expect((await w.api.get('/api/reports')).body.reports).toEqual([]);
     expect(await ctx.prisma.report.count({ where: { id, deletedAt: { not: null } } })).toBe(1); // kept as history
+  });
+
+  it('U10: a scheduled report is sent once per slot to the people chosen, with its numbers and a link', async () => {
+    const w = await world(ctx.app);
+    const { typeId } = await visits(w);
+    const hod = await w.person('Mahesh Yadav', 'HOD');
+    const definition = report(typeId, {
+      groupBy: { field: 'site' },
+      measures: [{ fn: 'count' }, { fn: 'sum', field: 'cost' }],
+    });
+    // Recipients must be people of this company.
+    const bad = await w.api.post('/api/reports', {
+      name: 'Visits by site',
+      definition,
+      schedule: { every: 'day', at: 9 * 60, userIds: ['nobody'] },
+    });
+    expect(bad.status).toBe(400);
+    const made = await w.api.post('/api/reports', {
+      name: 'Visits by site',
+      definition,
+      schedule: { every: 'day', at: 9 * 60, userIds: [hod.id, w.owner.id] },
+    });
+    expect(made.status).toBe(200);
+    const id = made.body.id as string;
+    const events = () =>
+      ctx.prisma.domainEvent.findMany({
+        where: { companyId: w.companyId, name: 'report.scheduled' },
+        orderBy: { occurredAt: 'asc' },
+      });
+    // 08:59 in Kolkata: not yet. 09:00: sent to both. A minute later, and all day: not again.
+    await sendScheduledReports(ctx.prisma, new Date('2026-12-14T03:29:00.000Z'));
+    expect(await events()).toHaveLength(0);
+    await sendScheduledReports(ctx.prisma, new Date('2026-12-14T03:30:00.000Z'));
+    await sendScheduledReports(ctx.prisma, new Date('2026-12-14T03:31:00.000Z'));
+    await sendScheduledReports(ctx.prisma, new Date('2026-12-14T12:00:00.000Z'));
+    const sent = await events();
+    expect(sent.map((e) => (e.payload as { userId: string }).userId).sort()).toEqual(
+      [hod.id, w.owner.id].sort(),
+    );
+    expect(sent[0]!.payload).toMatchObject({
+      report: 'Visits by site',
+      link: `/reports/${id}`,
+      summary:
+        'Count: 6 · Total Cost: 10,000.5. Tonk mine: 3 / 4,200; Niwai factory: 2 / 4,300; Kishangarh plant: 1 / 1,500.5',
+    });
+    // The next day it goes again; taking the schedule off stops it.
+    await sendScheduledReports(ctx.prisma, new Date('2026-12-15T03:30:00.000Z'));
+    expect(await events()).toHaveLength(4);
+    await w.api.put(`/api/reports/${id}`, { name: 'Visits by site', definition, schedule: null });
+    await sendScheduledReports(ctx.prisma, new Date('2026-12-16T03:30:00.000Z'));
+    expect(await events()).toHaveLength(4);
+
+    // Weekly and monthly slots.
+    const weekly = { every: 'week' as const, at: 600, on: 1, userIds: ['x'] }; // Mondays 10:00
+    expect(dueOn(weekly, '2026-12-14', 600)).toBe(true); // a Monday
+    expect(dueOn(weekly, '2026-12-14', 599)).toBe(false);
+    expect(dueOn(weekly, '2026-12-15', 700)).toBe(false);
+    const monthly = { every: 'month' as const, at: 0, on: 5, userIds: ['x'] };
+    expect(dueOn(monthly, '2026-12-05', 1)).toBe(true);
+    expect(dueOn(monthly, '2026-12-06', 1)).toBe(false);
+
+    // A report that can't run any more is told to its maker once, not sent to the others.
+    const second = await w.api.post('/api/reports', {
+      name: 'Broken',
+      definition,
+      schedule: { every: 'day', at: 0, userIds: [hod.id] },
+    });
+    await ctx.prisma.recordType.update({ where: { id: typeId }, data: { deletedAt: new Date() } });
+    await sendScheduledReports(ctx.prisma, new Date('2026-12-20T03:30:00.000Z'));
+    const broken = (await events()).filter((e) => e.entityId === second.body.id);
+    expect(broken).toHaveLength(1);
+    expect(broken[0]!.payload).toMatchObject({ userId: w.owner.id });
+    expect((broken[0]!.payload as { summary: string }).summary).toContain('could not be sent');
   });
 });

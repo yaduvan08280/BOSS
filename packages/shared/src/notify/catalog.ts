@@ -631,6 +631,15 @@ const ROWS: Row[] = [
     '{{type}} {{record}} पर नोट',
     '{{actor}}: {{note}}',
   ],
+  [
+    'report.scheduled',
+    'team',
+    ['user'],
+    'Report: {{report}}',
+    '{{summary}}',
+    'रिपोर्ट: {{report}}',
+    '{{summary}}',
+  ],
 ];
 
 /**
