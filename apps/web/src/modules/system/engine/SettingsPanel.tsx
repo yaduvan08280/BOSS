@@ -10,6 +10,7 @@ import { api } from '@/lib/api';
 import { formatShortDateTime } from '@/lib/when';
 import { eventLabel } from '../integration/labels';
 import { useEngineChanges, type EngineModuleInfo } from './api';
+import { BranchPeople } from './BranchPeople';
 import { ENGINE_FIELDS, optionLabel, type SettingField } from './fields';
 
 /** "Set up your flow": who does it, times and rules, steps on/off; recent changes; who hears about what. */
@@ -130,6 +131,7 @@ export function SettingsPanel({
         </Badge>
       </div>
       {section('1', t('engine.who'), ENGINE_FIELDS[module].who, true)}
+      <BranchPeople key={module} module={module} people={people} />
       {section('1B', t('engine.times'), ENGINE_FIELDS[module].times, true)}
       {section('2', t('engine.steps'), ENGINE_FIELDS[module].steps)}
       <div className="flex flex-wrap gap-2">

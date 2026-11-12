@@ -12,6 +12,7 @@ export const COMPANY_SCOPED_MODELS = new Set([
   'UserDepartment',
   'Counter',
   'ModuleSetting',
+  'ModuleBranchSetting',
   'Attachment',
   'Session',
   'AuditLog',

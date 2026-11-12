@@ -1,4 +1,4 @@
-import type { Db } from '@mono/db';
+import { currentReach, type Db } from '@mono/db';
 import { formatDate, misRow, weekOf, type MisRow } from '@mono/shared';
 import { renderPdf } from '../../lib/pdf';
 import { effectiveVerifier } from '../delegation/service';
@@ -12,12 +12,15 @@ export type MisPerson = MisRow & { name: string; department: string | null };
 async function peopleFor(db: Db, actor: Actor) {
   const all = can(actor, 'core.admin');
   const team = all ? [] : await teamOf(db, actor.companyId, actor.userId);
+  const branches = currentReach()?.branchIds ?? null;
   return db.user.findMany({
     where: {
       companyId: actor.companyId,
       deletedAt: null,
       status: 'ACTIVE',
       ...(all ? {} : { id: { in: [...team, actor.userId] } }),
+      // Inside the reader's branches (phase 12): an area manager's MIS, or the switcher set to one outlet.
+      ...(branches ? { OR: [{ branchId: { in: branches } }, { id: actor.userId }] } : {}),
     },
     orderBy: { name: 'asc' },
     select: { id: true, name: true, mainDepartment: { select: { name: true } } },

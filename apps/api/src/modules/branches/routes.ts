@@ -52,7 +52,7 @@ export async function branchRoutes(app: FastifyInstance) {
   // The top bar's switcher: the branches this person may look at (before the switcher narrows anything).
   r.get('/api/branches/mine', { ...signedIn(), schema: { tags } }, async (q) => {
     const all = q.reachAll?.branchIds ?? null;
-    return { branches: await myBranches(db, actorOf(q), all), wholeGroup: all === null };
+    return { ...(await myBranches(db, actorOf(q), all)), wholeGroup: all === null };
   });
 
   r.post('/api/branches/entities', { ...groupWide(), schema: { tags, body: entitySchema } }, async (q) =>

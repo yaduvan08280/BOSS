@@ -333,11 +333,30 @@ export async function setDepartmentHead(
   });
 }
 
-/** The branches the person may switch between in the top bar (all of them for the whole group). */
+/**
+ * What the person may switch between in the top bar: their branches (all of them for the whole group), and the
+ * regions and entities those branches sit in — so an area manager can look at one city, an owner at one company.
+ */
 export async function myBranches(db: Db, actor: Actor, branchIds: string[] | null) {
-  return db.branch.findMany({
-    where: { ...live(actor.companyId), ...(branchIds ? { id: { in: branchIds } } : {}) },
+  const where = live(actor.companyId);
+  const branches = await db.branch.findMany({
+    where: { ...where, ...(branchIds ? { id: { in: branchIds } } : {}) },
     orderBy: [{ isDefault: 'desc' }, { name: 'asc' }],
     select: { id: true, name: true, code: true, type: true, entityId: true, regionId: true },
   });
+  const [regions, entities] = await Promise.all([
+    db.region.findMany({ where, select: { id: true, name: true, parentId: true }, orderBy: { name: 'asc' } }),
+    db.legalEntity.findMany({ where, select: { id: true, name: true }, orderBy: { name: 'asc' } }),
+  ]);
+  // A region counts when one of the person's branches is in it or anywhere below it.
+  const used = new Set<string>();
+  for (const b of branches)
+    for (let r = b.regionId; r && !used.has(r); r = regions.find((x) => x.id === r)?.parentId ?? null)
+      used.add(r);
+  const entityIds = new Set(branches.map((b) => b.entityId));
+  return {
+    branches,
+    regions: regions.filter((r) => used.has(r.id)).map(({ id, name }) => ({ id, name })),
+    entities: entities.filter((e) => entityIds.has(e.id)),
+  };
 }

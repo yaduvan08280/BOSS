@@ -116,12 +116,22 @@
       "checkPerson": "Request from…",
       "checkAmount": "Amount (₹)",
       "nobody": "nobody"
-    }
+    },
+    "entityOf": "{{name}} (company)",
+    "regionOf": "{{name}} (region)"
   },
   "chkBranch": {
     "title": "A run for each branch",
     "hint": "Pick branches to give each its own runs, done by its own people at its own time. The people above are then not used.",
     "doers": "Who does it at this branch",
     "add": "Add a branch…"
+  },
+  "engineBranch": {
+    "title": "For one branch",
+    "hint": "A branch can have its own people for this. Times and rules stay the same everywhere.",
+    "branch": "Branch",
+    "choose": "Choose a branch…",
+    "hasOwn": "{{name}} (has its own)",
+    "same": "Same as the company"
   }
 }

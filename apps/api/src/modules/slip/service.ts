@@ -97,7 +97,8 @@ function checkSolutions(solutions: string[], s: SlipSettings) {
 export async function createSlip(db: Db, actor: Actor, input: SlipCreateInput) {
   if (!can(actor, 'slip.create')) throw new AppError(403, 'FORBIDDEN', "You can't raise help slips");
   return db.$transaction(async (tx) => {
-    const s = await moduleSettings(tx, actor.companyId, 'slip');
+    const branchId = await homeBranchOf(tx, actor.companyId, actor.userId);
+    const s = await moduleSettings(tx, actor.companyId, 'slip', branchId);
     checkSolutions(input.solutions, s);
     const owner = await ownerOf(tx, actor.companyId);
     // The owner's approval route (phase 12), when set: its first step screens the slip, the next one decides.
@@ -113,7 +114,7 @@ export async function createSlip(db: Db, actor: Actor, input: SlipCreateInput) {
     const slip = await tx.slip.create({
       data: {
         companyId: actor.companyId,
-        branchId: await homeBranchOf(tx, actor.companyId, actor.userId),
+        branchId,
         number: await nextCounter(tx, actor.companyId, 'slip'),
         problem: input.problem,
         raiserId: actor.userId,

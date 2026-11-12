@@ -89,15 +89,21 @@ export async function sweepChecklists(db: Db, now = new Date(), onlyMasterId?: s
             const doerId = buddy ?? owner;
             try {
               await db.$transaction(async (tx) => {
+                // The template's branch, else the branch of the person whose run it is (phase 12).
+                const runBranch = plan.branchId ?? (await homeBranchOf(tx, companyId, owner));
                 const run = await tx.checklistRun.create({
                   data: {
                     companyId,
                     // The template's branch, else the branch of the person whose run it is (phase 12).
-                    branchId: plan.branchId ?? (await homeBranchOf(tx, companyId, owner)),
+                    branchId: runBranch,
                     masterId: m.id,
                     doerId,
                     coveredById: buddy,
-                    verifierId: plan.verifierId ?? settings.verifierUserId,
+                    verifierId:
+                      plan.verifierId ??
+                      (runBranch
+                        ? (await moduleSettings(tx, companyId, 'checklist', runBranch)).verifierUserId
+                        : settings.verifierUserId),
                     plannedAt: due,
                     windowEndsAt: new Date(due.getTime() + windowMs),
                     itemsTotal: items.length,

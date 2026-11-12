@@ -78,7 +78,11 @@ export async function reachFor(
   return { userId: who.userId, branchIds: ids };
 }
 
-/** The branch picked in the top bar's switcher narrows a reach to that one branch; it can never widen it. */
+/**
+ * What the top bar's switcher shows narrows a reach; it can never widen it. The value is a branch id, or
+ * `r:<region>` (that region and the regions inside it) or `e:<entity>` — each cut down to the branches the
+ * person may see anyway. Something they may not see at all leaves the reach as it was.
+ */
 export async function narrowTo(
   db: Db | Tx,
   companyId: string,
@@ -86,10 +90,23 @@ export async function narrowTo(
   only: string | null,
 ): Promise<Reach> {
   if (!only) return reach;
-  const allowed = reach.branchIds
-    ? reach.branchIds.includes(only)
-    : (await db.branch.count({ where: { id: only, companyId, deletedAt: null } })) > 0;
-  return allowed ? { userId: reach.userId, branchIds: [only], strict: true } : reach;
+  const live = { companyId, deletedAt: null };
+  let wanted: string[];
+  if (only.startsWith('r:')) {
+    const regions = await db.region.findMany({ where: live, select: { id: true, parentId: true } });
+    const inside = withChildren(regions, [only.slice(2)]);
+    wanted = (
+      await db.branch.findMany({ where: { ...live, regionId: { in: inside } }, select: { id: true } })
+    ).map((b) => b.id);
+  } else if (only.startsWith('e:')) {
+    wanted = (
+      await db.branch.findMany({ where: { ...live, entityId: only.slice(2) }, select: { id: true } })
+    ).map((b) => b.id);
+  } else {
+    wanted = (await db.branch.count({ where: { id: only, ...live } })) > 0 ? [only] : [];
+  }
+  const allowed = reach.branchIds ? wanted.filter((id) => reach.branchIds!.includes(id)) : wanted;
+  return allowed.length ? { userId: reach.userId, branchIds: allowed, strict: true } : reach;
 }
 
 /** A person's home branch — the branch new work for them belongs to (null when the company has none set). */

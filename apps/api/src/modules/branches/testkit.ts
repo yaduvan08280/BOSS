@@ -1,3 +1,4 @@
+import type { PrismaClient } from '@mono/db';
 import type { world } from '../records/testkit';
 
 export type World = Awaited<ReturnType<typeof world>>;
@@ -50,3 +51,20 @@ export const tasks = async (api: World['api']) =>
   ((await ok<{ tasks: { description: string }[] }>(api.get('/api/tasks?scope=all&tab=all'))).tasks ?? [])
     .map((t) => t.description)
     .sort();
+
+/** Two outlets with a "my branches" manager each (HODs who may otherwise see every process and record). */
+export async function twoOutlets(prisma: PrismaClient, w: World) {
+  const g = await group(w);
+  const hod = await prisma.role.findUniqueOrThrow({ where: { id: w.role('HOD') } });
+  await ok(
+    w.api.patch(`/api/org/roles/${hod.id}`, {
+      permissions: [
+        ...new Set([...hod.permissions, 'fms.admin', 'records.admin', 'reports.admin', 'core.admin']),
+      ],
+    }),
+  );
+  await reachOf(w, 'HOD', 'branches');
+  const rooftop = await g.at('Farah Rooftop', g.b.rooftop.id, 'HOD');
+  const lake = await g.at('Leela Lake', g.b.lake.id, 'HOD');
+  return { g, rooftop, lake };
+}

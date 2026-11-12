@@ -179,6 +179,28 @@ describe('branches, regions, entities and reach (phase 12, stage A)', () => {
       'Renew the fire licence',
       'Send the monthly report',
     ]);
+    // G17: the same switch takes a region (with the regions inside it) or an entity — for every list and report.
+    expect(await narrowed(w.api, `r:${g.jaipur.id}`)).toEqual([
+      'Deep-clean the rooftop bar',
+      'Fix the garden lights',
+      'Renew the fire licence',
+    ]);
+    expect(await narrowed(w.api, `r:${g.raj.id}`)).toEqual([...all, 'Send the monthly report'].sort());
+    expect(await narrowed(w.api, `e:${g.entity.id}`)).toEqual([...all, 'Send the monthly report'].sort());
+    // A region is cut down to what the person may see: the lake manager looking at "Rajasthan" sees the lake.
+    expect(await narrowed(twoHats.api, `r:${g.ajmer.id}`)).toEqual(
+      [
+        'Check the cold room log',
+        'Count the lake-view linen',
+        'Renew the fire licence',
+        'Send the monthly report',
+      ].sort(),
+    );
+    const offered = await ok<{ regions: { name: string }[]; entities: { name: string }[] }>(
+      area.api.get('/api/branches/mine'),
+    );
+    expect(offered.regions.map((r) => r.name).sort()).toEqual(['Jaipur', 'Rajasthan']);
+    expect(offered.entities.map((e) => e.name)).toEqual(['GGM Hotels Rajasthan']);
   });
   it('G8: an outlet manager adds and manages only the people of their own branch', async () => {
     const w = await world(ctx.app);

@@ -16,7 +16,7 @@ import { checkPerson } from './actor';
 import { actorOf } from '../delegation/routes';
 import { pendingCounts } from './counts';
 import { personOpenWork } from './open-work';
-import { moduleSettings } from './settings';
+import { moduleSettings, personKeys } from './settings';
 
 const moduleParam = z.object({
   module: z.enum(Object.keys(MODULE_DEFAULTS) as [ModuleKeyWithSettings, ...ModuleKeyWithSettings[]]),
@@ -78,6 +78,57 @@ export async function workRoutes(app: FastifyInstance) {
           after: parsed.data,
         });
         return parsed.data;
+      }),
+  );
+
+  // Phase 12: a branch's own people for a module (its slip receiver, ticket coordinator, verifier …).
+  r.get(
+    '/api/work/settings/:module/branches',
+    { ...admin, schema: { tags: ['work'], params: moduleParam } },
+    async (request) => {
+      const rows = await app.prisma.moduleBranchSetting.findMany({
+        where: { companyId: request.auth!.companyId, module: request.params.module },
+      });
+      return rows.map((x) => ({ branchId: x.branchId, people: x.json }));
+    },
+  );
+  r.put(
+    '/api/work/settings/:module/branches/:branchId',
+    {
+      ...admin,
+      schema: {
+        tags: ['work'],
+        params: moduleParam.extend({ branchId: z.string().max(40) }),
+        body: z.record(z.string(), z.string().max(40).nullable()),
+      },
+    },
+    async (request) =>
+      inCompanyTx(request, async (tx, ctx) => {
+        const { module, branchId } = request.params;
+        if (!(await tx.branch.count({ where: { id: branchId, deletedAt: null } })))
+          throw new AppError(404, 'NOT_FOUND', 'Branch not found');
+        const allowed = personKeys(MODULE_DEFAULTS[module]);
+        const people: Record<string, string> = {};
+        for (const [k, v] of Object.entries(request.body)) {
+          if (!allowed.includes(k))
+            throw new AppError(400, 'VALIDATION_FAILED', `"${k}" is not a person of this module`);
+          if (!v) continue;
+          await checkPerson(tx, ctx.companyId, v, 'That person');
+          people[k] = v;
+        }
+        const where = { companyId: ctx.companyId, module, branchId };
+        const before = await tx.moduleBranchSetting.findFirst({ where });
+        await tx.moduleBranchSetting.deleteMany({ where });
+        if (Object.keys(people).length)
+          await tx.moduleBranchSetting.create({ data: { ...where, json: people, changedById: ctx.actorId } });
+        await recordChange(tx, ctx, {
+          event: 'settings.changed',
+          entityType: 'module_setting',
+          entityId: `${module}@${branchId}`,
+          before: before?.json ?? {},
+          after: people,
+        });
+        return { branchId, people };
       }),
   );
 

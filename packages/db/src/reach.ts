@@ -49,6 +49,17 @@ export const BRANCH_SCOPED_MODELS: Record<string, (userId: string) => Where[]> =
   Punch: (u) => [{ userId: u }],
 };
 
+/**
+ * Rows that belong to a branch through their parent (a process step through its record): fenced the same way, so
+ * counts and lists made from the child table stay inside the reach too.
+ */
+export const BRANCH_CHILD_MODELS: Record<
+  string,
+  { relation: string; parent: string; own: (userId: string) => Where[] }
+> = {
+  FmsRecordStep: { relation: 'record', parent: 'FmsRecord', own: (u) => [{ doerId: u }] },
+};
+
 /** Models that carry a branch but are not filtered by reach, with the reason. */
 export const BRANCH_FREE_MODELS: Record<string, string> = {
   User: 'people are named across branches (a task given by head office); the Users screen filters by itself',
@@ -59,6 +70,7 @@ export const BRANCH_FREE_MODELS: Record<string, string> = {
   UserBranch: 'set-up data: who works where',
   DepartmentHead: 'set-up data: who heads what',
   ApprovalRoute: 'set-up data: the owner’s routing',
+  ModuleBranchSetting: 'set-up data: a branch’s own flow-designer people',
 };
 
 const FILTERED = new Set([
@@ -77,10 +89,16 @@ const FILTERED = new Set([
 /** What a reach adds to a where on one model (null = nothing: the model is free, or the reach is the group). */
 export function reachWhere(model: string, reach: Reach | null): Where | null {
   if (!reach || reach.branchIds === null) return null;
+  const inReach = [{ branchId: null }, { branchId: { in: reach.branchIds } }];
+  const child = BRANCH_CHILD_MODELS[model];
+  if (child) {
+    const own = reach.strict ? [] : child.own(reach.userId);
+    return { OR: [{ [child.relation]: { OR: inReach } }, ...own] };
+  }
   const part = BRANCH_SCOPED_MODELS[model];
   if (!part) return null;
   const own = reach.strict ? [] : part(reach.userId);
-  return { OR: [{ branchId: null }, { branchId: { in: reach.branchIds } }, ...own] };
+  return { OR: [...inReach, ...own] };
 }
 
 /** The base client with reach built in: there is no way to read a branch-bearing table around it. */

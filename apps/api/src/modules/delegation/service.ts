@@ -111,7 +111,8 @@ export async function createTask(
   if (!can(actor, 'delegation.create')) throw new AppError(403, 'FORBIDDEN', "You can't give tasks");
   await checkPerson(tx, actor.companyId, input.doerId, 'The doer');
   if (input.verifierId) await checkPerson(tx, actor.companyId, input.verifierId, 'The verifier');
-  const s = await moduleSettings(tx, actor.companyId, 'delegation');
+  const branchId = await homeBranchOf(tx, actor.companyId, input.doerId);
+  const s = await moduleSettings(tx, actor.companyId, 'delegation', branchId);
   const plannedAt = new Date(input.plannedAt);
   const status = initialTaskStatus(s, input.doerId, actor.userId);
   const number = await nextCounter(tx, actor.companyId, 'task');
@@ -119,7 +120,7 @@ export async function createTask(
     data: {
       companyId: actor.companyId,
       // The work happens where the doer is: the task belongs to the doer's home branch (phase 12).
-      branchId: await homeBranchOf(tx, actor.companyId, input.doerId),
+      branchId,
       number,
       description: input.description,
       doerId: input.doerId,
@@ -173,7 +174,7 @@ export async function actOnTask(db: Db, actor: Actor, taskId: string, input: Tas
   return db.$transaction(async (tx) => {
     const t = await tx.task.findFirst({ where: { id: taskId, companyId: actor.companyId, deletedAt: null } });
     if (!t) throw notFound('Task');
-    const s = await moduleSettings(tx, actor.companyId, 'delegation');
+    const s = await moduleSettings(tx, actor.companyId, 'delegation', t.branchId);
     const roles = rolesFor(actor, t, s);
     // People outside the task (not the doer's HOD, nor someone who did an earlier part) can't even see it.
     const helpers = await pastDoers(tx, actor.companyId, t.id);

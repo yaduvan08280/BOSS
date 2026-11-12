@@ -64,7 +64,8 @@ export async function createTicket(db: Db, actor: Actor, input: TicketCreateInpu
     throw new AppError(400, 'VALIDATION_FAILED', 'Pick someone else to fix it');
   return db.$transaction(async (tx) => {
     await checkPerson(tx, actor.companyId, input.solverId, 'The problem solver');
-    const s = await moduleSettings(tx, actor.companyId, 'ticket');
+    const branchId = await homeBranchOf(tx, actor.companyId, actor.userId);
+    const s = await moduleSettings(tx, actor.companyId, 'ticket', branchId);
     const plannedFixAt = input.plannedFixAt
       ? new Date(input.plannedFixAt)
       : new Date(Date.now() + s.fixHours * 3600_000);
@@ -73,7 +74,7 @@ export async function createTicket(db: Db, actor: Actor, input: TicketCreateInpu
     const t = await tx.ticket.create({
       data: {
         companyId: actor.companyId,
-        branchId: await homeBranchOf(tx, actor.companyId, actor.userId),
+        branchId,
         number: await nextCounter(tx, actor.companyId, 'ticket'),
         title: input.title,
         description: input.description,

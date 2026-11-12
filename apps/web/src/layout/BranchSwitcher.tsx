@@ -7,7 +7,8 @@ import { api } from '@/lib/api';
 import { currentBranch, setCurrentBranch } from '@/lib/branch';
 import { cn } from '@/lib/utils';
 
-type Mine = { branches: { id: string; name: string; code: string | null }[]; wholeGroup: boolean };
+type Named = { id: string; name: string };
+type Mine = { branches: Named[]; regions: Named[]; entities: Named[]; wholeGroup: boolean };
 
 /**
  * "All my branches" or one of them (phase 12). Shown only to people with more than one branch. Choosing a branch
@@ -29,7 +30,14 @@ export function BranchSwitcher({ className }: { className?: string }) {
     void qc.invalidateQueries();
   };
   // A remembered branch the person no longer has (moved, branch closed): back to all of them.
-  const gone = Boolean(mine.data && branch && !list.some((b) => b.id === branch));
+  const regions = mine.data?.regions ?? [];
+  const entities = (mine.data?.entities.length ?? 0) > 1 ? mine.data!.entities : [];
+  const known = [
+    ...list.map((b) => b.id),
+    ...regions.map((r) => `r:${r.id}`),
+    ...entities.map((e) => `e:${e.id}`),
+  ];
+  const gone = Boolean(mine.data && branch && !known.includes(branch));
   useEffect(() => {
     if (!gone) return;
     setCurrentBranch('');
@@ -46,6 +54,16 @@ export function BranchSwitcher({ className }: { className?: string }) {
         className="h-9 min-w-0 flex-1 text-[13px]"
       >
         <option value="">{t('branches.allMine')}</option>
+        {entities.map((e) => (
+          <option key={e.id} value={`e:${e.id}`}>
+            {t('branches.entityOf', { name: e.name })}
+          </option>
+        ))}
+        {regions.map((r) => (
+          <option key={r.id} value={`r:${r.id}`}>
+            {t('branches.regionOf', { name: r.name })}
+          </option>
+        ))}
         {list.map((b) => (
           <option key={b.id} value={b.id}>
             {b.name}

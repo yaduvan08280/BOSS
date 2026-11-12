@@ -7,7 +7,7 @@ import { queueWebhooks } from '../platform/webhooks';
 import { makeRecord, makeType, siteVisit, world } from '../records/testkit';
 import { planSql } from '../ai/ask';
 import { reachOfUser } from './reach';
-import { give, group, ok, reachOf, type World } from './testkit';
+import { give, ok, twoOutlets, type World } from './testkit';
 
 let ctx: Awaited<ReturnType<typeof makeApp>>;
 beforeAll(async () => {
@@ -15,27 +15,10 @@ beforeAll(async () => {
 });
 afterAll(async () => ctx.app.close());
 
-/** Two outlets with a "my branches" manager each (HODs who may otherwise see every process and record). */
-async function twoOutlets(w: World) {
-  const g = await group(w);
-  const hod = await ctx.prisma.role.findUniqueOrThrow({ where: { id: w.role('HOD') } });
-  await ok(
-    w.api.patch(`/api/org/roles/${hod.id}`, {
-      permissions: [
-        ...new Set([...hod.permissions, 'fms.admin', 'records.admin', 'reports.admin', 'core.admin']),
-      ],
-    }),
-  );
-  await reachOf(w, 'HOD', 'branches');
-  const rooftop = await g.at('Farah Rooftop', g.b.rooftop.id, 'HOD');
-  const lake = await g.at('Leela Lake', g.b.lake.id, 'HOD');
-  return { g, rooftop, lake };
-}
-
 describe('work carries its branch, and reach holds everywhere (phase 12, stage A)', () => {
   it('G13: each new piece of work belongs to the branch of the person it starts with', async () => {
     const w = await world(ctx.app);
-    const { g, rooftop, lake } = await twoOutlets(w);
+    const { g, rooftop, lake } = await twoOutlets(ctx.prisma, w);
     const branchOf = async (table: string, id: string) =>
       (
         await ctx.prisma.$queryRawUnsafe<{ branch_id: string | null }[]>(
@@ -157,7 +140,7 @@ describe('work carries its branch, and reach holds everywhere (phase 12, stage A
 
   it('G5: process records, record lists, exports and reports show a manager only their own branches', async () => {
     const w = await world(ctx.app);
-    const { g, rooftop, lake } = await twoOutlets(w);
+    const { g, rooftop, lake } = await twoOutlets(ctx.prisma, w);
     const flowId = await publish(w.api, 'Complaints', {
       startFields: [{ key: 'guest', label: 'Guest', type: 'text', required: true, reportable: true }],
       steps: [task('call', w.owner.id)],
@@ -232,7 +215,7 @@ describe('work carries its branch, and reach holds everywhere (phase 12, stage A
 
   it("G5: Ask answers from inside the asker's branches", async () => {
     const w = await world(ctx.app);
-    const { g, rooftop, lake } = await twoOutlets(w);
+    const { g, rooftop, lake } = await twoOutlets(ctx.prisma, w);
     const cook = await g.at('Cook Rooftop', g.b.rooftop.id);
     const steward = await g.at('Steward Lake', g.b.lake.id);
     await give(w, cook.id, 'Clean the rooftop grill');
@@ -265,77 +248,9 @@ describe('work carries its branch, and reach holds everywhere (phase 12, stage A
     expect(await asked(lake.id)).toEqual(['Polish the lake cutlery', 'Sign the lease']);
   });
 
-  it("G14: a step goes to its doer at the record's branch, then the region, and says so when it leaves", async () => {
-    const w = await world(ctx.app);
-    const { g, rooftop, lake } = await twoOutlets(w);
-    const cookRooftop = await g.at('Cook Rooftop', g.b.rooftop.id);
-    const cookGarden = await g.at('Cook Garden', g.b.garden.id);
-    const cookLake = await g.at('Cook Lake', g.b.lake.id);
-    const flowId = await publish(w.api, 'Kitchen complaint', {
-      startFields: [{ key: 'what', label: 'What', type: 'text', required: true }],
-      steps: [{ ...task('fix', cookRooftop.id), doerIds: [cookLake.id, cookRooftop.id] }],
-    });
-    const doerOf = async (api: World['api'], what: string) => {
-      const rec = (await start(api, flowId, { what })).body as { id: string };
-      const step = await ctx.prisma.fmsRecordStep.findFirstOrThrow({
-        where: { recordId: rec.id, status: 'OPEN' },
-      });
-      const notes = await ctx.prisma.fmsRecordEvent.count({
-        where: { recordId: rec.id, type: 'doer_outside_branch' },
-      });
-      return { doerId: step.doerId, notes };
-    };
-    // Each outlet's record goes to that outlet's cook, however busy the other one is.
-    for (const n of [1, 2, 3])
-      expect(await doerOf(rooftop.api, `Rooftop ${n}`)).toEqual({ doerId: cookRooftop.id, notes: 0 });
-    expect(await doerOf(lake.api, 'Lake 1')).toEqual({ doerId: cookLake.id, notes: 0 });
-    // The garden has no cook on this step: the same region's cook (Jaipur) gets it, and the record says so.
-    const gardenMgr = await g.at('Gita Garden', g.b.garden.id, 'HOD');
-    expect(await doerOf(gardenMgr.api, 'Garden 1')).toEqual({ doerId: cookRooftop.id, notes: 1 });
-    // A record with no branch (the owner's) keeps the old rule: the least busy doer.
-    expect((await doerOf(w.api, 'Head office')).doerId).toBe(cookLake.id);
-    void cookGarden;
-  });
-
-  it('G15: one checklist template makes a run per branch, by its people, at its own time and clock', async () => {
-    const w = await world(ctx.app);
-    const { g } = await twoOutlets(w);
-    const cookRooftop = await g.at('Cook Rooftop', g.b.rooftop.id);
-    const cookLake = await g.at('Cook Lake', g.b.lake.id);
-    // The lake outlet runs on Dubai time for this test (a branch abroad).
-    await ok(w.api.patch(`/api/org/branches/${g.b.lake.id}`, { name: 'Lake View', timezone: 'Asia/Dubai' }));
-    const master = {
-      name: 'Opening round',
-      items: [{ key: 'a', text: 'Gas valves checked' }],
-      frequency: { type: 'daily' },
-      dueTime: '10:00',
-      windowHours: 4,
-      doerIds: [w.owner.id],
-      startDate: '2030-01-01',
-      perBranch: [
-        { branchId: g.b.rooftop.id, doerIds: [cookRooftop.id] },
-        { branchId: g.b.lake.id, doerIds: [cookLake.id], dueTime: '11:30' },
-      ],
-    };
-    // A branch can't be listed twice, and must be one of the company's.
-    const twice = { ...master, perBranch: [master.perBranch[0], master.perBranch[0]] };
-    expect((await w.api.post('/api/checklists/masters', twice)).status).toBe(400);
-    const made = await ok<{ id: string }>(w.api.post('/api/checklists/masters', master));
-    await sweepChecklists(ctx.prisma, new Date('2030-01-07T03:00:00Z'), made.id);
-    const runs = await ctx.prisma.checklistRun.findMany({
-      where: { masterId: made.id },
-      orderBy: { plannedAt: 'asc' },
-    });
-    // Rooftop: 10:00 in India. Lake: 11:30 in Dubai. Nobody else gets a run (not the template's own doer).
-    expect(runs.map((r) => [r.branchId, r.doerId, r.plannedAt.toISOString()])).toEqual([
-      [g.b.rooftop.id, cookRooftop.id, '2030-01-07T04:30:00.000Z'],
-      [g.b.lake.id, cookLake.id, '2030-01-07T07:30:00.000Z'],
-    ]);
-  });
-
   it('G6: an API key and a webhook see as far as the person who made them', async () => {
     const w = await world(ctx.app);
-    const { rooftop, lake } = await twoOutlets(w);
+    const { rooftop, lake } = await twoOutlets(ctx.prisma, w);
     const typeId = await makeType(w.api);
     await makeRecord(rooftop.api, typeId, { site: 'Rooftop terrace' });
     const atLake = await makeRecord(lake.api, typeId, { site: 'Lake deck' });
