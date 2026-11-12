@@ -271,4 +271,13 @@ describe('moves and machines', () => {
       transition(countMachine, { from: 'COUNTED', action: 'count', roles: ['auditor'], ctx: {} }),
     ).toThrow();
   });
+  it('L17: a waiting line is withdrawn by the system only, and only while it waits', () => {
+    const ctx = { own: false, neverOwn: true };
+    const withdraw = (from: 'PENDING' | 'APPLIED' | 'REJECTED', roles: ('approver' | 'system')[]) =>
+      transition(adjustMachine, { from, action: 'withdraw', roles, ctx }).to;
+    expect(withdraw('PENDING', ['system'])).toBe('REJECTED');
+    expect(() => withdraw('PENDING', ['approver'])).toThrow();
+    expect(() => withdraw('APPLIED', ['system'])).toThrow();
+    expect(() => withdraw('REJECTED', ['system'])).toThrow();
+  });
 });

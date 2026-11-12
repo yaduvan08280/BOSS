@@ -78,13 +78,23 @@ model StockMove {
   decidedById  String?   @map("decided_by_id")
   decidedAt    DateTime? @map("decided_at") @db.Timestamptz(3)
   decisionNote String?   @map("decision_note")
+  /// Stock on steps (phase 11): the record's step row (FmsRecordStep) that moved it.
+  stepId       String?   @map("step_id")
+  /// The quantity the line was for: a transfer's `qty` is 0, and a line that waits for approval has moved nothing yet.
+  lineQty      Decimal?  @map("line_qty") @db.Decimal(14, 3)
+  /// A reversal: the move this one undoes. Unique, so a move is undone at most once; nothing is edited or deleted.
+  reversesId   String?   @unique @map("reverses_id")
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  item Item @relation(fields: [itemId], references: [id])
+  item       Item       @relation(fields: [itemId], references: [id])
+  reverses   StockMove? @relation("Reversal", fields: [reversesId], references: [id])
+  reversedBy StockMove? @relation("Reversal")
 
   @@index([companyId, at])
   @@index([itemId, at])
   @@index([companyId, status])
+  @@index([refType, refId])
+  @@index([stepId])
   @@map("stock_moves")
 }
 

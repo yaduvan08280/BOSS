@@ -3,6 +3,7 @@ import { nextStepKey } from '@mono/shared';
 import { AppError, notFound } from '../../lib/errors';
 import { emitEvent } from '../../lib/events';
 import { releaseForm } from '../forms';
+import { reverseStock } from '../ims/step-reversal';
 import { can, checkPerson, type Actor } from '../work/actor';
 import { closeRecord, contextFor, log, openStep, payloadOf } from './engine';
 
@@ -115,6 +116,8 @@ export async function recordAction(
         owner: { kind: 'flow', id: record.flowId },
         recordId,
       });
+      // Stock its steps moved goes back (new moves; lines still waiting for approval are withdrawn).
+      await reverseStock(tx, record, { why: 'record cancelled', actorId: actor.userId });
     }
     await log(tx, record, action === 'hold' ? 'hold' : action === 'resume' ? 'resumed' : 'cancelled', {
       actorId: actor.userId,

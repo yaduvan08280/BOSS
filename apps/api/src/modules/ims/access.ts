@@ -2,6 +2,7 @@ import type { Db, Tx } from '@mono/db';
 import { DEFAULT_IMS_RULES, imsRulesPatchSchema, imsRulesSchema, type ImsRules } from '@mono/shared';
 import { writeAudit } from '../../lib/audit';
 import { AppError } from '../../lib/errors';
+import { emitEvent } from '../../lib/events';
 import { can, type Actor } from '../work/actor';
 
 export async function imsRulesOf(db: Db | Tx, companyId: string): Promise<ImsRules> {
@@ -89,3 +90,27 @@ export const peoplePayload = (rules: ImsRules) => ({
   storeIds: rules.people.storeKeeperIds,
   auditIds: rules.people.auditIds,
 });
+
+/**
+ * A stock line of a process step waits for a decision (not enough stock, or a reversal that can't be applied):
+ * tell the approvers and the store keepers, with the notice adjustments already use.
+ */
+export async function askApprovers(
+  tx: Tx,
+  ctx: { companyId: string; actorId: string | null },
+  moveId: string,
+  text: { item: string; qty: string; reason: string },
+) {
+  const people = peoplePayload(await imsRulesOf(tx, ctx.companyId));
+  await emitEvent(tx, ctx, {
+    name: 'ims.adjustment_approval',
+    entityType: 'stock_move',
+    entityId: moveId,
+    payload: {
+      ...people,
+      approverIds: [...new Set([...people.approverIds, ...people.storeIds])],
+      ...text,
+      link: '/ims/stock?tab=approvals',
+    },
+  });
+}

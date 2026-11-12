@@ -32,11 +32,14 @@ export const poMachine = defineMachine<PoStatus, PoAction, PoRole, PoContext>({
   ],
 });
 
-/** A stock adjustment (damaged, expired, lost, found, counted) waits for an approver before it changes stock. */
+/**
+ * A stock adjustment (damaged, expired, lost, found, counted) waits for an approver before it changes stock.
+ * So does a line an FMS step could not issue (phase 11) and a reversal that could not be applied.
+ */
 export const ADJUST_STATUSES = ['PENDING', 'APPLIED', 'REJECTED'] as const;
 export type AdjustStatus = (typeof ADJUST_STATUSES)[number];
-export type AdjustAction = 'approve' | 'reject';
-export type AdjustRole = 'approver';
+export type AdjustAction = 'approve' | 'reject' | 'withdraw';
+export type AdjustRole = 'approver' | 'system';
 /** `own`: the approver made the adjustment; `neverOwn`: the rule forbids approving your own. */
 export type AdjustContext = { own: boolean; neverOwn: boolean };
 
@@ -59,6 +62,9 @@ export const adjustMachine = defineMachine<AdjustStatus, AdjustAction, AdjustRol
       roles: ['approver'],
       guard: (c) => !(c.own && c.neverOwn),
     },
+    // A line an FMS step left waiting (not enough stock) is dropped when that step is undone or its record
+    // cancelled: nobody decides it any more.
+    { from: 'PENDING', action: 'withdraw', to: 'REJECTED', roles: ['system'] },
   ],
 });
 

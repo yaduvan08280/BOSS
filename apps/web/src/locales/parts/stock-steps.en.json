@@ -1,0 +1,70 @@
+{
+  "stockSteps": {
+    "line": {
+      "pick": "Search an item by code or name",
+      "inStock": "In stock: {{n}} {{unit}}",
+      "typed": "Typed by hand — not in the item master",
+      "useTyped": "Write “{{text}}” as typed",
+      "onlyList": "Pick an item from the list",
+      "qtyIn": "Qty ({{unit}})"
+    },
+    "extras": {
+      "free": "Items may also be typed by hand",
+      "freeHint": "Off: every line is picked from the item master. On: a line can also be written, but only picked items can move stock."
+    },
+    "editor": {
+      "title": "Stock",
+      "none": "This step does not move stock",
+      "hint": "Stock moves when the step is marked done. If an approval sends the record back over this step, or the record is cancelled, it is reversed.",
+      "action": {
+        "ISSUE": "Issue — stock goes out",
+        "RECEIVE": "Receive — stock comes in",
+        "TRANSFER": "Transfer — move to another place"
+      },
+      "lines": "Item lines",
+      "firstLines": "The first item lines of the record",
+      "noLines": "No item lines yet — add an “Item lines” field to the start form or a step",
+      "from": "From",
+      "to": "To",
+      "placeNone": "Not recorded",
+      "placeOwn": "Where the item is now",
+      "placeFixed": "A fixed place",
+      "placeField": "A field: {{label}}",
+      "placePh": "Main store",
+      "short": "If there is not enough stock",
+      "shortBlock": "Stop — the step can't be marked done",
+      "shortFlag": "Let it pass — short lines wait for the store keeper's approval",
+      "needsTo": "A transfer needs a place to move to."
+    },
+    "preview": {
+      "title": "Stock this step will move",
+      "action": {
+        "ISSUE": "Goes out of stock",
+        "RECEIVE": "Comes into stock",
+        "TRANSFER": "Moves to another place"
+      },
+      "now": "Now",
+      "after": "After",
+      "shortBy": "Short by {{n}} {{unit}}",
+      "unknown": "Not in the item master — will not move",
+      "blocked": "Not enough stock. This step can't be marked done until stock comes in or the quantity is changed.",
+      "flagged": "The short lines will wait for the store keeper's approval. The step still goes on.",
+      "noted": "Short lines will be skipped and noted on the record.",
+      "noLines": "No item lines to move yet.",
+      "needsTo": "Say where the stock moves to.",
+      "from": "From {{place}}",
+      "to": "To {{place}}",
+      "failed": "Could not work out the stock for this step."
+    },
+    "record": {
+      "IN": "Stock in",
+      "OUT": "Stock out",
+      "TRANSFER": "Moved",
+      "waiting": "waiting for approval",
+      "notIssued": "not issued",
+      "reversed": "reversed",
+      "reversalWaiting": "reversal waiting for approval",
+      "reversal": "Reversal"
+    }
+  }
+}

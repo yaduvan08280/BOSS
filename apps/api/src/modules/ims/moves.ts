@@ -1,15 +1,5 @@
 import type { Db, Tx } from '@mono/db';
-import {
-  adjustMachine,
-  bandOf,
-  localDate,
-  moveSchema,
-  transition,
-  worseBand,
-  zonedToUtc,
-  type Band,
-  type MoveType,
-} from '@mono/shared';
+import { bandOf, localDate, moveSchema, worseBand, zonedToUtc, type Band, type MoveType } from '@mono/shared';
 import { z } from 'zod';
 import type { ActorContext } from '../../lib/audit';
 import { writeAudit } from '../../lib/audit';
@@ -21,7 +11,7 @@ import { canApprove, ctxOf, imsRulesOf, need, peoplePayload } from './access';
 export const tzOf = async (db: Db | Tx, companyId: string) =>
   (await db.company.findUniqueOrThrow({ where: { id: companyId }, select: { timezone: true } })).timezone;
 const n = (d: unknown) => (d === null || d === undefined ? null : Number(d));
-const show = (q: number) => String(Math.round(q * 1000) / 1000);
+export const show = (q: number) => String(Math.round(q * 1000) / 1000);
 
 /** A move as the API sends it (money as a string of paise, quantities as numbers). */
 export const moveView = (m: {
@@ -52,6 +42,10 @@ export type MoveArgs = {
   note?: string | null;
   refType?: string | null;
   refId?: string | null;
+  /** Stock on steps: the record's step row, the line's quantity, and (a reversal) the move this one undoes. */
+  stepId?: string | null;
+  lineQty?: number | null;
+  reversesId?: string | null;
   at?: Date;
 };
 
@@ -98,6 +92,9 @@ export async function applyMove(tx: Tx, ctx: ActorContext, a: MoveArgs, moveId?:
     note: a.note ?? null,
     refType: a.refType ?? null,
     refId: a.refId ?? null,
+    stepId: a.stepId ?? null,
+    lineQty: a.lineQty ?? null,
+    reversesId: a.reversesId ?? null,
     status: 'APPLIED',
     balance: stock,
     at,
@@ -255,67 +252,6 @@ export async function postMove(db: Db, actor: Actor, input: z.input<typeof moveS
   });
 }
 
-/** Approve or reject an adjustment. With "any one of them" off, every listed approver must say yes. */
-export async function decideAdjustment(
-  db: Db,
-  actor: Actor,
-  id: string,
-  approve: boolean,
-  note?: string | null,
-) {
-  const move = await db.stockMove.findFirst({ where: { id, companyId: actor.companyId, type: 'ADJUST' } });
-  if (!move) throw notFound('Adjustment');
-  const rules = await imsRulesOf(db, actor.companyId);
-  if (!(await canApprove(db, actor, rules)))
-    throw new AppError(403, 'FORBIDDEN', "You aren't one of the approvers for stock adjustments");
-  const to = transition(adjustMachine, {
-    from: move.status as 'PENDING',
-    action: approve ? 'approve' : 'reject',
-    roles: ['approver'],
-    ctx: { own: move.createdById === actor.userId, neverOwn: rules.people.neverOwn },
-  }).to;
-  const ctx = ctxOf(actor);
-  return db.$transaction(async (tx) => {
-    const approvals = [...new Set([...move.approvals, actor.userId])];
-    // "Every approver": wait for all listed approvers (the owner's yes, when not listed, is final).
-    const listed = rules.people.approverIds;
-    const missing = listed.filter((a) => !approvals.includes(a)).length;
-    if (approve && !rules.people.anyOne && listed.includes(actor.userId) && missing > 0) {
-      await tx.stockMove.update({ where: { id }, data: { approvals } });
-      await writeAudit(tx, ctx, {
-        action: 'ims.adjust_approved_part',
-        entityType: 'stock_move',
-        entityId: id,
-      });
-      return { status: 'PENDING', waitingFor: missing };
-    }
-    const decided = {
-      decidedById: actor.userId,
-      decidedAt: new Date(),
-      decisionNote: note ?? null,
-      approvals,
-    };
-    if (to === 'APPLIED') {
-      await tx.stockMove.update({ where: { id }, data: decided });
-      await applyMove(
-        tx,
-        ctx,
-        { itemId: move.itemId, type: 'ADJUST', delta: Number(move.qty), reason: move.reason, at: move.at },
-        id,
-      );
-    } else {
-      await tx.stockMove.update({ where: { id }, data: { ...decided, status: 'REJECTED' } });
-    }
-    await writeAudit(tx, ctx, {
-      action: approve ? 'ims.adjust_approved' : 'ims.adjust_rejected',
-      entityType: 'stock_move',
-      entityId: id,
-      after: { note },
-    });
-    return { status: to };
-  });
-}
-
 export const sheetQuery = z.object({
   itemId: z.string().optional(),
   type: z.enum(['IN', 'OUT', 'TRANSFER', 'ADJUST']).optional(),
@@ -372,6 +308,9 @@ export async function listMoves(db: Db, actor: Actor, q: z.infer<typeof sheetQue
     toLocation: m.toLocation,
     refType: m.refType,
     refId: m.refId,
+    stepId: m.stepId,
+    lineQty: n(m.lineQty),
+    reversal: Boolean(m.reversesId),
     item: { id: m.itemId, ...m.item },
     by: m.createdById ? (names.get(m.createdById) ?? null) : null,
     decidedBy: m.decidedById ? (names.get(m.decidedById) ?? null) : null,

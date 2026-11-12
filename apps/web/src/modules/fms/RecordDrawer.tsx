@@ -17,6 +17,7 @@ import { formatDateTime } from '@/lib/when';
 import { RECORD_TONE, useRecord, type RecordDetail, type StepRow } from './api';
 import { knownOf, useRecordLinks } from './record-links';
 import { FieldValue, StepValues } from './RecordValues';
+import { RecordStock } from './RecordStock';
 import { showValue } from './show';
 import { StepDialog } from './StepDialog';
 
@@ -149,6 +150,8 @@ export function RecordDrawer({
                           links={links}
                           tz={tz}
                         />
+
+                        <RecordStock recordId={r.id} stepId={s.id} />
                         {r.files.some((f) => f.entityId === s.id) && (
                           <div className="mt-2 flex flex-wrap gap-1.5">
                             {r.files
