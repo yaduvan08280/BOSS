@@ -5,11 +5,12 @@ import type { Me } from '@mono/shared';
 import { Avatar, BrandMark } from '@/components/brand';
 import { cn } from '@/lib/utils';
 import { useWorkCounts } from '@/modules/workspace/useWorkCounts';
-import { navAllowed, type NavSection } from './nav';
+import type { MenuSection } from '@/modules/records/menu';
+import { navAllowed } from './nav';
 
 type Props = {
   me: Me;
-  sections: NavSection[];
+  sections: MenuSection[];
   collapsed?: boolean;
   onToggle?: () => void;
   onNavigate?: () => void;
@@ -47,7 +48,7 @@ export function Sidebar({ me, sections, collapsed = false, onToggle, onNavigate,
           <div key={section.key} className="mt-4 first:mt-1">
             {!collapsed && (
               <div className="mb-1.5 px-3 text-[11px] font-medium uppercase tracking-[0.14em] text-sidebar-muted">
-                {t(`section.${section.key}`)}
+                {section.label ?? t(`section.${section.key}`)}
               </div>
             )}
             <ul className="space-y-0.5">
@@ -59,7 +60,7 @@ export function Sidebar({ me, sections, collapsed = false, onToggle, onNavigate,
                       to={item.path}
                       end={item.path === '/'}
                       onClick={onNavigate}
-                      title={collapsed ? t(`nav.${item.key}`) : undefined}
+                      title={collapsed ? (item.label ?? t(`nav.${item.key}`)) : undefined}
                       className={({ isActive }) =>
                         cn(
                           'flex h-10 items-center gap-3 rounded-control px-3 text-sm transition-colors',
@@ -71,7 +72,7 @@ export function Sidebar({ me, sections, collapsed = false, onToggle, onNavigate,
                       }
                     >
                       <item.icon className="size-[18px] shrink-0" aria-hidden />
-                      {!collapsed && <span className="truncate">{t(`nav.${item.key}`)}</span>}
+                      {!collapsed && <span className="truncate">{item.label ?? t(`nav.${item.key}`)}</span>}
                       {!collapsed && Boolean(badge[item.key]) && (
                         <span className="tabular ml-auto rounded-pill bg-sidebar-hover px-1.5 text-[11px] font-semibold">
                           {badge[item.key]}
