@@ -43,6 +43,7 @@ import { recordRoutes } from './modules/records/routes';
 import { listRoutes } from './modules/lists/routes';
 import { reportRoutes } from './modules/reports/routes';
 import { branchRoutes } from './modules/branches/routes';
+import { franchiseRoutes } from './modules/franchise/routes';
 import { platformRoutes } from './modules/platform/routes';
 import { v1Routes } from './modules/platform/v1';
 import { LocalDiskStorage, type Storage } from './lib/storage';
@@ -121,10 +122,9 @@ export async function buildApp(opts: BuildOptions) {
   await app.register(healthRoutes);
   await app.register(authRoutes, { env });
   await app.register(sseRoutes, { listener });
-  await app.register(fileRoutes, {
-    storage:
-      opts.storage ?? new DriveAwareStorage(new LocalDiskStorage(env.UPLOAD_DIR), prisma, driveEnvOf(env)),
-  });
+  const storage =
+    opts.storage ?? new DriveAwareStorage(new LocalDiskStorage(env.UPLOAD_DIR), prisma, driveEnvOf(env));
+  await app.register(fileRoutes, { storage });
   await app.register(companyRoutes, { env });
   await app.register(setupRoutes);
   await app.register(departmentRoutes);
@@ -153,6 +153,7 @@ export async function buildApp(opts: BuildOptions) {
   await app.register(listRoutes);
   await app.register(reportRoutes);
   await app.register(branchRoutes);
+  await app.register(franchiseRoutes, { storage });
   await app.register(platformRoutes, { env });
   await app.register(v1Routes);
   await app.register(integrationRoutes, { env });

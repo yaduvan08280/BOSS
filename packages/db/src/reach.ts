@@ -25,6 +25,9 @@ export type Reach = {
   exceptBranchIds?: string[];
 };
 
+/** Models whose rows always have a branch: there is no "group-wide" row to ask for. */
+const ALWAYS_AT_A_BRANCH = new Set(['BrandAudit']);
+
 /** Brand content the group shares with franchises, read-only: models with a `shared` flag on a group-wide row. */
 const SHARED_WITH_FRANCHISES: Record<string, Where> = {
   ChecklistMaster: { branchId: null, shared: true },
@@ -79,6 +82,7 @@ export const BRANCH_SCOPED_MODELS: Record<string, (userId: string) => Where[]> =
   RecordEntry: (u) => [{ createdById: u }],
   MasterRow: () => [],
   Punch: (u) => [{ userId: u }],
+  BrandAudit: (u) => [{ auditorId: u }],
 };
 
 /**
@@ -142,7 +146,10 @@ export function reachWhere(model: string, reach: Reach | null): Where | null {
   if (reach.branchIds === null) {
     // The whole group, minus the franchises for someone without the oversight right.
     if (!reach.exceptBranchIds?.length) return null;
-    const outside = [{ branchId: null }, { branchId: { notIn: reach.exceptBranchIds } }];
+    const outside: Where[] = [
+      ...(ALWAYS_AT_A_BRANCH.has(model) ? [] : [{ branchId: null }]),
+      { branchId: { notIn: reach.exceptBranchIds } },
+    ];
     const kid = BRANCH_CHILD_MODELS[model];
     if (kid) return { [kid.relation]: { OR: outside } };
     return BRANCH_SCOPED_MODELS[model] ? { OR: outside } : null;
@@ -153,7 +160,7 @@ export function reachWhere(model: string, reach: Reach | null): Where | null {
         { branchId: { in: reach.branchIds } },
         ...(SHARED_WITH_FRANCHISES[model] ? [SHARED_WITH_FRANCHISES[model]!] : []),
       ]
-    : [{ branchId: null }, { branchId: { in: reach.branchIds } }];
+    : [...(ALWAYS_AT_A_BRANCH.has(model) ? [] : [{ branchId: null }]), { branchId: { in: reach.branchIds } }];
   const child = BRANCH_CHILD_MODELS[model];
   if (child) {
     const own = reach.strict ? [] : child.own(reach.userId);

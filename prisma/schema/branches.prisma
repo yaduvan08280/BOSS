@@ -142,6 +142,51 @@ model ExchangeRate {
   @@map("exchange_rates")
 }
 
+/// A month's royalty and fees from a franchise (stage D): % of its sales and / or a fixed fee, never under the
+/// minimum guarantee. One per franchise per month; amounts in the franchise entity's currency (minor units).
+model RoyaltyInvoice {
+  id           String   @id @default(cuid(2))
+  companyId    String   @map("company_id")
+  entityId     String   @map("entity_id")
+  /// YYYY-MM
+  month        String
+  /// ROY/26-27/0001
+  number       String
+  salesPaise   BigInt   @map("sales_paise")
+  royaltyPaise BigInt   @map("royalty_paise")
+  fixedPaise   BigInt   @map("fixed_paise")
+  /// What is due: the larger of (royalty + fixed) and the minimum guarantee.
+  amountPaise  BigInt   @map("amount_paise")
+  minimumUsed  Boolean  @default(false) @map("minimum_used")
+  /// ISSUED | PAID | CANCELLED
+  status       String   @default("ISSUED")
+  createdById  String?  @map("created_by_id")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([entityId, month])
+  @@unique([companyId, number])
+  @@map("royalty_invoices")
+}
+
+/// A brand audit at an outlet (stage D): a head-office auditor scores each point; failed points become tasks.
+model BrandAudit {
+  id        String   @id @default(cuid(2))
+  companyId String   @map("company_id")
+  branchId  String   @map("branch_id")
+  auditorId String   @map("auditor_id")
+  title     String
+  /// YYYY-MM-DD
+  date      String
+  /// [{ text, ok, note?, photoId?, taskId? }]
+  items     Json
+  /// Points passed, of 100.
+  score     Int
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([companyId, branchId, date])
+  @@map("brand_audits")
+}
+
 model DepartmentHead {
   id           String   @id @default(cuid(2))
   companyId    String   @map("company_id")

@@ -16,6 +16,8 @@ export const COMPANY_SCOPED_MODELS = new Set([
   'BranchStay',
   'BranchLoan',
   'ExchangeRate',
+  'RoyaltyInvoice',
+  'BrandAudit',
   'Attachment',
   'Session',
   'AuditLog',

@@ -21,6 +21,7 @@ import {
   sendWebhooks,
   runCovers,
   applyBranchMoves,
+  watchRenewals,
   settleAttendance,
   watchAbsences,
   EventListener,
@@ -182,6 +183,9 @@ await boss.work(
     const covers = await runCovers(prisma);
     const absent = await watchAbsences(prisma);
     // People whose move to another branch takes effect today switch over.
+    // Licences and franchise agreements about to run out (told 30 and 7 days before, and on the day).
+    const renewals = await watchRenewals(prisma);
+    if (renewals) log.info({ renewals }, 'Renewal reminders');
     const moved = await applyBranchMoves(prisma);
     if (moved) log.info({ moved }, 'Branch moves applied');
     const settled = await settleAttendance(prisma);

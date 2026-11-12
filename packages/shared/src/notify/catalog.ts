@@ -640,6 +640,34 @@ const ROWS: Row[] = [
     'रिपोर्ट: {{report}}',
     '{{summary}}',
   ],
+  // Phase 12, stage D: licences and franchise agreements about to run out; royalty invoices; brand audits.
+  [
+    'franchise.renewal_due',
+    'team',
+    ['owner', 'branch_manager'],
+    '{{what}} runs out on {{date}}',
+    '{{what}} of {{place}} is valid till {{date}} ({{daysLeft}} days left). Renew it in time.',
+    '{{what}} {{date}} को समाप्त होगा',
+    '{{place}} का {{what}} {{date}} तक वैध है ({{daysLeft}} दिन बाकी)। समय पर नवीनीकरण करें।',
+  ],
+  [
+    'franchise.royalty_invoiced',
+    'team',
+    ['owner', 'branch_manager'],
+    'Royalty invoice {{number}}',
+    '{{place}}: {{amount}} for {{month}} (sales {{sales}}).',
+    'रॉयल्टी इनवॉइस {{number}}',
+    '{{place}}: {{month}} के लिए {{amount}} (बिक्री {{sales}})।',
+  ],
+  [
+    'franchise.audit_done',
+    'team',
+    ['owner', 'branch_manager'],
+    'Brand audit at {{place}}: {{score}}%',
+    '{{actor}} audited {{place}}: {{score}}% — {{failed}} point(s) to correct.',
+    '{{place}} का ब्रांड ऑडिट: {{score}}%',
+    '{{actor}} ने {{place}} का ऑडिट किया: {{score}}% — {{failed}} बिंदु सुधारने हैं।',
+  ],
 ];
 
 /**

@@ -58,3 +58,4 @@ export { sendScheduledReports } from './modules/reports/schedule';
 export { saveReport } from './modules/reports/service';
 export { chainFor, placeHolders } from './modules/branches/approvals';
 export { applyBranchMoves } from './modules/branches/history';
+export { watchRenewals } from './modules/franchise/renewals';

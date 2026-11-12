@@ -80,6 +80,23 @@ export const entityDetailsSchema = z.object({
   letterheadFooter: text(400).nullish(),
   licences: z.array(licenceSchema).max(20).optional(),
   tax: taxProfileSchema.optional(),
+  /** A franchise partner's terms (stage D): the agreement's dates and what it pays the brand each month. */
+  franchise: z
+    .object({
+      agreementStart: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .nullish(),
+      agreementEnd: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .nullish(),
+      /** Royalty as a share of the month's sales, a fixed monthly fee, or both; never less than the minimum. */
+      royaltyPercent: z.number().min(0).max(100).nullish(),
+      fixedMonthlyPaise: z.number().int().min(0).nullish(),
+      minimumPaise: z.number().int().min(0).nullish(),
+    })
+    .optional(),
 });
 export type EntityDetails = z.infer<typeof entityDetailsSchema>;
 
