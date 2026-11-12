@@ -73,6 +73,7 @@ export function StartDialog({
           onChange={setValues}
           errors={errors}
           people={people}
+          owner={{ kind: 'flow', id: flowId }}
         />
       )}
     </Dialog>

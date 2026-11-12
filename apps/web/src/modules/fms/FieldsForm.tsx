@@ -6,14 +6,15 @@ import { FileDrop } from '@/components/file-drop';
 import { Button } from '@/components/ui/button';
 import { Field, Select, Textarea } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { personLabel } from '@/lib/people';
 import type { Uploaded } from '@/lib/upload';
 import { cn } from '@/lib/utils';
 import type { FormCtx, FormOwner } from './form/ctx';
+import { clearDependents, isLockedTarget } from './form/depend';
 import { FormulaValue } from './form/FormulaValue';
 import { ItemLines } from './form/ItemLines';
 import { LearnInput } from './form/LearnInput';
 import { LinkedInput } from './form/LinkedInput';
+import { LockedValue } from './form/LockedValue';
 import { SignaturePad } from './form/SignaturePad';
 import type { Values } from './payload';
 
@@ -44,9 +45,15 @@ export function FieldsForm({
     values,
     refs: refsOf(values),
     // A typed value has no link; a picked one carries its row's.
-    set: (k, v, ref) => onChange(withRef({ ...values, [k]: v }, k, ref)),
+    set: (k, v, ref) => onChange(clearDependents(fields, values, withRef({ ...values, [k]: v }, k, ref))),
     patch: (vs, refs = {}) =>
-      onChange(Object.entries(refs).reduce((d, [k, r]) => withRef(d, k, r), { ...values, ...vs })),
+      onChange(
+        clearDependents(
+          fields,
+          values,
+          Object.entries(refs).reduce((d, [k, r]) => withRef(d, k, r), { ...values, ...vs }),
+        ),
+      ),
     owner,
     known,
     publicForm,
@@ -65,7 +72,11 @@ export function FieldsForm({
               'sm:col-span-2',
           )}
         >
-          <FieldInput field={f} value={values[f.key]} ctx={ctx} />
+          {isLockedTarget(f, fields) ? (
+            <LockedValue field={f} value={values[f.key]} />
+          ) : (
+            <FieldInput field={f} value={values[f.key]} ctx={ctx} />
+          )}
         </Field>
       ))}
     </div>
@@ -74,7 +85,7 @@ export function FieldsForm({
 
 function FieldInput({ field: f, value, ctx }: { field: FlowField; value: unknown; ctx: FormCtx }) {
   const { t } = useTranslation();
-  const { people, publicForm } = ctx;
+  const { publicForm } = ctx;
   const onChange = (v: unknown) => ctx.set(f.key, v);
   const str = typeof value === 'string' ? value : value === undefined || value === null ? '' : String(value);
   switch (f.type) {
@@ -162,20 +173,7 @@ function FieldInput({ field: f, value, ctx }: { field: FlowField; value: unknown
     case 'formula':
       return <FormulaValue field={f} value={value} ctx={ctx} />;
     case 'master':
-      if (f.master === 'people' && !publicForm)
-        return (
-          <Select value={str} onChange={(e) => onChange(e.target.value)}>
-            <option value="">{t('org.choose')}</option>
-            {people
-              .filter((p) => p.status === 'ACTIVE')
-              .map((p) => (
-                <option key={p.id} value={p.name}>
-                  {personLabel(p)}
-                </option>
-              ))}
-          </Select>
-        );
-      // Any master (customers, items, vendors, your own): search and pick; the public form just types.
+      // Any master (customers, items, vendors, people, your own): search and pick; the public form just types.
       if (!publicForm) return <LinkedInput field={f} value={value} ctx={ctx} />;
       return <Input value={str} onChange={(e) => onChange(e.target.value)} />;
     case 'location':

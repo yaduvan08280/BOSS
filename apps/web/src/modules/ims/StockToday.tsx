@@ -16,7 +16,7 @@ export function StockToday({ canMove, canAdjust }: { canMove: boolean; canAdjust
   const { t } = useTranslation();
   const q = useItems();
   const [band, setBand] = useState<Band | 'all'>('all');
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get('q') ?? '');
   const [moving, setMoving] = useState<string | null>(null);
   if (q.isPending) return <PageSkeleton />;
   if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;

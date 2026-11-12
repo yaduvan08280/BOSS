@@ -14,7 +14,10 @@ export type FormScope = {
   /** null = the public form or the system. */
   actorId: string | null;
   owner: FormOwner;
-  /** The record / row being changed, so "unique" does not trip over itself. */
+  /**
+   * The record / row being changed, so "unique" does not trip over itself. For a new record pass the id it will
+   * be created with (`createId()`): unique values are claimed for that id while the form is saved.
+   */
   recordId?: string;
   /** Values already on the record (the start form and earlier steps): formulas and dependent choices read them. */
   known?: Record<string, unknown>;

@@ -1,0 +1,21 @@
+/// A value held by a "unique" field (phase 11, plan §2.2): one live record per value, per form owner and field.
+/// The unique index is what makes two people saving the same value at the same moment safe — one of them loses.
+/// Rows go when the record is cancelled or deleted (`releaseForm`), so the value can be used again.
+model UniqueValue {
+  id        String   @id @default(cuid(2))
+  companyId String   @map("company_id")
+  /// flow | master | recordType
+  ownerKind String   @map("owner_kind")
+  ownerId   String   @map("owner_id")
+  /// The field's key in the form.
+  field     String
+  /// The value as compared: trimmed, lower case.
+  value     String
+  /// The FMS record / master row / record that holds it.
+  recordId  String   @map("record_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([companyId, ownerKind, ownerId, field, value])
+  @@index([companyId, ownerKind, ownerId, recordId])
+  @@map("unique_values")
+}

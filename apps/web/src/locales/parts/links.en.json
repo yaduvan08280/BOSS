@@ -1,0 +1,61 @@
+{
+  "links": {
+    "clear": "Clear {{field}}",
+    "cantLoad": "This list could not be loaded. You may not have access to the process it reads.",
+    "useTyped": "Use “{{text}}”",
+    "lockedHint": "Filled automatically. It can't be changed by hand.",
+    "lockedEmpty": "Filled automatically",
+    "chooseFirst": "Choose {{field}} first",
+    "chooseFirstHint": "The choices here depend on {{field}}.",
+    "open": "Open {{name}}",
+    "nowCalled": "now {{name}}",
+    "src": {
+      "fms": "Values typed in another process",
+      "rec": "A record of another process",
+      "process": "Process",
+      "pickProcess": "Choose the process",
+      "field": "Field",
+      "pickField": "Choose the field"
+    },
+    "e": {
+      "records": "Records to offer",
+      "running": "Only running records",
+      "mine": "Only records the person started",
+      "days": "Only from the last",
+      "daysCount": "Number of days",
+      "daysUnit": "days",
+      "step": "Only records at a step",
+      "anyStep": "At any step",
+      "atStep": "Only at step: {{step}}",
+      "fill": "When a choice is picked, also fill",
+      "fillColumn": "Take this from the choice",
+      "fillInto": "Put it in this field",
+      "fillAdd": "Fill another field",
+      "depends": "The choices depend on",
+      "dependsNone": "Nothing — offer every choice",
+      "dependsColumn": "Match it with",
+      "dependsOn": "Offer only where “{{column}}” is the same",
+      "locked": "Locked — filled from {{field}}, can't be changed by hand",
+      "unique": "Must be unique — a value used in another live record is refused"
+    },
+    "col": {
+      "name": "Name",
+      "code": "Code",
+      "city": "City",
+      "mobile": "Mobile",
+      "segment": "Segment",
+      "unit": "Unit",
+      "rate": "Rate",
+      "category": "Category",
+      "location": "Location",
+      "vendor": "Vendor",
+      "stock": "Stock",
+      "designation": "Designation",
+      "department": "Department",
+      "number": "Number",
+      "title": "Title",
+      "status": "Status",
+      "started": "Started on"
+    }
+  }
+}
