@@ -55,3 +55,4 @@ export { changeStatus as moveRecord, createRecord } from './modules/records/reco
 export { recordVars as fmsRecordVars } from './modules/fms/show';
 export { runBackfills as runReportBackfills } from './modules/reports/backfill';
 export { sendScheduledReports } from './modules/reports/schedule';
+export { saveReport } from './modules/reports/service';

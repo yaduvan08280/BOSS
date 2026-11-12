@@ -77,5 +77,18 @@ The five packages are merged into the main branch. What was joined by hand when 
 - **Lists**: Masters → Lists shows record types under "used in"; `list.*` events are listed for webhooks.
 - `fms/engine.ts` is split (`engine-helpers.ts`) and back under 400 lines.
 
-Second wave (not built): L18, U7 (the rest), U8, U9, U10, Playwright e2e for the new screens, CHANGELOG and the
-CLAUDE.md status table and decisions.
+## Second wave (built 12/11/2026, in the main checkout)
+
+- **U7** `records/start-flow.ts` (a move starts a process, in the move's transaction), `platform/v1-records.ts`
+  (public API), `record.*` notification events, webhook module names fixed.
+- **L18** `packages/shared/src/fms/paths.ts` + `fms/show.ts` (value paths, read through links in bulk),
+  `fms/paths.ts` (Live FMS columns), `fms/kpi.ts`, document texts, `{{data.…}}` in process messages.
+- **U9** `forms/report.ts` (the pipeline stage), `reports/backfill.ts` (worker), the "Use in reports" tick.
+- **U10** `packages/shared/src/reports`, `reports/engine.ts` (definition → bound SQL), `reports/service.ts` (saved
+  reports, exports), `reports/schedule.ts`, the Ask hook (`ai/prompts/ask.v2.ts`), `apps/web/src/modules/reports`.
+- **U8** `ai/records.ts` + `ai/prompts/record-type.v1.ts`, `records/AiDraftDialog.tsx`.
+- `e2e/phase11.spec.ts`, demo data in `prisma/seed-demo-records.ts`, CHANGELOG and CLAUDE.md (decisions 102–116).
+
+The briefs `G.md`–`J.md` in `briefs/` were written for agents; the work was done by hand instead and differs in
+places (reports use only reportable fields and built-in columns; schedules send a message with the numbers and a
+link, not an attachment).

@@ -38,8 +38,11 @@ reviewed with GGM / the hotel team and frozen before each phase starts.
 | U10 | Report builder: source → columns → filters → group → totals → table or chart; save, share by role, schedule, export; Ask can read it | §2.7 | `apps/api/src/modules/reports/reports.test.ts` (build, filter, group, totals, share by role, export, schedule, Ask). Screens looked at in a browser at 380 and 1440 (no e2e yet) |
 | A1 | The request ceiling is counted per signed-in person; many people behind one internet address are not refused | §1.2 | `apps/api/src/plugins/ceiling.test.ts` |
 
-State on 12/11/2026: the first wave (L1–L17, U1–U6, A1) is merged and the whole suite passes on the combined code
-(70 files, 482 tests). The rows marked "no e2e yet" are proven through the API and shared code only; their screens
-were looked at in a browser by the builders but have no automated browser test. L18 and U7–U10 are the second wave.
+State on 12/11/2026: all 29 rows are built and each has a passing automated test (unit / API level). Browser
+tests: `e2e/phase11.spec.ts` drives the screens built in the second half of the phase (a move that starts a
+process, Live FMS columns, the report builder, "Build with AI", and a fit-the-screen pass in English and Hindi at
+380 and 1440). The first-wave screens (value lists, linked choices, formulas, stock on steps, the record list and
+drawer) were looked at in a browser by their builders and are covered by that fit-the-screen pass, but their
+behaviour is proven through the API, not yet click by click in a browser.
 
 Consume-by-recipe on a step (plan §2.4) needs recipes, which arrive in Phase 13; it is row I-recipe there, not here.
