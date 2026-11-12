@@ -1,3 +1,4 @@
+import { flowFormulaIssues } from '../formula/flow';
 import { END, type FlowDefinition, type FlowStep } from './definition';
 
 export type FlowIssue = {
@@ -12,9 +13,12 @@ export type FlowIssue = {
     | 'unknownPerson'
     | 'duplicateField'
     | 'unknownDateField'
-    | 'noEnd';
+    | 'noEnd'
+    | 'formula';
   stepKey?: string;
   detail?: string;
+  /** formula: the key of the field whose formula is broken. */
+  field?: string;
 };
 
 /** Where a step leads: Yes/No for decisions, back for a rejected approval, else `next` or the following step. */
@@ -95,6 +99,7 @@ export function validateFlow(def: FlowDefinition, people?: Set<string>): FlowIss
   }
   for (const s of def.steps) if (!seen.has(s.key)) issues.push({ code: 'orphan', stepKey: s.key });
   if (!endReached) issues.push({ code: 'noEnd' });
+  issues.push(...flowFormulaIssues(def));
   return issues;
 }
 
