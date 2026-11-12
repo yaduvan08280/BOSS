@@ -37,6 +37,7 @@ import { fmsRoutes } from './modules/fms/routes';
 import { aiRoutes } from './modules/ai/routes';
 import { hrRoutes } from './modules/hr/routes';
 import { imsRoutes } from './modules/ims/routes';
+import { stockRoutes } from './modules/ims/stock-routes';
 import { crmRoutes } from './modules/crm/routes';
 import { masterRoutes } from './modules/masters/routes';
 import { recordRoutes } from './modules/records/routes';
@@ -148,6 +149,7 @@ export async function buildApp(opts: BuildOptions) {
   await app.register(aiRoutes, { env });
   await app.register(hrRoutes);
   await app.register(imsRoutes);
+  await app.register(stockRoutes);
   await app.register(crmRoutes);
   await app.register(masterRoutes);
   await app.register(recordRoutes);

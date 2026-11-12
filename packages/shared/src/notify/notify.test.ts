@@ -10,7 +10,7 @@ describe('catalog', () => {
         .map((e) => e.event)
         .sort(),
     ).toEqual(['notify.escalation', 'notify.telegram_code', 'notify.test']);
-    // §7.3, plus phase 4: delegation.accept_late, slip.late, slip.closed, mis.weekly; phase 5: fms.step_stuck, fms.customer_update; phase 8: ims.ows_ready.
+    // §7.3, plus phase 4: delegation.accept_late, slip.late, slip.closed, mis.weekly; phase 5: fms.step_stuck, fms.customer_update; phase 8: ims.ows_ready; phase 13: ims.transfer_asked / dispatched / differences, ims.expiry_soon.
     const expected = {
       delegation: 13,
       checklist: 6,
@@ -19,7 +19,7 @@ describe('catalog', () => {
       ea: 3,
       fms: 8,
       hr: 8,
-      ims: 6,
+      ims: 10,
       crm: 6,
       mis: 1,
       record: 3,

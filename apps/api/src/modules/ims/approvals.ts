@@ -67,6 +67,12 @@ export async function decideAdjustment(
           refType: move.refType,
           refId: move.refId,
           at: move.at,
+          // Phase 13: where it was asked for, which batch, and a write-off may take an expired batch.
+          locationId: move.locationId,
+          batchId: move.batchId,
+          rate: move.rate,
+          qty2: move.qty2 === null ? null : Number(move.qty2),
+          allowExpired: Number(move.qty) < 0,
         },
         id,
       );

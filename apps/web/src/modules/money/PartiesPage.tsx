@@ -12,7 +12,16 @@ import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { money, useMoneyMutation, useParties, useStatement, type Party } from './api';
 
-const PARTY_KINDS = ['customer', 'vendor', 'guest', 'company', 'agent', 'franchise', 'transporter'] as const;
+const PARTY_KINDS = [
+  'customer',
+  'dealer',
+  'vendor',
+  'guest',
+  'company',
+  'agent',
+  'franchise',
+  'transporter',
+] as const;
 
 /** Everyone the company deals with, in one list: customers, vendors, guests, agents … */
 export function PartiesPage({ me }: { me: Me }) {

@@ -118,7 +118,8 @@
       "company": "कंपनी",
       "agent": "एजेंट",
       "franchise": "फ़्रैंचाइज़ी",
-      "transporter": "ट्रांसपोर्टर"
+      "transporter": "ट्रांसपोर्टर",
+      "dealer": "डीलर"
     },
     "owed": {
       "title": "बकाया",

@@ -81,6 +81,8 @@ export const poSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .nullish(),
   note: z.string().trim().max(1000).nullish(),
+  /** Phase 13: the location the goods are delivered to (left out = the main store). */
+  locationId: z.string().optional(),
   lines: z.array(lineSchema).min(1).max(200),
 });
 export const fromOwsSchema = z.object({ lines: z.array(lineSchema).min(1).max(500) });
@@ -119,6 +121,7 @@ export async function createPo(db: Db, actor: Actor, input: z.input<typeof poSch
         branchId: await homeBranchOf(tx, actor.companyId, actor.userId),
         number: await newNumber(tx, db, actor.companyId),
         vendor: p.vendor,
+        ...(p.locationId !== undefined ? { locationId: p.locationId } : {}),
         expectedOn: p.expectedOn ?? null,
         note: p.note ?? null,
         createdById: actor.userId,
@@ -205,6 +208,7 @@ const poView = async (db: Db, po: Awaited<ReturnType<typeof loadPo>>) => {
     id: po.id,
     number: po.number,
     vendor: po.vendor,
+    locationId: po.locationId,
     status: po.status as PoStatus,
     expectedOn: po.expectedOn,
     note: po.note,
@@ -258,6 +262,7 @@ export async function updatePo(db: Db, actor: Actor, id: string, input: z.input<
       where: { id },
       data: {
         vendor: p.vendor,
+        ...(p.locationId !== undefined ? { locationId: p.locationId } : {}),
         expectedOn: p.expectedOn ?? null,
         note: p.note ?? null,
         lines: {

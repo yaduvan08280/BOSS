@@ -20,6 +20,19 @@ export const COMPANY_SCOPED_MODELS = new Set([
   'Party',
   'PartyAlias',
   'TaxRate',
+  'StockBalance',
+  'StockBatch',
+  'ItemAttribute',
+  'SupplyRoute',
+  'StockTransfer',
+  'Recipe',
+  'ProductionOrder',
+  'GoodsReceipt',
+  'ParLevel',
+  'StockCount',
+  'PriceList',
+  'PriceListLine',
+  'RateBoard',
   'PaymentMode',
   'Bill',
   'BillAllocation',
@@ -159,6 +172,8 @@ export const SOFT_DELETE_MODELS = new Set([
   'LegalEntity',
   'Region',
   'Location',
+  'SupplyRoute',
+  'PriceList',
 ]);
 
 const LIST_READS = new Set(['findMany', 'findFirst', 'findFirstOrThrow', 'count', 'aggregate', 'groupBy']);

@@ -56,7 +56,21 @@ export const imsPeopleSchema = z.object({
   ownerAlways: z.boolean().default(true),
 });
 
+/** Phase 13: how stock is valued, when waste needs a yes, when a count is flagged, expiry warnings, emergencies. */
+export const stockRulesSchema = z.object({
+  valuation: z.enum(['AVG', 'FIFO']).default('AVG'),
+  /** Waste worth more than this (paise) waits for an approver. */
+  wasteApproveOverPaise: z.number().int().min(0).max(1e12).default(500_00),
+  /** A count's difference above this % of what should have been used is flagged. */
+  varianceFlagPct: z.number().min(0).max(100).default(5),
+  expiryAlertDays: z.number().int().min(0).max(365).default(7),
+  /** An emergency outlet-to-outlet transfer needs a yes from one side or from both. */
+  emergencyApprovals: z.enum(['one', 'both']).default('both'),
+});
+export type StockRules = z.infer<typeof stockRulesSchema>;
+
 export const imsRulesSchema = z.object({
+  stock: stockRulesSchema.default(stockRulesSchema.parse({})),
   max: maxRulesSchema.default(maxRulesSchema.parse({})),
   ows: owsRulesSchema.default(owsRulesSchema.parse({})),
   turns: turnsRulesSchema.default(turnsRulesSchema.parse({})),
@@ -69,6 +83,7 @@ export const DEFAULT_IMS_RULES: ImsRules = imsRulesSchema.parse({});
 
 /** Saving one rule set: only what is sent changes. */
 export const imsRulesPatchSchema = z.object({
+  stock: overrideOf(stockRulesSchema).optional(),
   max: overrideOf(maxRulesSchema).optional(),
   ows: overrideOf(owsRulesSchema).optional(),
   turns: overrideOf(turnsRulesSchema).optional(),

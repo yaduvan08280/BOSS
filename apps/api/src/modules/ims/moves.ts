@@ -1,5 +1,14 @@
 import type { Db, Tx } from '@mono/db';
-import { bandOf, localDate, moveSchema, worseBand, zonedToUtc, type Band, type MoveType } from '@mono/shared';
+import {
+  MAIN_STORE,
+  bandOf,
+  localDate,
+  moveSchema,
+  worseBand,
+  zonedToUtc,
+  type Band,
+  type MoveType,
+} from '@mono/shared';
 import { z } from 'zod';
 import type { ActorContext } from '../../lib/audit';
 import { writeAudit } from '../../lib/audit';
@@ -7,6 +16,7 @@ import { AppError, notFound } from '../../lib/errors';
 import { emitEvent } from '../../lib/events';
 import { can, type Actor } from '../work/actor';
 import { canApprove, ctxOf, imsRulesOf, need, peoplePayload, routedApprovers } from './access';
+import { adopt, moveBetween, putIn, takeOut, type Pick_ } from './ledger';
 
 export const tzOf = async (db: Db | Tx, companyId: string) =>
   (await db.company.findUniqueOrThrow({ where: { id: companyId }, select: { timezone: true } })).timezone;
@@ -47,6 +57,17 @@ export type MoveArgs = {
   lineQty?: number | null;
   reversesId?: string | null;
   at?: Date;
+  /** Phase 13: where ("" = the main store), which batch / piece, and for a real transfer where it goes. */
+  locationId?: string | null;
+  toLocationId?: string | null;
+  batchId?: string | null;
+  /** The unit that was typed and its quantity (the delta is always in the stock unit). */
+  unit?: string | null;
+  unitQty?: number | null;
+  /** The second unit's quantity (the weight of what moved), always positive. */
+  qty2?: number | null;
+  /** Take an expired batch too (writing it off, sending it back). */
+  allowExpired?: boolean;
 };
 
 /**
@@ -56,6 +77,28 @@ export type MoveArgs = {
 export async function applyMove(tx: Tx, ctx: ActorContext, a: MoveArgs, moveId?: string) {
   const item = await tx.item.findFirst({ where: { id: a.itemId, companyId: ctx.companyId } });
   if (!item || item.deletedAt) throw new AppError(404, 'NOT_FOUND', 'Item not found');
+  const at = a.at ?? new Date();
+  const tz = await tzOf(tx, ctx.companyId);
+  const locationId = a.locationId ?? MAIN_STORE;
+  const rate = a.rate ?? item.rate;
+  await adopt(tx, item);
+  let picks: Pick_[] = [];
+  const opts = { today: localDate(at, tz), allowExpired: a.allowExpired };
+  if (a.type === 'TRANSFER' && a.toLocationId !== undefined && a.toLocationId !== null) {
+    // A real transfer: the quantity leaves one location and arrives at another; the total does not change.
+    picks = await moveBetween(
+      tx,
+      item,
+      { locationId, batchId: a.batchId },
+      a.toLocationId,
+      a.lineQty ?? 0,
+      opts,
+    );
+  } else if (a.delta > 0) {
+    await putIn(tx, item, { locationId, batchId: a.batchId }, a.delta, a.delta * Number(rate), a.qty2 ?? 0);
+  } else if (a.delta < 0) {
+    picks = await takeOut(tx, item, { locationId, batchId: a.batchId }, -a.delta, opts);
+  }
   if (a.delta !== 0) {
     const done = await tx.item.updateMany({
       where: { id: item.id, ...(a.delta < 0 ? { stock: { gte: -a.delta } } : {}) },
@@ -68,10 +111,11 @@ export async function applyMove(tx: Tx, ctx: ActorContext, a: MoveArgs, moveId?:
         `Only ${show(Number(item.stock))} ${item.unit} of ${item.name} in stock`,
       );
   }
+  const moved = picks.reduce((n, p) => n + p.value, 0);
+  const value = a.delta > 0 ? Math.round(a.delta * Number(rate)) : picks.length ? moved : null;
   const after = await tx.item.findUniqueOrThrow({ where: { id: item.id } });
   const stock = Number(after.stock);
   const band = bandOf(stock, n(after.maxQty), n(after.minQty));
-  const at = a.at ?? new Date();
   await tx.item.update({
     where: { id: item.id },
     data: {
@@ -98,13 +142,30 @@ export async function applyMove(tx: Tx, ctx: ActorContext, a: MoveArgs, moveId?:
     status: 'APPLIED',
     balance: stock,
     at,
+    locationId,
+    toLocationId: a.toLocationId ?? null,
+    batchId: a.batchId ?? (picks.length === 1 && picks[0]!.batchId ? picks[0]!.batchId : null),
+    unit: a.unit ?? null,
+    unitQty: a.unitQty ?? null,
+    qty2: a.qty2 ?? (picks.some((p) => p.qty2) ? picks.reduce((n, p) => n + p.qty2, 0) : null),
+    value: value === null ? null : BigInt(value),
+    picks: picks.length > 1 ? picks.map((p) => ({ batchId: p.batchId, qty: p.qty })) : undefined,
   };
   const move = moveId
-    ? await tx.stockMove.update({ where: { id: moveId }, data: { status: 'APPLIED', balance: stock } })
+    ? await tx.stockMove.update({
+        where: { id: moveId },
+        data: {
+          status: 'APPLIED',
+          balance: stock,
+          value: data.value,
+          picks: data.picks,
+          batchId: data.batchId,
+        },
+      })
     : await tx.stockMove.create({
         data: { companyId: ctx.companyId, itemId: item.id, createdById: ctx.actorId, ...data },
       });
-  await snapshot(tx, ctx.companyId, item.id, stock, band, localDate(at, await tzOf(tx, ctx.companyId)));
+  await snapshot(tx, ctx.companyId, item.id, stock, band, localDate(at, tz));
   await emitEvent(tx, ctx, {
     name: 'ims.stock_moved',
     entityType: 'item',
@@ -125,7 +186,7 @@ export async function applyMove(tx: Tx, ctx: ActorContext, a: MoveArgs, moveId?:
     },
   });
   await bandAlert(tx, ctx, after, item.band as Band, band, stock);
-  return { move, stock, band };
+  return { move, stock, band, picks, value: value ?? 0 };
 }
 
 /** Today's snapshot keeps the worst band the day saw. */

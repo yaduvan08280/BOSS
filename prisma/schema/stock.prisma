@@ -1,0 +1,282 @@
+// Phase 13 — Inventory v2: stock per location, batches and pieces, transfers, recipes, production, goods
+// receipts, par levels, closing counts, price lists and the rate board. Changes decision 74 (one number an item):
+// `Item.stock` stays as the total of the item's balances.
+
+/// What a location holds of an item (and of one batch / piece of it). locationId "" = the main store,
+/// "~transit" = goods dispatched and not yet received; batchId "" = no batch.
+model StockBalance {
+  id         String  @id @default(cuid(2))
+  companyId  String  @map("company_id")
+  itemId     String  @map("item_id")
+  locationId String  @default("") @map("location_id")
+  batchId    String  @default("") @map("batch_id")
+  qty        Decimal @default(0) @db.Decimal(14, 3)
+  /// The second unit's total (grams of the pieces held here).
+  qty2       Decimal @default(0) @db.Decimal(14, 3)
+  /// Cost of what is held, in minor units (weighted average = value ÷ qty).
+  value      BigInt  @default(0)
+
+  @@unique([itemId, locationId, batchId])
+  @@index([companyId, locationId])
+  @@map("stock_balances")
+}
+
+/// A batch (with expiry), a lot (with attributes) or one serial-numbered piece of an item.
+model StockBatch {
+  id        String   @id @default(cuid(2))
+  companyId String   @map("company_id")
+  itemId    String   @map("item_id")
+  /// BATCH | SERIAL | LOT
+  kind      String   @default("BATCH")
+  /// Batch number / serial number
+  code      String
+  /// YYYY-MM-DD
+  expiry    String?
+  mfg       String?
+  /// Cost per stock unit (a piece's own cost), minor units.
+  rate      BigInt   @default(0)
+  /// Lot / piece attributes (size, colour, grade, purity …) as the category defines them.
+  attrs     Json?
+  /// A piece's own second-unit quantity (its weight).
+  qty2      Decimal? @db.Decimal(14, 3)
+  barcode   String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([companyId, itemId, code])
+  @@index([companyId, barcode])
+  @@index([companyId, expiry])
+  @@map("stock_batches")
+}
+
+/// The attributes a category's lots and pieces carry: [{ key, label, type: text|number|choice, options? }].
+model ItemAttribute {
+  id        String @id @default(cuid(2))
+  companyId String @map("company_id")
+  category  String
+  defs      Json
+
+  @@unique([companyId, category])
+  @@map("item_attributes")
+}
+
+/// Which kitchen / store supplies a branch (for a category, "" = everything) and at what transfer price.
+model SupplyRoute {
+  id             String    @id @default(cuid(2))
+  companyId      String    @map("company_id")
+  toBranchId     String    @map("to_branch_id")
+  category       String    @default("")
+  fromLocationId String    @map("from_location_id")
+  /// COST | COST_PLUS | LIST
+  priceRule      String    @default("COST") @map("price_rule")
+  percent        Decimal?  @db.Decimal(6, 2)
+  priceListId    String?   @map("price_list_id")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([companyId, toBranchId])
+  @@map("supply_routes")
+}
+
+/// An indent, an emergency outlet-to-outlet transfer or a store's own transfer (`transferMachine`).
+model StockTransfer {
+  id             String    @id @default(cuid(2))
+  companyId      String    @map("company_id")
+  /// IND/26-27/0001
+  number         String
+  /// INDENT | EMERGENCY | DIRECT
+  kind           String    @default("INDENT")
+  status         String    @default("REQUESTED")
+  /// The supplying location and the one that asked.
+  fromLocationId String    @map("from_location_id")
+  toLocationId   String    @map("to_location_id")
+  fromBranchId   String?   @map("from_branch_id")
+  toBranchId     String?   @map("to_branch_id")
+  /// [{ itemId, asked, unit, approved, substituteItemId, dispatched, picks, received, short, damaged, excess, rate }]
+  lines          Json
+  priceRule      String    @default("COST") @map("price_rule")
+  percent        Decimal?  @db.Decimal(6, 2)
+  priceListId    String?   @map("price_list_id")
+  note           String?
+  reason         String?
+  requestedById  String?   @map("requested_by_id")
+  /// People who have said yes so far (an emergency may need both managers).
+  approvals      String[]  @default([])
+  approvedById   String?   @map("approved_by_id")
+  dispatchedById String?   @map("dispatched_by_id")
+  receivedById   String?   @map("received_by_id")
+  settledById    String?   @map("settled_by_id")
+  dispatchedAt   DateTime? @map("dispatched_at") @db.Timestamptz(3)
+  receivedAt     DateTime? @map("received_at") @db.Timestamptz(3)
+  /// The delivery challan (same GSTIN) or tax invoice (another GSTIN) raised on dispatch, and the receiving
+  /// entity's purchase bill.
+  billId         String?   @map("bill_id")
+  purchaseBillId String?   @map("purchase_bill_id")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([companyId, number])
+  @@index([companyId, status])
+  @@index([companyId, toLocationId])
+  @@index([companyId, fromLocationId])
+  @@map("stock_transfers")
+}
+
+/// A recipe (bill of materials) of an item. Saving makes a new version; one version is active.
+model Recipe {
+  id          String   @id @default(cuid(2))
+  companyId   String   @map("company_id")
+  itemId      String   @map("item_id")
+  version     Int      @default(1)
+  active      Boolean  @default(true)
+  outputQty   Decimal  @default(1) @map("output_qty") @db.Decimal(14, 3)
+  /// [{ itemId, qty, unit, yieldPct, wastagePct }]
+  lines       Json
+  note        String?
+  createdById String?  @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([itemId, version])
+  @@index([companyId, itemId, active])
+  @@map("recipes")
+}
+
+/// Production at a kitchen: recipe × quantity → consumes ingredients, makes a batch (`productionMachine`).
+model ProductionOrder {
+  id          String    @id @default(cuid(2))
+  companyId   String    @map("company_id")
+  /// PRD/26-27/0001
+  number      String
+  itemId      String    @map("item_id")
+  recipeId    String    @map("recipe_id")
+  locationId  String    @default("") @map("location_id")
+  plannedQty  Decimal   @map("planned_qty") @db.Decimal(14, 3)
+  actualQty   Decimal?  @map("actual_qty") @db.Decimal(14, 3)
+  status      String    @default("PLANNED")
+  batchId     String?   @map("batch_id")
+  /// What was taken: [{ itemId, qty, value }]
+  consumed    Json?
+  note        String?
+  createdById String?   @map("created_by_id")
+  doneById    String?   @map("done_by_id")
+  doneAt      DateTime? @map("done_at") @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([companyId, number])
+  @@index([companyId, status])
+  @@map("production_orders")
+}
+
+/// Goods received (against a purchase order or without one): what came, at what rate, what was rejected.
+model GoodsReceipt {
+  id          String   @id @default(cuid(2))
+  companyId   String   @map("company_id")
+  /// GRN/26-27/0001
+  number      String
+  poId        String?  @map("po_id")
+  vendor      String?
+  partyId     String?  @map("party_id")
+  locationId  String   @default("") @map("location_id")
+  invoiceNo   String?  @map("invoice_no")
+  invoiceDate String?  @map("invoice_date")
+  /// [{ itemId, poLineId, ordered, received, unit, rate, poRate, rejected, batch, expiry, batchId, returned }]
+  lines       Json
+  billId      String?  @map("bill_id")
+  note        String?
+  createdById String?  @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([companyId, number])
+  @@index([companyId, poId])
+  @@map("goods_receipts")
+}
+
+/// The level a location should hold of an item (and the least before it is on the reorder list).
+model ParLevel {
+  id         String   @id @default(cuid(2))
+  companyId  String   @map("company_id")
+  itemId     String   @map("item_id")
+  locationId String   @default("") @map("location_id")
+  par        Decimal  @db.Decimal(14, 3)
+  min        Decimal? @db.Decimal(14, 3)
+
+  @@unique([itemId, locationId])
+  @@index([companyId, locationId])
+  @@map("par_levels")
+}
+
+/// A closing count of a location (`closingCountMachine`). Blind = the counter does not see the system figure.
+model StockCount {
+  id            String    @id @default(cuid(2))
+  companyId     String    @map("company_id")
+  /// CNT/26-27/0001
+  number        String
+  locationId    String    @default("") @map("location_id")
+  /// YYYY-MM-DD
+  date          String
+  blind         Boolean   @default(false)
+  status        String    @default("OPEN")
+  /// [{ itemId, batchId, system, counted, diff, theoretical, pct, flagged }]
+  lines         Json
+  note          String?
+  createdById   String?   @map("created_by_id")
+  submittedById String?   @map("submitted_by_id")
+  decidedById   String?   @map("decided_by_id")
+  submittedAt   DateTime? @map("submitted_at") @db.Timestamptz(3)
+  decidedAt     DateTime? @map("decided_at") @db.Timestamptz(3)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([companyId, number])
+  @@index([companyId, locationId, date])
+  @@map("stock_counts")
+}
+
+/// A price list: for a kind of party, a branch, both or everyone, from a day (to a day).
+model PriceList {
+  id        String    @id @default(cuid(2))
+  companyId String    @map("company_id")
+  name      String
+  partyKind String?   @map("party_kind")
+  branchId  String?   @map("branch_id")
+  /// YYYY-MM-DD
+  from      String
+  to        String?
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  lines PriceListLine[]
+
+  @@index([companyId, active])
+  @@map("price_lists")
+}
+
+model PriceListLine {
+  id        String @id @default(cuid(2))
+  companyId String @map("company_id")
+  listId    String @map("list_id")
+  itemId    String @map("item_id")
+  /// Minor units per priced unit.
+  price     BigInt
+
+  list PriceList @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  @@unique([listId, itemId])
+  @@index([companyId, itemId])
+  @@map("price_list_lines")
+}
+
+/// The rate board: a rate typed for a day (gold, silver, scrap, vegetables) that prices items by weight or unit.
+model RateBoard {
+  id          String   @id @default(cuid(2))
+  companyId   String   @map("company_id")
+  key         String
+  /// YYYY-MM-DD
+  date        String
+  rate        BigInt
+  unit        String?
+  createdById String?  @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([companyId, key, date])
+  @@map("rate_board")
+}

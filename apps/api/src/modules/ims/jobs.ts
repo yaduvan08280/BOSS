@@ -5,6 +5,7 @@ import { claimMark } from '../ea/jobs';
 import { actorFor } from '../work/actor';
 import { imsRulesOf, peoplePayload } from './access';
 import { deadStockAlert, openCycle } from './audit';
+import { places } from './ledger';
 import { tzOf } from './moves';
 import { owsList } from './purchase';
 import { proposeReviews, snapshotAll } from './review';
@@ -30,6 +31,7 @@ export async function imsSweep(db: Db, now = new Date(), onlyCompanyId?: string)
     await openCycle(db, c.id, now);
     await owsReady(db, c.id, now);
     await deadStockAlert(db, c.id, now);
+    if (await claimMark(db, c.id, `ims.expiry:${today}`)) await expiryAlert(db, c.id, today);
   }
   return companies.length;
 }
@@ -61,4 +63,57 @@ async function owsReady(db: Db, companyId: string, now: Date) {
       },
     ),
   );
+}
+
+/**
+ * Once a day (phase 13): batches that have expired or will within the rule's days, told branch by branch to the
+ * branch's managers (and the owner). Nothing is sent for a branch with nothing to say.
+ */
+export async function expiryAlert(db: Db, companyId: string, today: string) {
+  const rules = await imsRulesOf(db, companyId);
+  const days = rules.stock.expiryAlertDays;
+  const limit = new Date(Date.parse(`${today}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
+  const batches = await db.stockBatch.findMany({ where: { companyId, expiry: { not: null, lte: limit } } });
+  if (!batches.length) return 0;
+  const held = await db.stockBalance.findMany({
+    where: { companyId, batchId: { in: batches.map((b) => b.id) }, qty: { gt: 0 } },
+  });
+  if (!held.length) return 0;
+  const all = await places(db, companyId);
+  const items = new Map(
+    (
+      await db.item.findMany({
+        where: { companyId, id: { in: held.map((h) => h.itemId) } },
+        select: { id: true, name: true },
+      })
+    ).map((i) => [i.id, i.name]),
+  );
+  const byBranch = new Map<string, typeof held>();
+  for (const h of held) {
+    const key = all.get(h.locationId)?.branchId ?? '';
+    byBranch.set(key, [...(byBranch.get(key) ?? []), h]);
+  }
+  for (const [branchId, rows] of byBranch) {
+    const first = rows[0]!;
+    const batch = batches.find((b) => b.id === first.batchId)!;
+    await db.$transaction((tx) =>
+      emitEvent(
+        tx,
+        { companyId, actorId: null },
+        {
+          name: 'ims.expiry_soon',
+          entityType: 'ims_rules',
+          entityId: companyId,
+          payload: {
+            branchId: branchId || null,
+            count: rows.length,
+            days,
+            first: `${items.get(first.itemId) ?? ''} ${batch.code}, ${formatLocalDate(batch.expiry!)}`,
+            link: '/ims/locations?tab=expiry',
+          },
+        },
+      ),
+    );
+  }
+  return byBranch.size;
 }

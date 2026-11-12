@@ -11,6 +11,7 @@ import { can, type Actor } from '../work/actor';
  */
 export const PARTY_KINDS = [
   'customer',
+  'dealer',
   'vendor',
   'guest',
   'company',
@@ -20,7 +21,7 @@ export const PARTY_KINDS = [
 ] as const;
 export const partySchema = z.object({
   name: z.string().trim().min(2, 'Enter the name').max(160),
-  kinds: z.array(z.enum(PARTY_KINDS)).min(1, 'Choose what they are').max(7),
+  kinds: z.array(z.enum(PARTY_KINDS)).min(1, 'Choose what they are').max(8),
   mobile: z.string().trim().max(20).nullish(),
   email: z.string().trim().max(160).nullish(),
   taxId: z.string().trim().max(40).nullish(),

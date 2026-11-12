@@ -34,6 +34,27 @@ model Item {
   lastReviewAt DateTime? @map("last_review_at") @db.Timestamptz(3)
   /// The band after the last move (for "turned red / purple" alerts).
   band         String    @default("none")
+  /// Phase 13. QTY | BATCH (batch + expiry) | SERIAL (each piece its own number) | LOT (attributes).
+  tracking     String    @default("QTY")
+  /// BUY (bought, stocked) | MAKE (produced, stocked) | DISH (never stocked: sold through its recipe).
+  made         String    @default("BUY")
+  /// Other units of the item: [{ unit, factor }] — one of it = factor stock units.
+  units        Json?
+  purchaseUnit String?   @map("purchase_unit")
+  /// A second unit kept beside the quantity (pieces and grams); `pricedBy` says which one is priced.
+  secondUnit   String?   @map("second_unit")
+  pricedBy     String    @default("unit") @map("priced_by")
+  barcode      String?
+  brand        String?
+  hsn          String?
+  /// A tax code from the money core's tax rates.
+  taxCode      String?   @map("tax_code")
+  /// Selling price in minor units (food cost % and counter sales when no price list holds the item).
+  sellPrice    BigInt?   @map("sell_price")
+  /// Priced from the rate board: the board's key and the factor (purity) applied to the weight.
+  rateKey      String?   @map("rate_key")
+  rateFactor   Decimal?  @map("rate_factor") @db.Decimal(8, 4)
+  shelfLifeDays Int?     @map("shelf_life_days")
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(3)
@@ -46,6 +67,7 @@ model Item {
 
   @@unique([companyId, code])
   @@index([companyId, band])
+  @@index([companyId, barcode])
   @@map("items")
 }
 
@@ -82,6 +104,16 @@ model StockMove {
   stepId       String?   @map("step_id")
   /// The quantity the line was for: a transfer's `qty` is 0, and a line that waits for approval has moved nothing yet.
   lineQty      Decimal?  @map("line_qty") @db.Decimal(14, 3)
+  /// Phase 13: where it happened ("" = the main store), the batch / piece, the unit that was typed and its
+  /// quantity, the second unit's quantity, the cost value moved (minor units) and FEFO picks [{ batchId, qty }].
+  locationId   String    @default("") @map("location_id")
+  toLocationId String?   @map("to_location_id")
+  batchId      String?   @map("batch_id")
+  unit         String?
+  unitQty      Decimal?  @map("unit_qty") @db.Decimal(14, 3)
+  qty2         Decimal?  @db.Decimal(14, 3)
+  value        BigInt?
+  picks        Json?
   /// A reversal: the move this one undoes. Unique, so a move is undone at most once; nothing is edited or deleted.
   reversesId   String?   @unique @map("reverses_id")
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
@@ -95,6 +127,7 @@ model StockMove {
   @@index([companyId, status])
   @@index([refType, refId])
   @@index([stepId])
+  @@index([companyId, locationId, at])
   @@map("stock_moves")
 }
 
@@ -147,6 +180,8 @@ model PurchaseOrder {
   /// The branch this belongs to (phase 12): the starter's or doer's home branch. Null = group-wide / before branches.
   branchId    String?   @map("branch_id")
   /// PO/26-27/0001
+  /// Phase 13: the location the goods are delivered to ("" = the main store).
+  locationId  String    @default("") @map("location_id")
   number      String
   vendor      String
   /// DRAFT | SENT | PARTLY_RECEIVED | RECEIVED | CANCELLED

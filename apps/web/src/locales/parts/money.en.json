@@ -118,7 +118,8 @@
       "company": "Company",
       "agent": "Agent",
       "franchise": "Franchise",
-      "transporter": "Transporter"
+      "transporter": "Transporter",
+      "dealer": "Dealer"
     },
     "owed": {
       "title": "Money owed",

@@ -112,6 +112,7 @@ export const BRANCH_FREE_MODELS: Record<string, string> = {
   BranchStay: 'set-up data: where a person works from which day',
   AttendanceDay: 'attendance is listed by HR scope (HR all, an HOD their team, everyone themselves)',
   PaymentMode: 'set-up data: how money is taken at a branch',
+  PriceList: 'set-up data: prices are read by whoever sells; a list for a branch is chosen by the price rule',
   ModuleBranchSetting: 'set-up data: a branch’s own flow-designer people',
 };
 

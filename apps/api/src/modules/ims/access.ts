@@ -71,6 +71,7 @@ export async function saveImsRules(db: Db, actor: Actor, input: unknown) {
   const patch = imsRulesPatchSchema.parse(input);
   const current = await imsRulesOf(db, actor.companyId);
   const rules = imsRulesSchema.parse({
+    stock: { ...current.stock, ...patch.stock },
     max: { ...current.max, ...patch.max },
     ows: { ...current.ows, ...patch.ows },
     turns: { ...current.turns, ...patch.turns },
