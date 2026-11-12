@@ -4,7 +4,8 @@ import { AppError } from '../../lib/errors';
 import { emitEvent } from '../../lib/events';
 import type { Actor } from '../work/actor';
 import { attendanceDate, auditPunchFix, evaluateDay, punchWindow, settleDay } from './attendance';
-import { canDecideFor, hrPerson, hrRulesOf, hrScope, personRules } from './people';
+import { canDecideFor, decidable, hrPerson, hrRulesOf, hrScope, personRules } from './people';
+import { chainFor } from '../branches/approvals';
 
 const tzOf = async (db: Db, companyId: string) =>
   (await db.company.findUniqueOrThrow({ where: { id: companyId }, select: { timezone: true } })).timezone;
@@ -122,6 +123,7 @@ export async function requestCorrection(
       'VALIDATION_FAILED',
       `Only ${rules.punches.correctionsPerMonth} corrections a month are allowed; this month's are used`,
     );
+  const route = await chainFor(db, actor.companyId, 'hr.correction', { requesterId: p.id });
   const row = await db.$transaction(async (tx) => {
     const c = await tx.correctionRequest.create({
       data: {
@@ -146,6 +148,8 @@ export async function requestCorrection(
           time: (c.inAt ?? c.outAt)!.toISOString(),
           reason: `Correction asked: ${input.reason}`,
           link: '/hr/attendance?tab=corrections',
+          // With an approval route, its first people are told in the HOD's place.
+          ...(route ? { approverIds: route.first } : {}),
         },
       },
     );
@@ -155,23 +159,18 @@ export async function requestCorrection(
 }
 
 export async function listCorrections(db: Db, actor: Actor) {
-  const s = await hrScope(db, actor);
   const [mine, toDecide] = await Promise.all([
     db.correctionRequest.findMany({
       where: { userId: actor.userId },
       orderBy: { createdAt: 'desc' },
       take: 50,
     }),
-    s.all || s.team.length
-      ? db.correctionRequest.findMany({
-          where: {
-            companyId: actor.companyId,
-            status: 'PENDING',
-            userId: { not: actor.userId, ...(s.all ? {} : { in: s.team }) },
-          },
-          orderBy: { createdAt: 'asc' },
-        })
-      : [],
+    decidable(db, actor, 'hr.correction', (userId) =>
+      db.correctionRequest.findMany({
+        where: { companyId: actor.companyId, status: 'PENDING', userId },
+        orderBy: { createdAt: 'asc' },
+      }),
+    ),
   ]);
   return { mine, toDecide };
 }
@@ -180,7 +179,7 @@ export async function decideCorrection(db: Db, actor: Actor, id: string, approve
   const c = await db.correctionRequest.findFirst({ where: { id, companyId: actor.companyId } });
   if (!c) throw new AppError(404, 'NOT_FOUND', 'Correction not found');
   if (c.status !== 'PENDING') throw new AppError(409, 'CONFLICT', 'This was already decided');
-  if (!(await canDecideFor(db, actor, c.userId)))
+  if (!(await canDecideFor(db, actor, c.userId, { kind: 'hr.correction', askedAt: c.createdAt })))
     throw new AppError(403, 'FORBIDDEN', 'Only their HOD or HR decides this');
   await db.$transaction(async (tx) => {
     await tx.correctionRequest.update({

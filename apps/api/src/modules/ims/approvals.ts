@@ -3,7 +3,7 @@ import { adjustMachine, transition, type MoveType } from '@mono/shared';
 import { writeAudit } from '../../lib/audit';
 import { AppError, notFound } from '../../lib/errors';
 import type { Actor } from '../work/actor';
-import { canApprove, ctxOf, imsRulesOf } from './access';
+import { canApprove, ctxOf, imsRulesOf, routedApprove } from './access';
 import { applyMove } from './moves';
 import { noteStepDecision } from './step-reversal';
 
@@ -24,7 +24,8 @@ export async function decideAdjustment(
   });
   if (!move) throw notFound('Adjustment');
   const rules = await imsRulesOf(db, actor.companyId);
-  if (!(await canApprove(db, actor, rules)))
+  const routed = (await routedApprove(db, actor, move)) !== null;
+  if (!(await canApprove(db, actor, rules, move)))
     throw new AppError(403, 'FORBIDDEN', "You aren't one of the approvers for stock adjustments");
   const to = transition(adjustMachine, {
     from: move.status as 'PENDING',
@@ -38,7 +39,7 @@ export async function decideAdjustment(
     // "Every approver": wait for all listed approvers (the owner's yes, when not listed, is final).
     const listed = rules.people.approverIds;
     const missing = listed.filter((a) => !approvals.includes(a)).length;
-    if (approve && !rules.people.anyOne && listed.includes(actor.userId) && missing > 0) {
+    if (!routed && approve && !rules.people.anyOne && listed.includes(actor.userId) && missing > 0) {
       await tx.stockMove.update({ where: { id }, data: { approvals } });
       await writeAudit(tx, ctx, {
         action: 'ims.adjust_approved_part',

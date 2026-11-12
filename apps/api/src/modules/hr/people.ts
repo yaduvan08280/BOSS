@@ -1,3 +1,4 @@
+import { hasRoute, mayDecide } from '../branches/approvals';
 import type { Db, Tx } from '@mono/db';
 import { DEFAULT_HR_RULES, hrRulesSchema, rulesFor, type HrRules, type WorkPattern } from '@mono/shared';
 import { AppError } from '../../lib/errors';
@@ -93,8 +94,41 @@ export async function hrScope(db: Db | Tx, actor: Actor): Promise<{ all: boolean
   return { all: false, team: await teamOf(db, actor.companyId, actor.userId) };
 }
 
-export async function canDecideFor(db: Db | Tx, actor: Actor, userId: string): Promise<boolean> {
+type Routed = { kind: 'hr.leave' | 'hr.correction'; askedAt: Date };
+
+/**
+ * May this person decide that person's request? With an approval route set by the owner (phase 12) the route
+ * decides; without one, HR decides any and an HOD their team's.
+ */
+export async function canDecideFor(
+  db: Db | Tx,
+  actor: Actor,
+  userId: string,
+  routed?: Routed,
+): Promise<boolean> {
   if (userId === actor.userId) return false;
+  if (routed) {
+    const byRoute = await mayDecide(db, actor, routed.kind, { requesterId: userId, askedAt: routed.askedAt });
+    if (byRoute !== null) return byRoute;
+  }
   const s = await hrScope(db, actor);
   return s.all || (can(actor, 'hr.approve') && s.team.includes(userId));
+}
+
+/** The waiting requests of a kind this person may decide (never their own). */
+export async function decidable<T extends { userId: string; createdAt: Date }>(
+  db: Db | Tx,
+  actor: Actor,
+  kind: Routed['kind'],
+  pending: (where: { not: string; in?: string[] }) => Promise<T[]>,
+): Promise<T[]> {
+  if (await hasRoute(db, actor.companyId, kind)) {
+    const out: T[] = [];
+    for (const row of await pending({ not: actor.userId }))
+      if (await canDecideFor(db, actor, row.userId, { kind, askedAt: row.createdAt })) out.push(row);
+    return out;
+  }
+  const s = await hrScope(db, actor);
+  if (!s.all && !s.team.length) return [];
+  return pending({ not: actor.userId, ...(s.all ? {} : { in: s.team }) });
 }

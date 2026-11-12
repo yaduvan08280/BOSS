@@ -2,6 +2,8 @@ import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import {
+  APPROVAL_KINDS,
+  approvalRouteSchema,
   departmentHeadSchema,
   entitySchema,
   locationSchema,
@@ -10,6 +12,7 @@ import {
   regionSchema,
 } from '@mono/shared';
 import { actorOf } from '../delegation/routes';
+import { chainFor, deleteRoute, listRoutes, saveRoute } from './approvals';
 import {
   deleteEntity,
   deleteLocation,
@@ -90,5 +93,38 @@ export async function branchRoutes(app: FastifyInstance) {
     '/api/branches/department-heads',
     { ...view(), schema: { tags, body: departmentHeadSchema } },
     async (q) => setDepartmentHead(db, actorOf(q), q.body),
+  );
+  // Approval routing (decision 14): the owner sets who approves what, for the group, an entity or a branch.
+  r.get('/api/branches/approvals', { ...view(), schema: { tags } }, async (q) => listRoutes(db, actorOf(q)));
+  r.put(
+    '/api/branches/approvals',
+    { ...signedIn(), schema: { tags, body: approvalRouteSchema } },
+    async (q) => saveRoute(db, actorOf(q), q.body),
+  );
+  r.delete('/api/branches/approvals/:id', { ...signedIn(), schema: { tags, params: idParam } }, async (q) =>
+    deleteRoute(db, actorOf(q), q.params.id),
+  );
+  /** "Who would decide?" — the ladder for one person's request, to check a route before relying on it. */
+  r.get(
+    '/api/branches/approvals/preview',
+    {
+      ...view(),
+      schema: {
+        tags,
+        querystring: z.object({
+          kind: z.enum(APPROVAL_KINDS),
+          userId: z.string().max(40),
+          amount: z.coerce.number().min(0).optional(),
+        }),
+      },
+    },
+    async (q) => {
+      const actor = actorOf(q);
+      const chain = await chainFor(db, actor.companyId, q.query.kind, {
+        requesterId: q.query.userId,
+        amount: q.query.amount,
+      });
+      return { chain };
+    },
   );
 }

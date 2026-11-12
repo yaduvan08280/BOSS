@@ -13,10 +13,11 @@ import {
 import { writeAudit } from '../../lib/audit';
 import { AppError, notFound } from '../../lib/errors';
 import { emitEvent } from '../../lib/events';
-import type { Actor } from '../work/actor';
+import { ownerOf, type Actor } from '../work/actor';
 import { companyCalendar } from './calendar';
 import { balancesOf, ensureLeaveTypes, period } from './balance';
 import { cancelCovers, runCovers, scheduleCovers } from './cover';
+import { chainFor, hasRoute } from '../branches/approvals';
 import { canDecideFor, hrPerson, hrRulesOf, isHr, type HrPerson } from './people';
 import { openWork, suggestionsFor, type WorkItem } from './work';
 
@@ -149,6 +150,9 @@ export async function applyLeave(db: Db, actor: Actor, input: LeaveRequestInput)
   });
   if (buddies.length !== chosen.size)
     throw new AppError(400, 'VALIDATION_FAILED', 'A chosen Buddy is not an active person');
+  // The owner's approval route, when there is one: its first person is asked (else the HOD).
+  const route = await chainFor(db, actor.companyId, 'hr.leave', { requesterId: p.id });
+  const askId = route ? (route.first[0] ?? (await ownerOf(db, actor.companyId))) : p.hodId;
   const leave = await db.$transaction(async (tx) => {
     const row = await tx.leaveRequest.create({
       data: {
@@ -161,7 +165,7 @@ export async function applyLeave(db: Db, actor: Actor, input: LeaveRequestInput)
         half: input.half ?? null,
         days,
         reason: input.reason,
-        approverId: p.hodId,
+        approverId: askId,
         work: items.map(({ key, entityType, entityId, title }) => ({ key, entityType, entityId, title })),
       },
     });
@@ -184,7 +188,8 @@ export async function applyLeave(db: Db, actor: Actor, input: LeaveRequestInput)
           buddy: chosen.size ? `${chosen.size} asked` : items.length ? 'none yet' : 'not needed',
           link: `/hr/leave?tab=approve&leave=${row.id}`,
           telegramActions: ['leaveok', 'leaveno'],
-          telegramActionsFor: p.hodId,
+          telegramActionsFor: askId,
+          ...(route ? { approverIds: route.first.length ? route.first : [askId] } : {}),
         },
       },
     );
@@ -272,8 +277,11 @@ export async function decideLeave(db: Db, actor: Actor, id: string, ok: boolean,
   const leave = await db.leaveRequest.findFirst({ where: { id, companyId: actor.companyId } });
   if (!leave) throw notFound('Leave request');
   const roles: ('approver' | 'hr')[] = [];
-  if (await canDecideFor(db, actor, leave.userId)) roles.push('approver');
-  if (leave.userId !== actor.userId && (await isHr(db, actor))) roles.push('hr');
+  const routed = await hasRoute(db, actor.companyId, 'hr.leave');
+  if (await canDecideFor(db, actor, leave.userId, { kind: 'hr.leave', askedAt: leave.createdAt }))
+    roles.push('approver');
+  // Without a route HR may decide any leave; with one, the route (and the owner) decides.
+  if (!routed && leave.userId !== actor.userId && (await isHr(db, actor))) roles.push('hr');
   transition(leaveMachine, {
     from: leave.status as 'PENDING',
     action: ok ? 'approve' : 'reject',

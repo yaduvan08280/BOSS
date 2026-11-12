@@ -6,7 +6,7 @@ import { writeAudit } from '../../lib/audit';
 import { AppError, notFound } from '../../lib/errors';
 import { can, type Actor } from '../work/actor';
 import { ensureLeaveTypes } from './balance';
-import { hrRulesOf, hrScope } from './people';
+import { decidable, hrRulesOf } from './people';
 
 const needAdmin = (actor: Actor) => {
   if (!can(actor, 'hr.admin')) throw new AppError(403, 'FORBIDDEN', 'Only HR admins change this');
@@ -202,19 +202,14 @@ export async function saveLeaveType(
 
 /** The leave screen's lists: my requests, those I decide, and Buddy requests waiting on me. */
 export async function leaveLists(db: Db, actor: Actor) {
-  const scope = await hrScope(db, actor);
   const [mine, toDecide, asks] = await Promise.all([
     db.leaveRequest.findMany({ where: { userId: actor.userId }, orderBy: { createdAt: 'desc' }, take: 50 }),
-    scope.all || scope.team.length
-      ? db.leaveRequest.findMany({
-          where: {
-            companyId: actor.companyId,
-            status: 'PENDING',
-            userId: { not: actor.userId, ...(scope.all ? {} : { in: scope.team }) },
-          },
-          orderBy: { from: 'asc' },
-        })
-      : [],
+    decidable(db, actor, 'hr.leave', (userId) =>
+      db.leaveRequest.findMany({
+        where: { companyId: actor.companyId, status: 'PENDING', userId },
+        orderBy: { from: 'asc' },
+      }),
+    ),
     db.buddyRequest.findMany({ where: { buddyId: actor.userId }, orderBy: { createdAt: 'desc' }, take: 30 }),
   ]);
   const ids = [...mine, ...toDecide].map((l) => l.id);

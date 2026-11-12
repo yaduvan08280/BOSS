@@ -700,8 +700,18 @@ export const RECIPIENTS = [
   'owner',
   'hr',
   'actor',
+  'branch_manager',
+  'area_manager',
+  'branch_hr',
+  'department_head',
 ] as const;
-export const SPECIAL_RECIPIENTS = ['hod', 'owner', 'hr', 'actor'] as const;
+/**
+ * People of a place (phase 12), read from the branch and department of the person the event is about: the branch's
+ * managers, the area managers above it, the branch's HR person, the department's head at that branch.
+ */
+export const PLACE_RECIPIENTS = ['branch_manager', 'area_manager', 'branch_hr', 'department_head'] as const;
+export type PlaceRecipient = (typeof PLACE_RECIPIENTS)[number];
+export const SPECIAL_RECIPIENTS = ['hod', 'owner', 'hr', 'actor', ...PLACE_RECIPIENTS] as const;
 
 export const REMIND_AT = [
   'day_before',

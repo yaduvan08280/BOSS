@@ -17,6 +17,7 @@ import { emitEvent } from '../../lib/events';
 import { createTask, proofOf } from '../delegation/service';
 import { attachUploads, can, checkPerson, hodFor, ownerOf, teamOf, type Actor } from '../work/actor';
 import { moduleSettings } from '../work/settings';
+import { chainFor } from '../branches/approvals';
 import { homeBranchOf } from '../branches/reach';
 
 const short = (s: string) => (s.length > 80 ? `${s.slice(0, 77)}…` : s);
@@ -99,8 +100,13 @@ export async function createSlip(db: Db, actor: Actor, input: SlipCreateInput) {
     const s = await moduleSettings(tx, actor.companyId, 'slip');
     checkSolutions(input.solutions, s);
     const owner = await ownerOf(tx, actor.companyId);
-    const receiverId = s.receiverUserId ?? (await hodFor(tx, actor.companyId, actor.userId)) ?? owner;
-    const approverId = s.approverUserId ?? owner;
+    // The owner's approval route (phase 12), when set: its first step screens the slip, the next one decides.
+    const route = await chainFor(tx, actor.companyId, 'slip', { requesterId: actor.userId });
+    const held = route?.steps.filter((x) => x.userIds.length).map((x) => x.userIds[0]!) ?? [];
+    const receiverId = route
+      ? (held[0] ?? owner)
+      : (s.receiverUserId ?? (await hodFor(tx, actor.companyId, actor.userId)) ?? owner);
+    const approverId = route ? (held[1] ?? owner) : (s.approverUserId ?? owner);
     if (!receiverId || !approverId)
       throw new AppError(409, 'CONFLICT', 'Set a receiver and an approver first');
     const status = slipEntryStatus(slipCtx(s));

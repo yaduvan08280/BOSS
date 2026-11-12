@@ -63,10 +63,10 @@ Written 12/11/2026 from plan §3 and the answers to decisions 9–14. Stages: A 
 | G6 | A | An API key and a webhook carry their maker's reach | §3.3 | `apps/api/src/modules/branches/branches-work.test.ts` (a scheduled report also runs with its maker's reach — code only, no test yet) |
 | G7 | A | Branch switcher in the top bar ("All my branches" or one) for people with more than one branch | §3.3 | |
 | G8 | A | A branch manager adds and manages only their branch's people; group settings stay with owner / group admins | §3.3 | |
-| G9 | A | Approval routing is a setting the owner controls: an ordered chain per module and request type, with overrides per entity or branch; each step can skip if empty, skip the requester, or go up after N hours | §3.2, decision 14 | |
-| G10 | A | Leave, corrections, stock adjustments, slips and ticket escalation follow the configured chain | §3.2 | |
-| G11 | A | New notification recipients: branch manager, area manager, branch HR, department head at this branch | §3.2 | |
-| G12 | A | The head of a department can be set per branch or group-wide | §3.2 | |
+| G9 | A | Approval routing is a setting the owner controls: an ordered chain per module and request type, with overrides per entity or branch; each step can skip if empty, skip the requester, or go up after N hours | §3.2, decision 14 | `apps/api/src/modules/branches/approvals.test.ts` (API and rules; the set-up screen is still to build). One decision decides; "from this amount" starts the request at that step; the owner can always decide |
+| G10 | A | Leave, corrections, stock adjustments, slips and ticket escalation follow the configured chain | §3.2 | `apps/api/src/modules/branches/approvals.test.ts` (leave, stock adjustment, slip, ticket escalation by test; corrections share the leave code path and have no test of their own yet) |
+| G11 | A | New notification recipients: branch manager, area manager, branch HR, department head at this branch | §3.2 | `apps/worker/src/notify/places.test.ts` |
+| G12 | A | The head of a department can be set per branch or group-wide | §3.2 | `apps/worker/src/notify/places.test.ts` (per-branch head, else the group-wide head); set through `PUT /api/branches/department-heads` (screen still to build) |
 | G13 | A | Every task, checklist run, slip, ticket, process record, document, PO and CRM order carries a branch (the starter's, or a field) | §3.10 | `apps/api/src/modules/branches/branches-work.test.ts` (process record, document, ticket, slip, record, imported record, checklist run, PO, CRM order); task (`branches.test.ts`). "Or a field" on a start form is not built yet |
 | G14 | A | Process step doers are picked inside the record's branch first, then the fallback (region, group) — never silently someone at another outlet | §3.10 | |
 | G15 | A | One checklist template makes a run per branch, done by that branch's people at that branch's due time | §3.10 | |

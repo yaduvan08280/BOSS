@@ -6,7 +6,7 @@ import { writeAudit } from '../../lib/audit';
 import { AppError, notFound } from '../../lib/errors';
 import { emitEvent } from '../../lib/events';
 import { can, type Actor } from '../work/actor';
-import { canApprove, ctxOf, imsRulesOf, need, peoplePayload } from './access';
+import { canApprove, ctxOf, imsRulesOf, need, peoplePayload, routedApprovers } from './access';
 
 export const tzOf = async (db: Db | Tx, companyId: string) =>
   (await db.company.findUniqueOrThrow({ where: { id: companyId }, select: { timezone: true } })).timezone;
@@ -209,6 +209,7 @@ export async function postMove(db: Db, actor: Actor, input: z.input<typeof moveS
           createdById: actor.userId,
         },
       });
+      const routedTo = await routedApprovers(tx, actor.companyId, move);
       await writeAudit(tx, ctx, {
         action: 'ims.adjust_asked',
         entityType: 'stock_move',
@@ -221,6 +222,8 @@ export async function postMove(db: Db, actor: Actor, input: z.input<typeof moveS
         entityId: move.id,
         payload: {
           ...peoplePayload(rules),
+          // With an approval route, its first people are asked in place of the listed approvers.
+          ...(routedTo ? { approverIds: routedTo } : {}),
           item: item.name,
           qty: `${m.qty > 0 ? '+' : ''}${show(m.qty)} ${item.unit}`,
           reason: m.reason!.toLowerCase(),
@@ -293,7 +296,9 @@ export async function listMoves(db: Db, actor: Actor, q: z.infer<typeof sheetQue
     ]),
   );
   const rules = await imsRulesOf(db, actor.companyId);
-  const mayApprove = await canApprove(db, actor, rules);
+  const pending = moves.filter((m) => m.status === 'PENDING');
+  const may = new Map<string, boolean>();
+  for (const m of pending) may.set(m.id, await canApprove(db, actor, rules, m));
   return moves.map((m) => ({
     id: m.id,
     at: m.at,
@@ -316,7 +321,7 @@ export async function listMoves(db: Db, actor: Actor, q: z.infer<typeof sheetQue
     decidedBy: m.decidedById ? (names.get(m.decidedById) ?? null) : null,
     canDecide:
       m.status === 'PENDING' &&
-      mayApprove &&
+      may.get(m.id) === true &&
       !(rules.people.neverOwn && m.createdById === actor.userId) &&
       !m.approvals.includes(actor.userId),
   }));

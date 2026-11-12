@@ -1,6 +1,7 @@
 import type { Db } from '@mono/db';
 import { ticketEscalation } from '@mono/shared';
 import { emitEvent } from '../../lib/events';
+import { chainFor } from '../branches/approvals';
 import { hodFor, ownerOf } from '../work/actor';
 import { moduleSettings } from '../work/settings';
 import { logTicket, ticketPayload } from './service';
@@ -49,9 +50,20 @@ export async function sweepTickets(db: Db, now = new Date()): Promise<{ escalate
 
     const { level, reason } = ticketEscalation(t, s, now);
     if (level <= t.escalationLevel) continue;
-    const hod = await hodFor(db, t.companyId, t.solverId);
-    const to =
-      level === 1 ? [t.coordinatorId ?? hod] : [hod, await ownerOf(db, t.companyId), t.coordinatorId];
+    // The owner's approval route (phase 12), when set: level 1 goes to its first step, level 2 to the next too.
+    const route = await chainFor(db, t.companyId, 'ticket', {
+      requesterId: t.solverId,
+      branchId: t.branchId,
+    });
+    const held = route?.steps.filter((x) => x.userIds.length).map((x) => x.userIds) ?? [];
+    const hod = route ? null : await hodFor(db, t.companyId, t.solverId);
+    const to = route
+      ? level === 1
+        ? [...(held[0] ?? []), t.coordinatorId]
+        : [...(held[0] ?? []), ...(held[1] ?? [await ownerOf(db, t.companyId)]), t.coordinatorId]
+      : level === 1
+        ? [t.coordinatorId ?? hod]
+        : [hod, await ownerOf(db, t.companyId), t.coordinatorId];
     const userIds = [...new Set(to.filter((x): x is string => Boolean(x)))];
     const why =
       reason === 'noReply' ? `no reply in ${s.firstReplyHours} h` : 'the planned fix time has passed';

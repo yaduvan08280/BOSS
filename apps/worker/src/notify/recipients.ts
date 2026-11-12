@@ -1,4 +1,6 @@
+import { placeHolders } from '@mono/api/services';
 import type { Db } from '@mono/db';
+import { PLACE_RECIPIENTS, type PlaceRecipient } from '@mono/shared';
 
 export type Person = {
   id: string;
@@ -23,6 +25,7 @@ const personSelect = {
 } as const;
 const active = { deletedAt: null, status: 'ACTIVE' as const };
 
+const isPlace = (key: string): key is PlaceRecipient => (PLACE_RECIPIENTS as readonly string[]).includes(key);
 const ids = (v: unknown): string[] =>
   Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : typeof v === 'string' ? [v] : [];
 
@@ -75,8 +78,16 @@ export async function resolveRecipients(
     else if (key === 'actor') {
       if (actorId) wanted.add(actorId);
     } else if (key === 'owner') extra.push(...(await owners(db, companyId)));
-    else if (key === 'hod') extra.push(...(await hodOf(db, companyId, subjectId(payload, actorId))));
-    else if (key === 'hr') {
+    else if (key === 'hod') {
+      // An approval route (phase 12) names who is asked in the HOD's place.
+      const routed = ids(payload.approverIds);
+      if (routed.length) for (const id of routed) wanted.add(id);
+      else extra.push(...(await hodOf(db, companyId, subjectId(payload, actorId))));
+    } else if (isPlace(key)) {
+      const branchId = typeof payload.branchId === 'string' ? payload.branchId : null;
+      for (const id of await placeHolders(db, companyId, key, subjectId(payload, actorId), branchId))
+        wanted.add(id);
+    } else if (key === 'hr') {
       const hr = await db.department.findFirst({
         where: { companyId, deletedAt: null, name: { equals: 'HR', mode: 'insensitive' } },
         select: { hodUserId: true },

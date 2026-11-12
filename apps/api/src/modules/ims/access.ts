@@ -1,3 +1,4 @@
+import { chainFor, mayDecide } from '../branches/approvals';
 import type { Db, Tx } from '@mono/db';
 import { DEFAULT_IMS_RULES, imsRulesPatchSchema, imsRulesSchema, type ImsRules } from '@mono/shared';
 import { writeAudit } from '../../lib/audit';
@@ -25,11 +26,34 @@ export async function isOwner(db: Db | Tx, actor: Actor) {
   return u?.role.key === 'OWNER';
 }
 
+export type RoutedMove = { createdById: string | null; qty: unknown; rate: bigint | null; createdAt: Date };
+const routeRequest = (m: RoutedMove) => ({
+  requesterId: m.createdById ?? '',
+  // Rupees: the quantity at the item's rate.
+  amount: (Math.abs(Number(m.qty)) * Number(m.rate ?? 0n)) / 100,
+  askedAt: m.createdAt,
+});
+
+/**
+ * The owner's approval route for stock adjustments (phase 12), when one is set: true / false for this person,
+ * null when there is no route and the inventory rules below decide.
+ */
+export const routedApprove = (db: Db | Tx, actor: Actor, move: RoutedMove) =>
+  mayDecide(db, actor, 'ims.adjustment', routeRequest(move));
+
+/** The people a new adjustment is sent to under the route (null without one). */
+export async function routedApprovers(db: Db | Tx, companyId: string, move: RoutedMove) {
+  const chain = await chainFor(db, companyId, 'ims.adjustment', routeRequest(move));
+  return chain ? chain.first : null;
+}
+
 /**
  * Who may approve a stock adjustment (§10.2): the listed approvers (anyone with ims.approve when none are
  * listed), and the owner always when the rule says so. "Never their own" is the machine's guard.
  */
-export async function canApprove(db: Db | Tx, actor: Actor, rules: ImsRules) {
+export async function canApprove(db: Db | Tx, actor: Actor, rules: ImsRules, move?: RoutedMove) {
+  const byRoute = move ? await routedApprove(db, actor, move) : null;
+  if (byRoute !== null) return byRoute;
   const p = rules.people;
   if (p.ownerAlways && (await isOwner(db, actor))) return true;
   if (p.approverIds.length) return p.approverIds.includes(actor.userId);
