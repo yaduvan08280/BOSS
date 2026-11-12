@@ -1,4 +1,5 @@
 import { currentReach, type Db, type Reach, type Tx } from '@mono/db';
+import { localDate } from '@mono/shared';
 import { AppError } from '../../lib/errors';
 
 export const REACHES = ['own', 'branches', 'entity', 'group'] as const;
@@ -30,6 +31,19 @@ export async function branchesOf(db: Db | Tx, companyId: string, userId: string)
   ]);
   const ids = new Set<string>();
   if (user?.branchId) ids.add(user.branchId);
+  // Lent to another branch today: they are part of it for those days (its lists, its cover board, its gate).
+  const loans = await db.branchLoan.findMany({
+    where: { companyId, userId },
+    select: { branchId: true, from: true, to: true },
+  });
+  if (loans.length) {
+    const company = await db.company.findUniqueOrThrow({
+      where: { id: companyId },
+      select: { timezone: true },
+    });
+    const today = localDate(new Date(), company.timezone);
+    for (const l of loans) if (l.from <= today && l.to >= today) ids.add(l.branchId);
+  }
   for (const w of works) ids.add(w.branchId);
   for (const m of manages) if (m.branchId) ids.add(m.branchId);
   const regions = manages.flatMap((m) => (m.regionId ? [m.regionId] : []));

@@ -14,6 +14,7 @@ export const COMPANY_SCOPED_MODELS = new Set([
   'ModuleSetting',
   'ModuleBranchSetting',
   'BranchStay',
+  'BranchLoan',
   'Attachment',
   'Session',
   'AuditLog',

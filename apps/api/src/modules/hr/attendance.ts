@@ -1,7 +1,9 @@
+import { branchesOf } from '../branches/reach';
 import { branchHistory } from '../branches/history';
 import type { Db, Tx } from '@mono/db';
 import {
   addDays,
+  branchDetailsSchema,
   checkPunchPlace,
   computeDay,
   localDate,
@@ -138,22 +140,32 @@ export async function punch(db: Db, actor: Actor, input: PunchInput) {
     at < new Date(now.getTime() - 24 * 3600_000)
   )
     throw new AppError(400, 'VALIDATION_FAILED', 'That punch time is not possible');
-  const branch = await db.branch.findFirst({
+  // Every place this person may punch from (phase 12): each geofence of each of their branches — home, the ones
+  // they also work at or manage. Floating staff and managers punch at any of them without a flag.
+  const mine = p.branchId ? await branchesOf(db, actor.companyId, p.id) : [];
+  const branches = await db.branch.findMany({
     where: {
       companyId: actor.companyId,
       deletedAt: null,
-      lat: { not: null },
-      radiusM: { not: null },
-      ...(p.branchId ? { id: p.branchId } : { isDefault: true }),
+      ...(mine.length ? { id: { in: mine } } : { isDefault: true }),
     },
   });
-  const place = checkPunchPlace(
-    rules.punches,
-    branch ? { lat: Number(branch.lat), lng: Number(branch.lng), radiusM: branch.radiusM! } : null,
+  // The home branch first: with no match, its answer is the one that counts.
+  branches.sort((x, y) => Number(y.id === p.branchId) - Number(x.id === p.branchId));
+  const fences = branches.flatMap((br) => [
+    ...(br.lat !== null && br.radiusM !== null
+      ? [{ branchId: br.id, lat: Number(br.lat), lng: Number(br.lng), radiusM: br.radiusM }]
+      : []),
+    ...(branchDetailsSchema.safeParse(br.details).data?.fences ?? []).map((f) => ({ branchId: br.id, ...f })),
+  ]);
+  const here =
     input.lat != null && input.lng != null
       ? { lat: input.lat, lng: input.lng, accuracy: input.accuracy }
-      : null,
-  );
+      : null;
+  const tries = fences.map((f) => ({ f, r: checkPunchPlace(rules.punches, f, here) }));
+  const hit = tries.find((x) => x.r.allow && !x.r.flag) ?? tries[0];
+  const place = hit ? hit.r : checkPunchPlace(rules.punches, null, here);
+  const branch = hit ? { id: hit.f.branchId } : null;
   if (!place.allow) throw new AppError(400, 'VALIDATION_FAILED', `Punch not allowed: ${place.flag}`);
   if (rules.punches.selfie && !input.selfieId)
     throw new AppError(400, 'VALIDATION_FAILED', 'Take a selfie to punch');

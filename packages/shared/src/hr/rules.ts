@@ -48,9 +48,18 @@ export const hrRulesSchema = z.object({
       needsBuddy: z.enum(['any', 'fullDay', 'days']).default('any'),
       needsBuddyDays: z.number().min(1).max(30).default(2),
       otherDepartment: z.boolean().default(false),
+      /** Phase 12: a Buddy from another branch. Yes by default (as before branches); No keeps cover inside the branch. */
+      otherBranch: z.boolean().default(true),
       maxCover: z.number().int().min(1).max(10).default(3),
     })
-    .default({ noBuddy: 'warn', needsBuddy: 'any', needsBuddyDays: 2, otherDepartment: false, maxCover: 3 }),
+    .default({
+      noBuddy: 'warn',
+      needsBuddy: 'any',
+      needsBuddyDays: 2,
+      otherDepartment: false,
+      otherBranch: true,
+      maxCover: 3,
+    }),
   /** 5. Buddy's answer */
   buddyAnswer: z
     .object({

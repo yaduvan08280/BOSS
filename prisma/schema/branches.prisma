@@ -106,6 +106,25 @@ model BranchStay {
   @@map("branch_stays")
 }
 
+/// A person lent to another branch for some days (phase 12): they show on its lists and cover board, may punch
+/// there, and their cost for those days goes to that branch.
+model BranchLoan {
+  id          String   @id @default(cuid(2))
+  companyId   String   @map("company_id")
+  userId      String   @map("user_id")
+  branchId    String   @map("branch_id")
+  /// YYYY-MM-DD, both days included.
+  from        String
+  to          String
+  note        String?
+  createdById String?  @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([companyId, userId])
+  @@index([companyId, branchId, from])
+  @@map("branch_loans")
+}
+
 model DepartmentHead {
   id           String   @id @default(cuid(2))
   companyId    String   @map("company_id")

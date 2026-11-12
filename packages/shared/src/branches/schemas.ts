@@ -67,6 +67,18 @@ export const branchDetailsSchema = z.object({
   phone: text(40).nullish(),
   seriesCode: seriesCode.nullish(),
   licences: z.array(licenceSchema).max(20).optional(),
+  /** More places people may punch from at this branch (a second gate, the staff entrance, a banquet lawn). */
+  fences: z
+    .array(
+      z.object({
+        name: z.string().trim().min(1).max(60),
+        lat: z.number().min(-90).max(90),
+        lng: z.number().min(-180).max(180),
+        radiusM: z.number().int().min(10).max(5000),
+      }),
+    )
+    .max(10)
+    .optional(),
 });
 export type BranchDetails = z.infer<typeof branchDetailsSchema>;
 

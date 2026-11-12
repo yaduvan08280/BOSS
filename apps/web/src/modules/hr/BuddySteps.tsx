@@ -55,6 +55,13 @@ export function StepBuddy({ rules, set }: Props) {
           onChange={(v) => up({ otherDepartment: v })}
         />
       </Question>
+      <Question label={t('hrBranch.otherBranch')}>
+        <YesNo
+          label={t('hrBranch.otherBranch')}
+          value={b.otherBranch}
+          onChange={(v) => up({ otherBranch: v })}
+        />
+      </Question>
       <Question label={t('hr.w.maxCover')}>
         <NumberChoice
           label={t('hr.w.maxCover')}

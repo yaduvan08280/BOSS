@@ -112,4 +112,104 @@ describe('people across branches (phase 12, stage B)', () => {
     expect(await stamp(`${lm.month}-05`)).toBe(g.b.rooftop.id);
     expect(await stamp(`${lm.month}-20`)).toBe(g.b.lake.id);
   });
+  it('G27: people punch at any of their branches, and a branch may have more than one place to punch from', async () => {
+    const w = await world(ctx.app);
+    const { g } = await twoOutlets(ctx.prisma, w);
+    const place = (branchId: string, lat: number, lng: number, details: object = {}) =>
+      ctx.prisma.branch.update({ where: { id: branchId }, data: { lat, lng, radiusM: 150, details } });
+    await place(g.b.rooftop.id, 26.9124, 75.7873, {
+      fences: [{ name: 'Staff gate', lat: 26.9224, lng: 75.7873, radiusM: 100 }],
+    });
+    await place(g.b.garden.id, 26.85, 75.8);
+    await place(g.b.lake.id, 26.4499, 74.6399);
+    const floater = await g.at('Floating Chef', g.b.rooftop.id);
+    await ok(
+      w.api.put(`/api/branches/people/${floater.id}`, {
+        homeBranchId: g.b.rooftop.id,
+        alsoBranchIds: [g.b.garden.id],
+      }),
+    );
+    const at = (lat: number, lng: number, type: 'IN' | 'OUT' = 'IN') =>
+      floater.api.post('/api/hr/punch', { type, lat, lng, accuracy: 15 });
+    const punched = async (lat: number, lng: number, type: 'IN' | 'OUT' = 'IN') =>
+      (await ok<{ punch: { flagged: boolean; branchId: string | null } }>(at(lat, lng, type))).punch;
+    // Home branch, its second gate, and the other branch they work at: no flag, each stamped with its branch.
+    expect(await punched(26.9125, 75.7874)).toMatchObject({ flagged: false, branchId: g.b.rooftop.id });
+    expect(await punched(26.9224, 75.7874, 'OUT')).toMatchObject({
+      flagged: false,
+      branchId: g.b.rooftop.id,
+    });
+    expect(await punched(26.8501, 75.8001)).toMatchObject({ flagged: false, branchId: g.b.garden.id });
+    // A branch that isn't theirs is "away from the office", whatever geofence it has.
+    const away = await at(26.4499, 74.6399, 'OUT');
+    expect(away.status).toBe(400);
+    expect(away.body.error.message).toMatch(/Punch not allowed/);
+  });
+  it('G28: a person lent to another branch for some days belongs to it then — its lists, its gate, its cost', async () => {
+    const w = await world(ctx.app);
+    const { g, rooftop } = await twoOutlets(ctx.prisma, w);
+    const cook = await g.at('Cook Rooftop', g.b.rooftop.id);
+    const today = localDate(new Date(), TZ);
+    const lend = (api: World['api'], from: string, to: string, branchId = g.b.lake.id) =>
+      api.post('/api/branches/loans', { userId: cook.id, branchId, from, to, note: 'Wedding at the lake' });
+    // Lent to the lake from yesterday to tomorrow.
+    await ok(lend(w.api, addDays(today, -1), addDays(today, 1)));
+    // Not twice for the same days, and not to where they already work.
+    expect((await lend(w.api, today, addDays(today, 5))).status).toBe(409);
+    expect((await lend(w.api, addDays(today, 10), addDays(today, 11), g.b.rooftop.id)).status).toBe(400);
+    // For those days they are part of the lake: they see its work, and the days count there.
+    const { branchesOf } = await import('./reach');
+    expect((await branchesOf(ctx.prisma, w.companyId, cook.id)).sort()).toEqual(
+      [g.b.rooftop.id, g.b.lake.id].sort(),
+    );
+    const h = await branchHistory(ctx.prisma, w.companyId, [cook.id]);
+    expect([-2, -1, 0, 1, 2].map((n) => h.on(cook.id, addDays(today, n)))).toEqual([
+      g.b.rooftop.id,
+      g.b.lake.id,
+      g.b.lake.id,
+      g.b.lake.id,
+      g.b.rooftop.id,
+    ]);
+    // Their own manager may lend them; a manager of another branch may not.
+    const { lake } = { lake: await g.at('Leela Other', g.b.lake.id, 'HOD') };
+    expect((await lend(lake.api, addDays(today, 20), addDays(today, 21), g.b.garden.id)).status).toBe(403);
+    const again = await ok<{ id: string }>(
+      lend(rooftop.api, addDays(today, 20), addDays(today, 21), g.b.garden.id),
+    );
+    await ok(rooftop.api.del(`/api/branches/loans/${again.id}`));
+    expect(await ok<unknown[]>(w.api.get('/api/branches/loans'))).toHaveLength(1);
+  });
+
+  it('G29: "Buddy from another branch: No" keeps cover suggestions inside the branch', async () => {
+    const w = await world(ctx.app);
+    const { g } = await twoOutlets(ctx.prisma, w);
+    const kitchen = await ok<{ id: string }>(w.api.post('/api/org/departments', { name: 'Kitchen' }));
+    const inKitchen = async (name: string, branchId: string) => {
+      const p = await g.at(name, branchId);
+      await ok(w.api.patch(`/api/org/users/${p.id}`, { mainDepartmentId: kitchen.id }));
+      return p;
+    };
+    const cook = await inKitchen('Cook Rooftop', g.b.rooftop.id);
+    const mate = await inKitchen('Mate Rooftop', g.b.rooftop.id);
+    const far = await inKitchen('Cook Lake', g.b.lake.id);
+    const day = addDays(localDate(new Date(), TZ), 3);
+    await ok(
+      w.api.post('/api/tasks', {
+        doerId: cook.id,
+        plannedAt: new Date(`${day}T06:00:00Z`).toISOString(),
+        description: 'Stock take',
+      }),
+    );
+    const suggested = async () => {
+      const p = await ok<{ items: { suggestions: { id: string }[] }[] }>(
+        cook.api.get(`/api/hr/leave/preview?from=${day}&to=${day}`),
+      );
+      return p.items.flatMap((x) => x.suggestions.map((s) => s.id));
+    };
+    // As before branches: anyone in the department, wherever they work.
+    expect((await suggested()).sort()).toEqual([mate.id, far.id].sort());
+    const rules = (await ok<{ rules: { buddy: object } }>(w.api.get('/api/hr/rules'))).rules;
+    await ok(w.api.put('/api/hr/rules', { ...rules, buddy: { ...rules.buddy, otherBranch: false } }));
+    expect(await suggested()).toEqual([mate.id]);
+  });
 });

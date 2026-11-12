@@ -11,10 +11,12 @@ import {
   personBranchesSchema,
   regionSchema,
 } from '@mono/shared';
-import { forbidden } from '../../lib/errors';
+import { hasPermission } from '@mono/shared';
+import { forbidden, notFound } from '../../lib/errors';
 import { actorOf } from '../delegation/routes';
 import { chainFor, deleteRoute, listRoutes, saveRoute } from './approvals';
 import { compareOutlets } from './compare';
+import { lendPerson } from './history';
 import { closeBranch, closePreview, copyBranch } from './lifecycle';
 import {
   deleteEntity,
@@ -182,4 +184,52 @@ export async function branchRoutes(app: FastifyInstance) {
     },
     async (q) => closeBranch(db, actorOf(q), q.params.id, q.body.moveToBranchId),
   );
+  // Lending staff (plan §3.4): a person works at another branch for some days.
+  const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+  r.get('/api/branches/loans', { ...view(), schema: { tags } }, async (q) =>
+    db.branchLoan.findMany({
+      where: { companyId: actorOf(q).companyId },
+      orderBy: { from: 'desc' },
+      take: 200,
+    }),
+  );
+  r.post(
+    '/api/branches/loans',
+    {
+      ...view(),
+      schema: {
+        tags,
+        body: z.object({
+          userId: z.string().max(40),
+          branchId: z.string().max(40),
+          from: day,
+          to: day,
+          note: z.string().trim().max(200).nullish(),
+        }),
+      },
+    },
+    async (q) => {
+      const actor = actorOf(q);
+      await mayLend(q, q.body.userId);
+      return lendPerson(db, { companyId: actor.companyId, actorId: actor.userId }, q.body);
+    },
+  );
+  r.delete('/api/branches/loans/:id', { ...view(), schema: { tags, params: idParam } }, async (q) => {
+    const actor = actorOf(q);
+    const loan = await db.branchLoan.findFirst({ where: { id: q.params.id, companyId: actor.companyId } });
+    if (!loan) throw notFound('Loan');
+    await mayLend(q, loan.userId);
+    await db.branchLoan.delete({ where: { id: loan.id } });
+    return { ok: true };
+  });
+  /** Lending is for whoever may change people — and, below the group, only for people of their own branches. */
+  async function mayLend(q: FastifyRequest, userId: string) {
+    const actor = actorOf(q);
+    if (!actor.permissions.includes('*') && !hasPermission(actor.permissions, 'org.edit')) throw forbidden();
+    const mine = q.reachAll?.branchIds;
+    if (!mine) return;
+    const person = await db.user.findFirst({ where: { id: userId, companyId: actor.companyId } });
+    if (!person?.branchId || !mine.includes(person.branchId))
+      throw forbidden('You lend only the people of your own branches');
+  }
 }

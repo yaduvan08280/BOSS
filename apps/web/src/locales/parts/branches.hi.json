@@ -222,5 +222,8 @@
       "entity": "INV/RJ/26-27/0001 — हर GSTIN की अपनी गिनती",
       "branch": "INV/LAKE/26-27/0001 — हर शाखा की अपनी गिनती"
     }
+  },
+  "hrBranch": {
+    "otherBranch": "Buddy दूसरी शाखा से हो सकता है"
   }
 }

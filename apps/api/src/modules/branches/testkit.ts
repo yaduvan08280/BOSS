@@ -59,7 +59,14 @@ export async function twoOutlets(prisma: PrismaClient, w: World) {
   await ok(
     w.api.patch(`/api/org/roles/${hod.id}`, {
       permissions: [
-        ...new Set([...hod.permissions, 'fms.admin', 'records.admin', 'reports.admin', 'core.admin']),
+        ...new Set([
+          ...hod.permissions,
+          'fms.admin',
+          'records.admin',
+          'reports.admin',
+          'core.admin',
+          'org.edit',
+        ]),
       ],
     }),
   );

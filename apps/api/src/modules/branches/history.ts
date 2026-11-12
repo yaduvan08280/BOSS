@@ -1,5 +1,7 @@
 import type { Db, Tx } from '@mono/db';
 import { localDate } from '@mono/shared';
+import { writeAudit } from '../../lib/audit';
+import { AppError, notFound } from '../../lib/errors';
 
 /**
  * Branch history (phase 12, plan §3.4): where each person worked on each day. A move is recorded with the day it
@@ -10,6 +12,10 @@ type Stay = { userId: string; branchId: string | null; from: string; fromBranchI
 
 /** A reader of "which branch on that day?" for some people (their current branch when nothing was recorded). */
 export async function branchHistory(db: Db | Tx, companyId: string, userIds?: string[]) {
+  const loans = await db.branchLoan.findMany({
+    where: { companyId, ...(userIds ? { userId: { in: userIds } } : {}) },
+    select: { userId: true, branchId: true, from: true, to: true },
+  });
   const [stays, people] = await Promise.all([
     db.branchStay.findMany({
       where: { companyId, ...(userIds ? { userId: { in: userIds } } : {}) },
@@ -27,6 +33,9 @@ export async function branchHistory(db: Db | Tx, companyId: string, userIds?: st
   return {
     /** The person's branch on a day (YYYY-MM-DD). */
     on(userId: string, date: string): string | null {
+      // Lent to another branch that day: the day (and its cost) is that branch's.
+      const lent = loans.find((l) => l.userId === userId && l.from <= date && l.to >= date);
+      if (lent) return lent.branchId;
       const mine = byUser.get(userId);
       if (!mine?.length) return now.get(userId) ?? null;
       let at: string | null = mine[0]!.fromBranchId;
@@ -113,4 +122,47 @@ export async function applyBranchMoves(db: Db, now = new Date(), onlyCompanyId?:
     }
   }
   return moved;
+}
+
+/** Lend a person to another branch for some days (both included). The dates may not overlap another loan. */
+export async function lendPerson(
+  db: Db,
+  at: { companyId: string; actorId: string },
+  input: { userId: string; branchId: string; from: string; to: string; note?: string | null },
+) {
+  if (input.to < input.from) throw new AppError(400, 'VALIDATION_FAILED', 'The last day is before the first');
+  return db.$transaction(async (tx) => {
+    const live = { companyId: at.companyId, deletedAt: null };
+    const person = await tx.user.findFirst({ where: { id: input.userId, ...live, status: 'ACTIVE' } });
+    if (!person) throw notFound('Person');
+    if (!(await tx.branch.count({ where: { id: input.branchId, ...live } }))) throw notFound('Branch');
+    if (person.branchId === input.branchId)
+      throw new AppError(400, 'VALIDATION_FAILED', 'They already work at that branch');
+    const clash = await tx.branchLoan.findFirst({
+      where: {
+        companyId: at.companyId,
+        userId: input.userId,
+        from: { lte: input.to },
+        to: { gte: input.from },
+      },
+    });
+    if (clash) throw new AppError(409, 'CONFLICT', 'They are already lent out on some of those days');
+    const row = await tx.branchLoan.create({
+      data: {
+        companyId: at.companyId,
+        userId: input.userId,
+        branchId: input.branchId,
+        from: input.from,
+        to: input.to,
+        note: input.note ?? null,
+        createdById: at.actorId,
+      },
+    });
+    await writeAudit(
+      tx,
+      { companyId: at.companyId, actorId: at.actorId },
+      { action: 'branch.person_lent', entityType: 'user', entityId: input.userId, after: row },
+    );
+    return row;
+  });
 }

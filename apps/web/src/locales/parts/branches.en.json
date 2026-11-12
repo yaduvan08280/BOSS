@@ -222,5 +222,8 @@
       "entity": "INV/RJ/26-27/0001 — each GSTIN counts its own",
       "branch": "INV/LAKE/26-27/0001 — each branch counts its own"
     }
+  },
+  "hrBranch": {
+    "otherBranch": "Buddy can be from another branch"
   }
 }

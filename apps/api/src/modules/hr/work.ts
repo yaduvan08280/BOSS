@@ -158,7 +158,13 @@ export async function suggestionsFor(
   const busy = await unavailable(db, p.companyId, rules, period.from, period.to, period.fromAt, period.toAt);
   const people = await db.user.findMany({
     where: { companyId: p.companyId, deletedAt: null, status: 'ACTIVE', NOT: { id: p.id } },
-    select: { id: true, name: true, mainDepartmentId: true, designation: { select: { name: true } } },
+    select: {
+      id: true,
+      name: true,
+      mainDepartmentId: true,
+      branchId: true,
+      designation: { select: { name: true } },
+    },
   });
   const byId = new Map(people.map((u) => [u.id, u]));
   // Least busy first within the department: fewest open tasks.
@@ -181,6 +187,9 @@ export async function suggestionsFor(
   const allowed = (id: string) =>
     rules.buddy.otherDepartment || id === p.hodId || byId.get(id)?.mainDepartmentId === p.departmentId;
   for (const id of byId.keys()) if (!allowed(id)) skip.add(id);
+  // "Buddy from another branch: No" keeps cover inside the person's own branch (phase 12).
+  if (!rules.buddy.otherBranch && p.branchId)
+    for (const u of people) if (u.branchId !== p.branchId) skip.add(u.id);
   return items.map((it) => {
     const ids = suggestBuddies(
       rules.buddyAnswer.order,

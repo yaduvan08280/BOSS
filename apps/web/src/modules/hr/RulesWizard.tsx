@@ -152,6 +152,7 @@ function Summary({ rules, go }: { rules: HrRules; go: (step: number) => void }) 
             : t(`hr.w.${rules.buddy.needsBuddy === 'any' ? 'anyLeave' : 'fullDayUp'}`),
         ],
         [t('hr.w.otherDept'), yn(rules.buddy.otherDepartment)],
+        [t('hrBranch.otherBranch'), yn(rules.buddy.otherBranch)],
         [t('hr.w.maxCover'), String(rules.buddy.maxCover)],
         [t('hr.w.order'), rules.buddyAnswer.order.map((s) => t(`hr.w.source.${s}`)).join(' → ')],
         [t('hr.w.answerWithin'), `${rules.buddyAnswer.answerHours} h`],
