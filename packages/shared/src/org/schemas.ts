@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { LANGUAGES, THEME_MODES, USER_STATUS } from '../enums';
 import { themeSettingsSchema } from '../auth/schemas';
-import { BRANCH_TYPES, ROLE_REACHES, timezoneSchema } from '../branches/schemas';
+import { BRANCH_TYPES, ROLE_REACHES, timezoneSchema, branchDetailsSchema } from '../branches/schemas';
 
 const optionalText = (max = 200) =>
   z
@@ -57,6 +57,7 @@ export const branchSchema = z.object({
   regionId: id.nullish(),
   type: z.enum(BRANCH_TYPES).optional(),
   timezone: timezoneSchema.nullish(),
+  details: branchDetailsSchema.optional(),
 });
 export type BranchInput = z.infer<typeof branchSchema>;
 

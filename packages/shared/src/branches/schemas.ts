@@ -30,6 +30,50 @@ export const timezoneSchema = z
     }
   }, 'Unknown time zone');
 
+/** A licence or registration printed on papers: FSSAI, liquor, trade, shop & establishment … */
+export const licenceSchema = z.object({
+  name: z.string().trim().min(1, 'Name the licence').max(40),
+  number: z.string().trim().min(1, 'Enter its number').max(60),
+  /** YYYY-MM-DD; reminders come before it runs out (stage D). */
+  validTill: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullish(),
+});
+export type Licence = z.infer<typeof licenceSchema>;
+/** A short code that goes into document numbers when a series runs per entity or branch: INV/RJ/26-27/0001. */
+const seriesCode = z
+  .string()
+  .trim()
+  .regex(/^[A-Z0-9]{1,6}$/, 'Up to 6 capital letters or digits');
+
+/** What an entity prints on its papers (phase 12, stage B). Every key is optional. */
+export const entityDetailsSchema = z.object({
+  legalName: text(160).nullish(),
+  address: text(400).nullish(),
+  phone: text(40).nullish(),
+  email: text(160).nullish(),
+  seriesCode: seriesCode.nullish(),
+  /** Lines printed above and below every paper of this entity. */
+  letterheadHeader: text(400).nullish(),
+  letterheadFooter: text(400).nullish(),
+  licences: z.array(licenceSchema).max(20).optional(),
+});
+export type EntityDetails = z.infer<typeof entityDetailsSchema>;
+
+/** A branch's own address, series code and licences (an outlet's FSSAI and bar licence). */
+export const branchDetailsSchema = z.object({
+  address: text(400).nullish(),
+  phone: text(40).nullish(),
+  seriesCode: seriesCode.nullish(),
+  licences: z.array(licenceSchema).max(20).optional(),
+});
+export type BranchDetails = z.infer<typeof branchDetailsSchema>;
+
+/** How a document type is numbered: one series for the company (as before), or one per entity or per branch. */
+export const DOC_SERIES = ['company', 'entity', 'branch'] as const;
+export type DocSeries = (typeof DOC_SERIES)[number];
+
 export const entitySchema = z.object({
   name,
   kind: z.enum(ENTITY_KINDS).optional(),
@@ -46,6 +90,7 @@ export const entitySchema = z.object({
   state: text(80).nullish(),
   taxId: text(40).nullish(),
   isDefault: z.boolean().optional(),
+  details: entityDetailsSchema.optional(),
 });
 export type EntityInput = z.infer<typeof entitySchema>;
 

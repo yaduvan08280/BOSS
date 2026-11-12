@@ -28,13 +28,24 @@ test('the owner sets up branches, decides who approves, and switches to one bran
 
   // G1: a legal entity, a region and two branches, one with a manager.
   await page.getByRole('button', { name: 'Add an entity' }).click();
-  await dialog.getByLabel('Name').fill(names.entity);
+  await dialog.getByLabel('Name', { exact: true }).fill(names.entity);
   await dialog.getByLabel('Tax number (GSTIN / TRN)').fill('08AAAAA0000A1Z5');
+  // G22: what the entity prints on its papers — a code for its number series and a licence.
+  await dialog.getByLabel('Code in document numbers').fill(t.slice(0, 6));
+  await dialog.getByRole('button', { name: 'Add a licence' }).click();
+  await dialog.getByLabel('Licence', { exact: true }).fill('FSSAI');
+  await dialog.getByLabel('Number', { exact: true }).fill('1220-TEST');
   await save();
   await expect(page.getByText(names.entity)).toBeVisible();
+  await page.locator('li', { hasText: names.entity }).getByRole('button', { name: 'Edit' }).click();
+  await expect(dialog.getByLabel('Number', { exact: true })).toHaveValue('1220-TEST');
+  await expect(dialog.getByLabel('Code in document numbers')).toHaveValue(t.slice(0, 6));
+  await snap('entity');
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Add a region' }).click();
-  await dialog.getByLabel('Name').fill(names.region);
+  await dialog.getByLabel('Name', { exact: true }).fill(names.region);
   await save();
   await expect(page.getByText(names.region)).toBeVisible();
 
@@ -43,7 +54,7 @@ test('the owner sets up branches, decides who approves, and switches to one bran
     [names.lake, false],
   ] as const) {
     await page.getByRole('button', { name: 'Add branch' }).click();
-    await dialog.getByLabel('Name').fill(name);
+    await dialog.getByLabel('Name', { exact: true }).fill(name);
     await choose(page, dialog.getByRole('combobox', { name: 'Region' }), names.region);
     await choose(page, dialog.getByRole('combobox', { name: 'Legal entity' }), names.entity);
     if (withManager) await choose(page, dialog.getByRole('combobox', { name: 'Branch managers' }), 'Gopal');

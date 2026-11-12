@@ -25,7 +25,10 @@
       "currencyHint": "Three letters: INR, AED",
       "taxId": "Tax number (GSTIN / TRN)",
       "emptyTitle": "No legal entities yet",
-      "emptyBody": "Add one for each company or franchise partner. A single company needs none."
+      "emptyBody": "Add one for each company or franchise partner. A single company needs none.",
+      "legalName": "Legal name on papers",
+      "footer": "Line under every paper",
+      "footerHint": "e.g. Subject to Jaipur jurisdiction"
     },
     "region": {
       "one": "Region",
@@ -153,6 +156,17 @@
         "purchaseOrders_one": "{{count}} open purchase order",
         "purchaseOrders_other": "{{count}} open purchase orders"
       }
+    },
+    "address": "Address",
+    "seriesCode": "Code in document numbers",
+    "seriesCodeHint": "Short capitals, like RJ: INV/RJ/26-27/0001",
+    "lic": {
+      "title": "Licences and registrations",
+      "name": "Licence",
+      "namePh": "FSSAI",
+      "number": "Number",
+      "validTill": "Valid till",
+      "add": "Add a licence"
     }
   },
   "chkBranch": {
@@ -197,5 +211,16 @@
     "hint": "People of other branches won't see it.",
     "own": "My own branch",
     "all": "Every branch"
+  },
+  "docSeries": {
+    "label": "Number series",
+    "company": "One for the whole company",
+    "entity": "One for each legal entity",
+    "branch": "One for each branch",
+    "hint": {
+      "company": "INV/26-27/0001",
+      "entity": "INV/RJ/26-27/0001 — each GSTIN counts its own",
+      "branch": "INV/LAKE/26-27/0001 — each branch counts its own"
+    }
   }
 }

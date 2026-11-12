@@ -83,6 +83,7 @@ export async function saveEntity(db: Db, actor: Actor, input: EntityInput, id?: 
       ...(input.state !== undefined ? { state: input.state || null } : {}),
       ...(input.taxId !== undefined ? { taxId: input.taxId || null } : {}),
       ...(input.isDefault || first ? { isDefault: true } : {}),
+      ...(input.details ? { details: input.details as object } : {}),
     };
     const row = before
       ? await tx.legalEntity.update({ where: { id: before.id }, data })

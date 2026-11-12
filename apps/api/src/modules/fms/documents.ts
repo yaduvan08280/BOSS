@@ -15,6 +15,7 @@ import {
 import { renderPdf } from '../../lib/pdf';
 import { AppError } from '../../lib/errors';
 import { pathReaders, recordValues } from './show';
+import { letterheadOf, seriesOf, type Letterhead } from '../branches/letterhead';
 import { homeBranchOf } from '../branches/reach';
 
 /** QUO/26-27/0001 — numbered per document type, per financial year (CLAUDE.md §6.2 Documents). */
@@ -42,7 +43,6 @@ export async function createDocument(
   });
   const date = input.at ?? new Date();
   const fy = financialYear(date, company.timezone, company.fyStartMonth ?? 4).short;
-  const seq = await nextCounter(tx, input.companyId, `doc:${type.code}`, fy);
   const total = itemsTotal(input.data);
   // A paper belongs to its record's branch; one made by hand, to its maker's (phase 12).
   const record = input.recordId
@@ -52,12 +52,21 @@ export async function createDocument(
       })
     : null;
   const branchId = record ? record.branchId : await homeBranchOf(tx, input.companyId, input.createdById);
+  // One series for the company, or one per legal entity (a GSTIN's own invoice numbers) or per branch.
+  const series = seriesOf(
+    type.series,
+    await letterheadOf(tx, input.companyId, branchId),
+    type.code,
+    type.prefix,
+    fy,
+  );
+  const seq = await nextCounter(tx, input.companyId, series.counterKey, fy);
   return tx.document.create({
     data: {
       companyId: input.companyId,
       branchId,
       typeId: type.id,
-      number: `${type.prefix}/${fy}/${String(seq).padStart(4, '0')}`,
+      number: series.number(seq),
       fy,
       seq,
       date,
@@ -92,6 +101,7 @@ export async function paperTexts(
   doc: Paper,
   company: { id: string; name: string; legalName: string | null; timezone: string },
   fields: Map<string, FlowField>,
+  head?: Letterhead,
 ) {
   const texts = [doc.type.header, doc.type.terms, doc.type.footer];
   const [reader] = await pathReaders(
@@ -107,7 +117,14 @@ export async function paperTexts(
     date: formatDate(doc.date, company.timezone),
     party: doc.party,
     total: doc.total === null ? null : rupees(Number(doc.total)),
-    company: company.legalName || company.name,
+    company: head?.name ?? (company.legalName || company.name),
+    // Who the paper is from (phase 12): {{entity}}, {{address}}, {{gstin}}, {{branch}}, {{licence.FSSAI}} …
+    entity: head?.name ?? null,
+    address: head?.address ?? null,
+    gstin: head?.taxId ?? null,
+    branch: head?.branch ?? null,
+    'branch.address': head?.branchAddress ?? null,
+    ...Object.fromEntries((head?.licences ?? []).map((l) => [`licence.${l.name}`, l.number])),
   };
   const fill = (text: string | null) => (text ? fillPaths(text, (p) => reader!.text(p) ?? own[p]) : '');
   return { header: fill(doc.type.header), terms: fill(doc.type.terms), footer: fill(doc.type.footer) };
@@ -124,7 +141,8 @@ export async function documentPdf(db: Db, companyId: string, id: string) {
   const fields: Map<string, FlowField> = doc.recordId
     ? ((await recordValues(db, companyId, doc.recordId))?.fields ?? new Map())
     : new Map();
-  const { header, terms, footer } = await paperTexts(db, doc, company, fields);
+  const head = await letterheadOf(db, companyId, doc.branchId);
+  const { header, terms, footer } = await paperTexts(db, doc, company, fields, head);
   const pdf = await renderPdf({
     pageSize: 'A4',
     pageMargins: [36, 40, 36, 48],
@@ -133,9 +151,14 @@ export async function documentPdf(db: Db, companyId: string, id: string) {
       {
         columns: [
           [
-            { text: company.legalName || company.name, fontSize: 15, bold: true },
-            { text: [company.city, company.state].filter(Boolean).join(', '), color: '#666' },
-            company.gstin ? { text: `GSTIN ${company.gstin}`, color: '#666' } : '',
+            { text: head.name, fontSize: 15, bold: true },
+            head.address ? { text: head.address, color: '#666' } : '',
+            head.tax ? { text: head.tax, color: '#666' } : '',
+            // The branch it was made at, when that says more than the entity's own address.
+            head.branch && head.entityId
+              ? { text: [head.branch, head.branchAddress].filter(Boolean).join(' · '), color: '#666' }
+              : '',
+            ...head.licences.map((l) => ({ text: `${l.name} ${l.number}`, color: '#666', fontSize: 8 })),
           ],
           [
             { text: doc.type.name.toUpperCase(), alignment: 'right', fontSize: 13, bold: true },
@@ -147,6 +170,7 @@ export async function documentPdf(db: Db, companyId: string, id: string) {
           ],
         ],
       },
+      head.header ? { text: head.header, margin: [0, 10, 0, 0], color: '#444' } : '',
       header ? { text: header, margin: [0, 12, 0, 0] } : '',
       doc.party ? { text: [{ text: 'To: ', bold: true }, doc.party], margin: [0, 14, 0, 6] } : '',
       facts.length
@@ -189,6 +213,7 @@ export async function documentPdf(db: Db, companyId: string, id: string) {
         : '',
       terms ? { text: terms, fontSize: 8, color: '#666', margin: [0, 16, 0, 0] } : '',
       footer ? { text: footer, fontSize: 8, color: '#888', margin: [0, 8, 0, 0] } : '',
+      head.footer ? { text: head.footer, fontSize: 8, color: '#888', margin: [0, 6, 0, 0] } : '',
     ],
   });
   return { pdf, number: doc.number };

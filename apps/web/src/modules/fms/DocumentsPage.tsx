@@ -8,12 +8,12 @@ import { EmptyState, PageHeader, PageSkeleton } from '@/components/page';
 import { StatusChip } from '@/components/status-chip';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
-import { Field, Textarea } from '@/components/ui/form';
+import { Field, Select, Textarea } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { TabStrip } from '@/components/work';
 import { api } from '@/lib/api';
 import { useWorkMutation } from '@/lib/work';
-import { formatDate } from '@mono/shared';
+import { DOC_SERIES, formatDate, type DocSeries } from '@mono/shared';
 
 type DocType = {
   id: string;
@@ -24,6 +24,7 @@ type DocType = {
   footer: string | null;
   terms: string | null;
   active: boolean;
+  series?: DocSeries;
 };
 type Doc = {
   id: string;
@@ -167,6 +168,7 @@ function DocTypeDialog({ value, onClose }: { value: Partial<DocType>; onClose: (
           footer: d.footer || null,
           terms: d.terms || null,
           active: d.active ?? true,
+          series: d.series ?? 'company',
         },
       }),
     [['fms']],
@@ -210,6 +212,22 @@ function DocTypeDialog({ value, onClose }: { value: Partial<DocType>; onClose: (
             placeholder="QUO"
           />
         </Field>
+        <Field
+          label={t('docSeries.label')}
+          hint={t(`docSeries.hint.${d.series ?? 'company'}`)}
+          className="sm:col-span-2"
+        >
+          <Select
+            value={d.series ?? 'company'}
+            onChange={(e) => setD({ ...d, series: e.target.value as DocSeries })}
+          >
+            {DOC_SERIES.map((x) => (
+              <option key={x} value={x}>
+                {t(`docSeries.${x}`)}
+              </option>
+            ))}
+          </Select>
+        </Field>
         <Field label={t('fms.doc.header')} className="sm:col-span-3">
           <Textarea
             className="font-sans"
@@ -231,7 +249,11 @@ function DocTypeDialog({ value, onClose }: { value: Partial<DocType>; onClose: (
         </Field>
         <p className="text-xs text-muted-foreground sm:col-span-3">
           {t('show.holes', { a: '{{field}}', b: '{{field.column}}' })}{' '}
-          <span className="font-mono">{'{{number}} {{date}} {{party}} {{total}} {{company}}'}</span>
+          <span className="font-mono">
+            {
+              '{{number}} {{date}} {{party}} {{total}} {{company}} {{entity}} {{address}} {{gstin}} {{branch}} {{licence.FSSAI}}'
+            }
+          </span>
         </p>
       </div>
     </Dialog>

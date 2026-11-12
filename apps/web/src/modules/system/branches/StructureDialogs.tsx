@@ -1,13 +1,28 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BRANCH_TYPES, INDIAN_STATES, type OrgPerson } from '@mono/shared';
+import {
+  BRANCH_TYPES,
+  INDIAN_STATES,
+  type BranchDetails,
+  type EntityDetails,
+  type OrgPerson,
+} from '@mono/shared';
 import { PeoplePicker } from '@/components/people-picker';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Field, Select } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { patch, post, put, useOrgMutation } from '../api';
-import { regionTree, type Entity, type GroupBranch, type Manager, type Region, type Structure } from './api';
+import { Licences } from './Licences';
+import {
+  filled,
+  regionTree,
+  type Entity,
+  type GroupBranch,
+  type Manager,
+  type Region,
+  type Structure,
+} from './api';
 
 type Shared = { structure: Structure; people: OrgPerson[]; onClose: () => void };
 const holders = (managers: Manager[], role: Manager['role'], at: { branchId?: string; regionId?: string }) =>
@@ -26,9 +41,22 @@ export function EntityDialog({ entity, onClose }: { entity: Partial<Entity>; onC
     state: entity.state ?? '',
     taxId: entity.taxId ?? '',
   });
+  const [x, setX] = useState<EntityDetails>(entity.details ?? {});
   const save = useOrgMutation(
     () => {
-      const body = { ...d, state: d.state || null, taxId: d.taxId || null };
+      const body = {
+        ...d,
+        state: d.state || null,
+        taxId: d.taxId || null,
+        details: {
+          legalName: x.legalName || null,
+          address: x.address || null,
+          seriesCode: x.seriesCode || null,
+          letterheadHeader: x.letterheadHeader || null,
+          letterheadFooter: x.letterheadFooter || null,
+          licences: filled(x.licences ?? []),
+        },
+      };
       return entity.id
         ? patch(`/api/branches/entities/${entity.id}`, body)
         : post('/api/branches/entities', body);
@@ -86,6 +114,37 @@ export function EntityDialog({ entity, onClose }: { entity: Partial<Entity>; onC
             onChange={(e) => setD({ ...d, taxId: e.target.value.toUpperCase() })}
           />
         </Field>
+        <Field label={t('branches.entity.legalName')} className="col-span-2">
+          <Input value={x.legalName ?? ''} onChange={(e) => setX({ ...x, legalName: e.target.value })} />
+        </Field>
+        <Field label={t('branches.address')} className="col-span-2">
+          <Input value={x.address ?? ''} onChange={(e) => setX({ ...x, address: e.target.value })} />
+        </Field>
+        <Field
+          label={t('branches.seriesCode')}
+          hint={t('branches.seriesCodeHint')}
+          className="col-span-2 sm:col-span-1"
+        >
+          <Input
+            value={x.seriesCode ?? ''}
+            maxLength={6}
+            className="font-mono"
+            onChange={(e) => setX({ ...x, seriesCode: e.target.value.toUpperCase() })}
+          />
+        </Field>
+        <Field
+          label={t('branches.entity.footer')}
+          hint={t('branches.entity.footerHint')}
+          className="col-span-2"
+        >
+          <Input
+            value={x.letterheadFooter ?? ''}
+            onChange={(e) => setX({ ...x, letterheadFooter: e.target.value })}
+          />
+        </Field>
+        <div className="col-span-2">
+          <Licences value={x.licences ?? []} onChange={(licences) => setX({ ...x, licences })} />
+        </div>
       </div>
     </Dialog>
   );
@@ -208,6 +267,7 @@ export function BranchDialog({
     state: branch.state ?? '',
     timezone: branch.timezone ?? '',
   });
+  const [x, setX] = useState<BranchDetails>(branch.details ?? {});
   const at = { branchId: branch.id ?? '-' };
   const [managers, setManagers] = useState(() => holders(structure.managers, 'MANAGER', at));
   const [hr, setHr] = useState(() => holders(structure.managers, 'HR', at));
@@ -222,6 +282,11 @@ export function BranchDialog({
         city: d.city || null,
         state: d.state || null,
         timezone: d.timezone || null,
+        details: {
+          address: x.address || null,
+          seriesCode: x.seriesCode || null,
+          licences: filled(x.licences ?? []),
+        },
       };
       const saved = branch.id
         ? await patch<{ id: string }>(`/api/org/branches/${branch.id}`, body)
@@ -305,6 +370,24 @@ export function BranchDialog({
             onChange={(e) => setD({ ...d, timezone: e.target.value.trim() })}
           />
         </Field>
+        <Field label={t('branches.address')} className="col-span-2">
+          <Input value={x.address ?? ''} onChange={(e) => setX({ ...x, address: e.target.value })} />
+        </Field>
+        <Field
+          label={t('branches.seriesCode')}
+          hint={t('branches.seriesCodeHint')}
+          className="col-span-2 sm:col-span-1"
+        >
+          <Input
+            value={x.seriesCode ?? ''}
+            maxLength={6}
+            className="font-mono"
+            onChange={(e) => setX({ ...x, seriesCode: e.target.value.toUpperCase() })}
+          />
+        </Field>
+        <div className="col-span-2">
+          <Licences value={x.licences ?? []} onChange={(licences) => setX({ ...x, licences })} />
+        </div>
         <Field label={t('branches.managers')} hint={t('branches.managersHint')} className="col-span-2">
           <PeoplePicker
             ids={managers}

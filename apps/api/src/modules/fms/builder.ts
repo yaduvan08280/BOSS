@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import type { Db, Tx } from '@mono/db';
 import { formatNumber, nextCounter } from '@mono/db';
 import {
+  DOC_SERIES,
   flowDefinitionSchema,
   flowFieldMap,
   flowMetaPatchSchema,
@@ -324,6 +325,8 @@ export const documentTypeSchema = z.object({
   footer: z.string().max(1000).nullish(),
   terms: z.string().max(4000).nullish(),
   active: z.boolean().default(true),
+  /** One number series for the company (the default), or one per legal entity or per branch. */
+  series: z.enum(DOC_SERIES).optional(),
 });
 
 export async function saveDocumentType(db: Db, actor: Actor, input: z.infer<typeof documentTypeSchema>) {

@@ -1,5 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
-import type { ApprovalKind, ApprovalStep, BranchType, ManagerRole } from '@mono/shared';
+import type {
+  ApprovalKind,
+  ApprovalStep,
+  BranchDetails,
+  BranchType,
+  EntityDetails,
+  Licence,
+  ManagerRole,
+} from '@mono/shared';
 import { api } from '@/lib/api';
 
 export type Entity = {
@@ -11,6 +19,7 @@ export type Entity = {
   state: string | null;
   taxId: string | null;
   isDefault: boolean;
+  details?: EntityDetails;
 };
 export type Region = { id: string; name: string; entityId: string | null; parentId: string | null };
 export type GroupBranch = {
@@ -25,6 +34,7 @@ export type GroupBranch = {
   timezone: string | null;
   isDefault: boolean;
   people: number;
+  details?: BranchDetails;
 };
 export type Manager = { userId: string; branchId: string | null; regionId: string | null; role: ManagerRole };
 export type Structure = {
@@ -66,3 +76,6 @@ export function regionTree(regions: Region[]): { region: Region; depth: number }
   for (const r of regions) if (!out.some((o) => o.region.id === r.id)) out.push({ region: r, depth: 0 });
   return out;
 }
+
+/** Licence rows a person started but left empty are not sent. */
+export const filled = (list: Licence[]) => list.filter((l) => l.name.trim() && l.number.trim());

@@ -163,6 +163,8 @@ model DocumentType {
   name      String
   /// "QUO" → QUO/26-27/0001
   prefix    String
+  /// company | entity | branch — who the number series belongs to (phase 12): INV/RJ/26-27/0001 per entity.
+  series    String    @default("company")
   /// Which record fields fill the paper (party, items, total…).
   mapping   Json      @default("{}")
   header    String?
