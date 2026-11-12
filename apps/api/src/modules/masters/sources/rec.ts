@@ -27,7 +27,8 @@ function toOption(r: Rec, tz: string): MasterOption {
   return {
     value: recordLabel(r, tz),
     label: recordLabel(r, tz),
-    sub: at ? at.stepName : r.status === 'CLOSED' ? 'Closed' : r.status === 'ON_HOLD' ? 'On hold' : null,
+    // The step it stands at (nothing once it is closed); its status travels in the columns.
+    sub: at?.stepName ?? null,
     ref: makeRef('rec', r.id),
     // Everything entered on the record (start form, then each finished step), plus what MONO knows about it.
     columns: {
