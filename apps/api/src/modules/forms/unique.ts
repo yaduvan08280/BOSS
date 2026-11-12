@@ -14,17 +14,22 @@ const uniqueFields = (fields: FlowField[]) => fields.filter((f) => f.unique && f
 const taken = (f: FlowField, v: unknown) => `${f.label}: "${String(v).trim()}" is already used`;
 
 /**
- * Values held by records saved before the field was made unique (they have no row in `unique_values`): a plain
- * look through the owner's live records. Only the table's unique index is race-safe; this is for history.
+ * Values held by records saved before the field was made unique, or imported (they have no row in
+ * `unique_values`): a plain look through the owner's live records. A record that has claimed a value for the
+ * field is left to the table — what it holds now is there. Only the table's unique index is race-safe; this is
+ * for history.
  */
 async function usedBefore(db: Db | Tx, scope: FormScope, field: string, value: string): Promise<boolean> {
   const { companyId, owner } = scope;
   const not = scope.recordId ?? '';
+  const unclaimed = Prisma.sql`NOT EXISTS (SELECT 1 FROM unique_values u
+     WHERE u.company_id = ${companyId} AND u.owner_kind = ${owner.kind} AND u.owner_id = ${owner.id}
+       AND u.field = ${field} AND u.record_id = r.id)`;
   if (owner.kind === 'flow') {
     const hit = await db.$queryRaw<unknown[]>(Prisma.sql`
       SELECT 1 FROM fms_records r
        WHERE r.company_id = ${companyId} AND r.flow_id = ${owner.id} AND r.id <> ${not}
-         AND r.deleted_at IS NULL AND r.status <> 'CANCELLED'
+         AND r.deleted_at IS NULL AND r.status <> 'CANCELLED' AND ${unclaimed}
          AND (lower(btrim(r.data ->> ${field})) = ${value}
            OR EXISTS (SELECT 1 FROM fms_record_steps s
                        WHERE s.record_id = r.id AND s.status = 'DONE'
@@ -36,7 +41,8 @@ async function usedBefore(db: Db | Tx, scope: FormScope, field: string, value: s
     const hit = await db.$queryRaw<unknown[]>(Prisma.sql`
       SELECT 1 FROM master_rows r
        WHERE r.company_id = ${companyId} AND r.master_id = ${owner.id} AND r.id <> ${not}
-         AND r.deleted_at IS NULL AND lower(btrim(r.data ->> ${field})) = ${value}
+         AND r.deleted_at IS NULL AND ${unclaimed}
+         AND lower(btrim(r.data ->> ${field})) = ${value}
        LIMIT 1`);
     return hit.length > 0;
   }
