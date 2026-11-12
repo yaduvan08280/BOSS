@@ -1,5 +1,6 @@
 import type { Db } from '@mono/db';
 import { checkFields, fieldSchema, MASTER_LIBRARY, splitTable, type FlowField } from '@mono/shared';
+import { createId } from '@paralleldrive/cuid2';
 import { z } from 'zod';
 import { writeAudit } from '../../lib/audit';
 import { emitEvent, recordChange } from '../../lib/events';
@@ -84,7 +85,8 @@ export async function saveRow(
     companyId: actor.companyId,
     actorId: actor.userId,
     owner: { kind: 'master', id: masterId },
-    recordId: id,
+    // A new row's id is chosen here, so its unique values can be claimed for it.
+    recordId: id ?? createId(),
     canAddValues: true,
   };
   const state = await checkForm(db, scope, m.fields, input);
@@ -107,6 +109,7 @@ export async function saveRow(
       ? await tx.masterRow.update({ where: { id }, data: { data: values as object, key, label } })
       : await tx.masterRow.create({
           data: {
+            id: scope.recordId,
             companyId: actor.companyId,
             masterId,
             data: values as object,

@@ -1,5 +1,6 @@
 import type { Db, FmsRecord, Flow, Tx } from '@mono/db';
 import { nextCounter } from '@mono/db';
+import { createId } from '@paralleldrive/cuid2';
 import {
   END,
   flowDefinitionSchema,
@@ -212,12 +213,14 @@ export async function startRecord(
     if (!flow || flow.status !== 'PUBLISHED' || !flow.currentVersionId)
       throw new AppError(409, 'CONFLICT', 'This process is not published yet');
     const ctx = await contextFor(tx, flow.id, flow.currentVersionId, input.startedById);
+    const id = createId(); // known before the record exists, so its unique values can be claimed for it
     const values = await processForm(
       tx,
       {
         companyId: flow.companyId,
         actorId: input.startedById,
         owner: { kind: 'flow', id: flow.id },
+        recordId: id,
         publicForm: input.source === 'public',
       },
       ctx.def.startFields,
@@ -226,6 +229,7 @@ export async function startRecord(
     const number = await nextCounter(tx, flow.companyId, `fms:${flow.id}`);
     const record = await tx.fmsRecord.create({
       data: {
+        id,
         companyId: flow.companyId,
         flowId: flow.id,
         flowVersionId: flow.currentVersionId,
