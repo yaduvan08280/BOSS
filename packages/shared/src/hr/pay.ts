@@ -37,26 +37,60 @@ export const payRulesSchema = payPolicySchema.extend({
   overrides: z
     .array(
       z.object({
-        scope: z.enum(['department', 'designation', 'person']),
+        // Phase 12: a legal entity may differ too (a state's or a country's rules).
+        scope: z.enum(['entity', 'department', 'designation', 'person']),
         id: z.string(),
         rules: overrideOf(payPolicySchema).default({}),
       }),
     )
     .max(200)
     .default([]),
+  /**
+   * Minimum wages as data the accountant types (phase 12): a monthly amount for an entity (a state's table),
+   * for everyone there or for one designation. Pay below it is flagged on the payroll — nothing is hard-coded.
+   */
+  minimumWages: z
+    .array(
+      z.object({
+        entityId: z.string().nullable(),
+        designationId: z.string().nullable(),
+        monthlyPaise: z.number().int().min(0),
+      }),
+    )
+    .max(300)
+    .default([]),
 });
 export type PayRules = z.infer<typeof payRulesSchema>;
+
+/** The minimum monthly wage that applies to someone: their designation's at their entity, else the entity's, else the company's. */
+export function minimumWageFor(
+  rules: PayRules,
+  p: { entityId?: string | null; designationId: string | null },
+): number | null {
+  const rows = rules.minimumWages;
+  const pick = (entityId: string | null, designationId: string | null) =>
+    rows.find((r) => r.entityId === entityId && r.designationId === designationId)?.monthlyPaise;
+  const e = p.entityId ?? null;
+  return (
+    (p.designationId ? pick(e, p.designationId) : undefined) ??
+    pick(e, null) ??
+    (p.designationId ? pick(null, p.designationId) : undefined) ??
+    pick(null, null) ??
+    null
+  );
+}
 export const DEFAULT_PAY_RULES: PayRules = payRulesSchema.parse({});
 
 export function payPolicyFor(
   rules: PayRules,
-  p: { id: string; departmentId: string | null; designationId: string | null },
+  p: { id: string; departmentId: string | null; designationId: string | null; entityId?: string | null },
 ): PayPolicy {
   const find = (scope: string, id: string | null) =>
     rules.overrides.find((o) => o.scope === scope && o.id === id)?.rules;
-  const { overrides: _, ...base } = rules;
+  const { overrides: _, minimumWages: __, ...base } = rules;
   return {
     ...base,
+    ...find('entity', p.entityId ?? null),
     ...find('department', p.departmentId),
     ...find('designation', p.designationId),
     ...find('person', p.id),

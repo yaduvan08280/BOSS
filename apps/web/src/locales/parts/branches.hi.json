@@ -224,6 +224,15 @@
     }
   },
   "hrBranch": {
-    "otherBranch": "Buddy दूसरी शाखा से हो सकता है"
+    "otherBranch": "Buddy दूसरी शाखा से हो सकता है",
+    "entity": "कानूनी इकाई",
+    "branch": "शाखा"
+  },
+  "payEntity": {
+    "label": "किसका वेतन",
+    "all": "पूरी कंपनी",
+    "noBranch": "कोई शाखा नहीं",
+    "days_one": "{{count}} दिन",
+    "days_other": "{{count}} दिन"
   }
 }

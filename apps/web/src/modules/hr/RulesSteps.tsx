@@ -1,3 +1,4 @@
+import { useStructure } from '@/modules/system/branches/api';
 import { Plus, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { HrRules } from '@mono/shared';
@@ -134,6 +135,8 @@ function Overrides({ rules, set }: Props) {
   const depts = useDepartments();
   const users = useUsers();
   const list = rules.overrides;
+  const structure = useStructure();
+  const places = { entities: structure.data?.entities ?? [], branches: structure.data?.branches ?? [] };
   const put = (i: number, o: HrRules['overrides'][number]) =>
     set({ ...rules, overrides: list.map((x, j) => (j === i ? o : x)) });
   return (
@@ -147,8 +150,10 @@ function Overrides({ rules, set }: Props) {
           <Select
             value={o.scope}
             aria-label={t('hr.w.scope')}
-            onChange={(e) => put(i, { ...o, scope: e.target.value as 'department' | 'person', id: '' })}
+            onChange={(e) => put(i, { ...o, scope: e.target.value as typeof o.scope, id: '' })}
           >
+            {places.entities.length > 0 && <option value="entity">{t('hrBranch.entity')}</option>}
+            {places.branches.length > 1 && <option value="branch">{t('hrBranch.branch')}</option>}
             <option value="department">{t('hr.w.team')}</option>
             <option value="person">{t('hr.w.person')}</option>
           </Select>
@@ -158,19 +163,25 @@ function Overrides({ rules, set }: Props) {
             onChange={(e) => put(i, { ...o, id: e.target.value })}
           >
             <option value="">{t('org.choose')}</option>
-            {o.scope === 'department'
-              ? (depts.data ?? []).map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
+            {o.scope === 'entity' || o.scope === 'branch'
+              ? places[o.scope === 'entity' ? 'entities' : 'branches'].map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.name}
                   </option>
                 ))
-              : (users.data ?? [])
-                  .filter((u) => u.status === 'ACTIVE')
-                  .map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {personLabel(u)}
+              : o.scope === 'department'
+                ? (depts.data ?? []).map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
                     </option>
-                  ))}
+                  ))
+                : (users.data ?? [])
+                    .filter((u) => u.status === 'ACTIVE')
+                    .map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {personLabel(u)}
+                      </option>
+                    ))}
           </Select>
           <Button
             size="icon-sm"

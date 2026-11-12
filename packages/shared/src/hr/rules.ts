@@ -95,7 +95,8 @@ export const hrRulesSchema = z.object({
   overrides: z
     .array(
       z.object({
-        scope: z.enum(['department', 'person']),
+        // Phase 12: a legal entity or a branch may differ too (a state's rules, one outlet's grace time).
+        scope: z.enum(['entity', 'branch', 'department', 'person']),
         id: z.string(),
         late: overrideOf(lateRulesSchema).default({}),
         punches: overrideOf(punchRulesSchema).default({}),
@@ -124,15 +125,24 @@ export function overrideOf<S extends z.ZodRawShape>(schema: z.ZodObject<S>) {
   return z.object(shape) as unknown as ReturnType<z.ZodObject<S>['partial']>;
 }
 
-/** The attendance rules for one person: company answers, then their department's, then their own. */
+/**
+ * The attendance rules for one person: the company's answers, then their legal entity's, their branch's, their
+ * department's, and last their own — each only where it says something different.
+ */
 export function rulesFor(
   rules: HrRules,
-  person: { id: string; departmentId: string | null },
+  person: { id: string; departmentId: string | null; branchId?: string | null; entityId?: string | null },
 ): { late: LateRules; punches: PunchRules } {
-  const dept = rules.overrides.find((o) => o.scope === 'department' && o.id === person.departmentId);
-  const own = rules.overrides.find((o) => o.scope === 'person' && o.id === person.id);
+  const at = (scope: HrRules['overrides'][number]['scope'], id: string | null | undefined) =>
+    id ? rules.overrides.find((o) => o.scope === scope && o.id === id) : undefined;
+  const layers = [
+    at('entity', person.entityId),
+    at('branch', person.branchId),
+    at('department', person.departmentId),
+    at('person', person.id),
+  ];
   return {
-    late: { ...rules.late, ...dept?.late, ...own?.late },
-    punches: { ...rules.punches, ...dept?.punches, ...own?.punches },
+    late: Object.assign({}, rules.late, ...layers.map((o) => o?.late)),
+    punches: Object.assign({}, rules.punches, ...layers.map((o) => o?.punches)),
   };
 }

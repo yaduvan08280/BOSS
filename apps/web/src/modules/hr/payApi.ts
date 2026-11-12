@@ -31,7 +31,9 @@ export type PayLine = PayResult & {
   };
   ratePaise: number;
   pattern: WorkPattern;
-  warnings: ('noRate' | 'noAttendance' | 'unsettled' | 'unrecorded')[];
+  warnings: ('noRate' | 'noAttendance' | 'unsettled' | 'unrecorded' | 'belowMinimum')[];
+  /** The gross shared over the branches worked at this month (phase 12). */
+  byBranch?: { branchId: string | null; days: number; paise: number }[];
 };
 export type PaySheet = {
   month: string;
@@ -47,10 +49,12 @@ export type Quota = {
   yearlyQuota: number;
 };
 
-export const usePaySheet = (month: string) =>
+/** `?entityId=…` for one legal entity's payroll; nothing for the whole company. */
+const forEntity = (entityId: string) => (entityId ? `?entityId=${entityId}` : '');
+export const usePaySheet = (month: string, entityId = '') =>
   useQuery({
-    queryKey: ['hr', 'pay', month],
-    queryFn: () => api<PaySheet>(`/api/hr/payroll/${month}`),
+    queryKey: ['hr', 'pay', month, entityId],
+    queryFn: () => api<PaySheet>(`/api/hr/payroll/${month}${forEntity(entityId)}`),
     retry: false,
   });
 export const useTerms = () =>
@@ -69,9 +73,13 @@ export const payApi = {
   saveRules: (rules: PayRules) => api('/api/hr/pay-rules', { method: 'PUT', body: rules }),
   saveQuotas: (leaveTypeId: string, quotas: Omit<Quota, 'leaveTypeId'>[]) =>
     api(`/api/hr/leave-quotas/${leaveTypeId}`, { method: 'PUT', body: { quotas } }),
-  close: (month: string) => api<PaySheet>(`/api/hr/payroll/${month}/close`, { method: 'POST' }),
-  reopen: (month: string, reason: string) =>
-    api<PaySheet>(`/api/hr/payroll/${month}/reopen`, { method: 'POST', body: { reason } }),
+  close: (month: string, entityId = '') =>
+    api<PaySheet>(`/api/hr/payroll/${month}/close${forEntity(entityId)}`, { method: 'POST' }),
+  reopen: (month: string, reason: string, entityId = '') =>
+    api<PaySheet>(`/api/hr/payroll/${month}/reopen${forEntity(entityId)}`, {
+      method: 'POST',
+      body: { reason },
+    }),
 };
 
 export const inr = (paise: number) => formatINR(Math.round(paise));

@@ -15,10 +15,11 @@ import { EmptyState, ErrorState, KpiTile, PageSkeleton } from '@/components/page
 import { StatusChip } from '@/components/status-chip';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
-import { Field, Textarea } from '@/components/ui/form';
+import { Field, Select, Textarea } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { matchScore } from '@/lib/pick';
 import { cn } from '@/lib/utils';
+import { useStructure } from '@/modules/system/branches/api';
 import { useHrMutation } from './api';
 import { inr, payApi, payCsv, usePaySheet, type PayLine } from './payApi';
 
@@ -28,9 +29,13 @@ export function PayMonth({ today, tz }: { today: string; tz: string }) {
   const [month, setMonth] = useState(today.slice(0, 7));
   const [search, setSearch] = useState('');
   const [reopen, setReopen] = useState(false);
-  const q = usePaySheet(month);
+  const [entityId, setEntityId] = useState('');
+  const structure = useStructure();
+  const entities = structure.data?.entities ?? [];
+  const branchName = new Map((structure.data?.branches ?? []).map((b) => [b.id, b.name]));
+  const q = usePaySheet(month, entityId);
   const close = useHrMutation(
-    () => payApi.close(month),
+    () => payApi.close(month, entityId),
     () => t('hr.p.closedToast'),
   );
   const [y, m] = month.split('-').map(Number) as [number, number];
@@ -101,6 +106,21 @@ export function PayMonth({ today, tz }: { today: string; tz: string }) {
           </div>
         )}
       </div>
+      {entities.length > 0 && (
+        <Select
+          aria-label={t('payEntity.label')}
+          value={entityId}
+          onChange={(e) => setEntityId(e.target.value)}
+          className="sm:w-72"
+        >
+          <option value="">{t('payEntity.all')}</option>
+          {entities.map((e) => (
+            <option key={e.id} value={e.id}>
+              {e.name}
+            </option>
+          ))}
+        </Select>
+      )}
       <p className="text-xs text-muted-foreground">{t('hr.p.grossOnly')}</p>
       {q.isPending ? (
         <PageSkeleton />
@@ -140,19 +160,19 @@ export function PayMonth({ today, tz }: { today: string; tz: string }) {
               {!lines.length && <p className="text-sm text-muted-foreground">{t('common.noMatch')}</p>}
               <ul className="space-y-2">
                 {lines.map((l) => (
-                  <PersonPay key={l.user.id} l={l} />
+                  <PersonPay key={l.user.id} l={l} branchName={branchName} />
                 ))}
               </ul>
             </>
           )}
         </>
       )}
-      <ReopenDialog open={reopen} onOpenChange={setReopen} month={month} />
+      <ReopenDialog open={reopen} onOpenChange={setReopen} month={month} entityId={entityId} />
     </div>
   );
 }
 
-function PersonPay({ l }: { l: PayLine }) {
+function PersonPay({ l, branchName }: { l: PayLine; branchName: Map<string, string> }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const c = l.counts;
@@ -227,6 +247,19 @@ function PersonPay({ l }: { l: PayLine }) {
               </td>
               <td className="px-4 py-2 text-right tabular-nums">{inr(l.grossPaise)}</td>
             </tr>
+            {/* Moved or lent during the month: what each branch bears. */}
+            {(l.byBranch?.length ?? 0) > 1 &&
+              l.byBranch!.map((b) => (
+                <tr key={b.branchId ?? 'none'} className="border-t text-xs text-muted-foreground">
+                  <td className="px-4 py-1.5">
+                    {b.branchId ? (branchName.get(b.branchId) ?? '?') : t('payEntity.noBranch')}
+                  </td>
+                  <td className="px-2 py-1.5 text-right tabular-nums">
+                    {t('payEntity.days', { count: b.days })}
+                  </td>
+                  <td className="px-4 py-1.5 text-right tabular-nums">{inr(b.paise)}</td>
+                </tr>
+              ))}
           </tbody>
         </table>
       )}
@@ -238,15 +271,17 @@ function ReopenDialog({
   open,
   onOpenChange,
   month,
+  entityId,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   month: string;
+  entityId: string;
 }) {
   const { t } = useTranslation();
   const [reason, setReason] = useState('');
   const go = useHrMutation(
-    () => payApi.reopen(month, reason.trim()),
+    () => payApi.reopen(month, reason.trim(), entityId),
     () => t('hr.p.reopenedToast'),
   );
   return (

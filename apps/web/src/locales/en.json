@@ -2911,6 +2911,7 @@
         "weekly": "Hours a week"
       },
       "warn": {
+        "belowMinimum": "Below the minimum wage",
         "noRate": "No pay set",
         "noAttendance": "No attendance this month",
         "unsettled": "Days still being worked out",

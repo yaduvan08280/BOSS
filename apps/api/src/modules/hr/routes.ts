@@ -261,18 +261,30 @@ export async function hrRoutes(app: FastifyInstance) {
     { ...view(), schema: { tags, params: idParam, body: leaveQuotasSchema } },
     async (q) => saveQuotas(app.prisma, actorOf(q), q.params.id, q.body),
   );
-  r.get('/api/hr/payroll/:month', { ...view(), schema: { tags, params: monthParam } }, async (q) =>
-    payrollMonth(app.prisma, actorOf(q), q.params.month),
+  // Payroll for the whole company, or for one legal entity (?entityId=…) once the company has entities.
+  const forEntity = z.object({ entityId: z.string().max(40).optional() });
+  r.get(
+    '/api/hr/payroll/:month',
+    { ...view(), schema: { tags, params: monthParam, querystring: forEntity } },
+    async (q) => payrollMonth(app.prisma, actorOf(q), q.params.month, new Date(), q.query.entityId),
   );
-  r.post('/api/hr/payroll/:month/close', { ...view(), schema: { tags, params: monthParam } }, async (q) =>
-    closePayRun(app.prisma, actorOf(q), q.params.month),
+  r.post(
+    '/api/hr/payroll/:month/close',
+    { ...view(), schema: { tags, params: monthParam, querystring: forEntity } },
+    async (q) => closePayRun(app.prisma, actorOf(q), q.params.month, new Date(), q.query.entityId),
   );
   r.post(
     '/api/hr/payroll/:month/reopen',
     {
       ...view(),
-      schema: { tags, params: monthParam, body: z.object({ reason: z.string().trim().min(3).max(300) }) },
+      schema: {
+        tags,
+        params: monthParam,
+        querystring: forEntity,
+        body: z.object({ reason: z.string().trim().min(3).max(300) }),
+      },
     },
-    async (q) => reopenPayRun(app.prisma, actorOf(q), q.params.month, q.body.reason),
+    async (q) =>
+      reopenPayRun(app.prisma, actorOf(q), q.params.month, q.body.reason, new Date(), q.query.entityId),
   );
 }

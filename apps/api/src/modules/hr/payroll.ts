@@ -5,6 +5,7 @@ import {
   daysInMonth,
   localDate,
   payMonthSchema,
+  minimumWageFor,
   payPolicyFor,
   weekdayOf,
   type AttendanceStatus,
@@ -46,12 +47,25 @@ export type PayLineOut = PayResult & {
  * A month's gross pay for everyone with pay set (CLAUDE.md §9.2, gross only: PF/ESI/TDS are not here).
  * A closed month shows the figures as they were closed; an open one is worked out from attendance now.
  */
-export async function payrollMonth(db: Db, actor: Actor, month: string, now = new Date()) {
+/** The key of a pay run: one legal entity, or "" for the whole company (as before entities). */
+const runKey = (companyId: string, month: string, entityId?: string | null) => ({
+  companyId_month_entityKey: { companyId, month, entityKey: entityId ?? '' },
+});
+
+/**
+ * Payroll is worked out and closed for the whole company or, once it has legal entities, for one entity at a
+ * time (phase 12). A month is one or the other: a company-wide close and entity closes never mix.
+ */
+export async function payrollMonth(
+  db: Db,
+  actor: Actor,
+  month: string,
+  now = new Date(),
+  entityId?: string | null,
+) {
   await needHr(db, actor);
   payMonthSchema.parse(month);
-  const run = await db.payRun.findUnique({
-    where: { companyId_month: { companyId: actor.companyId, month } },
-  });
+  const run = await db.payRun.findUnique({ where: runKey(actor.companyId, month, entityId) });
   if (run) {
     const by = run.closedById
       ? await db.user.findUnique({ where: { id: run.closedById }, select: { name: true } })
@@ -64,7 +78,7 @@ export async function payrollMonth(db: Db, actor: Actor, month: string, now = ne
       totalPaise: Number(run.totalPaise),
     };
   }
-  const live = await workOut(db, actor.companyId, month, now);
+  const live = await workOut(db, actor.companyId, month, now, entityId);
   return { month, ...live, closed: null };
 }
 
@@ -73,7 +87,7 @@ const lastDay = (month: string) => {
   return `${month}-${String(daysInMonth(y, m)).padStart(2, '0')}`;
 };
 
-async function workOut(db: Db, companyId: string, month: string, now: Date) {
+async function workOut(db: Db, companyId: string, month: string, now: Date, entityId?: string | null) {
   const company = await db.company.findUniqueOrThrow({
     where: { id: companyId },
     select: { timezone: true },
@@ -96,6 +110,8 @@ async function workOut(db: Db, companyId: string, month: string, now: Date) {
         deletedAt: null,
         // People who left this month are paid for the days they worked.
         OR: [{ status: { not: 'LEFT' } }, { id: { in: [...new Set(records.map((r) => r.userId))] } }],
+        // One legal entity's payroll: the people whose branch belongs to it.
+        ...(entityId ? { branch: { entityId } } : {}),
       },
       orderBy: { name: 'asc' },
       select: {
@@ -190,6 +206,10 @@ async function workOut(db: Db, companyId: string, month: string, now: Date) {
     });
     const warnings: string[] = [];
     if (!ratePaise) warnings.push('noRate');
+    // Below the minimum wage typed for their entity (a month's pay only; day and hour rates are not compared).
+    const floor = minimumWageFor(payRules, p);
+    if (floor !== null && basis === 'monthly' && ratePaise > 0 && ratePaise < floor)
+      warnings.push('belowMinimum');
     if (!recorded && !mine.length) warnings.push('noAttendance');
     // In a running month today is always still being worked; only an ended month warns.
     if (unsettled && asOf === last) warnings.push('unsettled');
@@ -229,21 +249,38 @@ export function splitByBranch(grossPaise: number, branchOfEachDay: (string | nul
 }
 
 /** Close a month that has ended: its figures are kept as they are, whatever changes later. */
-export async function closePayRun(db: Db, actor: Actor, month: string, now = new Date()) {
+export async function closePayRun(
+  db: Db,
+  actor: Actor,
+  month: string,
+  now = new Date(),
+  entityId?: string | null,
+) {
   await needHr(db, actor);
   payMonthSchema.parse(month);
-  const live = await workOut(db, actor.companyId, month, now);
+  const live = await workOut(db, actor.companyId, month, now, entityId);
   if (live.asOf !== lastDay(month))
     throw new AppError(400, 'VALIDATION_FAILED', 'A month can be closed once it has ended');
   if (live.lines.some((l) => l.warnings.includes('unsettled')))
     throw new AppError(409, 'CONFLICT', 'Some days are still being worked out. Try again in a few hours.');
   await db.$transaction(async (tx) => {
-    if (await tx.payRun.findUnique({ where: { companyId_month: { companyId: actor.companyId, month } } }))
+    const closed = await tx.payRun.findMany({ where: { companyId: actor.companyId, month } });
+    if (closed.some((r) => r.entityKey === (entityId ?? '')))
       throw new AppError(409, 'CONFLICT', 'This month is already closed');
+    // The whole company at once, or entity by entity — not both in one month.
+    if (entityId ? closed.some((r) => r.entityKey === '') : closed.length)
+      throw new AppError(
+        409,
+        'CONFLICT',
+        entityId
+          ? 'This month was closed for the whole company. Reopen it to close entity by entity.'
+          : 'This month is being closed entity by entity. Close the remaining entities instead.',
+      );
     const run = await tx.payRun.create({
       data: {
         companyId: actor.companyId,
         month,
+        entityKey: entityId ?? '',
         lines: live.lines as object[],
         totalPaise: BigInt(live.totalPaise),
         closedById: actor.userId,
@@ -256,21 +293,26 @@ export async function closePayRun(db: Db, actor: Actor, month: string, now = new
         action: 'hr.pay_closed',
         entityType: 'pay_run',
         entityId: run.id,
-        after: { month, people: live.lines.length, totalPaise: live.totalPaise },
+        after: { month, entityId: entityId ?? null, people: live.lines.length, totalPaise: live.totalPaise },
       },
     );
   });
-  return payrollMonth(db, actor, month, now);
+  return payrollMonth(db, actor, month, now, entityId);
 }
 
 /** Open a closed month again (to fix attendance or pay). The closed figures stay in the audit log. */
-export async function reopenPayRun(db: Db, actor: Actor, month: string, reason: string, now = new Date()) {
+export async function reopenPayRun(
+  db: Db,
+  actor: Actor,
+  month: string,
+  reason: string,
+  now = new Date(),
+  entityId?: string | null,
+) {
   await needHr(db, actor);
   payMonthSchema.parse(month);
   await db.$transaction(async (tx) => {
-    const run = await tx.payRun.findUnique({
-      where: { companyId_month: { companyId: actor.companyId, month } },
-    });
+    const run = await tx.payRun.findUnique({ where: runKey(actor.companyId, month, entityId) });
     if (!run) throw new AppError(404, 'NOT_FOUND', 'This month is not closed');
     await tx.payRun.delete({ where: { id: run.id } });
     await writeAudit(
@@ -285,5 +327,5 @@ export async function reopenPayRun(db: Db, actor: Actor, month: string, reason: 
       },
     );
   });
-  return payrollMonth(db, actor, month, now);
+  return payrollMonth(db, actor, month, now, entityId);
 }

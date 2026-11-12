@@ -25,6 +25,8 @@ export type HrPerson = {
   /** Daily / weekly hours: in by this time (minutes from midnight) or absent; null = no absence check. */
   latestStartMin: number | null;
   designationId: string | null;
+  /** The legal entity of their branch (phase 12): HR and pay rules can differ by entity. */
+  entityId: string | null;
 };
 
 /** A person with what HR needs: their shift (or the default one), branch, department and HOD. */
@@ -35,6 +37,7 @@ export async function hrPerson(db: Db | Tx, companyId: string, userId: string): 
       id: true,
       name: true,
       branchId: true,
+      branch: { select: { entityId: true } },
       defaultBuddyId: true,
       designationId: true,
       mainDepartmentId: true,
@@ -72,6 +75,7 @@ export async function hrPerson(db: Db | Tx, companyId: string, userId: string): 
     latestStartMin: kind === 'shift' ? null : (terms?.latestStartMin ?? null),
     departmentId: u.mainDepartmentId,
     branchId: u.branchId,
+    entityId: u.branch?.entityId ?? null,
     defaultBuddyId: u.defaultBuddyId,
     hodId: hod && hod !== u.id ? hod : null,
     // Daily or weekly hours: any time of the day counts.
@@ -80,7 +84,7 @@ export async function hrPerson(db: Db | Tx, companyId: string, userId: string): 
 }
 
 export const personRules = (rules: HrRules, p: HrPerson) =>
-  rulesFor(rules, { id: p.id, departmentId: p.departmentId });
+  rulesFor(rules, { id: p.id, departmentId: p.departmentId, branchId: p.branchId, entityId: p.entityId });
 
 /** HR people: anyone with hr.admin, or the HR person named in the rules. */
 export async function isHr(db: Db | Tx, actor: Actor): Promise<boolean> {
@@ -88,10 +92,34 @@ export async function isHr(db: Db | Tx, actor: Actor): Promise<boolean> {
   return (await hrRulesOf(db, actor.companyId)).leave.hrUserId === actor.userId;
 }
 
-/** Whose attendance and leave someone may see and decide: HR all, an HOD their team, everyone themselves. */
-export async function hrScope(db: Db | Tx, actor: Actor): Promise<{ all: boolean; team: string[] }> {
-  if (await isHr(db, actor)) return { all: true, team: [] };
-  return { all: false, team: await teamOf(db, actor.companyId, actor.userId) };
+/**
+ * Whose attendance and leave someone may see and decide: HR all, an HOD their team, everyone themselves. The HR
+ * person of a branch (phase 12) sees and decides for the people of that branch.
+ */
+export async function hrScope(
+  db: Db | Tx,
+  actor: Actor,
+): Promise<{ all: boolean; team: string[]; branchPeople: string[] }> {
+  if (await isHr(db, actor)) return { all: true, team: [], branchPeople: [] };
+  const hrOf = await db.branchManager.findMany({
+    where: { companyId: actor.companyId, userId: actor.userId, role: 'HR', branchId: { not: null } },
+    select: { branchId: true },
+  });
+  const branchPeople = hrOf.length
+    ? (
+        await db.user.findMany({
+          where: {
+            companyId: actor.companyId,
+            deletedAt: null,
+            branchId: { in: hrOf.map((b) => b.branchId!) },
+            NOT: { id: actor.userId },
+          },
+          select: { id: true },
+        })
+      ).map((u) => u.id)
+    : [];
+  const team = await teamOf(db, actor.companyId, actor.userId);
+  return { all: false, team: [...new Set([...team, ...branchPeople])], branchPeople };
 }
 
 type Routed = { kind: 'hr.leave' | 'hr.correction'; askedAt: Date };
@@ -112,7 +140,7 @@ export async function canDecideFor(
     if (byRoute !== null) return byRoute;
   }
   const s = await hrScope(db, actor);
-  return s.all || (can(actor, 'hr.approve') && s.team.includes(userId));
+  return s.all || s.branchPeople.includes(userId) || (can(actor, 'hr.approve') && s.team.includes(userId));
 }
 
 /** The waiting requests of a kind this person may decide (never their own). */

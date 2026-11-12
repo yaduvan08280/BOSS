@@ -265,7 +265,9 @@ model PayRun {
   totalPaise BigInt   @map("total_paise")
   closedById String?  @map("closed_by_id")
   closedAt   DateTime @default(now()) @map("closed_at") @db.Timestamptz(3)
+  /// Phase 12: the legal entity this run is for ("" = the whole company, as before entities).
+  entityKey  String   @default("") @map("entity_key")
 
-  @@unique([companyId, month])
+  @@unique([companyId, month, entityKey])
   @@map("pay_runs")
 }

@@ -224,6 +224,15 @@
     }
   },
   "hrBranch": {
-    "otherBranch": "Buddy can be from another branch"
+    "otherBranch": "Buddy can be from another branch",
+    "entity": "Legal entity",
+    "branch": "Branch"
+  },
+  "payEntity": {
+    "label": "Payroll for",
+    "all": "Whole company",
+    "noBranch": "No branch",
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days"
   }
 }
