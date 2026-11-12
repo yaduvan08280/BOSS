@@ -180,12 +180,8 @@ test('U9 U10: a report is built on screen from reportable fields, saved, opened 
     .or(page.getByRole('button', { name: /^fields/i }))
     .first()
     .click();
-  await page
-    .getByRole('button', { name: /more settings/i })
-    .first()
-    .click()
-    .catch(() => undefined);
   await expect(page.getByLabel('Use in reports').first()).toBeChecked();
+  await expect(page.getByText('Ready to use in reports.').first()).toBeVisible();
 
   await page.goto('/reports/new');
   await settled(page);
