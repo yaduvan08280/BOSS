@@ -53,3 +53,4 @@ export { createType as createRecordType } from './modules/records/types';
 export { addNote as addRecordNote } from './modules/records/detail';
 export { changeStatus as moveRecord, createRecord } from './modules/records/records';
 export { recordVars as fmsRecordVars } from './modules/fms/show';
+export { runBackfills as runReportBackfills } from './modules/reports/backfill';

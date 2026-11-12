@@ -1,0 +1,73 @@
+/// A typed, indexed copy of one reportable value of one record (phase 11, plan §2.7). Form values stay in JSON;
+/// a field marked "reportable" also keeps this copy so filters, groups and totals stay fast on large data.
+/// Written by the form pipeline in the record's own transaction; removed when the record is cancelled or deleted.
+model ReportValue {
+  id        String    @id @default(cuid(2))
+  companyId String    @map("company_id")
+  /// flow | recordType
+  ownerKind String    @map("owner_kind")
+  ownerId   String    @map("owner_id")
+  /// The FMS record / the record of a record type.
+  recordId  String    @map("record_id")
+  /// The field's key in the form.
+  field     String
+  /// The value as people read it (text, a picked row's name, "Yes" / "No").
+  text      String?
+  /// The same, trimmed and lower case — what filters and groups compare.
+  norm      String?
+  number    Decimal?  @db.Decimal(20, 4)
+  /// A date, or the company-local day of a date-time.
+  day       DateTime? @db.Date
+  /// The link of a picked row (`customer:<id>`).
+  ref       String?
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([ownerKind, ownerId, recordId, field])
+  @@index([companyId, ownerKind, ownerId, field, norm])
+  @@index([companyId, ownerKind, ownerId, field, number])
+  @@index([companyId, ownerKind, ownerId, field, day])
+  @@map("report_values")
+}
+
+/// A field that became reportable while records already existed: the worker copies their values in batches.
+/// `cursor` is the last record id copied, so the job can stop and go on; DONE rows stay as the list of fields
+/// whose copies are complete.
+model ReportBackfill {
+  id        String   @id @default(cuid(2))
+  companyId String   @map("company_id")
+  ownerKind String   @map("owner_kind")
+  ownerId   String   @map("owner_id")
+  field     String
+  /// PENDING | DONE
+  status    String   @default("PENDING")
+  cursor    String?
+  copied    Int      @default(0)
+  total     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([ownerKind, ownerId, field])
+  @@index([status])
+  @@map("report_backfills")
+}
+
+/// A saved report (plan §2.7): a source, columns, filters, a group and totals, shown as a table or a chart.
+model Report {
+  id          String    @id @default(cuid(2))
+  companyId   String    @map("company_id")
+  name        String
+  /// ReportDefinition (shared zod).
+  definition  Json
+  /// The person who made it.
+  ownerId     String    @map("owner_id")
+  /// Roles that may open it besides its maker (view only).
+  sharedRoles String[]  @default([]) @map("shared_roles")
+  /// ReportSchedule (shared zod) or null: when it is sent, and to whom.
+  schedule    Json?
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([companyId, deletedAt])
+  @@map("reports")
+}

@@ -3,6 +3,7 @@ import type { Db, Tx } from '@mono/db';
 import { formatNumber, nextCounter } from '@mono/db';
 import {
   flowDefinitionSchema,
+  flowFieldMap,
   flowMetaPatchSchema,
   flowMetaSchema,
   mainPathHours,
@@ -13,6 +14,7 @@ import {
 } from '@mono/shared';
 import { z } from 'zod';
 import { writeAudit } from '../../lib/audit';
+import { syncReportable } from '../reports/backfill';
 import { AppError, notFound } from '../../lib/errors';
 import { emitEvent } from '../../lib/events';
 import { can, type Actor } from '../work/actor';
@@ -228,6 +230,8 @@ export async function publishFlow(db: Db, actor: Actor, id: string) {
       { companyId: actor.companyId, actorId: actor.userId },
       { name: 'flow.published', entityType: 'flow', entityId: id, payload: { version: version.version } },
     );
+    // Fields newly marked "reportable" get the values of the records that already exist (the worker copies them).
+    await syncReportable(tx, actor.companyId, { kind: 'flow', id }, [...flowFieldMap(def).values()]);
     return updated;
   });
 }

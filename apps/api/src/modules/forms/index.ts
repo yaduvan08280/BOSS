@@ -5,6 +5,7 @@ import { itemLinesStage } from '../ims/item-lines';
 import { formulaStage } from './formula';
 import { learnStage } from './learn';
 import { linkStage } from './links';
+import { reportStage } from './report';
 import { uniqueStage } from './unique';
 
 /** Where a form lives. Value lists and "unique" checks are kept per owner. */
@@ -50,8 +51,11 @@ export type FormStage = {
 /** A record that is going away: an FMS record, a master row, a record of a record type. */
 export type FormTarget = { companyId: string; owner: FormOwner; recordId: string };
 
-/** Order matters: links settle what was picked, lists check typed text, formulas use both, unique sees the final values. */
-const STAGES: FormStage[] = [linkStage, itemLinesStage, learnStage, formulaStage, uniqueStage];
+/**
+ * Order matters: links settle what was picked, lists check typed text, formulas use both, unique sees the final
+ * values, and the reportable copies are written from what is finally stored.
+ */
+const STAGES: FormStage[] = [linkStage, itemLinesStage, learnStage, formulaStage, uniqueStage, reportStage];
 
 /** Check a form: the basic field rules (shared `checkFields`), then every stage. Nothing is written. */
 export async function checkForm(

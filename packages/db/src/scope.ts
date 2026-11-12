@@ -94,6 +94,9 @@ export const COMPANY_SCOPED_MODELS = new Set([
   'RecordEntry',
   'RecordEvent',
   'RecordView',
+  'ReportValue',
+  'ReportBackfill',
+  'Report',
 ]);
 
 /** Models with `deletedAt` (soft delete). Kept in sync with the schema by `scope.test.ts`. */
@@ -128,6 +131,7 @@ export const SOFT_DELETE_MODELS = new Set([
   'Webhook',
   'RecordType',
   'RecordEntry',
+  'Report',
 ]);
 
 const LIST_READS = new Set(['findMany', 'findFirst', 'findFirstOrThrow', 'count', 'aggregate', 'groupBy']);

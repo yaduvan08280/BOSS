@@ -16,6 +16,7 @@ import { AppError } from '../../lib/errors';
 import { recordChange } from '../../lib/events';
 import { can, type Actor } from '../work/actor';
 import { ctxOf, loadType, roleIdOf, shapeType, type LoadedType } from './access';
+import { syncReportable } from '../reports/backfill';
 import { checkStartFlows, startableFlows } from './start-flow';
 
 const needAdmin = (actor: Actor) => {
@@ -167,6 +168,7 @@ export async function createType(db: Db, actor: Actor, input: RecordTypeInput) {
       after: { name: row.name, prefix: row.prefix, definition: input.definition, permissions },
       payload: { typeId: row.id, name: row.name, code: row.code },
     });
+    await syncReportable(tx, actor.companyId, { kind: 'recordType', id: row.id }, input.definition.fields);
     return { id: row.id, code: row.code };
   });
 }
@@ -251,6 +253,7 @@ export async function updateType(db: Db, actor: Actor, id: string, patch: Record
       after: { name: row.name, prefix: row.prefix, definition: def, menu: row.menu, permissions },
       payload: { typeId: id, name: row.name, code: row.code, changed: Object.keys(patch) },
     });
+    if (patch.definition) await syncReportable(tx, actor.companyId, { kind: 'recordType', id }, def.fields);
     return { id };
   });
 }

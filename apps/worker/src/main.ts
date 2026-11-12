@@ -13,6 +13,7 @@ import {
   recordError,
   DriveAwareStorage,
   driveEnvOf,
+  runReportBackfills,
   syncDrive,
   netOf,
   queueWebhooks,
@@ -210,6 +211,8 @@ await boss.work(
     await morningCoverReport(prisma);
     await runFmsWebhooks(prisma, fetch, net);
     await drainWebhooks();
+    const copies = await runReportBackfills(prisma);
+    if (copies) log.info({ copies }, 'Reportable values copied');
     const toDrive = await syncDrive(prisma, driveEnvOf(env), disk);
     if (toDrive) log.info({ toDrive }, 'Files moved to Google Drive');
     if (briefs || mis || summaries) log.info({ briefs, mis, summaries }, 'Scheduled sends');
