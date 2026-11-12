@@ -47,3 +47,56 @@ no browser date pickers). 22 of 22 pass. Screenshots: `docs/screenshots/phase11/
 the merged code (58 passed, 21 skipped by design; the one email check needs Mailpit, the development mail catcher).
 
 Consume-by-recipe on a step (plan §2.4) needs recipes, which arrive in Phase 13; it is row I-recipe there, not here.
+
+## Phase 12 — Branches, legal entities, countries and franchises (45 rows)
+
+Written 12/11/2026 from plan §3 and the answers to decisions 9–14. Stages: A branch as a dimension · B legal entities
+· C countries · D franchises (plan §3.12). A row is green when the test named in "Test" passes.
+
+| Row | Stage | Workflow | Plan | Test |
+|---|---|---|---|---|
+| G1 | A | Structure: group → legal entity → region (any depth) → branch (outlet / central kitchen / store / office / hotel) → location, set up from System Master → Branches | §3.1 | |
+| G2 | A | A branch has one or more branch managers; a region has area managers; one person may manage any set of branches | §3.2 | |
+| G3 | A | A role has a reach (own records / my branches / my entity / whole group); a person's branches = home + managed + worked at | §3.3 | |
+| G4 | A | Reach is enforced in the database layer for every branch-bearing model; a test fails when such a model is missing from the list | §3.3 | |
+| G5 | A | An area manager over 4 outlets sees only those in lists, counts, search, exports and Ask | §3.3 | |
+| G6 | A | An API key and a webhook carry their maker's reach | §3.3 | |
+| G7 | A | Branch switcher in the top bar ("All my branches" or one) for people with more than one branch | §3.3 | |
+| G8 | A | A branch manager adds and manages only their branch's people; group settings stay with owner / group admins | §3.3 | |
+| G9 | A | Approval routing is a setting the owner controls: an ordered chain per module and request type, with overrides per entity or branch; each step can skip if empty, skip the requester, or go up after N hours | §3.2, decision 14 | |
+| G10 | A | Leave, corrections, stock adjustments, slips and ticket escalation follow the configured chain | §3.2 | |
+| G11 | A | New notification recipients: branch manager, area manager, branch HR, department head at this branch | §3.2 | |
+| G12 | A | The head of a department can be set per branch or group-wide | §3.2 | |
+| G13 | A | Every task, checklist run, slip, ticket, process record, document, PO and CRM order carries a branch (the starter's, or a field) | §3.10 | |
+| G14 | A | Process step doers are picked inside the record's branch first, then the fallback (region, group) — never silently someone at another outlet | §3.10 | |
+| G15 | A | One checklist template makes a run per branch, done by that branch's people at that branch's due time | §3.10 | |
+| G16 | A | Flow designer people (EA, slip receiver / approver, ticket coordinator) can be set per branch | §3.10 | |
+| G17 | A | Live FMS, My steps, Delegation, Checklists, Weekly MIS and reports filter by branch / region / entity / group | §3.10, §3.11 | |
+| G18 | A | Outlet comparison and ranking (attendance, checklist misses, ticket times, on-time work) | §3.11 | |
+| G19 | A | System Master header cards and the health check per branch | §3.11 | |
+| G20 | A | Open an outlet by copying another (checklists, routing, people roles); close an outlet safely (move people, finish or move open work, archive) | §3.11 | |
+| G21 | A | Master rows and record-type records can belong to a branch / entity or be group-wide | §3.11 | |
+| G22 | B | A legal entity per GSTIN / foreign registration with address, letterhead and licences (FSSAI …); branches belong to an entity | §3.1, §3.9 | |
+| G23 | B | Number series by entity / branch / document type / FY (one invoice series per GSTIN per FY); existing company-wide series continue unchanged | §3.9 | |
+| G24 | B | Letterhead, address, GSTIN / TRN and licence numbers of the right entity and branch on every document | §3.9 | |
+| G25 | B | Branch history with dates: a move takes effect from a date; attendance, cover and pay use the branch on each day | §3.4 | |
+| G26 | B | A person moved mid-month is paid correctly by both branches (days and cost split) | §3.4 | |
+| G27 | B | Allowed branches for punching (floating staff, managers); a branch may have several geofences | §3.4 | |
+| G28 | B | Borrowing staff: lend a person to another branch for dates; they show on its cover board and work lists and their cost moves with them | §3.4 | |
+| G29 | B | Buddy cover can be limited to the same branch or allowed across branches | §3.4 | |
+| G30 | B | HR people per branch / entity; HR rule overrides by entity and branch | §3.5 | |
+| G31 | B | Pay rules per entity as data (state minimum wages, weekly-off rules); payroll runs and closes per entity | §3.5 | |
+| G32 | B | Holidays per country, state and branch; leave types and quotas per entity | §3.5 | |
+| G33 | B | Cover board, attendance, the morning report and absence alerts are per branch, to that branch's managers and HR | §3.5 | |
+| G34 | C | Each entity has a currency: money is minor units + currency code; Indian entities keep ₹ and lakh / crore | §3.7, decision 10 | |
+| G35 | C | Each entity has a tax regime as a profile the accountant fills (GST, VAT, none); documents use the entity's legal and number formats | §3.7 | |
+| G36 | C | Each branch has a time zone: due times, shifts, attendance and reminders follow the branch's clock | §3.7 | |
+| G37 | C | Group reports convert to INR with one exchange rate per currency per month, typed by an accountant | §3.7, decision 11 | |
+| G38 | C | Payroll closes per entity in its own currency | §3.5, §3.7 | |
+| G39 | D | A franchise is an entity with hard isolation: its people never reach beyond it; group people see it only with the "franchise oversight" right | §3.8, decision 9 | |
+| G40 | D | Brand content is shared read-only with franchises: checklists and SOPs, masters, training material | §3.8 | |
+| G41 | D | Royalty and fees: % of sales or fixed, invoiced monthly, with a minimum guarantee | §3.8 | |
+| G42 | D | Brand audits: head-office auditors run audit checklists at franchise outlets (score, photos, corrective tasks) | §3.8 | |
+| G43 | D | Franchise agreement, licences and renewal dates with reminders | §3.8 | |
+| G44 | D | Exit: export everything of one entity (data and files) as a package, then archive it | §3.8 | |
+| G45 | 13 | Stock per location, supply routes, indents, in-transit, emergency transfers, production, transfer price and inter-GSTIN invoices are designed in Phase 12 and built and proven in Phase 13 (rows I-…) | §3.6 | |
