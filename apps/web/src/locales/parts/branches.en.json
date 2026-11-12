@@ -133,5 +133,28 @@
     "choose": "Choose a branch…",
     "hasOwn": "{{name}} (has its own)",
     "same": "Same as the company"
-  }
+  },
+  "outlets": {
+    "title": "Outlet comparison",
+    "subtitle": "Your branches side by side, best first",
+    "period": "Period",
+    "p": {
+      "month": "This month",
+      "lastMonth": "Last month",
+      "d7": "Last 7 days",
+      "d30": "Last 30 days"
+    },
+    "score": "Score",
+    "attendance": "Attendance",
+    "missed": "Checklists missed",
+    "onTime": "Tasks on time",
+    "ticketHours": "Ticket fix time",
+    "rankN": "Rank {{n}}",
+    "noRank": "Not ranked yet",
+    "emptyTitle": "No branches to compare",
+    "emptyBody": "Add branches in System Master → Branches.",
+    "how": "Score = the average of attendance, checklists done (100 − missed) and tasks on time, for the parts that have data. A branch's numbers come from its own people and the work that belongs to it."
+  },
+  "nav.outlets": "Outlet comparison",
+  "navDesc.outlets": "Branches side by side: attendance, checklists, tickets, on-time work"
 }

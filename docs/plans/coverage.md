@@ -72,7 +72,7 @@ Written 12/11/2026 from plan §3 and the answers to decisions 9–14. Stages: A 
 | G15 | A | One checklist template makes a run per branch, done by that branch's people at that branch's due time | §3.10 | `apps/api/src/modules/branches/branches-work.test.ts` (server); the template editor has the per-branch section (no browser test yet) |
 | G16 | A | Flow designer people (EA, slip receiver / approver, ticket coordinator) can be set per branch | §3.10 | `apps/api/src/modules/branches/branches-flow.test.ts` (slip receiver, ticket coordinator; verifier and EA use the same reader). Screen: flow designer → "For one branch" (no browser test yet) |
 | G17 | A | Live FMS, My steps, Delegation, Checklists, Weekly MIS and reports filter by branch / region / entity / group | §3.10, §3.11 | `apps/api/src/modules/branches/branches.test.ts` (the switcher takes a branch, a region or an entity and narrows every list and report), `apps/api/src/modules/branches/branches-flow.test.ts` (Live FMS stage counts, Weekly MIS people) |
-| G18 | A | Outlet comparison and ranking (attendance, checklist misses, ticket times, on-time work) | §3.11 | |
+| G18 | A | Outlet comparison and ranking (attendance, checklist misses, ticket times, on-time work) | §3.11 | `apps/api/src/modules/branches/branches-flow.test.ts`; screen `/outlets`: `e2e/phase12-branches.spec.ts` (380 and 1440) |
 | G19 | A | System Master header cards and the health check per branch | §3.11 | |
 | G20 | A | Open an outlet by copying another (checklists, routing, people roles); close an outlet safely (move people, finish or move open work, archive) | §3.11 | |
 | G21 | A | Master rows and record-type records can belong to a branch / entity or be group-wide | §3.11 | |

@@ -123,3 +123,16 @@ test('the owner sets up branches, decides who approves, and switches to one bran
   for (const e of all.entities.filter((x) => x.name.endsWith(t)))
     await call(page, 'DELETE', `/api/branches/entities/${e.id}`);
 });
+
+/** G18: outlets side by side, on a phone and a desktop. */
+test('outlet comparison lists the branches with their numbers', async ({ page }, info) => {
+  await signIn(page);
+  await page.goto('/outlets');
+  await settled(page);
+  await expect(page.getByRole('heading', { name: 'Outlet comparison' })).toBeVisible();
+  await expect(page.locator('main').getByText('Attendance').first()).toBeVisible();
+  await choose(page, page.getByRole('combobox', { name: 'Period' }), 'Last 30 days');
+  await settled(page);
+  await expectNoSideScroll(page);
+  if (shots) await page.screenshot({ path: `docs/screenshots/phase12/${info.project.name}-outlets.png` });
+});

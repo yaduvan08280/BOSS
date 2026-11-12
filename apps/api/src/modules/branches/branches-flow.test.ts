@@ -3,7 +3,7 @@ import { makeApp } from '../../test/helpers';
 import { sweepChecklists } from '../checklist/jobs';
 import { publish, start, task } from '../forms/test-kit';
 import { world } from '../records/testkit';
-import { ok, twoOutlets, type World } from './testkit';
+import { give, ok, twoOutlets, type World } from './testkit';
 
 let ctx: Awaited<ReturnType<typeof makeApp>>;
 beforeAll(async () => {
@@ -153,5 +153,57 @@ describe('processes, checklists and the flow designer per branch (phase 12, stag
     const atLake = await mis(g.b.lake.id);
     expect(atLake).toContain('Cook Lake');
     expect(atLake).not.toContain('Cook Rooftop');
+  });
+  it('G18: outlets are compared and ranked on attendance, checklist misses, ticket times and on-time work', async () => {
+    const w = await world(ctx.app);
+    const { g, rooftop, lake } = await twoOutlets(ctx.prisma, w);
+    const cookRooftop = await g.at('Cook Rooftop', g.b.rooftop.id);
+    const cookLake = await g.at('Cook Lake', g.b.lake.id);
+    const companyId = w.companyId;
+    const day = (n: number) => new Date(Date.UTC(2030, 0, n, 6));
+    // Attendance: the rooftop cook worked 3 of 4 days, the lake cook 1 of 4.
+    const mark = (userId: string, statuses: string[]) =>
+      ctx.prisma.attendanceDay.createMany({
+        data: statuses.map((status, i) => ({ companyId, userId, date: `2030-01-0${i + 1}`, status })),
+      });
+    await mark(cookRooftop.id, ['PRESENT', 'LATE', 'PRESENT', 'ABSENT']);
+    await mark(cookLake.id, ['ABSENT', 'ABSENT', 'PRESENT', 'ABSENT']);
+    // Tasks: rooftop on time, lake late.
+    const task_ = async (doerId: string, n: number, late: boolean) => {
+      const made = await give(w, doerId, `Task ${n}`);
+      await ctx.prisma.task.update({
+        where: { id: made.id },
+        data: { status: 'DONE', plannedAt: day(3), doneAt: late ? day(5) : day(2) },
+      });
+    };
+    await task_(cookRooftop.id, 1, false);
+    await task_(cookLake.id, 2, true);
+    type Row = {
+      name: string;
+      rank: number | null;
+      attendance: number | null;
+      onTime: number | null;
+      score: number | null;
+    };
+    const rows = async (api: World['api']) =>
+      (await ok<{ rows: Row[] }>(api.get('/api/branches/compare?from=2030-01-01&to=2030-01-08'))).rows;
+    const all = await rows(w.api);
+    expect(all.find((r) => r.name === 'Rooftop Jaipur')).toMatchObject({
+      rank: 1,
+      attendance: 75,
+      onTime: 100,
+      score: 88,
+    });
+    expect(all.find((r) => r.name === 'Lake View Ajmer')).toMatchObject({
+      rank: 2,
+      attendance: 25,
+      onTime: 0,
+      score: 13,
+    });
+    // Branches with nothing to grade are listed last, unranked.
+    expect(all.at(-1)).toMatchObject({ rank: null, score: null });
+    // A manager sees only their own branches in the comparison.
+    expect((await rows(rooftop.api)).map((r) => r.name)).toEqual(['Rooftop Jaipur']);
+    expect((await rows(lake.api)).map((r) => r.name)).toEqual(['Lake View Ajmer']);
   });
 });

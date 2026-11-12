@@ -14,6 +14,7 @@ import {
 import { forbidden } from '../../lib/errors';
 import { actorOf } from '../delegation/routes';
 import { chainFor, deleteRoute, listRoutes, saveRoute } from './approvals';
+import { compareOutlets } from './compare';
 import {
   deleteEntity,
   deleteLocation,
@@ -136,5 +137,19 @@ export async function branchRoutes(app: FastifyInstance) {
       });
       return { chain };
     },
+  );
+  /** Outlets side by side: attendance, checklist misses, ticket times and on-time work for a period. */
+  r.get(
+    '/api/branches/compare',
+    {
+      onRequest: [app.requirePermission('reports.view')],
+      schema: {
+        tags,
+        querystring: z
+          .object({ from: z.coerce.date(), to: z.coerce.date() })
+          .refine((q) => q.from < q.to, 'Pick a period'),
+      },
+    },
+    async (q) => ({ rows: await compareOutlets(db, actorOf(q), q.query.from, q.query.to) }),
   );
 }
