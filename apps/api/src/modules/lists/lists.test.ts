@@ -27,7 +27,13 @@ async function setup() {
 }
 
 /** A published one-step process whose start form (and, when given, step form) has the fields under test. */
-async function makeFlow(api: Client, doerId: string, name: string, startFields: Field[], stepFields: Field[] = []) {
+async function makeFlow(
+  api: Client,
+  doerId: string,
+  name: string,
+  startFields: Field[],
+  stepFields: Field[] = [],
+) {
   const flow = (await api.post('/api/fms/flows', { meta: { name, runName: 'Booking' } })).body;
   await api.put(`/api/fms/flows/${flow.id}`, {
     meta: { coordinatorId: doerId, solverId: doerId },
@@ -59,7 +65,8 @@ const offer = async (api: Client, key: string, q = '') =>
     total: number;
     canAdd: boolean;
   };
-const offered = async (api: Client, key: string, q = '') => (await offer(api, key, q)).values.map((v) => v.value);
+const offered = async (api: Client, key: string, q = '') =>
+  (await offer(api, key, q)).values.map((v) => v.value);
 const adminValues = async (api: Client, key: string) =>
   (await api.get(`/api/lists/values?key=${enc(key)}`)).body.values as {
     id: string;
@@ -135,7 +142,9 @@ describe('value lists', () => {
     // A step's field has its own list, fed when the step is done.
     const rec = (await s.api.get(`/api/fms/records/${first.body.id}`)).body;
     const step = rec.steps.find((x: { status: string }) => x.status === 'OPEN');
-    const done = await s.member.post(`/api/fms/steps/${step.id}/complete`, { data: { served_by: 'Captain Ravi' } });
+    const done = await s.member.post(`/api/fms/steps/${step.id}/complete`, {
+      data: { served_by: 'Captain Ravi' },
+    });
     expect(done.status).toBe(200);
     expect(await offered(s.member, `flow:${flowId}:served_by`)).toEqual(['Captain Ravi']);
 
@@ -155,12 +164,17 @@ describe('value lists', () => {
       where: { companyId: s.companyId, action: 'list.value_added' },
     });
     expect(audits).toHaveLength(2);
-    expect(audits.map((a) => (a.after as { value: string }).value).sort()).toEqual(['Captain Ravi', 'Rooftop']);
+    expect(audits.map((a) => (a.after as { value: string }).value).sort()).toEqual([
+      'Captain Ravi',
+      'Rooftop',
+    ]);
   });
 
   it('L3: one named list is fed and offered by fields in two different processes', async () => {
     const s = await setup();
-    const banquet = await makeFlow(s.api, s.memberId, 'Banquet enquiry', [learn('venue', 'Venue', { list: 'venues' })]);
+    const banquet = await makeFlow(s.api, s.memberId, 'Banquet enquiry', [
+      learn('venue', 'Venue', { list: 'venues' }),
+    ]);
     const party = await makeFlow(s.api, s.memberId, 'Party order', [
       learn('place', 'Place', { list: 'venues' }),
       learn('theme', 'Theme'),
@@ -222,10 +236,14 @@ describe('value lists', () => {
     expect(await offered(s.member, key)).toEqual(['Jaipur', 'Ajmer city', 'Jaipr']);
     expect(await stored(ajmer.id)).toMatchObject({ city: 'Ajmer' });
     // A name another value already has is refused (merge them instead).
-    expect((await s.api.patch(`/api/lists/values/${await id('Jaipr')}`, { value: 'JAIPUR' })).status).toBe(409);
+    expect((await s.api.patch(`/api/lists/values/${await id('Jaipr')}`, { value: 'JAIPUR' })).status).toBe(
+      409,
+    );
 
     // Merge the typo into the right one: its uses are added, it is gone from the list, the record is untouched.
-    const merged = await s.api.post(`/api/lists/values/${await id('Jaipr')}/merge`, { into: await id('Jaipur') });
+    const merged = await s.api.post(`/api/lists/values/${await id('Jaipr')}/merge`, {
+      into: await id('Jaipur'),
+    });
     expect(merged.body).toMatchObject({ value: 'Jaipur', uses: 3 });
     expect((await offer(s.member, key)).values).toEqual([
       { value: 'Jaipur', uses: 3 },
@@ -255,7 +273,9 @@ describe('value lists', () => {
     expect(await offered(s.member, key)).toEqual(['Jaipur', 'Ajmer city']);
 
     // An admin adds a value nobody typed yet; the same value twice is refused.
-    expect((await s.api.post('/api/lists/values', { key, value: ' Kishangarh ' })).body.value).toBe('Kishangarh');
+    expect((await s.api.post('/api/lists/values', { key, value: ' Kishangarh ' })).body.value).toBe(
+      'Kishangarh',
+    );
     expect((await s.api.post('/api/lists/values', { key, value: 'kishangarh' })).status).toBe(409);
     expect((await s.api.post('/api/lists/values', { key: 'nonsense', value: 'X' })).status).toBe(400);
     expect((await offer(s.member, key)).values.at(-1)).toEqual({ value: 'Kishangarh', uses: 0 });
@@ -326,14 +346,18 @@ describe('value lists', () => {
     const bad = await s.member.post(`/api/fms/steps/${step.id}/complete`, { data: { bed: 'Bunk' } });
     expect(bad.status).toBe(400);
     expect(bad.body.error.details.fields).toEqual({ bed: 'Bed: pick from the list' });
-    expect((await s.member.post(`/api/fms/steps/${step.id}/complete`, { data: { bed: 'King' } })).status).toBe(200);
+    expect(
+      (await s.member.post(`/api/fms/steps/${step.id}/complete`, { data: { bed: 'King' } })).status,
+    ).toBe(200);
     expect(await offered(s.member, `flow:${flowId}:bed`)).toEqual(['King']);
   });
 
   it('keeps each company to its own lists, and changes to admins (core.edit)', async () => {
     const a = await setup();
     const b = await setup();
-    const flowId = await makeFlow(a.api, a.memberId, 'Orders', [learn('colour', 'Colour', { list: 'colours' })]);
+    const flowId = await makeFlow(a.api, a.memberId, 'Orders', [
+      learn('colour', 'Colour', { list: 'colours' }),
+    ]);
     await start(a.member, flowId, { colour: 'Calacatta gold' });
     const key = 'list:colours';
     const row = (await adminValues(a.api, key))[0]!;
@@ -350,7 +374,9 @@ describe('value lists', () => {
     const theirs = (await b.api.post('/api/lists/values', { key, value: 'Statuario' })).body;
     expect((await b.api.post(`/api/lists/values/${row.id}/merge`, { into: theirs.id })).status).toBe(404);
     expect((await b.api.post(`/api/lists/values/${theirs.id}/merge`, { into: row.id })).status).toBe(404);
-    expect(await adminValues(a.api, key)).toEqual([expect.objectContaining({ value: 'Calacatta gold', uses: 1 })]);
+    expect(await adminValues(a.api, key)).toEqual([
+      expect.objectContaining({ value: 'Calacatta gold', uses: 1 }),
+    ]);
     expect(await offered(b.member, key)).toEqual(['Statuario']);
 
     // A member reads what a form offers, but the admin screen and every change need core.edit.

@@ -39,7 +39,11 @@ export async function listRoutes(app: FastifyInstance) {
     '/api/lists/values/:id',
     {
       ...signedIn(),
-      schema: { tags, params: idParam, body: z.object({ value: value.optional(), hidden: z.boolean().optional() }) },
+      schema: {
+        tags,
+        params: idParam,
+        body: z.object({ value: value.optional(), hidden: z.boolean().optional() }),
+      },
     },
     async (req) => changeValue(db, actorOf(req), req.params.id, req.body),
   );

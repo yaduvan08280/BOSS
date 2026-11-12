@@ -52,7 +52,10 @@ export async function listsInForms(db: Db, companyId: string): Promise<Map<strin
   const add = (kind: ListUse['kind'], id: string, name: string, fields: LooseField[]) => {
     for (const f of fields) {
       if (f.learn !== true || f.type !== 'text' || typeof f.key !== 'string') continue;
-      const key = listKeyOf({ kind, id }, { key: f.key, list: typeof f.list === 'string' ? f.list : undefined });
+      const key = listKeyOf(
+        { kind, id },
+        { key: f.key, list: typeof f.list === 'string' ? f.list : undefined },
+      );
       // The draft and the published version usually hold the same field: count it once.
       if (seen.has(`${key}|${id}|${f.key}`)) continue;
       seen.add(`${key}|${id}|${f.key}`);
