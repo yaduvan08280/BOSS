@@ -1,5 +1,6 @@
 import { ChevronDown, List, PencilLine, X } from 'lucide-react';
-import { useId, useState } from 'react';
+import { Popover } from 'radix-ui';
+import { useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { listKeyOf, type FlowField } from '@mono/shared';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,7 @@ export function LearnInput({ field, value, ctx }: InputProps) {
 }
 
 const row = 'flex min-h-11 cursor-pointer items-center gap-2 rounded-control px-3 py-2 text-sm';
+const note = 'px-3 py-2.5 text-sm text-muted-foreground';
 
 function LearnPicker({
   field,
@@ -41,6 +43,7 @@ function LearnPicker({
   // null = not chosen yet: an empty list starts as a text box, a list with values as the dropdown.
   const [writing, setWriting] = useState<boolean | null>(null);
   const listId = useId();
+  const anchor = useRef<HTMLDivElement>(null);
   const offer = useOffer(listKeyOf(owner, field), open ? q.trim() : '');
   const canWrite = mayWrite(field, offer.data);
   const total = offer.data?.total ?? 0;
@@ -81,106 +84,117 @@ function LearnPicker({
   const write = () => {
     if (rows.write?.text) onChange(rows.write.text);
     setWriting(true);
-    setOpen(false);
-    setQ('');
+    close();
   };
   const choose = (i: number) => {
     const v = rows.values[i];
     if (v) pick(v.value);
     else if (rows.write && i === rows.values.length) write();
   };
+  const move = (by: number) => {
+    const next = Math.min(Math.max(active + by, 0), count - 1);
+    setActive(next);
+    document.getElementById(`${listId}-${next}`)?.scrollIntoView({ block: 'nearest' });
+  };
   return (
-    <div className="relative">
-      <Input
-        role="combobox"
-        aria-expanded={open}
-        aria-controls={listId}
-        aria-autocomplete="list"
-        className="pr-20"
-        value={open ? q : value}
-        placeholder={value || t(canWrite ? 'lists.pick' : 'lists.pickOnly')}
-        onFocus={() => (setQ(''), setActive(0), setOpen(true))}
-        // Already focused (a value was just picked): a tap opens the list again.
-        onClick={() => setOpen(true)}
-        onBlur={() => setTimeout(() => (setOpen(false), setQ('')), 150)}
-        onChange={(e) => (setQ(e.target.value), setActive(0), setOpen(true))}
-        onKeyDown={(e) => {
-          if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-            e.preventDefault();
-            if (!open) return setOpen(true);
-            setActive((a) => Math.min(Math.max(a + (e.key === 'ArrowDown' ? 1 : -1), 0), count - 1));
-          } else if (e.key === 'Enter' && open) {
-            e.preventDefault();
-            choose(active);
-          } else if (e.key === 'Escape' && open) {
-            e.preventDefault();
-            close();
-          }
-        }}
-      />
-      <div className="absolute inset-y-0 right-0 flex items-center">
-        {value && !open && (
-          <button
-            type="button"
-            aria-label={t('lists.clear')}
-            className="flex h-full w-9 items-center justify-center text-muted-foreground hover:text-foreground"
-            onClick={(e) => (e.preventDefault(), onChange(''))}
-          >
-            <X className="size-4" />
-          </button>
-        )}
-        <ChevronDown className="pointer-events-none mr-3 size-4 text-muted-foreground" aria-hidden />
-      </div>
-      {open && (
-        <ul
+    <Popover.Root open={open} onOpenChange={(o) => !o && close()}>
+      <Popover.Anchor asChild>
+        <div ref={anchor} className="relative">
+          <Input
+            role="combobox"
+            aria-expanded={open}
+            aria-controls={listId}
+            aria-autocomplete="list"
+            className="pr-20"
+            value={open ? q : value}
+            placeholder={value || t(canWrite ? 'lists.pick' : 'lists.pickOnly')}
+            onFocus={() => (setQ(''), setActive(0), setOpen(true))}
+            // Already focused (a value was just picked): a tap opens the list again.
+            onClick={() => setOpen(true)}
+            onBlur={close}
+            onChange={(e) => (setQ(e.target.value), setActive(0), setOpen(true))}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (open) move(e.key === 'ArrowDown' ? 1 : -1);
+                else setOpen(true);
+              } else if (e.key === 'Enter' && open) {
+                e.preventDefault();
+                choose(active);
+              }
+            }}
+          />
+          <div className="absolute inset-y-0 right-0 flex items-center">
+            {value && !open && (
+              <button
+                type="button"
+                aria-label={t('lists.clear')}
+                className="flex h-full w-9 items-center justify-center text-muted-foreground hover:text-foreground"
+                onClick={(e) => (e.preventDefault(), onChange(''))}
+              >
+                <X className="size-4" />
+              </button>
+            )}
+            <ChevronDown className="pointer-events-none mr-3 size-4 text-muted-foreground" aria-hidden />
+          </div>
+        </div>
+      </Popover.Anchor>
+      {/* In a portal, so a dialog's scroll area never cuts the list off. */}
+      <Popover.Portal>
+        <Popover.Content
           id={listId}
           role="listbox"
-          // The field sits inside its <label>: without this a tap on a row would "click" the input again.
-          onClick={(e) => e.preventDefault()}
-          className="absolute z-30 mt-1 max-h-72 w-full overflow-auto rounded-control border bg-card p-1 shadow-lg"
+          align="start"
+          sideOffset={4}
+          collisionPadding={8}
+          // The cursor stays in the box: typing filters, and a tap on a row must not blur it first.
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => e.preventDefault()}
+          onMouseDown={(e) => e.preventDefault()}
+          onInteractOutside={(e) => anchor.current?.contains(e.target as Node) && e.preventDefault()}
+          className="z-[60] flex max-h-[min(50vh,320px)] w-[var(--radix-popover-trigger-width)] min-w-56 flex-col overflow-hidden rounded-control border bg-card p-1 shadow-lg"
         >
-          {offer.isPending && (
-            <li className="px-3 py-2.5 text-sm text-muted-foreground">{t('common.loading')}</li>
-          )}
-          {offer.isError && (
-            <li className="px-3 py-2.5 text-sm text-status-bad-fg">{t('lists.loadFailed')}</li>
-          )}
-          {rows.values.map((v, i) => (
-            <li
-              key={v.value}
-              role="option"
-              aria-selected={v.value === value}
-              onMouseEnter={() => setActive(i)}
-              onMouseDown={(e) => (e.preventDefault(), pick(v.value))}
-              className={cn(row, i === active && 'bg-muted', v.value === value && 'font-medium')}
-            >
-              <span className="min-w-0 break-words">{v.value}</span>
-            </li>
-          ))}
-          {offer.isSuccess && !rows.values.length && q.trim() && (
-            <li className="px-3 py-2.5 text-sm text-muted-foreground">{t('common.noMatch')}</li>
-          )}
-          {rows.values.length > 0 && <li role="separator" className="my-1 border-t" />}
+          <div role="presentation" className="min-h-0 flex-1 overflow-y-auto">
+            {offer.isPending && <p className={note}>{t('common.loading')}</p>}
+            {offer.isError && <p className={cn(note, 'text-status-bad-fg')}>{t('lists.loadFailed')}</p>}
+            {rows.values.map((v, i) => (
+              <div
+                key={v.value}
+                id={`${listId}-${i}`}
+                role="option"
+                aria-selected={v.value === value}
+                onMouseEnter={() => setActive(i)}
+                onClick={() => pick(v.value)}
+                className={cn(row, i === active && 'bg-muted', v.value === value && 'font-medium')}
+              >
+                <span className="min-w-0 break-words">{v.value}</span>
+              </div>
+            ))}
+            {offer.isSuccess && !rows.values.length && q.trim() && (
+              <p className={note}>{t('common.noMatch')}</p>
+            )}
+          </div>
+          {/* Below the scrolling values, so the last choice is always in sight. */}
+          {rows.values.length > 0 && <div role="separator" className="my-1 shrink-0 border-t" />}
           {rows.write ? (
-            <li
+            <div
+              id={`${listId}-${rows.values.length}`}
               role="option"
               aria-selected={false}
               onMouseEnter={() => setActive(rows.values.length)}
-              onMouseDown={(e) => (e.preventDefault(), write())}
-              className={cn(row, 'font-medium', active === rows.values.length && 'bg-muted')}
+              onClick={write}
+              className={cn(row, 'shrink-0 font-medium', active === rows.values.length && 'bg-muted')}
             >
               <PencilLine className="size-4 shrink-0 text-muted-foreground" aria-hidden />
               <span className="min-w-0 break-words">
                 {rows.write.text ? t('lists.writeThis', { value: rows.write.text }) : t('lists.write')}
               </span>
-            </li>
+            </div>
           ) : (
-            offer.isSuccess && (
-              <li className="px-3 py-2.5 text-xs text-muted-foreground">{t('lists.adminsOnly')}</li>
-            )
+            offer.isSuccess && <p className={cn(note, 'shrink-0 text-xs')}>{t('lists.adminsOnly')}</p>
           )}
-        </ul>
-      )}
-    </div>
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
   );
 }
