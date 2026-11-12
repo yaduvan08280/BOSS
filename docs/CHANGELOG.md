@@ -1,5 +1,34 @@
 # Changelog
 
+## Phase 12M — Money core (13/11/2026)
+
+One engine for every paper that carries money. Plan: `docs/plans/hospitality-100-plan.md` §3A; rows U11–U22 in
+`docs/plans/coverage.md`. The CRM's screens are unchanged; its orders and payments now also stand as invoices and
+receipts.
+
+- **Parties** (Money → Parties): one list of everyone you deal with — customer, vendor, guest, company, agent,
+  franchise, transporter; a party can be several. A CRM customer is a party with the same id and code.
+- **Vendors to match** (Money set-up): vendor names typed on items and purchase orders are listed with a suggestion;
+  a person says which party each is. Nothing is merged by itself.
+- **Tax rates are data**: a code, a percent and the day it starts, typed by the accountant; a change is a new row
+  from a new day. Rates can go by price slab. Same state → CGST + SGST, another state → IGST; a VAT entity charges
+  one tax, a no-tax entity none (from the entity's tax profile).
+- **Bills** (Money → Bills): invoice, credit note, debit note, receipt, advance, purchase bill, vendor payment and
+  delivery challan in one model — lines with HSN and tax, charges, discount, round-off, any currency. Draft →
+  issued → part paid → paid. An issued paper is never edited: an invoice is cancelled by a credit note, a receipt
+  entered by mistake is voided with a reason. Numbers come from the legal entity's series.
+- **Money owed** (receivable and payable with ageing, due and promised dates) and a **statement** per party.
+- **Payment modes** per branch and a **day close**: expected from the day's papers against what was counted.
+- Every issued paper makes a **balanced voucher**; **Tally ledgers** maps MONO's heads to Tally ledger names and
+  exports the vouchers as Tally XML.
+- CRM orders (invoice with the order's number), payments (receipt), cancelled orders (credit note), goods received
+  on a purchase order (purchase bill), process document steps and `/api/v1/bills` all go through this engine. The
+  worker carries over orders and payments made before it, numbers unchanged.
+- New rights: `money.view / create / edit / approve / admin`.
+
+Not done here: tax on CRM order lines (orders carry one amount), TDS / TCS, e-invoice and e-way bill, a printed
+invoice PDF from a bill, bank reconciliation. Hindi strings need review.
+
 ## Phase 12 — Branches, legal entities, countries and franchises (13/11/2026)
 
 One MONO for a whole group: many branches under several companies, some abroad, some franchised. Plan:

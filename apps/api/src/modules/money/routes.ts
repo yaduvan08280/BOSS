@@ -3,7 +3,8 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { billInputSchema, BILL_TYPES } from '@mono/shared';
 import { actorOf } from '../delegation/routes';
-import { createBill, issueBill, updateDraft, voidBill } from './bills';
+import { homeBranchOf } from '../branches/reach';
+import { createBill, issueBill, updateDraft, voidBill, workOutBill } from './bills';
 import { billOut, getBill, listBills, setPromise } from './bills-read';
 import { closeDay, dayClose, listModes, modeSchema, saveMode } from './cash';
 import { outstanding, statement } from './ledger';
@@ -119,6 +120,20 @@ export async function moneyRoutes(app: FastifyInstance) {
     const { issue, allocate, ...input } = q.body;
     return billOut(await createBill(db, actorOf(q), input, { issue, allocate }));
   });
+  // What a paper would come to, before it is saved: the form shows this as the person types.
+  r.post(
+    '/api/money/bills/preview',
+    { ...signedIn(), schema: { tags, body: billInputSchema } },
+    async (q) => {
+      const actor = actorOf(q);
+      const branchId =
+        q.body.branchId === undefined
+          ? await homeBranchOf(db, actor.companyId, actor.userId)
+          : q.body.branchId;
+      const { totals, seller } = await workOutBill(db, actor.companyId, q.body, branchId);
+      return { ...totals, currency: seller.head.currency, regime: seller.regime };
+    },
+  );
   r.put(
     '/api/money/bills/:id',
     { ...signedIn(), schema: { tags, params: idParam, body: billInputSchema } },

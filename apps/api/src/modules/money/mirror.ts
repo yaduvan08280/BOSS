@@ -30,6 +30,13 @@ function linesOf(order: OrderRow) {
     : [{ item: `Order ${order.number}`, qty: 1, rate: Number(order.amount) }];
 }
 
+/** A customer made before the engine (or outside the CRM's screens) becomes a party the moment a paper needs it. */
+async function ensureParty(tx: Tx, companyId: string, customerId: string) {
+  if (await tx.party.count({ where: { id: customerId, companyId } })) return;
+  const c = await tx.customer.findFirst({ where: { id: customerId, companyId } });
+  if (c) await partyOfCustomer(tx, c);
+}
+
 export async function billForOrder(tx: Tx, actor: Actor, order: OrderRow) {
   if (
     await tx.bill.count({
@@ -37,6 +44,7 @@ export async function billForOrder(tx: Tx, actor: Actor, order: OrderRow) {
     })
   )
     return;
+  await ensureParty(tx, order.companyId, order.customerId);
   await createBillIn(
     tx,
     actor,
@@ -96,6 +104,7 @@ export async function receiptForPayment(tx: Tx, actor: Actor, p: Payment) {
       })
     : null;
   const due = own ? Number(own.total - own.credited - own.settled) : 0;
+  await ensureParty(tx, p.companyId, p.customerId);
   await createBillIn(
     tx,
     actor,

@@ -83,6 +83,11 @@ const TypeEditorPage = page(() => import('@/modules/records/TypeEditorPage'), 'T
 const RecordListPage = page(() => import('@/modules/records/RecordListPage'), 'RecordListPage');
 const ListsPage = page(() => import('@/modules/lists/ListsPage'), 'ListsPage');
 const OutletsPage = page(() => import('@/modules/branches/OutletsPage'), 'OutletsPage');
+const BillsPage = page(() => import('@/modules/money/BillsPage'), 'BillsPage');
+const PartiesPage = page(() => import('@/modules/money/PartiesPage'), 'PartiesPage');
+const OwedPage = page(() => import('@/modules/money/OwedPage'), 'OwedPage');
+const DayClosePage = page(() => import('@/modules/money/DayClosePage'), 'DayClosePage');
+const MoneySetupPage = page(() => import('@/modules/money/SetupPage'), 'MoneySetupPage');
 const ReportsPage = page(() => import('@/modules/reports/ReportsPage'), 'ReportsPage');
 const ReportBuilderPage = page(() => import('@/modules/reports/ReportBuilderPage'), 'ReportBuilderPage');
 const RulesWizard = page(() => import('@/modules/hr/RulesWizard'), 'RulesWizard');
@@ -150,6 +155,11 @@ export const router = createBrowserRouter([
       { path: '/records/:typeId', element: <WithMe render={(me) => <RecordListPage me={me} />} /> },
       { path: '/reports', element: <ReportsPage /> },
       { path: '/outlets', element: <OutletsPage /> },
+      { path: '/money/bills', element: <WithMe render={(me) => <BillsPage me={me} />} /> },
+      { path: '/money/parties', element: <WithMe render={(me) => <PartiesPage me={me} />} /> },
+      { path: '/money/owed', element: <OwedPage /> },
+      { path: '/money/day-close', element: <WithMe render={(me) => <DayClosePage me={me} />} /> },
+      { path: '/money/setup', element: <MoneySetupPage /> },
       { path: '/reports/new', element: <WithMe render={(me) => <ReportBuilderPage me={me} />} /> },
       { path: '/reports/:id', element: <WithMe render={(me) => <ReportBuilderPage me={me} />} /> },
       { path: '/fms/live', element: <WithMe render={(me) => <LiveFmsPage me={me} />} /> },
