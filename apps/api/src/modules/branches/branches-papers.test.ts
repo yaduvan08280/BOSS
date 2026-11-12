@@ -92,7 +92,7 @@ describe('entities, number series and papers (phase 12, stage B)', () => {
 
   it('G23, G24: a series per entity or branch; the paper prints the right entity, branch and licences', async () => {
     const w = await world(ctx.app);
-    const { g, rooftop, lake } = await twoEntities(w);
+    const { rooftop, lake } = await twoEntities(w);
     const type = (code: string, series?: string) =>
       ok(
         w.api.put('/api/document-types', {
