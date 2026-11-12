@@ -11,7 +11,39 @@ export type Reach = {
   branchIds: string[] | null;
   /** The person picked one branch in the top bar: show that branch only, not their own rows elsewhere. */
   strict?: boolean;
+  /**
+   * A franchise's own person (stage D): nothing outside their entity's branches — not even what is group-wide,
+   * except brand content the group shares with franchises.
+   */
+  isolated?: boolean;
+  /** With `isolated`: the franchise itself — its entity and all its branches (kept when the switcher narrows). */
+  franchise?: { entityId: string; branchIds: string[] };
+  /**
+   * A group person without the franchise-oversight right: the whole group (`branchIds: null`) except these
+   * branches — the franchises'.
+   */
+  exceptBranchIds?: string[];
 };
+
+/** Brand content the group shares with franchises, read-only: models with a `shared` flag on a group-wide row. */
+const SHARED_WITH_FRANCHISES: Record<string, Where> = {
+  ChecklistMaster: { branchId: null, shared: true },
+  MasterRow: { branchId: null, master: { shared: true } },
+};
+
+/**
+ * The same limits for a plain branch column (people's home branch, a list of branches): null = no limit.
+ * `orNull` keeps rows with no branch (someone at head office) when only the franchises are left out.
+ */
+export function reachBranch(field = 'branchId', reach = currentReach()): Where | null {
+  if (!reach) return null;
+  if (reach.branchIds) return { [field]: { in: reach.branchIds } };
+  if (reach.exceptBranchIds?.length)
+    return field === 'id'
+      ? { id: { notIn: reach.exceptBranchIds } }
+      : { OR: [{ [field]: null }, { [field]: { notIn: reach.exceptBranchIds } }] };
+  return null;
+}
 
 const store = new AsyncLocalStorage<{ reach: Reach | null }>();
 
@@ -91,8 +123,37 @@ const FILTERED = new Set([
 
 /** What a reach adds to a where on one model (null = nothing: the model is free, or the reach is the group). */
 export function reachWhere(model: string, reach: Reach | null): Where | null {
-  if (!reach || reach.branchIds === null) return null;
-  const inReach = [{ branchId: null }, { branchId: { in: reach.branchIds } }];
+  if (!reach) return null;
+  // People, branches and entities are set-up data everyone may normally read. Franchises are the exception:
+  // a franchise's person sees only their own franchise's, and a group person without oversight not the franchises'.
+  if (model === 'User' || model === 'Branch' || model === 'LegalEntity') {
+    const key = model === 'User' ? 'branchId' : 'id';
+    if (reach.franchise) {
+      if (model === 'LegalEntity') return { id: reach.franchise.entityId };
+      const inside = { [key]: { in: reach.franchise.branchIds } };
+      return model === 'User' ? { OR: [inside, { id: reach.userId }] } : inside;
+    }
+    if (reach.exceptBranchIds?.length && model !== 'LegalEntity')
+      return model === 'User'
+        ? { OR: [{ branchId: null }, { branchId: { notIn: reach.exceptBranchIds } }] }
+        : { id: { notIn: reach.exceptBranchIds } };
+    return null;
+  }
+  if (reach.branchIds === null) {
+    // The whole group, minus the franchises for someone without the oversight right.
+    if (!reach.exceptBranchIds?.length) return null;
+    const outside = [{ branchId: null }, { branchId: { notIn: reach.exceptBranchIds } }];
+    const kid = BRANCH_CHILD_MODELS[model];
+    if (kid) return { [kid.relation]: { OR: outside } };
+    return BRANCH_SCOPED_MODELS[model] ? { OR: outside } : null;
+  }
+  // A franchise's person sees no group-wide rows — only brand content shared with franchises.
+  const inReach: Where[] = reach.isolated
+    ? [
+        { branchId: { in: reach.branchIds } },
+        ...(SHARED_WITH_FRANCHISES[model] ? [SHARED_WITH_FRANCHISES[model]!] : []),
+      ]
+    : [{ branchId: null }, { branchId: { in: reach.branchIds } }];
   const child = BRANCH_CHILD_MODELS[model];
   if (child) {
     const own = reach.strict ? [] : child.own(reach.userId);
@@ -114,7 +175,11 @@ export function withReach<T extends PrismaClient>(db: T): T {
           const extra = FILTERED.has(operation) ? reachWhere(model, currentReach()) : null;
           if (!extra) return query(args);
           const a = { ...((args ?? {}) as { where?: Where }) };
-          a.where = a.where ? { AND: [a.where, extra] } : extra;
+          // A unique look-up keeps its key on top; the limit rides along as an extra condition.
+          if (operation.startsWith('findUnique') && a.where) {
+            const more = a.where.AND;
+            a.where = { ...a.where, AND: [...(Array.isArray(more) ? more : more ? [more] : []), extra] };
+          } else a.where = a.where ? { AND: [a.where, extra] } : extra;
           return query(a as typeof args);
         },
       },
@@ -129,15 +194,21 @@ export function withReach<T extends PrismaClient>(db: T): T {
  */
 export function reachSql(table: 'records' | 'fms_records'): Prisma.Sql {
   const reach = currentReach();
-  if (!reach || reach.branchIds === null) return Prisma.sql`TRUE`;
+  if (!reach) return Prisma.sql`TRUE`;
+  if (reach.branchIds === null)
+    return reach.exceptBranchIds?.length
+      ? Prisma.sql`(r.branch_id IS NULL OR r.branch_id NOT IN (${Prisma.join(reach.exceptBranchIds)}))`
+      : Prisma.sql`TRUE`;
   const inBranches = reach.branchIds.length
     ? Prisma.sql`r.branch_id IN (${Prisma.join(reach.branchIds)})`
     : Prisma.sql`FALSE`;
+  if (reach.isolated && reach.strict) return inBranches;
   if (reach.strict) return Prisma.sql`(r.branch_id IS NULL OR ${inBranches})`;
   const own =
     table === 'records'
       ? Prisma.sql`r.created_by_id = ${reach.userId}`
       : Prisma.sql`(r.started_by_id = ${reach.userId} OR EXISTS (
           SELECT 1 FROM fms_record_steps s WHERE s.record_id = r.id AND s.doer_id = ${reach.userId}))`;
+  if (reach.isolated) return Prisma.sql`(${inBranches} OR ${own})`;
   return Prisma.sql`(r.branch_id IS NULL OR ${inBranches} OR ${own})`;
 }

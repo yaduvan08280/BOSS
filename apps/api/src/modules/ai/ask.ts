@@ -123,15 +123,21 @@ export function planSql(plan: AskPlan, companyId: string, tz: string, onlyPerson
   if (onlyPersonId && plan.view !== 'people') where.push(Prisma.sql`person_id = ${onlyPersonId}`);
   // Inside the asker's branches (phase 12): group-wide rows, their branches' rows, and their own work.
   const reach = currentReach();
-  if (reach?.branchIds && plan.view !== 'people') {
-    const inBranches = reach.branchIds.length
-      ? Prisma.sql`branch_id IN (${Prisma.join(reach.branchIds)})`
-      : Prisma.sql`FALSE`;
-    where.push(
-      reach.strict
-        ? Prisma.sql`(branch_id IS NULL OR ${inBranches})`
-        : Prisma.sql`(branch_id IS NULL OR ${inBranches} OR person_id = ${reach.userId})`,
-    );
+  if (reach && plan.view !== 'people') {
+    if (reach.branchIds) {
+      const inBranches = reach.branchIds.length
+        ? Prisma.sql`branch_id IN (${Prisma.join(reach.branchIds)})`
+        : Prisma.sql`FALSE`;
+      // A franchise's person never gets group-wide rows; nobody gets their own rows elsewhere once narrowed.
+      const groupWide = reach.isolated ? Prisma.sql`FALSE` : Prisma.sql`branch_id IS NULL`;
+      where.push(
+        reach.strict
+          ? Prisma.sql`(${groupWide} OR ${inBranches})`
+          : Prisma.sql`(${groupWide} OR ${inBranches} OR person_id = ${reach.userId})`,
+      );
+    } else if (reach.exceptBranchIds?.length) {
+      where.push(Prisma.sql`(branch_id IS NULL OR branch_id NOT IN (${Prisma.join(reach.exceptBranchIds)}))`);
+    }
   }
   for (const f of plan.filters)
     where.push(condition(f.column, view.columns[f.column]!.type, f.op, f.value, tz));

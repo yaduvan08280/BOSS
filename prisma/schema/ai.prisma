@@ -73,6 +73,8 @@ model MasterDef {
   /// ai | library | own
   source       String    @default("own")
   description  String?
+  /// Brand content (phase 12, stage D): franchises may read its group-wide rows, never change them.
+  shared       Boolean   @default(false)
   createdById  String?   @map("created_by_id")
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)

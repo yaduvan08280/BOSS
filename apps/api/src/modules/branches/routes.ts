@@ -12,6 +12,7 @@ import {
   regionSchema,
 } from '@mono/shared';
 import { hasPermission } from '@mono/shared';
+import { writeAudit } from '../../lib/audit';
 import { forbidden, notFound } from '../../lib/errors';
 import { actorOf } from '../delegation/routes';
 import { chainFor, deleteRoute, listRoutes, saveRoute } from './approvals';
@@ -264,5 +265,41 @@ export async function branchRoutes(app: FastifyInstance) {
       },
     },
     async (q) => saveRate(db, actorOf(q), q.body),
+  );
+  // Brand content (stage D): a master or a checklist template the group shares with its franchises, read-only.
+  r.put(
+    '/api/branches/brand',
+    {
+      ...groupWide(),
+      schema: {
+        tags,
+        body: z.object({
+          kind: z.enum(['master', 'checklist']),
+          id: z.string().max(40),
+          shared: z.boolean(),
+        }),
+      },
+    },
+    async (q) => {
+      const actor = actorOf(q);
+      if (!hasPermission(actor.permissions, 'franchise.admin')) throw forbidden();
+      const where = { id: q.body.id, companyId: actor.companyId, deletedAt: null };
+      const res =
+        q.body.kind === 'master'
+          ? await db.masterDef.updateMany({ where, data: { shared: q.body.shared } })
+          : await db.checklistMaster.updateMany({ where, data: { shared: q.body.shared } });
+      if (!res.count) throw notFound(q.body.kind === 'master' ? 'Master' : 'Checklist');
+      await writeAudit(
+        db,
+        { companyId: actor.companyId, actorId: actor.userId },
+        {
+          action: 'brand.shared_changed',
+          entityType: q.body.kind === 'master' ? 'master' : 'checklist_master',
+          entityId: q.body.id,
+          after: { shared: q.body.shared },
+        },
+      );
+      return { ok: true };
+    },
   );
 }

@@ -298,7 +298,10 @@ export async function queueWebhooks(db: Db, event: DomainEvent) {
     const kept = [];
     for (const h of want) {
       const reach = h.createdById ? await reachOfUser(db, event.companyId, h.createdById) : null;
-      if (!reach || reach.branchIds === null || reach.branchIds.includes(branchId)) kept.push(h);
+      const seen = reach?.branchIds
+        ? reach.branchIds.includes(branchId)
+        : !reach?.exceptBranchIds?.includes(branchId);
+      if (seen) kept.push(h);
     }
     want = kept;
     if (!want.length) return 0;

@@ -1,3 +1,4 @@
+import { brandGuard } from '../branches/reach';
 import type { Db } from '@mono/db';
 import { fieldSchema } from '@mono/shared';
 import { z } from 'zod';
@@ -26,6 +27,8 @@ export async function saveMaster(db: Db, actor: Actor, input: MasterDefInput, id
     throw new AppError(400, 'VALIDATION_FAILED', 'Two fields have the same key');
   for (const k of [input.keyField, input.displayField])
     if (k && !keys.has(k)) throw new AppError(400, 'VALIDATION_FAILED', `There is no field "${k}"`);
+  // A master's definition is the group's.
+  brandGuard(null);
   return db.$transaction(async (tx) => {
     const clash = await tx.masterDef.findFirst({
       where: {
@@ -71,6 +74,7 @@ export async function saveMaster(db: Db, actor: Actor, input: MasterDefInput, id
 export async function deleteMaster(db: Db, actor: Actor, id: string) {
   const row = await db.masterDef.findFirst({ where: { id, companyId: actor.companyId, deletedAt: null } });
   if (!row) throw notFound('Master');
+  brandGuard(null);
   await db.$transaction(async (tx) => {
     await tx.masterDef.update({ where: { id }, data: { deletedAt: new Date() } });
     await writeAudit(

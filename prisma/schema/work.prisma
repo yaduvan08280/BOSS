@@ -86,6 +86,8 @@ model ChecklistMaster {
   dueMin            Int       @map("due_min")
   windowHours       Int       @default(4) @map("window_hours")
   doerIds           String[]  @map("doer_ids")
+  /// Brand content (stage D): franchises may see this template, never change it.
+  shared            Boolean   @default(false)
   /// Phase 12: one template, a run per branch — [{ branchId, doerIds, dueTime?, verifierId? }]. Empty = one set of runs.
   perBranch         Json?     @map("per_branch")
   verifierId        String?   @map("verifier_id")

@@ -1,4 +1,4 @@
-import { placeAt } from '../branches/reach';
+import { brandGuard, placeAt } from '../branches/reach';
 import type { Db } from '@mono/db';
 import { checkFields, fieldSchema, MASTER_LIBRARY, splitTable, type FlowField } from '@mono/shared';
 import { createId } from '@paralleldrive/cuid2';
@@ -119,6 +119,7 @@ export async function saveRow(
   return db.$transaction(async (tx) => {
     const before = id ? await tx.masterRow.findFirst({ where: { id, masterId, deletedAt: null } }) : null;
     if (id && !before) throw notFound('Row');
+    if (before) brandGuard(before.branchId);
     await commitForm(tx, scope, m.fields, state);
     const row = id
       ? await tx.masterRow.update({
@@ -156,6 +157,7 @@ export async function deleteRow(db: Db, actor: Actor, masterId: string, id: stri
     where: { id, masterId, companyId: actor.companyId, deletedAt: null },
   });
   if (!row) throw notFound('Row');
+  brandGuard(row.branchId);
   await db.$transaction(async (tx) => {
     await tx.masterRow.update({ where: { id }, data: { deletedAt: new Date(), key: null } });
     await releaseForm(tx, {
@@ -180,6 +182,8 @@ export async function deleteRow(db: Db, actor: Actor, masterId: string, id: stri
  */
 export async function importRows(db: Db, actor: Actor, masterId: string, table: string[][]) {
   needEdit(actor);
+  // Imported rows are for every branch: not something a franchise does.
+  brandGuard(null);
   const m = await loadMaster(db, actor.companyId, masterId);
   if (table.length < 2)
     throw new AppError(400, 'VALIDATION_FAILED', 'Put the field names in the first row and the rows below');

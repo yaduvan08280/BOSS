@@ -1,3 +1,4 @@
+import { brandGuard } from '../branches/reach';
 import { Prisma, type ChecklistRun, type Db, type Tx } from '@mono/db';
 import { formatNumber, nextCounter } from '@mono/db';
 import {
@@ -94,6 +95,7 @@ export async function updateMaster(tx: Tx, actor: Actor, id: string, input: Part
     where: { id, companyId: actor.companyId, deletedAt: null },
   });
   if (!before) throw notFound('Checklist');
+  brandGuard(before.branchId);
   if (input.doerIds || input.verifierId)
     await checkPeople(tx, actor.companyId, [
       ...(input.doerIds ?? []),
@@ -127,6 +129,7 @@ export async function deleteMaster(tx: Tx, actor: Actor, id: string) {
     where: { id, companyId: actor.companyId, deletedAt: null },
   });
   if (!before) throw notFound('Checklist');
+  brandGuard(before.branchId);
   await tx.checklistMaster.update({ where: { id }, data: { deletedAt: new Date(), active: false } });
   await writeAudit(
     tx,

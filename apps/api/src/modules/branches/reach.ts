@@ -1,5 +1,5 @@
 import { currentReach, type Db, type Reach, type Tx } from '@mono/db';
-import { localDate } from '@mono/shared';
+import { hasPermission, localDate } from '@mono/shared';
 import { AppError } from '../../lib/errors';
 
 export const REACHES = ['own', 'branches', 'entity', 'group'] as const;
@@ -71,6 +71,59 @@ export async function reachFor(
   db: Db | Tx,
   who: { companyId: string; userId: string; permissions: string[]; reach: string },
 ): Promise<Reach> {
+  // Franchises (stage D). Someone whose home branch belongs to a franchise entity is walled inside it, whatever
+  // their role says. Group people see franchises only with the franchise-oversight right.
+  const franchises = await db.legalEntity.findMany({
+    where: { companyId: who.companyId, kind: 'FRANCHISE' },
+    select: { id: true },
+  });
+  if (franchises.length) {
+    const fIds = franchises.map((f) => f.id);
+    const home = await db.user.findFirst({
+      where: { id: who.userId, companyId: who.companyId },
+      select: { branch: { select: { entityId: true } } },
+    });
+    const mine = home?.branch?.entityId;
+    if (mine && fIds.includes(mine)) {
+      const inside = (
+        await db.branch.findMany({
+          where: { companyId: who.companyId, entityId: mine },
+          select: { id: true },
+        })
+      ).map((x) => x.id);
+      const wide = who.permissions.includes('*') || who.reach === 'group' || who.reach === 'entity';
+      const own = wide
+        ? inside
+        : (await branchesOf(db, who.companyId, who.userId)).filter((id) => inside.includes(id));
+      return {
+        userId: who.userId,
+        branchIds: own,
+        isolated: true,
+        franchise: { entityId: mine, branchIds: inside },
+      };
+    }
+    const oversight = who.permissions.includes('*') || hasPermission(who.permissions, 'franchise.view');
+    if (!oversight) {
+      const theirs = (
+        await db.branch.findMany({
+          where: { companyId: who.companyId, entityId: { in: fIds } },
+          select: { id: true },
+        })
+      ).map((x) => x.id);
+      const reach = await ownReach(db, who);
+      return reach.branchIds
+        ? { ...reach, branchIds: reach.branchIds.filter((id) => !theirs.includes(id)) }
+        : { ...reach, exceptBranchIds: theirs };
+    }
+  }
+  return ownReach(db, who);
+}
+
+/** A person's reach by their role and branches alone (before franchises are taken into account). */
+async function ownReach(
+  db: Db | Tx,
+  who: { companyId: string; userId: string; permissions: string[]; reach: string },
+): Promise<Reach> {
   const everything = who.permissions.includes('*') || who.reach === 'group';
   let ids: string[] | null = null;
   if (!everything) {
@@ -120,8 +173,17 @@ export async function narrowTo(
   } else {
     wanted = (await db.branch.count({ where: { id: only, ...live } })) > 0 ? [only] : [];
   }
-  const allowed = reach.branchIds ? wanted.filter((id) => reach.branchIds!.includes(id)) : wanted;
-  return allowed.length ? { userId: reach.userId, branchIds: allowed, strict: true } : reach;
+  const allowed = reach.branchIds
+    ? wanted.filter((id) => reach.branchIds!.includes(id))
+    : wanted.filter((id) => !reach.exceptBranchIds?.includes(id));
+  return allowed.length
+    ? {
+        userId: reach.userId,
+        branchIds: allowed,
+        strict: true,
+        ...(reach.isolated ? { isolated: true, franchise: reach.franchise } : {}),
+      }
+    : reach;
 }
 
 /** A person's home branch — the branch new work for them belongs to (null when the company has none set). */
@@ -150,7 +212,10 @@ export async function placeAt(
   companyId: string,
   branchId: string | null,
 ): Promise<string | null> {
-  const mine = currentReach()?.branchIds ?? null;
+  const reach = currentReach();
+  const mine = reach?.branchIds ?? null;
+  if (branchId && reach?.exceptBranchIds?.includes(branchId))
+    throw new AppError(403, 'FORBIDDEN', "That branch isn't one of yours");
   if (branchId === null) {
     if (mine) throw new AppError(403, 'FORBIDDEN', "Only the group's people make something for every branch");
     return null;
@@ -160,4 +225,13 @@ export async function placeAt(
   if (!(await db.branch.count({ where: { id: branchId, companyId, deletedAt: null } })))
     throw new AppError(404, 'NOT_FOUND', 'Branch not found');
   return branchId;
+}
+
+/**
+ * Brand content (stage D): what the group shares with its franchises is theirs to read, never to change. Call
+ * with the row's branch — a franchise's person may change only what belongs to their own branches.
+ */
+export function brandGuard(branchId: string | null | undefined) {
+  if (currentReach()?.isolated && !branchId)
+    throw new AppError(403, 'FORBIDDEN', 'This belongs to the brand: a franchise can read it, not change it');
 }
