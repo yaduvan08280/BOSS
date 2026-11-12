@@ -95,14 +95,14 @@ Conventions
 ## 3. App shell and navigation
 
 ### Top bar (every screen)
-Logo + page title + one-line subtitle · **My Workspace / System Master** switch (System Master only for
+Logo + page title + one-line subtitle · **branch switcher** (people with more than one branch: all, or one branch / region / entity) · **My Workspace / System Master** switch (System Master only for
 Owner/Admin) · support button · two counters (my pending work, unread notifications) · refresh ·
 user menu (profile, language, AI assistant, help, sign out). Floating chat/assistant button bottom-right.
 
 ### Left menu (My Workspace)
 - WORKSPACE: Home · My Workspace · Support
 - BUSINESS ENGINE: Delegation sheet · Checklists · Help Slips · Help Tickets · EA system · Weekly MIS
-- SYSTEMS: My FMS steps · Live FMS · Documents · Reports · FMS Builder
+- SYSTEMS: My FMS steps · Live FMS · Documents · Reports · Outlet comparison · FMS Builder
 - HR: Attendance · Leave · Cover board · Payroll (gross pay from attendance; HR only)
 - INVENTORY: Stock · Purchase (OWS) · MAX review · Audit
 - SALES CRM: Dashboard · Plan & setup · Customer Master · SCOT Sheet · Today's Calls · CRM Orders · Collections · NBD Funnel · MeCA/MCAP
@@ -158,7 +158,7 @@ cream page, soft cream cards with large radius, one ink "hero" KPI card per scre
 5. **Health check** — % readiness, "2 of 8 fully ready", link "See what is missing" (lists gaps: departments without HOD, people without login, steps without doer, no Telegram link, etc.).
 
 ### 4.2 Tabs
-`Company Setup · Departments · Users · Roles · Org Chart · Integration · Inventory · Sales CRM · API Keys · HR Rules · Business details · Appearance` (each with a count badge).
+`Company Setup · Departments · Users · Roles · Org Chart · Branches · Integration · Inventory · Sales CRM · API Keys · HR Rules · Business details · Appearance` (each with a count badge).
 
 **Company Setup** sub-tabs:
 - *Company Profile*: trading name*, city*, state*, owner/contact name*, mobile*, email, website, CIN.
@@ -308,7 +308,8 @@ fms: step_assigned, step_due_soon, step_late, record_started, record_closed, app
 hr: punch_flagged, missed_punch, leave_requested, leave_decided, buddy_requested, buddy_answered, absent_no_cover, morning_cover_report ·
 ims: below_min, above_max, max_review_due, adjustment_approval, dead_stock, ows_ready ·
 crm: call_due, lead_assigned, lead_stuck, order_step_due, payment_due, customer_sleeping ·
-record: created (rule off until asked for), status_changed, note · report: scheduled.
+record: created (rule off until asked for), status_changed, note · report: scheduled ·
+franchise: renewal_due, royalty_invoiced, audit_done.
 
 ### 7.4 Telegram bot
 Commands: `/start` (ask for link code), `/my` (my pending list), `/today`, `/done <id>`, `/capture <text>` (EA), photo reply = attach proof, text reply to a task message = a note on that task. Inline buttons on messages: Accept · Done · Move date · Open. Each message deep-links to the web app.
@@ -423,6 +424,7 @@ notify: `NotificationRule` · `Template` · `ReminderPattern` · `Outbox`(channe
 hr: `HrRules`(Json) · `Holiday` · `WeeklyOff` · `Punch`(type, at, lat, lng, accuracy, selfieId, flagged, flagReason) · `AttendanceDay` · `CorrectionRequest` · `LeaveType` · `LeaveBalance` · `LeaveRequest` · `BuddyRequest`
 ims: `Item` · `StockMove`(type, qty, rate, refType, refId, approvedBy) · `StockSnapshot` · `ImsRules`(Json) · `PurchaseOrder` · `PoLine` · `AuditCount`
 crm: `Customer`(segment, handledById, creditDays, rhythm Json) · `CustomerTag` · `Contact` · `Lead`(source, stage, value, nextAction, nextActionAt, ownerId, qualify Json) · `Call`(customerId, scId, dueAt, result, note) · `SalesOrder`(→ FmsRecord) · `Invoice` · `Payment` · `Plan`(fy, status, json) · `SeatAssignment` · `Season`
+branches: `LegalEntity`(kind, country, currency, taxId, details Json) · `Region`(parentId) · `Location` · `BranchManager`(role MANAGER|AREA|HR) · `UserBranch` · `DepartmentHead` · `ApprovalRoute`(kind, entityId, branchId, steps Json) · `ModuleBranchSetting` · `BranchStay`(from) · `BranchLoan`(from, to) · `ExchangeRate`(currency, month, rate) · `RoyaltyInvoice` · `BrandAudit`
 ai: `AiConfig` · `AiUsage` · `BusinessDetails`
 
 ---
@@ -460,6 +462,7 @@ Ubuntu 24.04 LTS on i7-12700 / 48 GB / 1.8 TB. Docker Engine + Compose plugin. S
 | 9 | Sales CRM | done (05/11/2026) — charts are small SVG components (no Recharts yet); order line items are free text until masters arrive in phase 10; Contact / Invoice / Season / SeatAssignment live inside the CRM settings and orders rather than as tables |
 | 10 | Masters library, Google Drive, public API, WhatsApp, PWA push, hardening | done (05/11/2026) — restore drill passed with `deploy/restore.sh` into an empty data folder on the dev PC's Docker stack (35 s; data, files, sign-in, API key back); a drill on a separate fresh VM is still to be done by GGM (INSTALL.md log). Google Drive tested against a mocked Google (a real Google Cloud client is needed to try it live). Load test: 50 users, 0 errors, p95 23 ms. Support page added (contacts, help ticket, in-app printable guides) |
 | 11 | Linked fields, record types, reports (plan: `docs/plans/hospitality-100-plan.md` §2; rows L1–L18, U1–U10, A1 in `docs/plans/coverage.md`) | done (12/11/2026) — every row has an automated test, and all but A1 are also driven through the screens by Playwright at 380 and 1440 (`e2e/phase11-*.spec.ts`, 22 of 22). Hindi strings need review. Report PDFs use Helvetica (no ₹ / Hindi). KPI cards do not read saved reports yet. "Build a record type with AI" is tested with a scripted model only. Phases 12–21 are planned in the same document |
+| 12 | Branches, legal entities, countries and franchises (plan: `docs/plans/hospitality-100-plan.md` §3; rows G1–G44 in `docs/plans/coverage.md`) | done (13/11/2026) — every row has an automated test; the structure (entities with licences, regions, branches with managers), who-approves, branch switcher, outlet-comparison and copy / close screens are driven by Playwright at 380 and 1440 (`e2e/phase12-branches.spec.ts`). Built but not browser-tested: exchange rates, payroll per entity, the tax profile, per-branch checklist plans, per-branch flow-designer people, the holiday "For" choice, "For which branch" on rows and records. Still API-only (no screen yet): lending staff, dated moves, extra punching gates, minimum-wage tables, tax rates, royalties, brand audits, franchise exit, the share-with-franchises switch. Tax on lines and PO / SO numbering per entity wait for the money core (12M); stock per location is Phase 13. Hindi strings need review |
 
 ---
 
@@ -580,3 +583,23 @@ Ubuntu 24.04 LTS on i7-12700 / 48 GB / 1.8 TB. Docker Engine + Compose plugin. S
 114. The request ceiling counts per signed-in person (from the signed access cookie, no database call), per address for visitors, with a flood guard of 20× per address — so an office behind one address is not refused together.
 115. Modules added after a company exists (`LATER_MODULES`: records, reports): at start-up a built-in role that holds nothing of such a module gets the default rights; a role an admin has touched is left alone. A data event's `module` is its own prefix, so webhook choices like `record.*` match.
 116. Feature strings live in `apps/web/src/locales/parts/<feature>.{en,hi}.json` and are merged at start-up; a part never redefines a section of the main files (tested). A translated sentence that must show literal braces takes them as values (`{{a}}` ← `'{{field}}'`).
+117. Phase 12 structure (13/11/2026): Group (the MONO company) → `LegalEntity` (OWN or FRANCHISE; country, currency, tax number, `details`) → `Region` (any depth) → `Branch` (OUTLET / KITCHEN / STORE / OFFICE / HOTEL; `details`, time zone) → `Location`. `BranchManager` rows give a branch its managers (MANAGER) and HR person (HR) and a region its area managers (AREA). A company with no entities and one branch behaves exactly as before.
+118. Reach lives in the database client (`packages/db/src/reach.ts`): each request runs in an AsyncLocalStorage slot; after sign-in the person's reach is set and every read (and `updateMany` / `deleteMany`) of a model in `BRANCH_SCOPED_MODELS` gets "no branch, or one of my branches, or a row I am part of". The worker and seeds have no slot and are unfiltered; `withReachOf` acts as a person outside a request; `reachSql` gives the same condition to hand-written SQL. A model with a `branchId` must be listed as scoped or as free with a reason (a test checks the schema). Rows with no branch are group-wide.
+119. A role has a reach (`own`, `branches`, `entity`, `group`; existing roles are `group`). A person's branches are their home branch, the ones they also work at, the ones they manage or are HR of, every branch of the regions they are area manager of, and a branch they are lent to today. The top-bar switcher sends `x-mono-branch` (a branch id, `r:<region>` or `e:<entity>`); it narrows strictly (not even the person's own rows elsewhere) and never widens.
+120. Work carries the branch of the person it starts with (a task: the doer's; a slip, ticket, record, order: the maker's; a paper: its record's; a checklist run: the template's branch or plan, else the doer's). The owner has no home branch, so what they make is group-wide unless they choose a branch.
+121. Approval routing (plan decision 14): no built-in order. `ApprovalRoute` holds a ladder per kind (`hr.leave`, `hr.correction`, `ims.adjustment`, `slip`, `ticket`) for the group, an entity or a branch (branch > entity > group). One decision decides. "From an amount" starts the request at that step and leaves the earlier steps out. A step nobody holds is passed over only if it says so. "Go up after N hours" lets the next step decide too. Nobody decides their own request; the owner always may. With no ladder for a kind, the module's own rule stands (HOD / HR for leave, the listed approvers for stock …). Slips take the first step as receiver and the next as approver; ticket escalation level n goes to step n.
+122. `hod` in a notification rule means the route's first people when the event carries `approverIds`. Place recipients (`branch_manager`, `area_manager`, `branch_hr`, `department_head`) are read from the branch in the payload, else the home branch of the person the event is about.
+123. A process step with several doers goes to those at the record's branch, then its region, then anyone — least busy within that. Leaving the branch writes `doer_outside_branch` on the record.
+124. A checklist template may list branches (`perBranch`): each gets its own runs, doers, due time and clock; the template's own doers are then not used. A plan with no doers makes no runs.
+125. Flow-designer people can be set per branch (`ModuleBranchSetting`, person keys only); times, rules and switches are always the company's.
+126. Closing a branch sets `closedAt` and `deletedAt`: it leaves pickers and the structure while history keeps its id. People and open work must move first. Copying a branch never copies people.
+127. Document numbers: a type's `series` is `company` (default, unchanged), `entity` or `branch`; the place's `seriesCode` goes into the number (`INV/RJ/26-27/0001`) and into the counter key. A place with no code uses the last four characters of its id. A paper with no branch keeps the company series.
+128. Branch history: `BranchStay` rows say where a person works from a day; the first branch of someone who had none counts from the beginning. `User.branchId` is where they are today, kept in step when a move is saved and by a job on the day a planned move begins. `BranchLoan` overrides the day's branch while someone is lent. Attendance days are stamped with the day's branch; a month's gross is split over branches by days with `splitExact`.
+129. Punching: a person may punch inside any geofence of any of their branches (a branch can have extra gates in `details.fences`); the home branch's answer counts when none matches.
+130. HR rule overrides layer company → entity → branch → department → person. Pay-rule overrides add `entity` below department. Minimum wages are rows typed by the accountant (entity and / or designation → monthly amount); pay below them is flagged, never changed. A pay run has an `entityKey` ("" = the whole company); a month is closed for the whole company or entity by entity, never both.
+131. Holidays may be for everyone, a country, a state, a legal entity or a branch; a branch's calendar is everything that applies to it. Leave days a year: person, else designation, else entity, else the leave type.
+132. Money in any currency is whole minor units plus a code (`formatMoney`, `minorUnits`); rupees keep `formatINR`. Group totals are in rupees with `ExchangeRate` (one per currency per month); a currency with no rate that month is left out of the total and named. An entity's tax regime is a profile in its `details.tax` (regime, the tax number's name, invoice title, rates, a legal line) — no country's tax is built in.
+133. A branch's time zone (else the company's) is the clock for its people: `HrPerson.tz`, the calendar's `tz`, "today" for absence and settling, checklist plans and notification quiet hours.
+134. Franchises: a person whose home branch is in a FRANCHISE entity is isolated — only that entity's branches, people and entity, no group-wide rows except brand content marked `shared` (master rows, checklist templates), which they can read and never change. Group people without `franchise.view` see everything except the franchises (`exceptBranchIds`). Brand functions (royalties, audits, export, archive) need `franchise.admin` and are never open to a franchise's own people.
+135. Royalty for a month = max(sales × % + fixed fee, minimum guarantee), on the sales orders of the franchise's branches (until the POS exists), one invoice per franchise per month (`ROY/{FY}/0001`), raised by the brand team after the month ends. A brand audit's failed points become proof-required tasks for the outlet's manager. Renewal reminders go 30 days before, 7 days before and on the day, once each (`JobMark`). A franchise is archived only after its export (a zip: JSON per kind of data, its people's files up to 200 MB, a manifest); archiving signs its people out for good and retires its branches and entity.
+136. The process-step watcher pages through every open step (500 at a time, by id); a fixed "first N" with no order starves later rows.

@@ -1,5 +1,61 @@
 # Changelog
 
+## Phase 12 — Branches, legal entities, countries and franchises (13/11/2026)
+
+One MONO for a whole group: many branches under several companies, some abroad, some franchised. Plan:
+`docs/plans/hospitality-100-plan.md` §3; the 44 rows that define "done" (G1–G44) and the test that proves each are
+in `docs/plans/coverage.md`. Nothing changes for a company with one branch and no entities.
+
+**The structure** (System Master → Branches)
+- **Legal entities** (a company of the group or a franchise partner: country, currency, tax number, address, a code for its number series, licences, a tax profile), **regions** of any depth, **branches** of a kind (outlet, kitchen, store, office, hotel) with their own address, licences, time zone and extra punching gates, and **stock locations** inside a branch.
+- Each branch has **managers** and an **HR person**; each region has **area managers**. The head of a department can be set per branch.
+- **Open a branch by copying another** (kind, region, entity, locations, approval steps, its place on checklists — never people) and **close one safely** (its people and open work move first; history keeps pointing at it).
+
+**Who sees what**
+- A role has a **reach**: own records, my branches, my entity or the whole group. It is enforced inside the database client, next to company scoping, so every list, count, report, export, Ask answer, API key and webhook follows it; a test fails if a new table with a branch is not listed.
+- **Branch switcher** in the top bar: all my branches, or one branch, one region or one entity. It only ever narrows.
+- Every task, checklist run, slip, ticket, process record, paper, purchase order, sales order and record **carries its branch**. Master rows and records can be for one branch or for the whole group.
+- An **outlet manager manages only their own branch's people**; the structure and group settings stay with the group.
+
+**Who approves** (System Master → Branches → Who approves) — the owner's choice (plan decision 14)
+- For each kind of request (leave, attendance corrections, stock adjustments, help slips, ticket escalation) an ordered ladder: branch manager, area manager, department head, branch HR, HR person, owner or a named person. A step can be skipped when nobody holds it, can "go up after N hours", and can start "from an amount". A branch or an entity can have its own ladder. One answer decides; nobody decides their own request; the owner always can. With no ladder set, each module keeps its old rule.
+- New notification recipients: branch manager, area manager, branch HR, department head at the branch.
+
+**Work per branch**
+- A process step goes to its doer **at the record's branch**, then the region, then elsewhere — and says so on the record when it leaves the branch.
+- **One checklist template, a run per branch**: its own people, its own due time, its own clock.
+- The flow designer's people (slip receiver / approver, ticket coordinator, verifier, EA) can differ **for one branch**.
+- **Outlet comparison** (Systems): attendance, checklist misses, ticket fix time and on-time work side by side, ranked.
+- System Master's people cards and health check follow the branch being looked at; a new check names branches without a manager.
+
+**People across branches**
+- **Branch history**: a move takes effect from a day (past, today or planned). Attendance days carry the branch of the day; **payroll splits a month's gross** between the branches by days.
+- People **punch at any of their branches** and gates; staff can be **lent to another branch** for dates (they see its work, punch there, and their cost goes there).
+- HR rules can differ by entity and by branch; holidays can be for a country, a state, an entity or a branch; leave days a year can differ by entity; "Buddy from another branch" is a rule; the cover board and the morning report are per branch.
+- **Pay rules and minimum wages per entity** (typed by the accountant — nothing built in); **payroll is worked out and closed entity by entity**.
+
+**Papers, currencies, clocks**
+- A document type can number **per entity or per branch** (`INV/RJ/26-27/0001`); the company-wide series is untouched. Papers print the right entity's name, address, tax number and licences, the branch, and the entity's legal line.
+- Each entity has a **currency** (minor units + code; rupees keep lakh / crore). Payroll is in the entity's currency; the group total is in rupees by **one exchange rate per currency per month**, typed by an accountant — a month with no rate is said, never guessed.
+- Each branch can have its own **time zone**: shifts, attendance, absence alerts, checklist times and quiet hours follow it.
+
+**Franchises**
+- A franchise entity is **walled off**: its people see only their own franchise's work, people and branches, whatever role they hold. Group people see franchises only with the **franchise oversight** right (Roles → Franchises).
+- **Brand content** (masters, checklist templates) can be shared with franchises read-only.
+- **Royalty**: a share of the month's sales and / or a fixed fee, never under the minimum guarantee; one invoice a month (`ROY/26-27/0001`).
+- **Brand audits**: an auditor scores an outlet point by point; every failed point becomes a proof-required task for the outlet's manager.
+- **Renewals**: licences and franchise agreements are chased 30 days before, 7 days before and on the day.
+- **Exit**: everything of one franchise (data and files) as a package, then archive.
+
+**Also fixed**: the process-step watcher looked at only the first 1,000 open steps; it now pages through all of them.
+
+**Not in this phase (said so in the coverage rows)**
+- Screens for lending staff, dated moves, extra punching gates, minimum-wage tables, tax rates, royalties, brand audits, the franchise exit and the "share with franchises" switch — these work through the API and are tested there; the screens come next.
+- Tax is not computed on lines, and purchase / sales order numbers are still company-wide: both belong to the money core (Phase 12M).
+- Stock per location, transfers and central kitchens are Phase 13 (row G45).
+- Process step due times still use the company's clock; the report builder does not convert currencies.
+- Hindi strings are machine-drafted (decision 14).
+
 ## Phase 11 — Linked fields, record types and reports (12/11/2026)
 
 What lets any industry fit its own work into MONO without code. Plan: `docs/plans/hospitality-100-plan.md` §2; the

@@ -151,7 +151,8 @@ test('leave with a Buddy: apply, the Buddy says yes, the HOD approves', async ({
     const card = r.page.locator('main li').filter({ hasText: 'Sandeep Pal' }).first();
     await expect(card.getByText('Will cover')).toBeVisible();
     await card.getByRole('button', { name: 'Approve' }).click();
-    await expect(r.page.getByText('Saved').first()).toBeVisible();
+    // "Saved" — or, on a day when Sandeep has other work nobody covers (a weekly checklist), the warning.
+    await expect(r.page.getByText(/^Saved$|Approved.*no Buddy/).first()).toBeVisible();
     await r.close();
     const after = (await (await page.request.get('/api/hr/leave')).json()) as unknown;
     void after;

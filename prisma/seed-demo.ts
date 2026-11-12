@@ -15,6 +15,7 @@ import { seedDemoPay } from './seed-demo-pay';
 import { seedDemoIms } from './seed-demo-ims';
 import { seedDemoCrm } from './seed-demo-crm';
 import { seedDemoRecords } from './seed-demo-records';
+import { seedDemoBranches } from './seed-demo-branches';
 
 const PASSWORD = process.env.SEED_DEMO_PASSWORD?.trim() || 'Demo1234';
 const DEPARTMENTS = [
@@ -239,6 +240,10 @@ try {
     console.log('Added demo sales CRM: an approved ₹7.5 Cr plan, 24 customers with order history, 20 leads.');
   if (await seedDemoRecords(prisma, company.id))
     console.log('Added a demo record type (Site visits) with 14 records and two saved reports.');
+  if (await seedDemoBranches(prisma, company.id))
+    console.log(
+      'Added a sample group: two Indian entities, a franchise and a company abroad, each with an outlet.',
+    );
 } finally {
   await prisma.$disconnect();
 }
