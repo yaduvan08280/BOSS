@@ -33,11 +33,12 @@ export async function reverseStock(
       reversedBy: { is: null },
       ...(o.stepIds ? { stepId: { in: o.stepIds } } : {}),
     },
-    // Newest first, so a receipt and a later issue of the same item unwind in order.
-    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-    include: { item: { select: { name: true, unit: true, stock: true } } },
+    include: { item: { select: { name: true, unit: true } } },
   });
   if (!moves.length) return;
+  // Give stock back before taking any away, so a receipt and a later issue of the same item both unwind.
+  const rank = (m: (typeof moves)[number]) => (m.type === 'OUT' ? 0 : m.type === 'IN' ? 2 : 1);
+  moves.sort((a, b) => rank(a) - rank(b));
   const ctx = { companyId: record.companyId, actorId: o.actorId };
   const note = `Reversal · ${record.title} #${record.number} · ${o.why}`;
   const stuck: string[] = [];
@@ -147,12 +148,16 @@ export async function recordStock(db: Db, actor: Actor, recordId: string) {
   if (!record) throw notFound('Record');
   const moves = await db.stockMove.findMany({
     where: { companyId: actor.companyId, refType: 'fms_record', refId: record.id },
-    orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    orderBy: { createdAt: 'asc' },
     include: {
       item: { select: { code: true, name: true, unit: true } },
       reversedBy: { select: { status: true } },
     },
   });
+  // Moves of one step are made in one transaction (one time): keep them in a steady order, by item code.
+  moves.sort(
+    (a, b) => a.createdAt.getTime() - b.createdAt.getTime() || a.item.code.localeCompare(b.item.code),
+  );
   return moves.map((m) => ({
     id: m.id,
     stepId: m.stepId,

@@ -1,6 +1,6 @@
 import type { Db, FmsRecord, Tx } from '@mono/db';
 import { nextCounter } from '@mono/db';
-import { END, nextStepKey, plannedAt, recordTitle, type FlowStep } from '@mono/shared';
+import { END, nextStepKey, plannedAt, recordTitle } from '@mono/shared';
 import { writeAudit } from '../../lib/audit';
 import { AppError, notFound } from '../../lib/errors';
 import { emitEvent } from '../../lib/events';
