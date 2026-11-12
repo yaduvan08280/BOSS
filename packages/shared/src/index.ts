@@ -40,6 +40,7 @@ export * from './fms/flow';
 export * from './fms/worktime';
 export * from './fms/fields';
 export * from './fms/links';
+export * from './formula';
 export * from './ai/providers';
 export * from './ai/drafts';
 export * from './ai/ask';
