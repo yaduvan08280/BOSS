@@ -44,7 +44,13 @@ export function FieldsEditor({
             <Select
               aria-label={t('fms.b.fieldType')}
               value={f.type}
-              onChange={(e) => set(i, { type: e.target.value as FlowField['type'] })}
+              onChange={(e) =>
+                // A new "items" field takes only items of the item master until typed items are switched on.
+                set(i, {
+                  type: e.target.value as FlowField['type'],
+                  ...(e.target.value === 'items' && f.freeItems === undefined ? { freeItems: false } : {}),
+                })
+              }
             >
               {FIELD_TYPES.map((ty) => (
                 <option key={ty} value={ty}>

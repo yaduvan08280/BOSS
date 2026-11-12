@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { useDueLabel, useWorkMutation } from '@/lib/work';
 import { formatDateTime } from '@/lib/when';
 import { RECORD_TONE, useRecord, type RecordDetail, type StepRow } from './api';
+import { RecordStock } from './RecordStock';
 import { showValue } from './show';
 import { StepDialog } from './StepDialog';
 
@@ -155,6 +156,7 @@ export function RecordDrawer({
                               .join(' · ')}
                           </div>
                         )}
+                        <RecordStock recordId={r.id} stepId={s.id} />
                         {r.files.some((f) => f.entityId === s.id) && (
                           <div className="mt-2 flex flex-wrap gap-1.5">
                             {r.files

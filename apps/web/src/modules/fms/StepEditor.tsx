@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { PeoplePicker } from '@/components/people-picker';
 import { FieldsEditor } from './FieldsEditor';
+import { StepStockEditor } from './StepStockEditor';
 
 type Props = {
   step: FlowStep;
@@ -291,6 +292,7 @@ export function StepEditor({ step, steps, people, docTypes, fields, onChange, on
             <h3 className="text-sm font-semibold">{t('fms.b.form')}</h3>
             <FieldsEditor fields={step.fields} onChange={(fields) => set({ fields })} />
           </section>
+          <StepStockEditor step={step} fields={fields} onChange={(stock) => set({ stock })} />
           <section className="space-y-2">
             <h3 className="text-sm font-semibold">{t('fms.b.documents')}</h3>
             <div className="flex flex-wrap gap-1.5">

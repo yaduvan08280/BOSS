@@ -12,6 +12,7 @@ import type { Uploaded } from '@/lib/upload';
 import { cn } from '@/lib/utils';
 import { FieldsForm } from './FieldsForm';
 import { toPayload, type Values } from './payload';
+import { StockPreview } from './StockPreview';
 
 /** Do my step: its form, checklist, proof and (for decisions/approvals) the answer. */
 export function StepDialog({
@@ -138,6 +139,7 @@ export function StepDialog({
         <Field label={step.type === 'APPROVAL' ? t('fms.noteReject') : t('fms.note')}>
           <Textarea className="font-sans" rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
         </Field>
+        <StockPreview stepId={stepId} step={step} values={values} tz={tz} />
       </div>
     </Dialog>
   );
