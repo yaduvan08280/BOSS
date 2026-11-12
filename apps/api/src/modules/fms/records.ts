@@ -2,6 +2,7 @@ import type { Db } from '@mono/db';
 import { nextStepKey } from '@mono/shared';
 import { AppError, notFound } from '../../lib/errors';
 import { emitEvent } from '../../lib/events';
+import { releaseForm } from '../forms';
 import { can, checkPerson, type Actor } from '../work/actor';
 import { closeRecord, contextFor, log, openStep, payloadOf } from './engine';
 
@@ -104,11 +105,17 @@ export async function recordAction(
         closedAt: action === 'cancel' ? new Date() : null,
       },
     });
-    if (action === 'cancel')
+    if (action === 'cancel') {
       await tx.fmsRecordStep.updateMany({
         where: { recordId, status: 'OPEN' },
         data: { status: 'SKIPPED', doneAt: new Date() },
       });
+      await releaseForm(tx, {
+        companyId: record.companyId,
+        owner: { kind: 'flow', id: record.flowId },
+        recordId,
+      });
+    }
     await log(tx, record, action === 'hold' ? 'hold' : action === 'resume' ? 'resumed' : 'cancelled', {
       actorId: actor.userId,
       note: reason ?? null,

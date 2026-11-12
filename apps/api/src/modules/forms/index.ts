@@ -39,7 +39,12 @@ export type FormStage = {
   name: string;
   check?: (db: Db | Tx, scope: FormScope, fields: FlowField[], state: FormState) => Promise<void>;
   commit?: (tx: Tx, scope: FormScope, fields: FlowField[], state: FormState) => Promise<void>;
+  /** The record is cancelled or deleted: give back what it held (its unique values). */
+  release?: (tx: Tx, target: FormTarget) => Promise<void>;
 };
+
+/** A record that is going away: an FMS record, a master row, a record of a record type. */
+export type FormTarget = { companyId: string; owner: FormOwner; recordId: string };
 
 /** Order matters: links settle what was picked, lists check typed text, formulas use both, unique sees the final values. */
 const STAGES: FormStage[] = [linkStage, learnStage, formulaStage, uniqueStage];
@@ -82,4 +87,9 @@ export async function processForm(
     throw new AppError(400, 'VALIDATION_FAILED', Object.values(state.errors)[0]!, { fields: state.errors });
   await commitForm(tx, scope, fields, state);
   return storedValues(state);
+}
+
+/** Call when a record is cancelled or deleted, in the same transaction, so its unique values can be used again. */
+export async function releaseForm(tx: Tx, target: FormTarget) {
+  for (const stage of STAGES) await stage.release?.(tx, target);
 }

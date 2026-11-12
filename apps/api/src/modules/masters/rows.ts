@@ -3,7 +3,7 @@ import { checkFields, fieldSchema, MASTER_LIBRARY, splitTable, type FlowField } 
 import { z } from 'zod';
 import { writeAudit } from '../../lib/audit';
 import { emitEvent, recordChange } from '../../lib/events';
-import { checkForm, commitForm, storedValues, type FormScope } from '../forms';
+import { checkForm, commitForm, releaseForm, storedValues, type FormScope } from '../forms';
 import { AppError, notFound } from '../../lib/errors';
 import { saveMaster } from '../ai/masters';
 import { can, type Actor } from '../work/actor';
@@ -136,6 +136,11 @@ export async function deleteRow(db: Db, actor: Actor, masterId: string, id: stri
   if (!row) throw notFound('Row');
   await db.$transaction(async (tx) => {
     await tx.masterRow.update({ where: { id }, data: { deletedAt: new Date(), key: null } });
+    await releaseForm(tx, {
+      companyId: actor.companyId,
+      owner: { kind: 'master', id: masterId },
+      recordId: id,
+    });
     await recordChange(tx, ctxOf(actor), {
       event: 'master.row_deleted',
       entityType: 'master_row',
