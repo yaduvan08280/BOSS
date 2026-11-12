@@ -1,8 +1,9 @@
 # Coverage checklist — the rows that define "done"
 
 From `docs/plans/hospitality-100-plan.md` §13. A row is green when an automated test (unit or e2e) proves it.
-The "Test" column names the test once it exists. Rows for Phases 12–21 are in `coverage-later.md`; they are
-reviewed with GGM / the hotel team and frozen before each phase starts.
+The "Test" column names the test once it exists. Rows for a phase are written here from the plan when the phase
+starts; rows written without a review by GGM / the hotel team are marked "drafted from the plan" and stay open
+to change.
 
 ## Phase 11 — Linked fields, record types, reports (29 rows)
 
@@ -100,3 +101,20 @@ Written 12/11/2026 from plan §3 and the answers to decisions 9–14. Stages: A 
 | G43 | D | Franchise agreement, licences and renewal dates with reminders | §3.8 | `apps/api/src/modules/branches/branches-franchise.test.ts` (30 days, 7 days and on the day, once each, for licences of entities and branches and for the franchise agreement). Dates are typed in the entity / branch dialogs (agreement dates through the API) |
 | G44 | D | Exit: export everything of one entity (data and files) as a package, then archive it | §3.8 | `apps/api/src/modules/branches/branches-franchise.test.ts` (a zip with a JSON file per kind of data, the files of its people up to 200 MB, and a manifest; archive only after an export: sign-ins off, branches and entity retired, history kept). API only — no button yet |
 | G45 | 13 | Stock per location, supply routes, indents, in-transit, emergency transfers, production, transfer price and inter-GSTIN invoices are designed in Phase 12 and built and proven in Phase 13 (rows I-…) | §3.6 | |
+
+## Phase 12M — Money core (12 rows; drafted from the plan §3A on 13/11/2026, not yet reviewed by GGM)
+
+| # | Row | Plan | Test |
+|---|---|---|---|
+| U11 | One master of **parties** for everyone MONO deals with (customer, vendor, guest, company, agent, franchise, transporter); a party can be several kinds; CRM customers are parties with the same id and history | §3A | |
+| U12 | Vendors typed on items and purchase orders are matched into parties from a screen: each typed name is shown with a suggestion and a person decides — nothing is merged silently | §3A | |
+| U13 | **Tax rates are data with a from-date**, typed by the accountant: a rate changed from a date applies only to bills from that date; HSN / SAC on a line; tax inside or on top of the price | §3A | |
+| U14 | The **place-of-supply rule** splits GST into CGST + SGST (same state) or IGST (other state); a VAT entity charges one tax; a "no tax" entity none — all from the entity's profile | §3A | |
+| U15 | **Tax by price slab** (a room tariff under / over a limit takes a different rate), usable by anything priced that way | §3A | |
+| U16 | **One bill model** for sales invoice, credit note, debit note, receipt, advance, purchase bill, vendor payment and delivery challan: lines, per-line tax, charges, discounts, round-off — every amount in minor units with its currency | §3A | |
+| U17 | A bill's **state machine**: draft → issued → part paid → paid; an issued bill is never edited and is cancelled only by a credit note; its number comes from the entity / branch / type / FY series | §3A | |
+| U18 | **Receivables and payables** for every party: what is owed, ageing, due and promised dates, and a statement that shows invoices, credit notes and payments in order | §3A | |
+| U19 | **Payment modes and cash books** per branch (cash, UPI, card, bank, credit) with expected against counted at day close | §3A | |
+| U20 | Every issued bill and payment makes a **voucher stored as balanced debit and credit lines** against MONO heads | §3A | |
+| U21 | **Vouchers for Tally**: a mapping screen (MONO head → Tally ledger) and an export the Tally agent can post | §3A | |
+| U22 | CRM orders and payments, purchase orders, process document steps and the public API raise bills through this one engine; existing orders and payments are carried over with their numbers unchanged; a counter bill (pharmacy style) and a stay bill (hotel style) come from the same engine | §3A | |
