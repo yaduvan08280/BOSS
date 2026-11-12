@@ -6,7 +6,8 @@
     "allMine": "All my branches",
     "part": {
       "structure": "Structure",
-      "approvals": "Who approves"
+      "approvals": "Who approves",
+      "rates": "Exchange rates"
     },
     "entity": {
       "one": "Legal entity",
@@ -233,7 +234,8 @@
     "all": "Whole company",
     "noBranch": "No branch",
     "days_one": "{{count}} day",
-    "days_other": "{{count}} days"
+    "days_other": "{{count}} days",
+    "missingRates": "No exchange rate is typed for {{list}} this month, so that pay is not in this rupee total. Add it in System Master → Branches → Exchange rates."
   },
   "holidayFor": {
     "label": "For",
@@ -241,5 +243,13 @@
     "country": "Country: {{name}}",
     "state": "State: {{name}}",
     "only": "only {{name}}"
+  },
+  "rates": {
+    "intro": "One rate per currency per month: how many rupees one unit is worth. Group totals are shown in rupees with it.",
+    "emptyTitle": "Every entity works in rupees",
+    "emptyBody": "Exchange rates are needed only once a legal entity uses another currency.",
+    "saved": "1 {{c}} = ₹{{rate}}",
+    "none": "No rate for this month",
+    "rateFor": "Rupees for 1 {{c}}"
   }
 }

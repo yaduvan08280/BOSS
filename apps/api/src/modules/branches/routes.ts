@@ -18,6 +18,7 @@ import { chainFor, deleteRoute, listRoutes, saveRoute } from './approvals';
 import { compareOutlets } from './compare';
 import { lendPerson } from './history';
 import { closeBranch, closePreview, copyBranch } from './lifecycle';
+import { listRates, saveRate } from './money';
 import {
   deleteEntity,
   deleteLocation,
@@ -232,4 +233,36 @@ export async function branchRoutes(app: FastifyInstance) {
     if (!person?.branchId || !mine.includes(person.branchId))
       throw forbidden('You lend only the people of your own branches');
   }
+  // Exchange rates (decision 11): one per currency per month, typed by an accountant; group totals use them.
+  r.get(
+    '/api/branches/rates',
+    {
+      ...signedIn(),
+      schema: {
+        tags,
+        querystring: z.object({
+          year: z
+            .string()
+            .regex(/^\d{4}$/)
+            .optional(),
+        }),
+      },
+    },
+    async (q) => listRates(db, actorOf(q), q.query.year),
+  );
+  r.put(
+    '/api/branches/rates',
+    {
+      ...signedIn(),
+      schema: {
+        tags,
+        body: z.object({
+          currency: z.string().regex(/^[A-Z]{3}$/, 'Three capital letters, like AED'),
+          month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/),
+          rate: z.number().min(0).max(1_000_000),
+        }),
+      },
+    },
+    async (q) => saveRate(db, actorOf(q), q.body),
+  );
 }

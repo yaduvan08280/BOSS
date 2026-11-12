@@ -125,6 +125,23 @@ model BranchLoan {
   @@map("branch_loans")
 }
 
+/// One rate per currency per month, typed by an accountant (phase 12, decision 11): rupees for one unit of the
+/// currency. Group totals are shown in INR with it.
+model ExchangeRate {
+  id          String   @id @default(cuid(2))
+  companyId   String   @map("company_id")
+  /// ISO code: AED, USD …
+  currency    String
+  /// YYYY-MM
+  month       String
+  rate        Decimal  @db.Decimal(14, 6)
+  updatedById String?  @map("updated_by_id")
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([companyId, currency, month])
+  @@map("exchange_rates")
+}
+
 model DepartmentHead {
   id           String   @id @default(cuid(2))
   companyId    String   @map("company_id")

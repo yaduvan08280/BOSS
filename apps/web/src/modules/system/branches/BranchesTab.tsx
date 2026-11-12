@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { ApprovalsPanel } from './ApprovalsPanel';
+import { RatesPanel } from './RatesPanel';
 import { StructurePanel } from './StructurePanel';
 
-const PARTS = ['structure', 'approvals'] as const;
+const PARTS = ['structure', 'approvals', 'rates'] as const;
 
 /** System Master → Branches (phase 12): the group's structure, and who approves what. */
 export function BranchesTab() {
@@ -30,7 +31,7 @@ export function BranchesTab() {
           </button>
         ))}
       </div>
-      {part === 'structure' ? <StructurePanel /> : <ApprovalsPanel />}
+      {part === 'structure' ? <StructurePanel /> : part === 'approvals' ? <ApprovalsPanel /> : <RatesPanel />}
     </div>
   );
 }

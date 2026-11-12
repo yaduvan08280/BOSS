@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import {
-  formatINR,
+  formatMoney,
   type EmployeeTerms,
   type PayBasis,
   type PayResult,
@@ -34,6 +34,7 @@ export type PayLine = PayResult & {
   warnings: ('noRate' | 'noAttendance' | 'unsettled' | 'unrecorded' | 'belowMinimum')[];
   /** The gross shared over the branches worked at this month (phase 12). */
   byBranch?: { branchId: string | null; days: number; paise: number }[];
+  currency?: string;
 };
 export type PaySheet = {
   month: string;
@@ -41,6 +42,10 @@ export type PaySheet = {
   closed: { at: string; by: string | null } | null;
   lines: PayLine[];
   totalPaise: number;
+  /** The currency of the total (phase 12): the entity's own, or INR for the whole company. */
+  currency?: string;
+  /** Currencies with no exchange rate typed for the month: their pay is not in a rupee total. */
+  missingRates?: string[];
 };
 export type Quota = {
   leaveTypeId: string;
@@ -82,7 +87,7 @@ export const payApi = {
     }),
 };
 
-export const inr = (paise: number) => formatINR(Math.round(paise));
+export const inr = (paise: number, currency = 'INR') => formatMoney(Math.round(paise), currency);
 
 /** ₹ from paise for inputs (whole rupees and paise as typed). */
 export const rupees = (paise: number) => Math.round(paise) / 100;

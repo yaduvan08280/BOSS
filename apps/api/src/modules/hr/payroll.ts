@@ -20,6 +20,7 @@ import { AppError } from '../../lib/errors';
 import type { Actor } from '../work/actor';
 import { evaluateDay } from './attendance';
 import { branchHistory } from '../branches/history';
+import { currencyOfPeople, inrConverter } from '../branches/money';
 import { companyCalendar, type CompanyCalendar } from './calendar';
 import { hrPerson, hrRulesOf, personRules } from './people';
 import { needHr, payRulesOf } from './terms';
@@ -41,6 +42,8 @@ export type PayLineOut = PayResult & {
    * its share of the cost. One entry for someone who did not move.
    */
   byBranch?: { branchId: string | null; days: number; paise: number }[];
+  /** The currency every amount of this line is in (phase 12): the person's legal entity's; INR when left out. */
+  currency?: string;
 };
 
 /**
@@ -76,6 +79,8 @@ export async function payrollMonth(
       closed: { at: run.closedAt, by: by?.name ?? null },
       lines: run.lines as unknown as PayLineOut[],
       totalPaise: Number(run.totalPaise),
+      currency: await sheetCurrency(db, actor.companyId, entityId),
+      missingRates: [] as string[],
     };
   }
   const live = await workOut(db, actor.companyId, month, now, entityId);
@@ -146,6 +151,11 @@ async function workOut(db: Db, companyId: string, month: string, now: Date, enti
     return calendars.get(branchId)!;
   };
 
+  const currencyOf = await currencyOfPeople(
+    db,
+    companyId,
+    users.map((u) => u.id),
+  );
   const history = await branchHistory(
     db,
     companyId,
@@ -226,13 +236,30 @@ async function workOut(db: Db, companyId: string, month: string, now: Date, enti
       pattern: p.pattern,
       warnings,
       ...result,
+      currency: currencyOf.get(u.id) ?? 'INR',
       byBranch: splitByBranch(
         result.grossPaise,
         days.filter((d) => d.employed && d.date <= asOf).map((d) => history.on(u.id, d.date)),
       ),
     });
   }
-  return { asOf, lines, totalPaise: lines.reduce((n, l) => n + l.grossPaise, 0) };
+  // One entity: the total is in its own currency. The whole company: in rupees, each line by the month's rate.
+  const currency = await sheetCurrency(db, companyId, entityId);
+  const inr = await inrConverter(db, companyId, month);
+  const totalPaise = entityId
+    ? lines.reduce((n, l) => n + l.grossPaise, 0)
+    : lines.reduce((n, l) => n + inr.toInr(l.grossPaise, l.currency ?? 'INR'), 0);
+  return { asOf, lines, totalPaise, currency, missingRates: [...inr.missing] };
+}
+
+/** The currency a pay sheet's total is in: the entity's own, or rupees for the whole company. */
+async function sheetCurrency(db: Db, companyId: string, entityId?: string | null) {
+  if (!entityId) return 'INR';
+  const e = await db.legalEntity.findFirst({
+    where: { id: entityId, companyId },
+    select: { currency: true },
+  });
+  return e?.currency ?? 'INR';
 }
 
 /** A gross amount shared over branches by the days at each; the parts always add up to the gross. */

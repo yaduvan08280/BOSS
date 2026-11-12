@@ -64,3 +64,45 @@ export function inrInWords(value: Paise): string {
   if (rupees >= 1_000n) return `₹${trim(fixed2(rupees, 1_000n))} thousand`;
   return `₹${rupees}`;
 }
+
+/**
+ * Money in any currency (phase 12, stage C): an amount is always whole minor units (paise, fils, cents) plus a
+ * currency code. Rupees keep the Indian way — ₹, lakh and crore grouping; every other currency is written the
+ * way its own users expect, with its code or symbol and grouping in thousands.
+ */
+const MINOR_DIGITS: Record<string, number> = {
+  JPY: 0,
+  KRW: 0,
+  VND: 0,
+  BHD: 3,
+  KWD: 3,
+  OMR: 3,
+  JOD: 3,
+  TND: 3,
+};
+/** How many minor units make one unit of a currency: 100 for most, 1000 for dinars, 1 for yen. */
+export const minorUnits = (currency: string): number => 10 ** (MINOR_DIGITS[currency] ?? 2);
+
+export function formatMoney(value: Paise, currency = 'INR', opts: InrOptions = {}): string {
+  if (currency === 'INR') return formatINR(value, opts);
+  const digits = MINOR_DIGITS[currency] ?? 2;
+  const minor = toPaise(value);
+  const abs = minor < 0n ? -minor : minor;
+  const unit = BigInt(10 ** digits);
+  const whole = abs / unit;
+  const grouped = whole.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const frac =
+    digits && opts.decimals !== false && !opts.compact
+      ? `.${(abs % unit).toString().padStart(digits, '0')}`
+      : '';
+  return `${minor < 0n ? '-' : ''}${currency} ${grouped}${frac}`;
+}
+
+/**
+ * An amount in another currency, in rupees, by the month's rate (₹ for one unit of the currency). Paise in,
+ * paise out, rounded to the nearest paisa. INR passes through.
+ */
+export function toInrPaise(minor: number, currency: string, ratePerUnit: number): number {
+  if (currency === 'INR') return Math.round(minor);
+  return Math.round((minor / minorUnits(currency)) * ratePerUnit * 100);
+}

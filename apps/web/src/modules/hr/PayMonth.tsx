@@ -129,7 +129,7 @@ export function PayMonth({ today, tz }: { today: string; tz: string }) {
       ) : (
         <>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            <KpiTile label={t('hr.p.total')} value={inr(q.data.totalPaise)} hero />
+            <KpiTile label={t('hr.p.total')} value={inr(q.data.totalPaise, q.data.currency)} hero />
             <KpiTile label={t('hr.p.people')} value={q.data.lines.length} />
             <KpiTile
               label={t('hr.p.state')}
@@ -146,6 +146,11 @@ export function PayMonth({ today, tz }: { today: string; tz: string }) {
               }
             />
           </div>
+          {(q.data.missingRates?.length ?? 0) > 0 && (
+            <p className="rounded-control bg-status-warn-bg px-3 py-2 text-sm text-status-warn-fg">
+              {t('payEntity.missingRates', { list: q.data.missingRates!.join(', ') })}
+            </p>
+          )}
           {!q.data.lines.length ? (
             <EmptyState icon={Wallet} title={t('hr.p.empty')} body={t('hr.p.emptyBody')} />
           ) : (
@@ -199,13 +204,13 @@ function PersonPay({ l, branchName }: { l: PayLine; branchName: Map<string, stri
             {[l.user.code, l.user.department, l.user.designation].filter(Boolean).join(' · ')}
           </div>
           <div className="mt-1 text-xs text-muted-foreground">
-            {t(`hr.p.rateOf.${l.basis}`, { amount: inr(l.ratePaise) })}
+            {t(`hr.p.rateOf.${l.basis}`, { amount: inr(l.ratePaise, l.currency) })}
             {l.pattern.kind !== 'shift' &&
               ` · ${l.pattern.kind === 'daily' ? t('hr.p.hoursDay', { n: l.pattern.hours }) : t('hr.p.weekly')}`}
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-base font-semibold tabular-nums">{inr(l.grossPaise)}</span>
+          <span className="text-base font-semibold tabular-nums">{inr(l.grossPaise, l.currency)}</span>
           <ChevronDown className={cn('size-4 transition-transform', open && 'rotate-180')} />
         </div>
         <div className="flex w-full flex-wrap gap-1.5">
@@ -228,7 +233,7 @@ function PersonPay({ l, branchName }: { l: PayLine; branchName: Map<string, stri
               <tr key={x.key} className="border-b last:border-0">
                 <td className="px-4 py-2">{t(`hr.p.line.${x.key}`)}</td>
                 <td className="px-2 py-2 text-right text-xs text-muted-foreground tabular-nums">
-                  {x.key === 'base' ? '' : `${x.qty} × ${inr(x.ratePaise)}`}
+                  {x.key === 'base' ? '' : `${x.qty} × ${inr(x.ratePaise, l.currency)}`}
                 </td>
                 <td
                   className={cn(
@@ -236,16 +241,18 @@ function PersonPay({ l, branchName }: { l: PayLine; branchName: Map<string, stri
                     x.amountPaise < 0 && 'text-status-bad-fg',
                   )}
                 >
-                  {inr(x.amountPaise)}
+                  {inr(x.amountPaise, l.currency)}
                 </td>
               </tr>
             ))}
             <tr className="bg-muted/50 font-semibold">
               <td className="px-4 py-2">{t('hr.p.gross')}</td>
               <td className="px-2 py-2 text-right text-xs font-normal text-muted-foreground">
-                {l.divisor ? t('hr.p.dayValue', { n: l.divisor, amount: inr(l.perDayPaise) }) : ''}
+                {l.divisor
+                  ? t('hr.p.dayValue', { n: l.divisor, amount: inr(l.perDayPaise, l.currency) })
+                  : ''}
               </td>
-              <td className="px-4 py-2 text-right tabular-nums">{inr(l.grossPaise)}</td>
+              <td className="px-4 py-2 text-right tabular-nums">{inr(l.grossPaise, l.currency)}</td>
             </tr>
             {/* Moved or lent during the month: what each branch bears. */}
             {(l.byBranch?.length ?? 0) > 1 &&
@@ -257,7 +264,7 @@ function PersonPay({ l, branchName }: { l: PayLine; branchName: Map<string, stri
                   <td className="px-2 py-1.5 text-right tabular-nums">
                     {t('payEntity.days', { count: b.days })}
                   </td>
-                  <td className="px-4 py-1.5 text-right tabular-nums">{inr(b.paise)}</td>
+                  <td className="px-4 py-1.5 text-right tabular-nums">{inr(b.paise, l.currency)}</td>
                 </tr>
               ))}
           </tbody>
