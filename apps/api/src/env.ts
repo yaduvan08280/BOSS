@@ -27,8 +27,13 @@ const envSchema = z.object({
   VAPID_SUBJECT: z.string().default(''),
   /** Login attempts allowed per IP per 15 minutes. */
   LOGIN_RATE_LIMIT: z.coerce.number().int().default(10),
-  /** API calls allowed per IP per minute, on top of each route's own limit. Empty = 600 in production, off elsewhere; 0 = off. */
+  /**
+   * API calls allowed per minute for one signed-in person or API key (and for one IP's requests that are not signed
+   * in), on top of each route's own limit. Empty = 600 in production, off elsewhere; 0 = off.
+   */
   API_RATE_LIMIT: z.string().default(''),
+  /** All signed-in API calls allowed per minute from one IP (a whole office). Empty = 10 × API_RATE_LIMIT; 0 = no total. */
+  API_RATE_LIMIT_IP: z.string().default(''),
   /** Let webhooks call private / local addresses (development and tests only; never in production). */
   WEBHOOK_ALLOW_PRIVATE: z
     .string()

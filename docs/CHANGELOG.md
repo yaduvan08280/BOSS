@@ -1,5 +1,11 @@
 # Changelog
 
+## Fix — the API ceiling no longer makes one office share a budget (12/11/2026)
+
+- The ceiling on API calls (600 a minute in production, `API_RATE_LIMIT`) now counts each **signed-in person** or **API key** by themselves, and the IP only for requests that are not signed in. Before, everyone behind one public address (the ~50 people at the plant, or every tablet at one outlet) shared a single 600-a-minute budget and could get "Too many requests" at busy times.
+- All signed-in calls from one address together are capped at 10 × the ceiling (6,000 a minute in production). New setting `API_RATE_LIMIT_IP` changes it (0 = no total).
+- Live updates and the health check are still not counted, and each route's own limit (login, imports, the public API's 120 a minute per key) is unchanged.
+
 ## Fix — leftover "arrives in phase N" notices replaced (09/11/2026)
 
 Five spots still showed a placeholder for features that were already built. Each now works:

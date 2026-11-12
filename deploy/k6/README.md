@@ -8,7 +8,7 @@ Run it against the Docker stack with the demo company loaded (not on the live se
 
 ```bash
 ./deploy/compose.sh run --rm migrate node apps/api/dist/seed-demo.js     # once: the demo company
-# The per-IP ceiling and the login limit would stop 50 people coming from one test machine:
+# The per-IP total of the API ceiling and the login limit could stop 50 people coming from one test machine:
 #   in .env for the test only: API_RATE_LIMIT=0 and LOGIN_RATE_LIMIT=1000, then ./deploy/compose.sh up -d
 docker run --rm --network host -v "$PWD/deploy/k6:/k6" grafana/k6:1.4.2 run /k6/load.js
 ```

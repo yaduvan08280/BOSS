@@ -61,7 +61,7 @@ describe('error monitoring', () => {
 });
 
 describe('API ceiling', () => {
-  it('limits calls per IP per minute but leaves health checks alone', async () => {
+  it('limits calls that are not signed in per IP per minute but leaves health checks alone', async () => {
     const small = await makeApp({ API_RATE_LIMIT: '5' });
     try {
       const codes: number[] = [];

@@ -90,8 +90,18 @@ changed in Phase 10; **OK** were already in place and re-checked; **Accepted** a
 ## Rate limits — Fixed
 - Per route (decision 62): login, change-password, public form, Google Sheet import, AI, API key creation, webhook
   test, Drive connect, error reports (20/min), the public API (120/min per key).
-- **Fixed:** a ceiling for every API call of 600 per IP per minute in production (`API_RATE_LIMIT`), as its own counter
-  so it never switches off a route's stricter limit. Live updates and the health check are not counted.
+- **Fixed:** a ceiling for every API call (`API_RATE_LIMIT`, 600 a minute in production), as its own counter so it
+  never switches off a route's stricter limit. Live updates and the health check are not counted.
+- **Changed (12/11/2026):** the ceiling counts the **signed-in person** (or the API key), and the IP only for requests
+  that are not signed in. A whole office or outlet shares one public address, so counting by IP made ~50 people share
+  one budget. The hook runs before sign-in is checked, so it verifies the access cookie's signature and expiry only (no
+  database call); a forged, expired or missing cookie is counted by IP. An API key can't be checked without the
+  database, so it is counted as itself only after it has authenticated (remembered by its sha256 for 10 minutes);
+  made-up keys are counted by IP and gain nothing. A person signed out or disabled in the last 15 minutes is still
+  counted as themselves until the cookie expires (they get 401s, nothing more).
+- Backstop: all signed-in calls from one IP together are capped at 10 × the ceiling (6,000 a minute in production,
+  `API_RATE_LIMIT_IP`; 0 = no total). That is 120 calls a minute from each of 50 people at once, far above normal use
+  (a screen load is 5–15 calls). Raise it for a site with several hundred people behind one address.
 - Bodies are limited to 2 MB (imports 4–8 MB).
 
 ## Left for later
