@@ -205,6 +205,7 @@ function RowDialog({
         onChange={(v) => setValues(v as Record<string, unknown>)}
         errors={errors}
         people={users.data ?? []}
+        owner={{ kind: 'master', id: data.master.id }}
       />
     </Dialog>
   );
