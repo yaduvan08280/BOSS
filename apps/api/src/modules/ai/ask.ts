@@ -14,10 +14,11 @@ import {
   type AskView,
 } from '@mono/shared';
 import { AppError } from '../../lib/errors';
+import { listReports, runSaved } from '../reports/service';
 import { can, type Actor } from '../work/actor';
 import { runAi } from './llm';
 import * as ANSWER from './prompts/answer.v1';
-import * as ASK from './prompts/ask.v1';
+import * as ASK from './prompts/ask.v2';
 import { companyContext } from './prompts/context';
 
 /** A date word or YYYY-MM-DD → the instant it starts, in the company's time zone. */
@@ -164,6 +165,23 @@ const plain = (v: unknown) =>
   typeof v === 'bigint' ? Number(v) : v instanceof Prisma.Decimal ? Number(v) : v;
 
 /**
+ * Saved reports this person may open, described for the planner in a line each (what it is on, how it is grouped,
+ * what it totals). People without the right to open reports are offered none.
+ */
+async function offeredReports(db: Db, actor: Actor): Promise<ASK.OfferedReport[]> {
+  if (!can(actor, 'reports.view')) return [];
+  const { reports } = await listReports(db, actor);
+  return reports.slice(0, 40).map((r) => {
+    const d = r.definition;
+    const totals = d.measures.map((m) => (m.fn === 'count' ? 'count' : `${m.fn} of ${m.field}`)).join(', ');
+    const group = d.groupBy
+      ? `grouped by ${d.groupBy.field}${d.groupBy.bucket ? ` (${d.groupBy.bucket})` : ''}`
+      : 'a list';
+    return { id: r.id, name: r.name, about: `${group}${totals ? `; ${totals}` : ''}` };
+  });
+}
+
+/**
  * "Ask" from the Home search: the AI plans, MONO checks and runs the lookup, the AI says it in a sentence.
  * People without `ai.admin` only see their own rows (and the people list).
  */
@@ -172,9 +190,10 @@ export async function askQuestion(db: Db, actor: Actor, appSecret: string, quest
     throw new AppError(403, 'FORBIDDEN', "You can't ask questions about the company's data");
   const caller = { companyId: actor.companyId, userId: actor.userId, appSecret };
   const ctx = await companyContext(db, actor.companyId);
+  const offered = await offeredReports(db, actor);
   const { data: plan } = await runAi(db, caller, 'ask', ASK.id, (llm) =>
     llm.json({
-      system: ASK.system(ctx),
+      system: ASK.system(ctx, offered),
       messages: [{ role: 'user', content: ASK.user(question) }],
       schema: askPlanSchema,
       effort: 'low',
@@ -183,6 +202,35 @@ export async function askQuestion(db: Db, actor: Actor, appSecret: string, quest
   );
   const empty = { columns: [] as string[], rows: [] as Record<string, unknown>[], total: 0 };
   if (!plan.answerable) return { answer: plan.why || "MONO's data can't answer that yet.", plan, ...empty };
+  if (plan.report) {
+    // Only a report that was offered — one this person may open — and it runs with their rights.
+    if (!offered.some((r) => r.id === plan.report))
+      return {
+        answer: "I couldn't turn that into a safe lookup. Try asking it another way.",
+        plan,
+        problems: [`Unknown report "${plan.report}"`],
+        ...empty,
+      };
+    const { name, result } = await runSaved(db, actor, plan.report, 200);
+    const columns = result.columns.map((c) => c.label);
+    const rows = result.rows.map((r) => Object.fromEntries(columns.map((c, i) => [c, r[i] ?? null])));
+    const { text } = await runAi(db, caller, 'ask_answer', ANSWER.id, (llm) =>
+      llm.complete({
+        system: ANSWER.system(ctx.now),
+        messages: [{ role: 'user', content: ANSWER.user(question, rows.slice(0, 50), rows.length) }],
+        effort: 'low',
+        maxTokens: 2_000,
+      }),
+    );
+    return {
+      answer: text,
+      plan,
+      columns,
+      rows,
+      total: rows.length,
+      report: { id: plan.report, name, link: `/reports/${plan.report}` },
+    };
+  }
   const problems = checkAskPlan(plan);
   if (problems.length)
     return {

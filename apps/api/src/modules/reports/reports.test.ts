@@ -2,6 +2,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { asHeader, cookieHeader, makeApp, ORIGIN } from '../../test/helpers';
 import { publish, start, task } from '../forms/test-kit';
 import { makeRecord, makeType, siteVisit, world } from '../records/testkit';
+import { setTestLlm } from '../ai/llm';
+import type { Llm } from '../ai/providers';
 import { dueOn, sendScheduledReports } from './schedule';
 
 let ctx: Awaited<ReturnType<typeof makeApp>>;
@@ -420,5 +422,71 @@ describe('the report builder (plan §2.7)', () => {
     expect(broken).toHaveLength(1);
     expect(broken[0]!.payload).toMatchObject({ userId: w.owner.id });
     expect((broken[0]!.payload as { summary: string }).summary).toContain('could not be sent');
+  });
+
+  it('U10: Ask answers from a saved report the person may open — run by the report engine, never by model SQL', async () => {
+    const w = await world(ctx.app);
+    const { typeId } = await visits(w);
+    const definition = report(typeId, {
+      groupBy: { field: 'site' },
+      measures: [{ fn: 'count' }, { fn: 'sum', field: 'cost' }],
+    });
+    const id = (await w.api.post('/api/reports', { name: 'Visits by site', definition })).body.id as string;
+    const plan = (reportId: string | null) => ({
+      answerable: true,
+      why: '',
+      view: 'tasks',
+      columns: [],
+      filters: [],
+      groupBy: null,
+      aggregate: null,
+      orderBy: null,
+      limit: 50,
+      report: reportId,
+    });
+    // A scripted model: the first call plans, the second words the answer from the rows it is given.
+    const script = (companyId: string, answers: unknown[]) => {
+      const asked: { system: string; user: string }[] = [];
+      const llm: Llm = {
+        provider: 'anthropic',
+        model: 'claude-opus-5-5',
+        async complete(req) {
+          asked.push({ system: req.system, user: req.messages.at(-1)!.content });
+          return { text: String(answers.shift()), usage: { inputTokens: 100, outputTokens: 10 } };
+        },
+        async json(req) {
+          asked.push({ system: req.system, user: req.messages.at(-1)!.content });
+          return { data: req.schema.parse(answers.shift()), usage: { inputTokens: 100, outputTokens: 10 } };
+        },
+      };
+      setTestLlm((c) => (c === companyId ? llm : null));
+      return asked;
+    };
+    try {
+      const asked = script(w.companyId, [plan(id), 'Tonk mine had the most visits: 3.']);
+      const got = (await w.api.post('/api/ai/ask', { question: 'Which site had the most visits?' })).body;
+      // The planner was told about the report; the answer was worded from the report's own rows.
+      expect(asked[0]!.system).toContain(`${id} — Visits by site: grouped by site; count, sum of cost`);
+      expect(asked[1]!.user).toContain('Tonk mine');
+      expect(got).toMatchObject({
+        answer: 'Tonk mine had the most visits: 3.',
+        columns: ['Site', 'Count', 'Total Cost'],
+        total: 3,
+        report: { id, name: 'Visits by site', link: `/reports/${id}` },
+      });
+      expect(got.rows[0]).toEqual({ Site: 'Tonk mine', Count: 3, 'Total Cost': 4200 });
+
+      // A report id the model makes up — or one this person was never offered — never runs.
+      script(w.companyId, [plan('made-up-id')]);
+      const refused = (await w.api.post('/api/ai/ask', { question: 'Anything else?' })).body;
+      expect(refused).toMatchObject({ rows: [], problems: ['Unknown report "made-up-id"'] });
+      const other = await world(ctx.app);
+      const theirs = script(other.companyId, [plan(id)]);
+      const leak = (await other.api.post('/api/ai/ask', { question: 'visits by site?' })).body;
+      expect(theirs[0]!.system).not.toContain('Visits by site');
+      expect(leak).toMatchObject({ rows: [], problems: [`Unknown report "${id}"`] });
+    } finally {
+      setTestLlm(null);
+    }
   });
 });

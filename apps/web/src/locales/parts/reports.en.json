@@ -121,6 +121,7 @@
         "6": "Saturday",
         "7": "Sunday"
       }
-    }
+    },
+    "fromReport": "From the report “{{name}}” — open it"
   }
 }

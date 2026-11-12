@@ -168,6 +168,10 @@ export const askPlanSchema = z.object({
     .nullable(),
   orderBy: z.object({ column: z.string(), dir: z.enum(['asc', 'desc']) }).nullable(),
   limit: z.number().describe('At most 200'),
+  report: z
+    .string()
+    .nullable()
+    .describe('The id of a saved report that answers the question as it stands, else null'),
 });
 export type AskPlan = z.infer<typeof askPlanSchema>;
 

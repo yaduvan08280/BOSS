@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Loader2, Sparkles, X } from 'lucide-react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { formatDateTime } from '@mono/shared';
 import { Button } from '@/components/ui/button';
@@ -53,6 +53,13 @@ export function AskPanel({ question, tz, onClose }: { question: string; tz: stri
       ) : (
         <div className="mt-3 space-y-3">
           <p className="whitespace-pre-wrap text-base">{q.data.answer}</p>
+          {q.data.report && (
+            <p className="text-sm">
+              <Link to={q.data.report.link} className="font-medium underline underline-offset-2">
+                {t('reports.fromReport', { name: q.data.report.name })}
+              </Link>
+            </p>
+          )}
           {rows.length > 0 &&
             (phone ? (
               <ul className="space-y-2">

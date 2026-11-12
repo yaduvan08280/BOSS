@@ -97,6 +97,8 @@ export type AskAnswer = {
   total: number;
   onlyMine?: boolean;
   problems?: string[];
+  /** The answer came from a saved report (plan §2.7). */
+  report?: { id: string; name: string; link: string };
 };
 
 export const useAiStatus = () =>

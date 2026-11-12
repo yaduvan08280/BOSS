@@ -239,6 +239,7 @@ describe('AI layer', () => {
       aggregate: null,
       orderBy: null,
       limit: 50,
+      report: null,
       ...p,
     });
     let asked = script(company.id, [

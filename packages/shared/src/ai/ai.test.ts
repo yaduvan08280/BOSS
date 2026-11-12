@@ -208,6 +208,7 @@ describe('Ask plans', () => {
     aggregate: null,
     orderBy: null,
     limit: 50,
+    report: null,
     ...p,
   });
   it('accepts names from the catalog only', () => {

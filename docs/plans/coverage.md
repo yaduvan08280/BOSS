@@ -35,7 +35,7 @@ reviewed with GGM / the hotel team and frozen before each phase starts.
 | U7 | A status change can start a process; records can be picked in any form; changes raise events for notification rules, the public API and webhooks | §2.6 | `apps/api/src/modules/records/records-reach.test.ts` (a move starts a process, the public API, the webhook), `apps/api/src/modules/records/records-links.test.ts` (picked in forms), `apps/worker/src/notify/records.test.ts` (notification rules) |
 | U8 | A record type is drafted by AI from a description; nothing is saved until a person accepts | §2.6 | not built yet (second wave) |
 | U9 | A field marked reportable keeps a typed, indexed copy; existing records are back-filled by the worker | §2.7 | `apps/api/src/modules/reports/reportable.test.ts` |
-| U10 | Report builder: source → columns → filters → group → totals → table or chart; save, share by role, schedule, export; Ask can read it | §2.7 | `apps/api/src/modules/reports/reports.test.ts` (build, filter, group, totals, share by role, export, schedule). Screens looked at in a browser at 380 and 1440 (no e2e yet). Not built yet: Ask reading saved reports |
+| U10 | Report builder: source → columns → filters → group → totals → table or chart; save, share by role, schedule, export; Ask can read it | §2.7 | `apps/api/src/modules/reports/reports.test.ts` (build, filter, group, totals, share by role, export, schedule, Ask). Screens looked at in a browser at 380 and 1440 (no e2e yet) |
 | A1 | The request ceiling is counted per signed-in person; many people behind one internet address are not refused | §1.2 | `apps/api/src/plugins/ceiling.test.ts` |
 
 State on 12/11/2026: the first wave (L1–L17, U1–U6, A1) is merged and the whole suite passes on the combined code
