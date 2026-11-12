@@ -38,11 +38,12 @@ reviewed with GGM / the hotel team and frozen before each phase starts.
 | U10 | Report builder: source → columns → filters → group → totals → table or chart; save, share by role, schedule, export; Ask can read it | §2.7 | `apps/api/src/modules/reports/reports.test.ts` (build, filter, group, totals, share by role, export, schedule, Ask). Screens looked at in a browser at 380 and 1440 (no e2e yet) |
 | A1 | The request ceiling is counted per signed-in person; many people behind one internet address are not refused | §1.2 | `apps/api/src/plugins/ceiling.test.ts` |
 
-State on 12/11/2026: all 29 rows are built and each has a passing automated test (unit / API level). Browser
-tests: `e2e/phase11.spec.ts` drives the screens built in the second half of the phase (a move that starts a
-process, Live FMS columns, the report builder, "Build with AI", and a fit-the-screen pass in English and Hindi at
-380 and 1440). The first-wave screens (value lists, linked choices, formulas, stock on steps, the record list and
-drawer) were looked at in a browser by their builders and are covered by that fit-the-screen pass, but their
-behaviour is proven through the API, not yet click by click in a browser.
+State on 12/11/2026: all 29 rows are built and each has a passing automated test at unit / API level (the "Test"
+column). On top of that, every row except A1 (not a screen) is driven through the real screens by Playwright, on a
+phone (380 px) and a desktop (1440 px): `e2e/phase11-forms.spec.ts` (L1–L4, L6–L13), `e2e/phase11-stock.spec.ts`
+(L5, L14–L17, U6), `e2e/phase11-records.spec.ts` (U1–U5, U7, U8 with the model's answer stood in),
+`e2e/phase11-reports.spec.ts` (L18, U9, U10, and a fit-the-screen pass of the new screens in English and Hindi with
+no browser date pickers). 22 of 22 pass. Screenshots: `docs/screenshots/phase11/`. The older suite still passes on
+the merged code (58 passed, 21 skipped by design; the one email check needs Mailpit, the development mail catcher).
 
 Consume-by-recipe on a step (plan §2.4) needs recipes, which arrive in Phase 13; it is row I-recipe there, not here.

@@ -36,6 +36,8 @@ What lets any industry fit its own work into MONO without code. Plan: `docs/plan
 - Webhook picker: "whole module" choices (`master.*`, `list.*`, `record.*`) now match their events.
 - Migrations: `phase11_lists`, `phase11_records`, `phase11_links`, `phase11_stock_steps`, `phase11_live_columns`, `phase11_reports`.
 
+**Checked how**: 507 unit / API tests; 22 browser tests of the new screens on a phone and a desktop (`e2e/phase11-*.spec.ts`), with screenshots in `docs/screenshots/phase11/`; the older browser suite still passes on the merged code. Run the browser tests with `LOGIN_RATE_LIMIT=1000` in `.env` (they sign in many times).
+
 **Not in this phase** (said plainly): Hindi strings are machine-drafted and need review (decision 14); PDFs still use Helvetica, so ₹ and Hindi do not print in report PDFs; KPI cards do not yet read saved reports; child lines of records are not imported, searched or reported on; "Build with AI" for record types is tested with a scripted model, not yet against a live key.
 
 ## Fix — leftover "arrives in phase N" notices replaced (09/11/2026)
