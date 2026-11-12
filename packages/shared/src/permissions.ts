@@ -16,6 +16,7 @@ export const MODULES = [
   'ai',
   'integrations',
   'search',
+  'records',
 ] as const;
 export type ModuleKey = (typeof MODULES)[number];
 

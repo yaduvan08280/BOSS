@@ -39,6 +39,7 @@ import { hrRoutes } from './modules/hr/routes';
 import { imsRoutes } from './modules/ims/routes';
 import { crmRoutes } from './modules/crm/routes';
 import { masterRoutes } from './modules/masters/routes';
+import { recordRoutes } from './modules/records/routes';
 import { platformRoutes } from './modules/platform/routes';
 import { v1Routes } from './modules/platform/v1';
 import { LocalDiskStorage, type Storage } from './lib/storage';
@@ -142,6 +143,7 @@ export async function buildApp(opts: BuildOptions) {
   await app.register(imsRoutes);
   await app.register(crmRoutes);
   await app.register(masterRoutes);
+  await app.register(recordRoutes);
   await app.register(platformRoutes, { env });
   await app.register(v1Routes);
   await app.register(integrationRoutes, { env });

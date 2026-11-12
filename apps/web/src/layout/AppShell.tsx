@@ -9,6 +9,7 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { cn, safeStorage } from '@/lib/utils';
 import { useLiveEvents, useLogout, useUpdatePreferences } from '@/modules/auth/session';
 import { ChangePasswordCard } from '@/modules/account/AccountPage';
+import { useRecordPageTitle, useRecordSections } from '@/modules/records/menu';
 import { CommandPalette } from '@/modules/search/CommandPalette';
 import { AssistantSheet } from './AssistantSheet';
 import { BottomTabs } from './BottomTabs';
@@ -37,10 +38,15 @@ export function AppShell({ me }: { me: Me }) {
   useLiveEvents(true);
 
   const inSystem = pathname.startsWith('/system') || pathname.startsWith('/dev');
-  const sections = inSystem && canOpenSystemMaster(me.user.permissions) ? SYSTEM_NAV : WORKSPACE_NAV;
+  // The company's own record types join the workspace menu where their admin placed them.
+  const workspace = useRecordSections(me, WORKSPACE_NAV);
+  const recordPage = useRecordPageTitle(pathname);
+  const sections = inSystem && canOpenSystemMaster(me.user.permissions) ? SYSTEM_NAV : workspace;
   const item = findNavItem(pathname);
-  const title = item ? t(`nav.${item.key}`) : inSystem ? t('system.title') : t(`nav.home`);
-  const subtitle = item ? t(`navDesc.${item.key}`) : inSystem ? t('system.subtitle') : undefined;
+  const title =
+    recordPage?.title ?? (item ? t(`nav.${item.key}`) : inSystem ? t('system.title') : t(`nav.home`));
+  const subtitle =
+    recordPage?.subtitle ?? (item ? t(`navDesc.${item.key}`) : inSystem ? t('system.subtitle') : undefined);
 
   const toggle = () => {
     setCollapsed((c) => {

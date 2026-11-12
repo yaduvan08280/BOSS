@@ -13,6 +13,12 @@ export const DATA_EVENTS = [
   { event: 'master.row_changed', module: 'masters' },
   { event: 'master.row_deleted', module: 'masters' },
   { event: 'master.rows_imported', module: 'masters' },
+  { event: 'record.created', module: 'records' },
+  { event: 'record.changed', module: 'records' },
+  { event: 'record.status_changed', module: 'records' },
+  { event: 'record.note', module: 'records' },
+  { event: 'record.deleted', module: 'records' },
+  { event: 'record.imported', module: 'records' },
 ] as const;
 
 /** A webhook's event list: exact names, a module's events (`crm.*`) or everything (`*`). */
