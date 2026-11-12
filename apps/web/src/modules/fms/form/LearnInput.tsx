@@ -57,7 +57,8 @@ function LearnPicker({
             autoFocus={writing === true}
             value={value}
             placeholder={t('lists.writePh')}
-            onChange={(e) => onChange(e.target.value)}
+            // Once typing has begun it stays a text box, even if the list gets its first value meanwhile.
+            onChange={(e) => (setWriting(true), onChange(e.target.value))}
           />
           {total > 0 && (
             <Button
