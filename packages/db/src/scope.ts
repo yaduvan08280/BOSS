@@ -83,6 +83,7 @@ export const COMPANY_SCOPED_MODELS = new Set([
   'Lead',
   'LeadEvent',
   'MasterRow',
+  'ValueList',
   'ApiKey',
   'Webhook',
   'WebhookDelivery',
@@ -118,6 +119,7 @@ export const SOFT_DELETE_MODELS = new Set([
   'Item',
   'Customer',
   'MasterRow',
+  'ValueList',
   'Webhook',
 ]);
 
