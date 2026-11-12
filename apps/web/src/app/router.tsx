@@ -80,6 +80,7 @@ const LibraryPage = page(() => import('@/modules/masters/LibraryPage'), 'Library
 const RecordTypesPage = page(() => import('@/modules/records/RecordTypesPage'), 'RecordTypesPage');
 const TypeEditorPage = page(() => import('@/modules/records/TypeEditorPage'), 'TypeEditorPage');
 const RecordListPage = page(() => import('@/modules/records/RecordListPage'), 'RecordListPage');
+const ListsPage = page(() => import('@/modules/lists/ListsPage'), 'ListsPage');
 const RulesWizard = page(() => import('@/modules/hr/RulesWizard'), 'RulesWizard');
 
 const placeholderRoutes = ALL_ITEMS.filter((i) => i.phase > 0).map((i) => ({
@@ -137,6 +138,7 @@ export const router = createBrowserRouter([
       { path: '/crm/meca', element: <WithMe render={(me) => <CrmMeca me={me} />} /> },
       { path: '/masters/build', element: <WithMe render={(me) => <MastersPage me={me} />} /> },
       { path: '/masters/library', element: <WithMe render={(me) => <LibraryPage me={me} />} /> },
+      { path: '/masters/lists', element: <WithMe render={(me) => <ListsPage me={me} />} /> },
       { path: '/masters/:id', element: <WithMe render={(me) => <MasterRowsPage me={me} />} /> },
       { path: '/records/types', element: <WithMe render={(me) => <RecordTypesPage me={me} />} /> },
       { path: '/records/types/new', element: <WithMe render={(me) => <TypeEditorPage me={me} />} /> },

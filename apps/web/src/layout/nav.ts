@@ -142,6 +142,14 @@ export const WORKSPACE_NAV: NavSection[] = [
     items: [
       { key: 'myMasters', path: '/masters', icon: Boxes, phase: 0, tag: 'masters' },
       { key: 'masterLibrary', path: '/masters/library', icon: LibraryBig, phase: 0, tag: 'masters' },
+      {
+        key: 'valueLists',
+        path: '/masters/lists',
+        icon: ListChecks,
+        phase: 0,
+        tag: 'masters',
+        permission: 'core.edit',
+      },
       { key: 'buildMaster', path: '/masters/build', icon: Sparkles, phase: 0, tag: 'masters' },
     ],
   },

@@ -1,0 +1,28 @@
+// Phase 11 — value lists: what a "remember what people type" field offers (plan §2.1).
+
+/// One value of a list. `key` names the list: a field's own (`flow:<flowId>:<field>`, `master:<id>:<field>` …) or
+/// a named one shared by several forms (`list:<name>`) — see `listKeyOf`.
+model ValueList {
+  id          String    @id @default(cuid(2))
+  companyId   String    @map("company_id")
+  key         String
+  /// The value as it is offered (the spelling of whoever typed it first, or the admin's rename).
+  value       String
+  /// The value in lower case with single spaces: one live row per (company, list, value) whatever the capitals.
+  /// Null once the value is merged away, so the same text can be typed again.
+  norm        String?
+  /// How many forms were saved with this value.
+  uses        Int       @default(0)
+  lastUsedAt  DateTime? @map("last_used_at") @db.Timestamptz(3)
+  createdById String?   @map("created_by_id")
+  /// Hidden values are not offered; records that hold them keep them.
+  hidden      Boolean   @default(false)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Set when the value was merged into another one (kept as history).
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@unique([companyId, key, norm])
+  @@index([companyId, key, hidden, uses])
+  @@map("value_lists")
+}
