@@ -65,3 +65,6 @@ export * from './platform/events';
 export * from './records';
 export * from './reports';
 export * from './branches/schemas';
+export * from './machines/bill';
+export * from './money/tax';
+export * from './money/bill';

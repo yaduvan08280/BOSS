@@ -567,7 +567,8 @@
       "search": "Search",
       "records": "Records",
       "reports": "Reports",
-      "franchise": "Franchises"
+      "franchise": "Franchises",
+      "money": "Money"
     },
     "chart": {
       "search": "Search person or designation",
@@ -2002,6 +2003,7 @@
     "noReport": "No finished steps in this period yet.",
     "reportDays": "Last {{n}} days.",
     "ev": {
+      "bill_skipped": "No bill raised",
       "doer_outside_branch": "Given outside the branch",
       "started": "Started",
       "step_assigned": "Step assigned",

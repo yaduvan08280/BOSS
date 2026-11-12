@@ -26,7 +26,7 @@ export type Reach = {
 };
 
 /** Models whose rows always have a branch: there is no "group-wide" row to ask for. */
-const ALWAYS_AT_A_BRANCH = new Set(['BrandAudit']);
+const ALWAYS_AT_A_BRANCH = new Set(['BrandAudit', 'DayClose']);
 
 /** Brand content the group shares with franchises, read-only: models with a `shared` flag on a group-wide row. */
 const SHARED_WITH_FRANCHISES: Record<string, Where> = {
@@ -83,6 +83,8 @@ export const BRANCH_SCOPED_MODELS: Record<string, (userId: string) => Where[]> =
   MasterRow: () => [],
   Punch: (u) => [{ userId: u }],
   BrandAudit: (u) => [{ auditorId: u }],
+  Bill: (u) => [{ createdById: u }],
+  DayClose: (u) => [{ closedById: u }],
 };
 
 /**
@@ -109,6 +111,7 @@ export const BRANCH_FREE_MODELS: Record<string, string> = {
   BranchLoan: 'set-up data: who is lent where and when',
   BranchStay: 'set-up data: where a person works from which day',
   AttendanceDay: 'attendance is listed by HR scope (HR all, an HOD their team, everyone themselves)',
+  PaymentMode: 'set-up data: how money is taken at a branch',
   ModuleBranchSetting: 'set-up data: a branch’s own flow-designer people',
 };
 

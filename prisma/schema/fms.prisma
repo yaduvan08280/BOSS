@@ -163,6 +163,8 @@ model DocumentType {
   name      String
   /// "QUO" → QUO/26-27/0001
   prefix    String
+  /// Phase 12M: a paper of this type is also a bill of this kind (INVOICE, CHALLAN …) in the money core.
+  billType  String?   @map("bill_type")
   /// company | entity | branch — who the number series belongs to (phase 12): INV/RJ/26-27/0001 per entity.
   series    String    @default("company")
   /// Which record fields fill the paper (party, items, total…).

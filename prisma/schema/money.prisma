@@ -1,0 +1,198 @@
+/// Phase 12M — the money core: one master of parties, tax as data, one bill engine, vouchers.
+
+/// Everyone MONO deals with. A party can be several kinds at once. A CRM customer is a party with the same id.
+model Party {
+  id          String    @id @default(cuid(2))
+  companyId   String    @map("company_id")
+  /// PTY-0001 (a CRM customer keeps its CUS-001)
+  code        String
+  name        String
+  /// customer | vendor | guest | company | agent | franchise | transporter
+  kinds       String[]
+  mobile      String?
+  email       String?
+  /// GSTIN / TRN
+  taxId       String?   @map("tax_id")
+  /// The state that decides CGST + SGST or IGST.
+  state       String?
+  address     String?
+  creditDays  Int       @default(0) @map("credit_days")
+  note        String?
+  createdById String?   @map("created_by_id")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@unique([companyId, code])
+  @@index([companyId, name])
+  @@map("parties")
+}
+
+/// A name people typed for a vendor (on an item, a purchase order) and the party a person said it is.
+model PartyAlias {
+  id        String   @id @default(cuid(2))
+  companyId String   @map("company_id")
+  /// The typed name, lower-cased and trimmed.
+  norm      String
+  partyId   String   @map("party_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([companyId, norm])
+  @@map("party_aliases")
+}
+
+/// A tax rate from a day, typed by the accountant. The latest row of a code that has started applies.
+model TaxRate {
+  id          String   @id @default(cuid(2))
+  companyId   String   @map("company_id")
+  /// Null = every entity.
+  entityId    String?  @map("entity_id")
+  code        String
+  name        String
+  percent     Decimal  @db.Decimal(6, 3)
+  /// YYYY-MM-DD
+  from        String
+  /// [{ upTo (minor units, null = above), percent }] — tax by the price of one unit.
+  slabs       Json?
+  createdById String?  @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([companyId, entityId, code, from])
+  @@index([companyId, code])
+  @@map("tax_rates")
+}
+
+/// How money comes in and goes out at a branch (or everywhere when no branch is named).
+model PaymentMode {
+  id        String    @id @default(cuid(2))
+  companyId String    @map("company_id")
+  branchId  String?   @map("branch_id")
+  name      String
+  /// CASH | UPI | CARD | BANK | CREDIT
+  kind      String
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([companyId, branchId])
+  @@map("payment_modes")
+}
+
+/// One model for every money paper (shared `billMachine`). Amounts are minor units of `currency`.
+model Bill {
+  id           String    @id @default(cuid(2))
+  companyId    String    @map("company_id")
+  branchId     String?   @map("branch_id")
+  entityId     String?   @map("entity_id")
+  /// INVOICE | CREDIT_NOTE | DEBIT_NOTE | RECEIPT | ADVANCE | PURCHASE_BILL | VENDOR_PAYMENT | CHALLAN
+  type         String
+  /// DRAFT | ISSUED | PART_PAID | PAID | CANCELLED
+  status       String    @default("DRAFT")
+  /// INV/RJ/26-27/0001 once issued; a draft holds "DRAFT-<id>".
+  number       String
+  fy           String?
+  /// YYYY-MM-DD
+  date         String
+  partyId      String    @map("party_id")
+  currency     String    @default("INR")
+  /// As typed, with what each came to: [{ item, hsn, qty, unit, rate, discount, taxCode, taxable, taxPercent, taxes, total }]
+  lines        Json      @default("[]")
+  charges      Json      @default("[]")
+  discount     BigInt    @default(0)
+  taxInclusive Boolean   @default(false) @map("tax_inclusive")
+  taxable      BigInt    @default(0)
+  tax          BigInt    @default(0)
+  /// [{ name, percent, amount }]
+  taxes        Json      @default("[]")
+  roundOff     Int       @default(0) @map("round_off")
+  total        BigInt    @default(0)
+  /// Money set against this paper (or, for a money paper, how much of it has been used).
+  settled      BigInt    @default(0)
+  /// Credit notes raised against this paper.
+  credited     BigInt    @default(0)
+  dueOn        String?   @map("due_on")
+  promisedOn   String?   @map("promised_on")
+  /// A credit / debit note: the paper it corrects.
+  againstId    String?   @map("against_id")
+  modeId       String?   @map("mode_id")
+  reference    String?
+  note         String?
+  /// What raised it: crm_order, crm_payment, purchase_order, document, api …
+  sourceType   String?   @map("source_type")
+  sourceId     String?   @map("source_id")
+  createdById  String?   @map("created_by_id")
+  issuedAt     DateTime? @map("issued_at") @db.Timestamptz(3)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([companyId, number])
+  @@index([companyId, partyId, status])
+  @@index([companyId, branchId])
+  @@index([companyId, type, date])
+  @@index([companyId, sourceType, sourceId])
+  @@map("bills")
+}
+
+/// Money (a receipt, a payment, an advance, a credit note) set against a paper that is owed.
+model BillAllocation {
+  id        String   @id @default(cuid(2))
+  companyId String   @map("company_id")
+  billId    String   @map("bill_id")
+  paymentId String   @map("payment_id")
+  amount    BigInt
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([billId])
+  @@index([paymentId])
+  @@map("bill_allocations")
+}
+
+/// The books of one paper: balanced debit and credit lines against MONO heads.
+model Voucher {
+  id        String   @id @default(cuid(2))
+  companyId String   @map("company_id")
+  entityId  String?  @map("entity_id")
+  billId    String   @map("bill_id")
+  /// YYYY-MM-DD
+  date      String
+  narration String
+  /// [{ head, partyId?, debit, credit }]
+  lines     Json
+  /// The voucher that undoes another (a voided receipt).
+  reversal  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([companyId, date])
+  @@index([billId])
+  @@map("vouchers")
+}
+
+/// MONO head → the ledger name in Tally.
+model TallyMap {
+  id        String @id @default(cuid(2))
+  companyId String @map("company_id")
+  head      String
+  ledger    String
+
+  @@unique([companyId, head])
+  @@map("tally_maps")
+}
+
+/// A branch's day close for one payment mode: what the books expect against what was counted.
+model DayClose {
+  id         String   @id @default(cuid(2))
+  companyId  String   @map("company_id")
+  branchId   String   @map("branch_id")
+  /// YYYY-MM-DD
+  date       String
+  modeId     String   @map("mode_id")
+  expected   BigInt
+  counted    BigInt
+  note       String?
+  closedById String?  @map("closed_by_id")
+  closedAt   DateTime @default(now()) @map("closed_at") @db.Timestamptz(3)
+
+  @@unique([branchId, date, modeId])
+  @@index([companyId, date])
+  @@map("day_closes")
+}

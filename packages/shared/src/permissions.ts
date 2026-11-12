@@ -21,6 +21,8 @@ export const MODULES = [
   // Phase 12, stage D: `franchise.view` is the franchise-oversight right (see franchises' work); `franchise.admin`
   // runs royalties, brand audits and exits.
   'franchise',
+  // Phase 12M: parties, tax rates, bills, receipts and payments, day close, vouchers.
+  'money',
 ] as const;
 export type ModuleKey = (typeof MODULES)[number];
 
@@ -64,7 +66,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<BuiltInRole, PermissionKey[]> = {
  * Modules added after companies were already running. A built-in role that holds nothing of such a module yet
  * (nobody has set it in the Roles matrix) is given the defaults above when the server starts.
  */
-export const LATER_MODULES: ModuleKey[] = ['records', 'reports', 'franchise'];
+export const LATER_MODULES: ModuleKey[] = ['records', 'reports', 'franchise', 'money'];
 
 export function hasPermission(granted: readonly string[], needed: PermissionKey): boolean {
   if (granted.includes('*') || granted.includes(needed)) return true;

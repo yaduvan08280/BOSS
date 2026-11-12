@@ -17,6 +17,15 @@ export const COMPANY_SCOPED_MODELS = new Set([
   'BranchLoan',
   'ExchangeRate',
   'RoyaltyInvoice',
+  'Party',
+  'PartyAlias',
+  'TaxRate',
+  'PaymentMode',
+  'Bill',
+  'BillAllocation',
+  'Voucher',
+  'TallyMap',
+  'DayClose',
   'BrandAudit',
   'Attachment',
   'Session',
@@ -114,6 +123,8 @@ export const COMPANY_SCOPED_MODELS = new Set([
 
 /** Models with `deletedAt` (soft delete). Kept in sync with the schema by `scope.test.ts`. */
 export const SOFT_DELETE_MODELS = new Set([
+  'Party',
+  'PaymentMode',
   'Company',
   'CompanyContact',
   'Branch',

@@ -1,3 +1,4 @@
+import { receiptForPayment } from '../money/mirror';
 import type { Db } from '@mono/db';
 import { addDays, formatINR, formatLocalDate } from '@mono/shared';
 import { z } from 'zod';
@@ -143,6 +144,8 @@ export async function recordPayment(db: Db, actor: Actor, input: z.input<typeof 
     const row = await tx.payment.create({
       data: { companyId: actor.companyId, ...p, amount: BigInt(p.amount), createdById: actor.userId },
     });
+    // The payment is a receipt in the money core, set against the customer's oldest papers.
+    await receiptForPayment(tx, actor, row);
     await writeAudit(tx, ctxOf(actor), {
       action: 'crm.payment',
       entityType: 'payment',

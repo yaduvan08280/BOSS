@@ -1,3 +1,5 @@
+import { billOut } from '../money/bills-read';
+import { billForPo } from '../money/sources';
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
@@ -126,6 +128,24 @@ export async function imsRoutes(app: FastifyInstance) {
       },
     },
     async (q) => poAction(db, actorOf(q), q.params.id, q.params.action, q.body),
+  );
+
+  // Phase 12M: what an order has received becomes a purchase bill (a draft for the accounts to check).
+  r.post(
+    '/api/ims/po/:id/bill',
+    {
+      ...view(),
+      schema: {
+        tags,
+        params: idParam,
+        body: z.object({
+          date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          reference: z.string().trim().max(80).nullish(),
+          taxCode: z.string().trim().max(20).nullish(),
+        }),
+      },
+    },
+    async (q) => billOut(await billForPo(db, actorOf(q), q.params.id, q.body)),
   );
 
   r.get('/api/ims/audit', { ...view(), schema: { tags } }, async (q) => listCounts(db, actorOf(q)));

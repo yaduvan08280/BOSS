@@ -1,5 +1,13 @@
+import { billForOrder, creditForOrder } from '../money/mirror';
 import { nextCounter, type Db, type Tx } from '@mono/db';
-import { addDays, financialYear, salesOrderMachine, transition, type SalesOrderStatus } from '@mono/shared';
+import {
+  addDays,
+  financialYear,
+  localDate,
+  salesOrderMachine,
+  transition,
+  type SalesOrderStatus,
+} from '@mono/shared';
 import { z } from 'zod';
 import { writeAudit } from '../../lib/audit';
 import { emitEvent } from '../../lib/events';
@@ -104,6 +112,8 @@ export async function createOrder(
         fields: o.fields as object,
       },
     });
+    // The order is an invoice in the money core, with the order's own number (phase 12M).
+    await billForOrder(t, actor, order);
     await writeAudit(t, ctxOf(actor), {
       action: 'crm.order_taken',
       entityType: 'sales_order',
@@ -192,6 +202,12 @@ export async function cancelOrder(db: Db, actor: Actor, id: string, reason: stri
   }).to;
   await db.$transaction(async (tx) => {
     await tx.salesOrder.update({ where: { id }, data: { status: to } });
+    // Its invoice is cancelled by a credit note for it.
+    const company = await tx.company.findUniqueOrThrow({
+      where: { id: actor.companyId },
+      select: { timezone: true },
+    });
+    await creditForOrder(tx, actor, o, localDate(new Date(), company.timezone));
     await writeAudit(tx, ctxOf(actor), {
       action: 'crm.order_cancelled',
       entityType: 'sales_order',

@@ -15,6 +15,7 @@ import { listItems } from '../ims/items';
 import { postMove } from '../ims/moves';
 import { listRows, saveRow } from '../masters/rows';
 import { resolveApiKey } from './keys';
+import { v1MoneyRoutes } from './v1-money';
 import { v1RecordRoutes } from './v1-records';
 
 const idParam = z.object({ id: z.string().max(40) });
@@ -275,4 +276,7 @@ export async function v1Routes(app: FastifyInstance) {
 
   // ---- Custom record types and their records
   v1RecordRoutes(app, { keyed, doc, actor });
+
+  // ---- Parties and bills (the money core)
+  v1MoneyRoutes(app, { keyed, doc, actor });
 }

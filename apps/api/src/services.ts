@@ -59,3 +59,4 @@ export { saveReport } from './modules/reports/service';
 export { chainFor, placeHolders } from './modules/branches/approvals';
 export { applyBranchMoves } from './modules/branches/history';
 export { watchRenewals } from './modules/franchise/renewals';
+export { carryOverCrm } from './modules/money/mirror';

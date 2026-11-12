@@ -21,6 +21,7 @@ import {
   sendWebhooks,
   runCovers,
   applyBranchMoves,
+  carryOverCrm,
   watchRenewals,
   settleAttendance,
   watchAbsences,
@@ -194,6 +195,9 @@ await boss.work(
     // Inventory: daily snapshots and bands, the morning MAX review, audit cycles, the order list, dead stock.
     await imsSweep(prisma);
     // Sales CRM: orders done, the day's calls, stuck leads, customers going quiet.
+    // Money core: orders and payments from before the bill engine get their papers (nothing once caught up).
+    const carried = await carryOverCrm(prisma);
+    if (carried) log.info({ carried }, 'CRM orders and payments carried into bills');
     const crmCalls = await crmSweep(prisma);
     if (crmCalls) log.info({ crmCalls }, 'CRM calls made');
     if (

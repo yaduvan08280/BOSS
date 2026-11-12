@@ -1,3 +1,4 @@
+import { partyOfCustomer } from '../money/parties';
 import { formatNumber, nextCounter, type Db } from '@mono/db';
 import { leadMachine, NBD_SEATS, transition, type LeadAction, type LeadStatus } from '@mono/shared';
 import { z } from 'zod';
@@ -282,6 +283,7 @@ export async function leadAction(db: Db, actor: Actor, id: string, input: z.inpu
             fields: {},
           },
         }));
+      if (!existing) await partyOfCustomer(tx, customer);
       Object.assign(data, { customerId: customer.id, closedAt: new Date() });
     }
     await tx.lead.update({ where: { id }, data });

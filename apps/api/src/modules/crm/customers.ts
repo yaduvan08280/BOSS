@@ -1,3 +1,4 @@
+import { partyOfCustomer } from '../money/parties';
 import { formatNumber, nextCounter, type Db } from '@mono/db';
 import { SEGMENTS, splitTable } from '@mono/shared';
 import { z } from 'zod';
@@ -154,6 +155,8 @@ export async function saveCustomer(db: Db, actor: Actor, input: z.input<typeof c
             ...data,
           },
         });
+    // Every customer is a party (phase 12M), with the same id.
+    await partyOfCustomer(tx, row);
     await recordChange(tx, ctxOf(actor), {
       event: id ? 'crm.customer_changed' : 'crm.customer_added',
       entityType: 'customer',
@@ -251,8 +254,8 @@ export async function importCustomers(db: Db, actor: Actor, text: string) {
       lines: problems,
     });
   await db.$transaction(async (tx) => {
-    for (const c of rows)
-      await tx.customer.create({
+    for (const c of rows) {
+      const made = await tx.customer.create({
         data: {
           companyId: actor.companyId,
           code: formatNumber('CUS', await nextCounter(tx, actor.companyId, 'customer')),
@@ -262,6 +265,8 @@ export async function importCustomers(db: Db, actor: Actor, text: string) {
           fields: {},
         },
       });
+      await partyOfCustomer(tx, made);
+    }
     await writeAudit(tx, ctxOf(actor), {
       action: 'crm.customers_imported',
       entityType: 'customer',

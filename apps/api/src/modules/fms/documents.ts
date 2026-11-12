@@ -10,6 +10,7 @@ import {
   pathsIn,
   plainValues,
   showStored,
+  type BillType,
   type FlowField,
   type ItemLine,
 } from '@mono/shared';
@@ -18,6 +19,7 @@ import { AppError } from '../../lib/errors';
 import { pathReaders, recordValues } from './show';
 import { letterheadOf, seriesOf, type Letterhead } from '../branches/letterhead';
 import { homeBranchOf } from '../branches/reach';
+import { billForDocument } from '../money/sources';
 
 /** QUO/26-27/0001 — numbered per document type, per financial year (CLAUDE.md §6.2 Documents). */
 export async function createDocument(
@@ -62,7 +64,7 @@ export async function createDocument(
     fy,
   );
   const seq = await nextCounter(tx, input.companyId, series.counterKey, fy);
-  return tx.document.create({
+  const doc = await tx.document.create({
     data: {
       companyId: input.companyId,
       branchId,
@@ -79,6 +81,21 @@ export async function createDocument(
       createdById: input.createdById ?? null,
     },
   });
+  // A paper that is also a bill (an invoice, a challan) goes through the money core (phase 12M).
+  if (type.billType) {
+    const out = await billForDocument(tx, doc, type.billType as BillType, company.timezone);
+    if ('skipped' in out && doc.recordId)
+      await tx.fmsRecordEvent.create({
+        data: {
+          companyId: doc.companyId,
+          recordId: doc.recordId,
+          type: 'bill_skipped',
+          stepKey: doc.stepKey,
+          note: out.skipped,
+        },
+      });
+  }
+  return doc;
 }
 
 /** An amount in whole units of a currency, written that currency's way (₹ with lakh grouping for rupees). */

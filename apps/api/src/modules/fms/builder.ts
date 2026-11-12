@@ -327,6 +327,8 @@ export const documentTypeSchema = z.object({
   active: z.boolean().default(true),
   /** One number series for the company (the default), or one per legal entity or per branch. */
   series: z.enum(DOC_SERIES).optional(),
+  /** A paper of this type is also a bill of this kind in the money core (when its record names a party). */
+  billType: z.enum(['INVOICE', 'CHALLAN', 'PURCHASE_BILL']).nullish(),
 });
 
 export async function saveDocumentType(db: Db, actor: Actor, input: z.infer<typeof documentTypeSchema>) {

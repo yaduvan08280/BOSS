@@ -44,6 +44,7 @@ import { listRoutes } from './modules/lists/routes';
 import { reportRoutes } from './modules/reports/routes';
 import { branchRoutes } from './modules/branches/routes';
 import { franchiseRoutes } from './modules/franchise/routes';
+import { moneyRoutes } from './modules/money/routes';
 import { platformRoutes } from './modules/platform/routes';
 import { v1Routes } from './modules/platform/v1';
 import { LocalDiskStorage, type Storage } from './lib/storage';
@@ -154,6 +155,7 @@ export async function buildApp(opts: BuildOptions) {
   await app.register(reportRoutes);
   await app.register(branchRoutes);
   await app.register(franchiseRoutes, { storage });
+  await app.register(moneyRoutes);
   await app.register(platformRoutes, { env });
   await app.register(v1Routes);
   await app.register(integrationRoutes, { env });

@@ -567,7 +567,8 @@
       "search": "खोज",
       "records": "रिकॉर्ड",
       "reports": "रिपोर्ट",
-      "franchise": "फ़्रैंचाइज़ी"
+      "franchise": "फ़्रैंचाइज़ी",
+      "money": "पैसा"
     },
     "chart": {
       "search": "व्यक्ति या पद खोजें",
@@ -2002,6 +2003,7 @@
     "noReport": "इस अवधि में अभी कोई स्टेप पूरा नहीं।",
     "reportDays": "पिछले {{n}} दिन।",
     "ev": {
+      "bill_skipped": "बिल नहीं बना",
       "doer_outside_branch": "शाखा के बाहर दिया गया",
       "started": "शुरू हुआ",
       "step_assigned": "स्टेप सौंपा",
