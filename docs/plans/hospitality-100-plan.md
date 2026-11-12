@@ -5,9 +5,15 @@ Rule for every phase below: the same Definition of Done as CLAUDE.md §17 (380 p
 state machines, audit + events, permissions on the API, company scoping tested, no file over 400 lines), **plus**
 every row of that phase's coverage checklist has an automated test (unit or e2e) before the phase is called done.
 
-"100%" is defined by the **coverage checklist** in §13: 259 workflows a hotel / bar / restaurant runs. A workflow is
+"100%" is defined by the **coverage checklist** in §13: 259 workflows a hotel / bar / restaurant runs, plus 42
+universal-core rows (added 12/11/2026) that prove the same engines serve other industries — 301 rows. A workflow is
 covered when a person can do it end to end in MONO, or MONO drives it through a named integration (§10). The
-program is finished only when all 259 rows are green.
+program is finished only when all 301 rows are green.
+
+**Tweak of 12/11/2026 (every industry):** no hospitality scope was removed or moved later. What changed is *how* it
+is built — as industry-neutral engines with hospitality on top (§1.1) — plus a money core (Phase 12M, §3A), custom
+record types and a report builder (§2.6–2.7), item tracking for other trades (§4), industry packs (§12A) and four
+new decisions (§14, #15–18).
 
 ---
 
@@ -15,9 +21,10 @@ program is finished only when all 259 rows are green.
 
 | Phase | Name | Needs | Why this order |
 |---|---|---|---|
-| 11 | **Linked fields** (value lists, "Write…", fields from other FMS, auto-fill, cascading, stock from any step) | — | Every later module's forms use it |
-| 12 | **Branches, legal entities, countries, franchises** (scopes, routing, people across branches, per-entity HR / tax / currency / numbering, transfers design) | 11 | Every later module stores a branch and respects who may see it |
-| 13 | **Inventory v2** (locations per branch, units, batches/expiry, recipes, central-kitchen production, indents, transfers in transit, wastage, variance, bar ml) | 12 | POS, bar and banquets consume stock through recipes |
+| 11 | **Linked fields** (value lists, "Write…", fields from other FMS, auto-fill, cascading, stock from any step) **+ custom record types and report builder** | — | Every later module's forms use it |
+| 12 | **Branches, legal entities, countries, franchises** (scopes, routing, people across branches, per-entity HR / tax / currency / numbering, transfers design) — built in stages A–D (§3.12) | 11 | Every later module stores a branch and respects who may see it |
+| 12M | **Money core** (parties, tax profiles, bills and credit notes, receivables and payables, cash books, vouchers for Tally) | 12 (stages A–B) | Transfer invoices, POS bills, folios, banquet bills and royalties all use one bill engine |
+| 13 | **Inventory v2** (locations per branch, units, batches/expiry, recipes, central-kitchen production, indents, transfers in transit, wastage, variance, bar ml) **+ serials, attributes, second unit, barcodes, price lists** | 12, 12M | POS, bar and banquets consume stock through recipes |
 | 14 | **Hospitality setup + Menu** (outlets, floors/tables, rooms, taxes, printers, payment modes, menu, modifiers) | 13 | POS, reservations and the hotel read this setup |
 | 15 | **POS, KOT, kitchen display, billing, payments, day close** | 14 | The money path for restaurant and bar |
 | 16 | **Table reservations, waitlist, guest profiles** | 14, 15 | A seated booking opens a POS order |
@@ -27,6 +34,38 @@ program is finished only when all 259 rows are green.
 | 20 | **Reports, MIS, load test at service peak, offline drill, guides** | all | Sign-off |
 
 Nothing in a later phase may start before the earlier phase's checklist is fully green.
+
+### 1.1 Rule for every phase: core engine first, hospitality on top (added 12/11/2026)
+
+Hospitality is the **first industry pack**, not a special case. Every feature below is built in three layers:
+
+1. **Core engine** — industry-neutral tables and services, in the core modules. No hospitality word in a core table,
+   field, permission or event (a room, a table and a hall are all a *resource*; a restaurant bill and a pharmacy
+   bill are both a *bill*).
+2. **Hospitality screens** — the fast purpose-built screens a hotel needs (floor view, kitchen display, tape chart,
+   night audit), in one `hospitality` module on the API and web. They only call core engines; they own no money,
+   stock or booking logic of their own.
+3. **Pack** — the data that makes it a hotel: masters, record types, flows, checklists, documents, registers, KPI
+   cards, roles, menu sections, notification rules (§12A).
+
+Rules:
+- If a second industry would need it, it goes in the core. If only a hotel needs it, it goes in the hospitality module.
+- Every engine has at least one automated test using a **non-hospitality example** (checklist U, §13).
+- The left-menu section, roles and words on screen come from the pack, so another industry sees its own words.
+
+| Core engine | Built in | Hospitality uses it for | The same engine serves |
+|---|---|---|---|
+| Custom record types + linked fields | 11 | Guest requests, lost & found, banquet enquiries | Prescriptions, site visits, projects, trips, any register |
+| Branch / entity / reach / routing | 12 | Outlets, central kitchens, franchises | Shops, sites, mines, depots, warehouses, dealers |
+| Money core (bills, tax, parties, receivables / payables) | 12M | POS bills, folios, banquet bills, royalties | Every counter sale, invoice, purchase bill, running bill |
+| Stock (locations, units, batches, serials, attributes) | 13 | Kitchen, bar, minibar, linen | Medicines by batch, jewellery by piece and weight, cement by site |
+| Recipes / production | 13 | Dishes, gravies, central kitchen | Manufacturing BOM, jewellery making, construction BOQ use |
+| Price rules (price lists, time bands, rate boards) | 13–14 | Happy hour, outlet prices, room rate plans | Wholesale price lists, retail schemes, daily gold rate |
+| Counter billing (bill, split, payments, day close) | 15 | POS | Retail, pharmacy, wholesale and jewellery counters |
+| Booking (resource × time, no overlaps, holds, deposits) | 16–17 | Tables, rooms, halls | Vehicles, machines, plots / flats, appointments, site equipment |
+| Running account (charges posted over time, settled later) | 17 | Guest folio, city ledger | Customer khata, construction running bills, flat payment schedules |
+| Statutory registers (a daily register from moves, exported in a set format) | 18 | Excise register, guest register, Form C | Schedule H drug register, gold stock register, royalty passes |
+| Site agent (printers, scales, scanners on a branch's own network) | 15, 19 | KOT and bill printers | Barcode and label printers, weighbridges, cash drawers |
 
 ---
 
@@ -78,9 +117,32 @@ people / `m:<id>`), the value is stored as display text (decision 91), and only 
 - Any field (from a master, another FMS, a list, an item, a formula) can be shown as a column in Live FMS, in
   documents (`{{field.column}}`), in KPI cards and in notification templates.
 
+### 2.6 Custom record types (added 12/11/2026 — what lets any industry add its own things without code)
+Today a custom master is a flat list of rows. A **record type** is a master that behaves like a built-in module:
+- Its own **number series** (`{PREFIX}/{FY}/{0001}`), **statuses** with allowed moves (a small state machine set
+  up on screen, run through the shared `transition()`), and who may do each move.
+- **Links to other record types** (one or many) and **child lines** (a table inside the record: items, visits,
+  instalments, stones in a piece).
+- Its own **list screen** (columns, filters, saved views, card list on phones), detail drawer with Notes and
+  History, attachments, import / export, and a place in the left menu chosen by the admin.
+- Permissions per record type (view / create / edit / approve) and the branch reach of Phase 12.
+- Can **start an FMS flow** on a status change, be picked in any form (`rec:` source, §2.2), raise domain events
+  for notification rules, and be reached through the public API and webhooks.
+- Built with AI from a description, like masters today (the AI proposes; a person confirms).
+
+### 2.7 Reportable fields and the report builder (added 12/11/2026)
+- Form values stay in JSON, but any field can be marked **reportable**: MONO keeps a typed, indexed copy (text,
+  number, date, reference) so lists, filters, totals and Ask stay fast on large data. Existing records are
+  back-filled by the worker.
+- **Report builder:** pick a flow or record type → columns → filters → group by → total / count / average → table
+  or chart; save, share by role, schedule by Telegram / email, export Excel / PDF. KPI cards read the same source.
+- Ask (AI) gets these reports as extra read-only sources, checked against the catalog as today (decision 60).
+
 **Done when (checklist L1–L18 in §13):** a Purchase-request value appears as a dropdown in Goods receipt; "Write…"
 adds a value that the next record offers; a picked booking fills guest fields; Outlet → Table cascades; a unique
 booking ref is refused twice; a step issues stock from a location chosen in the form and reopening reverses it.
+**And (U1–U10):** a "Site visit" record type with statuses, child lines and a link to a customer is made from screens
+alone, starts a flow when it turns Confirmed, and appears in a saved report grouped by month.
 
 ---
 
@@ -208,6 +270,20 @@ Group (the tenant: one MONO install, one owner)
   safely (move people, transfer stock, finish or move open work, then archive).
 - Masters rows can belong to a branch / entity or be group-wide.
 
+### 3.12 Build order inside the phase (added 12/11/2026)
+The scope above is unchanged; it is built and tested in four stages so each can be signed off on its own:
+
+| Stage | What | Sections |
+|---|---|---|
+| A | Branch as a dimension: structure, reach, branch switcher, managers, routing, branch on every record, per-branch checklists and reports | 3.1–3.3, 3.10, 3.11 |
+| B | Legal entities: GSTIN per entity, number series, letterheads and licences, HR and pay per entity, people across branches | 3.4, 3.5, 3.9 |
+| C | Countries: currency, tax regime, time zone per branch, base-currency reports | 3.7 |
+| D | Franchises: isolation, shared brand content, supplies as sales, royalties, brand audits, exit | 3.8 |
+
+Stock and transfers (§3.6) are designed here and built in Phase 13, as before. Phase 12M starts once A and B are
+green. By default C and D are finished before Phase 13; decision #15 lets you move them to just before Phase 18 if
+the first hotel is in one country with no franchise — nothing is dropped either way.
+
 **Done when (G1–G45 in §13):** a group with 2 Indian entities (two states), 1 foreign entity and 1 franchise; 2 central
 kitchens; 7 outlets. An area manager over 4 outlets sees only those; the franchise sees only itself. Kitchen 1
 produces a gravy batch and sends it to Outlets 1 and 5 (in transit, received with a shortage); Outlet 2 sends stock to
@@ -217,9 +293,58 @@ and the foreign currency; group reports show all 7 outlets ranked, converted to 
 
 ---
 
+## 3A. Phase 12M — Money core (added 12/11/2026)
+
+Today MONO has no shared way to bill: CRM orders hold their own amounts, purchase orders theirs, and vendors are
+typed text. The plan already needs GST bills (POS), folios (hotel), banquet bills, inter-GSTIN transfer invoices and
+royalty invoices. Building each one separately would give five billing systems. This phase builds **one**, and it is
+the same one a shop, a pharmacy, a builder or a jeweller needs.
+
+- **Parties:** one master for everyone MONO deals with — customer, vendor, guest, company, travel agent, franchise,
+  transporter (a party can be several kinds). CRM customers become parties and keep their ids and history; vendors
+  typed on items and purchase orders are matched into parties by an import screen (nothing is guessed silently).
+- **Tax profiles:** regime-neutral (India GST, VAT, none), rates as **data with a from-date**, entered by the
+  accountant — never hard-coded. HSN / SAC, tax inside or on top of the price, place-of-supply rule (CGST + SGST or
+  IGST), tax by price slab (hotel tariffs, and anything else priced that way). The Phase 14 "Taxes & charges" tab
+  is a view of these.
+- **Bills:** one model for sales invoice, credit note, debit note, receipt, advance, purchase bill, vendor payment
+  and delivery challan — lines, per-line tax, charges (service, packing, freight, making), discounts, round-off.
+  A state machine (draft → issued → part paid → paid; cancelled only by a credit note). An issued bill is never
+  edited. Numbers come from the entity / branch / type / FY series of §3.9.
+- **Receivables and payables:** today's CRM collections (decision 88) generalised to every party, plus the vendor
+  side: what is owed, ageing, due dates, promised dates, statements.
+- **Payment modes and cash books** per branch: cash, UPI, card, bank, credit, with expected vs counted at day close.
+  The Phase 14 "Payment modes" and "Day close rules" tabs are views of these.
+- **Currency:** every amount is minor units + a currency code from day one (§3.7), so stage C needs no rewrite.
+- **Accounts:** MONO keeps the day-to-day books (party balances, cash and bank, tax collected and paid) and makes
+  **vouchers for Tally** through the agent, with a mapping screen (MONO head → Tally ledger). Final accounts,
+  returns and audit stay in Tally with the accountant (decision #17).
+- CRM orders, purchase orders, FMS document steps and the public API all raise bills through this engine.
+  Existing orders and payments are migrated; their numbers do not change.
+
+**Done when (U11–U22):** a tax invoice with two tax rates, a part payment, a credit note for a return and a vendor
+bill with its payment all show correctly in the party's statement, the ageing report and the Tally voucher export;
+a tax rate changed from a date applies only to bills from that date; a pharmacy-style counter bill and a hotel-style
+bill come from the same engine.
+
+---
+
 ## 4. Phase 13 — Inventory v2 (kitchen, bar, stores)
 
 Changes decision 74 (one stock number per item) — a **migration** moves today's stock into the main store location.
+
+**Added 12/11/2026 — so every trade uses the same stock engine.** Each item gets a **tracking mode**, chosen once:
+- *Quantity only* (as today) · *Batch + expiry* (food, liquor, medicines, chemicals) · *Serial / per piece* (each
+  piece has its own number, cost and history: jewellery, machines, phones, slabs) · *Lot with attributes* (size,
+  colour, grade, thickness, purity — attributes set per category, usable in filters and prices).
+- **Second unit** on a move (pieces **and** weight: 1 ring = 4.250 g; 40 bags = 2 000 kg), with either unit as the
+  one that is priced.
+- **Barcodes / QR** per item, batch or piece; label printing through the site agent; scan to receive, issue,
+  count and bill.
+- **Price lists** per party kind, branch and date, and a **rate board** (a rate entered daily that prices items by
+  weight or unit — gold, silver, scrap, vegetables). Hospitality's outlet prices and happy hours use the same lists.
+- Vendors on items and purchase orders are **parties** (Phase 12M); a goods receipt can raise the purchase bill.
+The hospitality items below are unchanged and are built on this.
 
 - **Locations with their own stock:** main store, kitchen(s), bar(s), housekeeping, banquet, minibar — each inside a
   branch (§3.1); `StockBalance (item, location)`; transfers really move quantity.
@@ -246,6 +371,9 @@ Changes decision 74 (one stock number per item) — a **migration** moves today'
 
 **Done when (I1–I30):** a case of whisky received in the store, indented to the bar, sold as 60 ml pegs through a
 recipe, counted at close, shows the right ml balance and variance; an expired batch is blocked from issue.
+**And (U23–U30):** a piece tracked by serial with weight and purity is received, moved between two branches and sold
+at the day's rate; a scanned barcode issues the right batch; a wholesale price list gives a different price to a
+dealer than to a walk-in.
 
 ---
 
@@ -302,6 +430,20 @@ variants and modifiers, and tax profiles are set up from screens alone.
   also keeps an **offline order queue** (orders and KOTs saved on the device, sent when the server answers).
 - **Printing:** the server sends ESC/POS straight to network thermal printers (IP:9100); USB printers through a small
   print agent on a PC (same pattern as the planned Tally agent).
+
+**Added 12/11/2026 — layering and two corrections for several branches:**
+- Bills, payments, discounts, day close and stock consumption are the **counter billing engine** in the core
+  (works with no tables and no kitchen: a shop or pharmacy counter). Tables, covers, courses, KOT, kitchen display
+  and room charge are the hospitality layer on top of it.
+- **Printers at other branches:** the server can reach a printer only on its own network. Every branch that is not
+  where the server sits runs the **site agent** (one small PC or mini-box per branch) which keeps a connection to
+  MONO and prints to that branch's network and USB printers. Scales, scanners and cash drawers use the same agent.
+- **Internet down at a branch:** the line above about LAN tablets is true only at the branch that holds the server.
+  Elsewhere the device's offline queue carries the service: orders, KOTs (printed through the site agent) and bills
+  are made on the device, with bill numbers taken from a **block reserved per device** so numbers never clash, and
+  are sent when the link returns. Stock and reports catch up then. Where the server lives is decision #16.
+- **Backups once money runs through MONO:** nightly is no longer enough. Continuous database archiving (restore to
+  any minute) is switched on before the first live bill, and the restore drill is repeated.
 
 **Done when (P1–P40):** a dinner service of 30 tables from seating to Z report, including a split bill, a room
 charge, a voided KOT with approval, a printer going offline and the server losing internet, passes e2e.
@@ -394,6 +536,10 @@ charge, a voided KOT with approval, a printer going offline and the server losin
   p95 under 300 ms for POS actions.
 - **Offline drill:** pull the internet during a service; pull the server's power (UPS) — written results.
 - Printable guides: steward, cashier, kitchen, bartender, front office, housekeeping, night auditor, store, GM.
+- **Added 12/11/2026 — proof that it is not only a hotel system:** the hospitality pack is exported and installed
+  into an empty company from the Master Library; then **two proof packs** for other industries (decision #18) are
+  set up **from screens only, with no new code** and run through a scripted day each (U37–U42). Anything a proof
+  pack cannot do goes into the core as a fix, not into the pack as a workaround.
 
 ---
 
@@ -404,7 +550,37 @@ Each gets a ready role in Roles with the right permissions and its own phone hom
 
 ---
 
-## 13. Coverage checklist (the 259 workflows that define 100%)
+## 12A. Industry packs (added 12/11/2026)
+
+A **pack** is a file of setup, not code: masters and record types, flows, checklists, document types, registers,
+tax profile shells (rates left for the accountant), price lists, KPI cards, reports, roles, left-menu section,
+notification rules and demo data. It is installed from the **Master Library** (already grouped by industry), can be
+installed into a running company without touching its data, has a version, and can be exported from one company and
+installed in another. Hospitality (this plan) is the first pack.
+
+What each industry gets from the engines of §1.1, and what its pack must still add:
+
+| Industry | Engines it runs on | Its pack adds (setup, not code) |
+|---|---|---|
+| Hotel / bar / restaurant | all of them | this plan |
+| Retail | counter billing, stock with barcodes, price lists, branches | schemes, loyalty tags, shift cash rules |
+| Wholesale / distribution | money core, price lists, receivables, stock, CRM + SCOT | dealer price lists, order-to-dispatch flow |
+| Pharmacy | counter billing, batch + expiry (FEFO), registers, parties | prescription record type, Schedule H register, expiry-return flow |
+| Gold and gems | serial + attributes + second unit, rate board, money core | making and wastage charges, old-gold purchase on the same bill, piece certificates |
+| Manufacturing | recipes / production, batches, stock, FMS, CRM (today's strength) | BOMs, production order flows, quality checks |
+| Mining | branches (mines, plants), production, second unit (weighbridge by site agent), registers | royalty-pass register, dispatch flow, vehicle trips |
+| Logistics | booking (vehicles, drivers), record types (trip, consignment), money core | consignment note, freight bill, trip expense flow |
+| Real estate | booking (plots / flats as resources), running account, record types, CRM funnel | payment schedule by milestone, agreement and registry flows |
+| Construction | branches (sites), recipes as BOQ, stock per site, running account | project and BOQ record types, running-bill flow, subcontractor bills |
+| Services / projects | record types, FMS, money core, booking (people, rooms) | timesheet record type, milestone billing |
+
+Honest limit: a pack makes an industry's **daily work** run. Filings to a government portal that are special to one
+trade (e-way bill, RERA returns, drug-licence returns, hallmarking portals) are added to that pack as an integration
+when a customer needs it, the same way §10 treats OTAs and e-invoice.
+
+---
+
+## 13. Coverage checklist (the 301 rows that define 100%)
 
 Each row becomes a test. Count per area:
 
@@ -419,7 +595,8 @@ Each row becomes a test. Count per area:
 | H Hotel | 50 | rates, tape chart, bookings, groups, check-in, Form C, folio, routing, night audit, housekeeping, minibar, lost & found, OOO |
 | B Banquets, bar, compliance | 20 | enquiry → BEO → indent → bill, excise register, dry days, licences, HACCP logs |
 | X Integrations | 20 | channel manager, booking engine, payment links, aggregator reconciliation, e-invoice, Tally, printers |
-| **Total** | **259** | |
+| U Universal core and packs | 42 | U1–U10 record types, child lines, links, reportable fields, report builder · U11–U22 parties, tax profiles by date, bills, credit notes, receivables, payables, cash books, Tally vouchers · U23–U30 serials, attributes, second unit, barcodes, price lists, rate board · U31–U36 one non-hospitality test per engine (booking, counter billing, running account, price rules, registers, site agent) · U37–U42 pack install, upgrade, export and two proof packs |
+| **Total** | **301** | (259 hospitality + 42 universal) |
 
 The full row list is written into `docs/plans/coverage.md` at the start of Phase 11, reviewed by GGM / the hotel
 team, and frozen before building.
@@ -444,7 +621,15 @@ team, and frozen before building.
 | 12 | Do central kitchens ever send food across borders, or are foreign outlets supplied locally? | 12 |
 | 13 | List of entities (GSTINs / foreign companies), regions, branches and which kitchen feeds which outlet | 12 |
 | 14 | Default approval routing per module (branch manager first or department head first) | 12 |
+| 15 | Is the first hotel in one country with no franchise? If yes, Phase 12 stages C and D may be built just before Phase 18 instead of before Phase 13 (the hotel sees POS and rooms sooner; nothing is dropped) | 12 |
+| 16 | Where the server lives once there are outlets in several cities or countries: the office PC (as today), a server at the main property, or a cloud server. Recommended for several branches: a cloud server, with a site agent at each branch | 12 / 15 |
+| 17 | MONO keeps day-to-day books and sends vouchers to Tally (recommended), or MONO becomes the full accounting book later | 12M |
+| 18 | The two proof packs for Phase 20 (recommended: a pharmacy counter and a jeweller — the two furthest from a hotel) | 20 |
 
 ## 15. Size
 Roughly the size of Phases 5–10 together (Phase 12 alone is about one large phase). Phase 11 is small enough to start now and is useful for GGM even
 without the hospitality modules.
+
+The 12/11/2026 tweak adds about one phase of work (Phase 12M), makes Phases 11 and 13 somewhat larger, and makes
+Phases 15–18 somewhat smaller, because bills, bookings, running accounts and registers are each built once. The next
+industry then costs a pack plus a few purpose-built screens, not another ten phases.
