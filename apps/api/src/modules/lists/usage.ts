@@ -3,9 +3,9 @@ import { listKeyOf } from '@mono/shared';
 
 /** A form field that feeds and offers a list. */
 export type ListUse = {
-  kind: 'flow' | 'master';
+  kind: 'flow' | 'master' | 'recordType';
   id: string;
-  /** The process or master. */
+  /** The process, master or record type. */
   name: string;
   /** The field's label. */
   field: string;
@@ -24,11 +24,11 @@ const fieldsOf = (definition: unknown) => {
 };
 
 /**
- * Which lists the company's forms use, by list key: processes (the draft and the published version) and
- * masters. Record types join in once they exist (package E).
+ * Which lists the company's forms use, by list key: processes (the draft and the published version), masters
+ * and record types (their own fields and their child tables' columns).
  */
 export async function listsInForms(db: Db, companyId: string): Promise<Map<string, ListUse[]>> {
-  const [flows, masters] = await Promise.all([
+  const [flows, masters, types] = await Promise.all([
     db.flow.findMany({
       where: { companyId, deletedAt: null },
       select: { id: true, name: true, draft: true, currentVersionId: true },
@@ -36,6 +36,10 @@ export async function listsInForms(db: Db, companyId: string): Promise<Map<strin
     db.masterDef.findMany({
       where: { companyId, deletedAt: null },
       select: { id: true, name: true, fields: true },
+    }),
+    db.recordType.findMany({
+      where: { companyId, deletedAt: null },
+      select: { id: true, pluralName: true, definition: true },
     }),
   ]);
   const versionIds = flows.flatMap((f) => (f.currentVersionId ? [f.currentVersionId] : []));
@@ -71,5 +75,9 @@ export async function listsInForms(db: Db, companyId: string): Promise<Map<strin
   };
   for (const f of flows) add('flow', f.id, f.name, [...fieldsOf(published.get(f.id)), ...fieldsOf(f.draft)]);
   for (const m of masters) add('master', m.id, m.name, arr(m.fields));
+  for (const t of types) {
+    const d = (t.definition ?? {}) as { fields?: unknown; tables?: unknown };
+    add('recordType', t.id, t.pluralName, [...arr(d.fields), ...arr(d.tables).flatMap((x) => arr(x.fields))]);
+  }
   return out;
 }

@@ -12,6 +12,7 @@
     "src": {
       "fms": "Values typed in another process",
       "rec": "A record of another process",
+      "rt": "{{name}} (records)",
       "process": "Process",
       "pickProcess": "Choose the process",
       "field": "Field",

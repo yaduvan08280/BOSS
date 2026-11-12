@@ -1,5 +1,5 @@
 import type { Db } from '@mono/db';
-import { fieldSchema, flowDefinitionSchema, type FlowField } from '@mono/shared';
+import { fieldSchema, flowDefinitionSchema, recordDefinitionSchema, type FlowField } from '@mono/shared';
 import { z } from 'zod';
 import { AppError } from '../../lib/errors';
 import type { FormOwner } from '../forms';
@@ -48,10 +48,22 @@ const inMaster: FieldFinder = async (db, companyId, at) => {
     : null;
 };
 
-/** Where a form's fields are read from, by owner kind (record types add theirs). */
+/** A record type's field: one of its own, else a column of one of its child tables. */
+const inRecordType: FieldFinder = async (db, companyId, at) => {
+  const t = await db.recordType.findFirst({
+    where: { id: at.owner.id, companyId, deletedAt: null },
+    select: { definition: true },
+  });
+  if (!t) return null;
+  const def = recordDefinitionSchema.parse(t.definition);
+  return [...def.fields, ...def.tables.flatMap((x) => x.fields)].find((f) => f.key === at.field) ?? null;
+};
+
+/** Where a form's fields are read from, by owner kind. */
 export const FIELD_FINDERS: Partial<Record<FormOwner['kind'], FieldFinder>> = {
   flow: inFlow,
   master: inMaster,
+  recordType: inRecordType,
 };
 
 /**

@@ -2,6 +2,7 @@ import type { Db } from '@mono/db';
 import { parseRef, type PermissionKey, type RefKind } from '@mono/shared';
 import { can, type Actor } from '../work/actor';
 import { companyTz, recordLabel } from './sources/rec';
+import { mayReadRecordType } from './sources/record-type';
 
 /** What a link points at today: its current name, and where to open it (null when the person has no screen for it). */
 export type ResolvedLink = { label: string; to: string | null };
@@ -15,7 +16,7 @@ const where = (actor: Actor, ids: string[]) => ({
 const q = (text: string) => encodeURIComponent(text);
 const to = (actor: Actor, need: PermissionKey, path: string) => (can(actor, need) ? path : null);
 
-/** By kind of link (`customer:<id>`, `row:<id>`, `rec:<id>` …). Record types add `rt`. */
+/** By kind of link (`customer:<id>`, `row:<id>`, `rec:<id>`, `rt:<id>` …). */
 export const LINK_RESOLVERS: Partial<Record<RefKind, Resolver>> = {
   customer: async (db, actor, ids) =>
     new Map(
@@ -54,6 +55,33 @@ export const LINK_RESOLVERS: Partial<Record<RefKind, Resolver>> = {
     });
     const tz = rows.length ? await companyTz(db, actor.companyId) : '';
     return new Map(rows.map((r) => [r.id, { label: recordLabel(r, tz), to: `/fms/live?record=${r.id}` }]));
+  },
+  rt: async (db, actor, ids) => {
+    // A custom record is only named to people who may see records of its type.
+    const rows = await db.recordEntry.findMany({
+      where: where(actor, ids),
+      select: { id: true, code: true, title: true, typeId: true },
+    });
+    const seen = new Map<string, boolean>();
+    for (const typeId of new Set(rows.map((r) => r.typeId)))
+      seen.set(
+        typeId,
+        await mayReadRecordType(db, actor, typeId).then(
+          () => true,
+          () => false,
+        ),
+      );
+    return new Map(
+      rows
+        .filter((r) => seen.get(r.typeId))
+        .map((r) => [
+          r.id,
+          {
+            label: r.title && r.title !== r.code ? `${r.code} · ${r.title}` : r.code,
+            to: `/records/${r.typeId}?record=${r.id}`,
+          },
+        ]),
+    );
   },
 };
 

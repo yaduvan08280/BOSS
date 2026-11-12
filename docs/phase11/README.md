@@ -61,3 +61,21 @@ Shared files several packages must touch (`app.ts` route registration, `router.t
 - One Prisma migration per package, named after it. Add new models to `packages/db/src/scope.ts`.
 - Do not edit `CLAUDE.md` or `docs/CHANGELOG.md`: write `docs/phase11/<package>.md` with what was built, the
   decisions taken and anything left open. They are merged into the main docs at the end.
+
+## After the merge (12/11/2026)
+
+The five packages are merged into the main branch. What was joined by hand when they met:
+
+- **Record types as a source of choices** (`rt:<typeId>`): the handler checks picked links (`ids`) and is
+  company-scoped only; "may this person browse it" is asked by `masterOptions` / `sourceColumns`
+  (`mayReadRecordType`), so a saved form verifies its links whoever fills it in. `recordType` is in `FIELD_FINDERS`
+  (a record form's own picker, child-table columns included), `rt` in `LINK_RESOLVERS` (named only to people who may
+  see the type; opens `/records/<typeId>?record=<id>`) and in `SOURCE_COLUMNS`; the editor's source picker lists
+  record types.
+- **A link that holds makes the text the row's current name** — also for records of a record type
+  ("SITE/26-27/0001 · Tonk mine"), in fields and in child lines.
+- **Lists**: Masters → Lists shows record types under "used in"; `list.*` events are listed for webhooks.
+- `fms/engine.ts` is split (`engine-helpers.ts`) and back under 400 lines.
+
+Second wave (not built): L18, U7 (the rest), U8, U9, U10, Playwright e2e for the new screens, CHANGELOG and the
+CLAUDE.md status table and decisions.

@@ -106,6 +106,26 @@ describe('record links and child lines', () => {
       visit_on: '2026-11-20',
       _refs: { site: `rt:${tonk.id}`, customer: `customer:${customer.id}` },
     });
+    // The form's own picker (owner + field) offers the same records; the link's name and screen are resolved
+    // for people who may see the type, and its columns are there for auto-fill.
+    const offered = await w.api.get(`/api/masters/options?owner=recordType:${visitType}&field=site&q=tonk`);
+    expect(offered.body.map((o: { ref: string }) => o.ref)).toEqual([`rt:${tonk.id}`]);
+    const names = await w.api.post('/api/masters/links', { refs: [`rt:${tonk.id}`] });
+    expect(names.body[`rt:${tonk.id}`]).toEqual({
+      label: `SITE/${FY}/0001 · Tonk mine`,
+      to: `/records/${siteType}?record=${tonk.id}`,
+    });
+    expect((await gopal.api.post('/api/masters/links', { refs: [`rt:${tonk.id}`] })).body).toEqual({});
+    const columns = await w.api.get(`/api/masters/columns?source=rt:${siteType}`);
+    expect(columns.body.map((c: { key: string }) => c.key)).toEqual([
+      'code',
+      'title',
+      'status',
+      'name',
+      'city',
+    ]);
+    expect((await gopal.api.get(`/api/masters/columns?source=rt:${siteType}`)).status).toBe(403);
+
     // The event carries the readable values (no _refs inside `data`).
     const event = await ctx.prisma.domainEvent.findFirst({
       where: { companyId: w.companyId, entityId: visit.id, name: 'record.created' },
@@ -146,8 +166,18 @@ describe('record links and child lines', () => {
     const read = async () => (await w.api.get(`/api/records/entries/${visit.id}`)).body.record;
     expect((await read()).lines).toEqual({
       findings: [
-        { what: 'Crack in wall', qty: 2, other_site: niwai.code, _refs: { other_site: `rt:${niwai.id}` } },
-        { what: 'Loose wiring', other_site: tonk.code, _refs: { other_site: `rt:${tonk.id}` } },
+        // A link that holds makes the text the record's current name (number · title).
+        {
+          what: 'Crack in wall',
+          qty: 2,
+          other_site: `${niwai.code} · Niwai factory`,
+          _refs: { other_site: `rt:${niwai.id}` },
+        },
+        {
+          what: 'Loose wiring',
+          other_site: `${tonk.code} · Tonk mine`,
+          _refs: { other_site: `rt:${tonk.id}` },
+        },
       ],
     });
     // Changing the fields alone keeps the lines; sending a table replaces it; an empty table empties it.

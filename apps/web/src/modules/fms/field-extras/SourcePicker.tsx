@@ -3,6 +3,7 @@ import { parseSource, type FlowField } from '@mono/shared';
 import { Select } from '@/components/ui/form';
 import { useMasters } from '@/modules/ai/api';
 import { useSourceColumns } from '@/modules/masters/api';
+import { useRecordTypes } from '@/modules/records/api';
 import { useFlows } from '../api';
 
 const BUILT_IN = ['customers', 'items', 'vendors', 'people'] as const;
@@ -24,6 +25,7 @@ export function SourcePicker({
   const { t } = useTranslation();
   const masters = useMasters();
   const flows = useFlows();
+  const recordTypes = useRecordTypes();
   const source = field.master ?? 'customers';
   const parsed = parseSource(source);
   // `fms` / `rec` with nothing chosen yet are kept as "fms:" / "rec:" until a process is picked.
@@ -54,7 +56,13 @@ export function SourcePicker({
         ))}
         <option value="fms">{t('links.src.fms')}</option>
         <option value="rec">{t('links.src.rec')}</option>
-        {/* Record types (`rt:<id>`) are listed here by their own package. */}
+        {(recordTypes.data?.types ?? [])
+          .filter((r) => r.status === 'ACTIVE' || source === `rt:${r.id}`)
+          .map((r) => (
+            <option key={r.id} value={`rt:${r.id}`}>
+              {t('links.src.rt', { name: r.pluralName })}
+            </option>
+          ))}
       </Select>
       {(kind === 'fms' || kind === 'rec') && (
         <Select

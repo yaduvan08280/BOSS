@@ -45,7 +45,10 @@ export function ValuesPanel({ list, tz, onBack }: { list: ListInfo; tz: string; 
               {list.usedIn.map((u, i) => (
                 <span key={`${u.kind}${u.id}${u.field}`}>
                   {i > 0 && '; '}
-                  {t(u.kind === 'flow' ? 'lists.p.process' : 'lists.p.master')} {u.name} · {u.field}
+                  {t(
+                    `lists.p.${u.kind === 'flow' ? 'process' : u.kind === 'master' ? 'master' : 'records'}`,
+                  )}{' '}
+                  {u.name} · {u.field}
                 </span>
               ))}
             </>

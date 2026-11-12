@@ -4,7 +4,7 @@ import { useWorkMutation } from '@/lib/work';
 import { listTitle, type Offer } from './offer';
 
 /** A form field that feeds and offers a list. */
-export type ListUse = { kind: 'flow' | 'master'; id: string; name: string; field: string; closed: boolean };
+export type ListUse = { kind: 'flow' | 'master' | 'recordType'; id: string; name: string; field: string; closed: boolean };
 export type ListInfo = {
   key: string;
   /** A named list several forms share (`list:<name>`), not one field's own. */

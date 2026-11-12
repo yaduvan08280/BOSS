@@ -6,7 +6,7 @@ import type { MasterOption, OptionQuery, SourceHandler } from './sources';
 import { fmsValueSource } from './sources/fms';
 import { listSource } from './sources/list';
 import { recordSource } from './sources/rec';
-import { recordTypeSource } from './sources/record-type';
+import { mayReadRecordType, recordTypeSource } from './sources/record-type';
 
 export type { MasterOption, OptionQuery } from './sources';
 
@@ -215,9 +215,11 @@ export async function masterOptions(
   limit = 50,
   extra: Pick<OptionQuery, 'filter' | 'rec'> = {},
 ): Promise<MasterOption[]> {
-  const need = NEEDS[prefixOf(source).prefix];
+  const { prefix, arg } = prefixOf(source);
+  const need = NEEDS[prefix];
   if (need && !can(actor, need))
     throw new AppError(403, 'FORBIDDEN', 'You do not have access to the processes this list reads');
+  if (prefix === 'rt') await mayReadRecordType(db, actor, arg);
   return sourceRows(db, actor, source, { q, limit: Math.min(200, Math.max(1, limit)), ...extra });
 }
 

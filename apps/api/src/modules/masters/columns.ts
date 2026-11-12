@@ -1,10 +1,17 @@
 import type { Db } from '@mono/db';
-import { fieldSchema, flowDefinitionSchema, type FlowField, type PermissionKey } from '@mono/shared';
+import {
+  fieldSchema,
+  flowDefinitionSchema,
+  recordDefinitionSchema,
+  type FlowField,
+  type PermissionKey,
+} from '@mono/shared';
 import { z } from 'zod';
 import { AppError } from '../../lib/errors';
 import { can, type Actor } from '../work/actor';
 import { vendorsMaster } from './options';
 import type { SourceColumn } from './sources';
+import { mayReadRecordType } from './sources/record-type';
 
 type ColumnLister = (db: Db, actor: Actor, arg: string) => Promise<SourceColumn[]>;
 
@@ -51,6 +58,22 @@ const recordColumns: ColumnLister = async (db, actor, flowId) => {
   ];
 };
 
+/** A custom record's columns: its number, title and status, then the type's own fields. */
+const recordTypeColumns: ColumnLister = async (db, actor, typeId) => {
+  const t = await db.recordType.findFirst({
+    where: { id: typeId, companyId: actor.companyId, deletedAt: null },
+    select: { definition: true },
+  });
+  if (!t) return [];
+  const seen = new Set(['code', 'title', 'status']);
+  return [
+    { key: 'code', label: 'Number' },
+    { key: 'title', label: 'Title' },
+    { key: 'status', label: 'Status' },
+    ...ofFields(recordDefinitionSchema.parse(t.definition).fields).filter((c) => !seen.has(c.key)),
+  ];
+};
+
 /** By source prefix, like the choices themselves (`options.ts`). A source without an entry has no columns. */
 export const SOURCE_COLUMNS: Record<string, ColumnLister> = {
   customers: fixed(
@@ -83,6 +106,7 @@ export const SOURCE_COLUMNS: Record<string, ColumnLister> = {
   },
   m: masterColumns,
   rec: recordColumns,
+  rt: recordTypeColumns,
 };
 
 const NEEDS: Record<string, PermissionKey> = { rec: 'fms.view', fms: 'fms.view' };
@@ -94,5 +118,7 @@ export async function sourceColumns(db: Db, actor: Actor, source: string): Promi
   const need = NEEDS[prefix];
   if (need && !can(actor, need))
     throw new AppError(403, 'FORBIDDEN', 'You do not have access to the processes this list reads');
-  return (await SOURCE_COLUMNS[prefix]?.(db, actor, i < 0 ? '' : source.slice(i + 1))) ?? [];
+  const arg = i < 0 ? '' : source.slice(i + 1);
+  if (prefix === 'rt') await mayReadRecordType(db, actor, arg);
+  return (await SOURCE_COLUMNS[prefix]?.(db, actor, arg)) ?? [];
 }
