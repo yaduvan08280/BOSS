@@ -59,7 +59,7 @@ Written 12/11/2026 from plan §3 and the answers to decisions 9–14. Stages: A 
 | G2 | A | A branch has one or more branch managers; a region has area managers; one person may manage any set of branches | §3.2 | `apps/api/src/modules/branches/branches.test.ts` |
 | G3 | A | A role has a reach (own records / my branches / my entity / whole group); a person's branches = home + managed + worked at | §3.3 | `apps/api/src/modules/branches/branches.test.ts`, `packages/db/src/reach.test.ts` |
 | G4 | A | Reach is enforced in the database layer for every branch-bearing model; a test fails when such a model is missing from the list | §3.3 | `packages/db/src/reach.test.ts` |
-| G5 | A | An area manager over 4 outlets sees only those in lists, counts, search, exports and Ask | §3.3 | part: tasks (`apps/api/src/modules/branches/branches.test.ts`); process records, record lists and counts, opening by id, reports (`apps/api/src/modules/branches/branches-work.test.ts`). Still to do: search, Ask, the remaining module lists and exports |
+| G5 | A | An area manager over 4 outlets sees only those in lists, counts, search, exports and Ask | §3.3 | tasks (`apps/api/src/modules/branches/branches.test.ts`); process records, record lists and counts, opening by id, reports, Ask (`apps/api/src/modules/branches/branches-work.test.ts`). Search finds people and departments only (not branch-bound). Still to check one by one: the remaining module lists and exports (they read through the same fenced client) |
 | G6 | A | An API key and a webhook carry their maker's reach | §3.3 | `apps/api/src/modules/branches/branches-work.test.ts` (a scheduled report also runs with its maker's reach — code only, no test yet) |
 | G7 | A | Branch switcher in the top bar ("All my branches" or one) for people with more than one branch | §3.3 | |
 | G8 | A | A branch manager adds and manages only their branch's people; group settings stay with owner / group admins | §3.3 | |
@@ -67,7 +67,7 @@ Written 12/11/2026 from plan §3 and the answers to decisions 9–14. Stages: A 
 | G10 | A | Leave, corrections, stock adjustments, slips and ticket escalation follow the configured chain | §3.2 | |
 | G11 | A | New notification recipients: branch manager, area manager, branch HR, department head at this branch | §3.2 | |
 | G12 | A | The head of a department can be set per branch or group-wide | §3.2 | |
-| G13 | A | Every task, checklist run, slip, ticket, process record, document, PO and CRM order carries a branch (the starter's, or a field) | §3.10 | part: process record, document, ticket, slip, record, imported record (`apps/api/src/modules/branches/branches-work.test.ts`); task (`branches.test.ts`). Still to test: checklist run, PO, CRM order; "or a field" not built yet |
+| G13 | A | Every task, checklist run, slip, ticket, process record, document, PO and CRM order carries a branch (the starter's, or a field) | §3.10 | `apps/api/src/modules/branches/branches-work.test.ts` (process record, document, ticket, slip, record, imported record, checklist run, PO, CRM order); task (`branches.test.ts`). "Or a field" on a start form is not built yet |
 | G14 | A | Process step doers are picked inside the record's branch first, then the fallback (region, group) — never silently someone at another outlet | §3.10 | |
 | G15 | A | One checklist template makes a run per branch, done by that branch's people at that branch's due time | §3.10 | |
 | G16 | A | Flow designer people (EA, slip receiver / approver, ticket coordinator) can be set per branch | §3.10 | |

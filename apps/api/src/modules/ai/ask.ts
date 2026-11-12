@@ -1,4 +1,4 @@
-import { Prisma, type Db } from '@mono/db';
+import { currentReach, Prisma, type Db } from '@mono/db';
 import {
   addDays,
   ASK_VIEWS,
@@ -121,6 +121,18 @@ export function planSql(plan: AskPlan, companyId: string, tz: string, onlyPerson
   const view = ASK_VIEWS[plan.view] as AskView;
   const where: Prisma.Sql[] = [Prisma.sql`company_id = ${companyId}`];
   if (onlyPersonId && plan.view !== 'people') where.push(Prisma.sql`person_id = ${onlyPersonId}`);
+  // Inside the asker's branches (phase 12): group-wide rows, their branches' rows, and their own work.
+  const reach = currentReach();
+  if (reach?.branchIds && plan.view !== 'people') {
+    const inBranches = reach.branchIds.length
+      ? Prisma.sql`branch_id IN (${Prisma.join(reach.branchIds)})`
+      : Prisma.sql`FALSE`;
+    where.push(
+      reach.strict
+        ? Prisma.sql`(branch_id IS NULL OR ${inBranches})`
+        : Prisma.sql`(branch_id IS NULL OR ${inBranches} OR person_id = ${reach.userId})`,
+    );
+  }
   for (const f of plan.filters)
     where.push(condition(f.column, view.columns[f.column]!.type, f.op, f.value, tz));
   const from = Prisma.raw(`ai_v_${plan.view}`);

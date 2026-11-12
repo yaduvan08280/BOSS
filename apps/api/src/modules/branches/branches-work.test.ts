@@ -1,9 +1,13 @@
+import { withReachOf } from '@mono/db';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { makeApp } from '../../test/helpers';
+import { sweepChecklists } from '../checklist/jobs';
 import { publish, start, task } from '../forms/test-kit';
 import { queueWebhooks } from '../platform/webhooks';
 import { makeRecord, makeType, siteVisit, world } from '../records/testkit';
-import { group, ok, reachOf, type World } from './testkit';
+import { planSql } from '../ai/ask';
+import { reachOfUser } from './reach';
+import { give, group, ok, reachOf, type World } from './testkit';
 
 let ctx: Awaited<ReturnType<typeof makeApp>>;
 beforeAll(async () => {
@@ -85,6 +89,67 @@ describe('work carries its branch, and reach holds everywhere (phase 12, stage A
       where: { typeId, title: { startsWith: 'Lake' } },
     });
     expect(imported.map((r) => r.branchId)).toEqual([g.b.lake.id, g.b.lake.id]);
+    // A checklist run: the branch of the person whose run it is.
+    const cook = await g.at('Cook Rooftop', g.b.rooftop.id);
+    await ok(
+      w.api.post('/api/checklists/masters', {
+        name: 'Opening round',
+        items: [{ key: 'a', text: 'Gas valves checked' }],
+        frequency: { type: 'daily' },
+        dueTime: '10:00',
+        windowHours: 4,
+        doerIds: [cook.id],
+        startDate: '2030-01-01',
+      }),
+    );
+    await sweepChecklists(ctx.prisma, new Date('2030-01-07T03:00:00Z'));
+    const run = await ctx.prisma.checklistRun.findFirstOrThrow({
+      where: { companyId: w.companyId, doerId: cook.id },
+    });
+    expect(run.branchId).toBe(g.b.rooftop.id);
+
+    // A purchase order and a sales order: the maker's branch.
+    const item = await ok<{ id: string }>(
+      w.api.post('/api/ims/items', { code: 'OIL-1', name: 'Cooking oil', unit: 'L' }),
+    );
+    const po = await ok<{ id: string }>(
+      lake.api.post('/api/ims/po', {
+        vendor: 'Ajmer Traders',
+        lines: [{ itemId: item.id, qty: 10, rate: '12000' }],
+      }),
+    );
+    expect(await branchOf('purchase_orders', po.id)).toBe(g.b.lake.id);
+    const customer = await ok<{ id: string }>(
+      w.api.post('/api/crm/customers', { name: 'Delta Homes', creditDays: 15 }),
+    );
+    await ok(
+      w.api.put('/api/crm/setup', {
+        page: 'seats',
+        patch: { seats: { owner: [w.owner.id], crm: [w.owner.id] } },
+      }),
+    );
+    await ok(
+      w.api.put('/api/crm/setup', {
+        page: 'afterOrder',
+        patch: {
+          afterOrder: [
+            {
+              key: 'confirm',
+              name: 'Confirm order',
+              seat: 'crm',
+              time: { value: 2, unit: 'hours', anchor: 'start' },
+              documents: [],
+              proof: false,
+            },
+          ],
+        },
+      }),
+    );
+    const order = await ok<{ id: string }>(
+      rooftop.api.post('/api/crm/orders', { customerId: customer.id, amount: 5_000_00 }),
+    );
+    expect(await branchOf('sales_orders', order.id)).toBe(g.b.rooftop.id);
+
     // The owner has no home branch: what they make belongs to the whole group.
     const hq = await makeRecord(w.api, typeId, { site: 'Head office' });
     expect(await branchOf('records', hq.id)).toBeNull();
@@ -163,6 +228,41 @@ describe('work carries its branch, and reach holds everywhere (phase 12, stage A
     expect(await guests(rooftop.api)).toEqual(['Rooftop guest']);
     expect(await guests(lake.api)).toEqual(['Lake guest one', 'Lake guest two']);
     void g;
+  });
+
+  it("G5: Ask answers from inside the asker's branches", async () => {
+    const w = await world(ctx.app);
+    const { g, rooftop, lake } = await twoOutlets(w);
+    const cook = await g.at('Cook Rooftop', g.b.rooftop.id);
+    const steward = await g.at('Steward Lake', g.b.lake.id);
+    await give(w, cook.id, 'Clean the rooftop grill');
+    await give(w, steward.id, 'Polish the lake cutlery');
+    await give(w, w.owner.id, 'Sign the lease');
+    const plan = {
+      view: 'tasks',
+      columns: ['task'],
+      filters: [],
+      groupBy: null,
+      aggregate: null,
+      orderBy: null,
+      limit: 50,
+    } as unknown as Parameters<typeof planSql>[0];
+    const asked = async (userId: string | null) => {
+      const reach = userId ? await reachOfUser(ctx.prisma, w.companyId, userId) : null;
+      return withReachOf(reach, async () =>
+        (await ctx.prisma.$queryRaw<{ task: string }[]>(planSql(plan, w.companyId, 'Asia/Kolkata', null).sql))
+          .map((r) => r.task)
+          .sort(),
+      );
+    };
+    // The owner's own task has no branch (group-wide), so everyone's answer may include it.
+    expect(await asked(null)).toEqual([
+      'Clean the rooftop grill',
+      'Polish the lake cutlery',
+      'Sign the lease',
+    ]);
+    expect(await asked(rooftop.id)).toEqual(['Clean the rooftop grill', 'Sign the lease']);
+    expect(await asked(lake.id)).toEqual(['Polish the lake cutlery', 'Sign the lease']);
   });
 
   it('G6: an API key and a webhook see as far as the person who made them', async () => {
