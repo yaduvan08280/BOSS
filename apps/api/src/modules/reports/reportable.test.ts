@@ -171,9 +171,9 @@ describe('reportable fields keep a typed, indexed copy (plan §2.7)', () => {
     expect((await copies(fresh.id)).map((c) => [c.field, c.number])).toEqual([['cost', 800]]);
 
     // The worker: two records a batch, one batch a run → it stops part-way and goes on next time.
-    await runBackfills(ctx.prisma, { batch: 2, batches: 1 });
+    await runBackfills(ctx.prisma, { batch: 2, batches: 1, companyId: w.companyId });
     expect((await state())[0]).toMatchObject({ field: 'cost', status: 'PENDING', copied: 2 });
-    await runBackfills(ctx.prisma, { batch: 2, batches: 50 });
+    await runBackfills(ctx.prisma, { batch: 2, batches: 50, companyId: w.companyId });
     expect(await state()).toEqual([
       { field: 'cost', status: 'DONE', copied: 7, total: 7 },
       { field: 'kind', status: 'DONE', copied: 7, total: 7 },
@@ -186,7 +186,7 @@ describe('reportable fields keep a typed, indexed copy (plan §2.7)', () => {
     expect(await ctx.prisma.reportValue.count({ where: { ...where, field: 'kind' } })).toBe(0);
     expect(await copies(gone.id)).toEqual([]);
     // Running again changes nothing.
-    await runBackfills(ctx.prisma, { batch: 2, batches: 50 });
+    await runBackfills(ctx.prisma, { batch: 2, batches: 50, companyId: w.companyId });
     expect(await ctx.prisma.reportValue.count({ where })).toBe(7);
 
     // Unmarking a field removes its copies and its place in the list; another company sees nothing of it.
@@ -223,7 +223,7 @@ describe('reportable fields keep a typed, indexed copy (plan §2.7)', () => {
         ]),
       ],
     });
-    await runBackfills(ctx.prisma);
+    await runBackfills(ctx.prisma, { companyId: t.company.id });
     expect((await copies(one.id)).map((c) => [c.field, c.text])).toEqual([
       ['amount', '₹45,000'],
       ['grade', 'A'],

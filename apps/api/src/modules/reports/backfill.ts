@@ -57,7 +57,7 @@ export async function syncReportable(tx: Tx, companyId: string, owner: Owner, fi
 export async function backfillState(db: Db, companyId: string, owner: FormOwner) {
   const rows = await db.reportBackfill.findMany({
     where: { companyId, ownerKind: owner.kind, ownerId: owner.id },
-    orderBy: { createdAt: 'asc' },
+    orderBy: [{ createdAt: 'asc' }, { field: 'asc' }],
   });
   return rows.map((b) => ({ field: b.field, status: b.status, copied: b.copied, total: b.total }));
 }
@@ -117,13 +117,16 @@ async function batchAfter(db: Db, owner: Owner, cursor: string | null, take: num
  * reportable, a batch at a time. It can be stopped and run again at any point — the cursor says where it was,
  * and writing a copy twice changes nothing. Records saved meanwhile get their copies from the form pipeline.
  */
-export async function runBackfills(db: Db, opts: { batch?: number; batches?: number } = {}) {
+export async function runBackfills(
+  db: Db,
+  opts: { batch?: number; batches?: number; /** Only this company's (tests). */ companyId?: string } = {},
+) {
   const batch = opts.batch ?? 500;
   let left = opts.batches ?? 20;
   let copied = 0;
   const pending = await db.reportBackfill.findMany({
-    where: { status: 'PENDING' },
-    orderBy: { createdAt: 'asc' },
+    where: { status: 'PENDING', ...(opts.companyId ? { companyId: opts.companyId } : {}) },
+    orderBy: [{ createdAt: 'asc' }, { field: 'asc' }],
     take: 20,
   });
   for (const job of pending) {

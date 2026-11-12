@@ -562,7 +562,9 @@
       "notify": "सूचनाएँ",
       "ai": "AI",
       "integrations": "इंटीग्रेशन",
-      "search": "खोज"
+      "search": "खोज",
+      "records": "रिकॉर्ड",
+      "reports": "रिपोर्ट"
     },
     "chart": {
       "search": "व्यक्ति या पद खोजें",

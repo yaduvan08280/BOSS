@@ -562,7 +562,9 @@
       "notify": "Notifications",
       "ai": "AI",
       "integrations": "Integrations",
-      "search": "Search"
+      "search": "Search",
+      "records": "Records",
+      "reports": "Reports"
     },
     "chart": {
       "search": "Search person or designation",

@@ -1,7 +1,8 @@
-import { formatNumber, nextCounter, type Db } from '@mono/db';
+import { formatNumber, nextCounter, type Db, type Tx } from '@mono/db';
 import {
   BUILT_IN_ROLES,
   DEFAULT_ROLE_PERMISSIONS,
+  LATER_MODULES,
   DEFAULT_THEME,
   hhmmToMinutes,
   normalizeMobile,
@@ -40,6 +41,27 @@ export function slugify(name: string): string {
 }
 
 /**
+ * Built-in roles of a company made before a module existed get that module's default rights — only where the
+ * role holds nothing of the module yet, so what an admin set in the Roles matrix is never touched.
+ */
+export async function ensureRoleDefaults(tx: Tx, companyId: string) {
+  const roles = await tx.role.findMany({ where: { companyId, deletedAt: null, key: { not: null } } });
+  let changed = 0;
+  for (const role of roles) {
+    const have = role.permissions;
+    if (have.includes('*')) continue;
+    const defaults = DEFAULT_ROLE_PERMISSIONS[role.key as keyof typeof DEFAULT_ROLE_PERMISSIONS] ?? [];
+    const add = LATER_MODULES.flatMap((m) =>
+      have.some((p) => p.startsWith(`${m}.`)) ? [] : defaults.filter((p) => p.startsWith(`${m}.`)),
+    );
+    if (!add.length) continue;
+    await tx.role.update({ where: { id: role.id }, data: { permissions: [...have, ...add] } });
+    changed++;
+  }
+  return changed;
+}
+
+/**
  * Create a company with its built-in roles, a default shift and its owner (login enabled).
  * Idempotent by slug: if the company exists, returns it untouched.
  * The owner password must pass `passwordRule` (8+ characters, a letter and a number).
@@ -49,7 +71,10 @@ export async function bootstrapCompany(db: Db, input: BootstrapInput) {
   const existing = await db.company.findUnique({ where: { slug } });
   if (existing) {
     // Companies created before a phase get that phase's defaults (adds only what's missing).
-    await db.$transaction((tx) => ensureNotifyDefaults(tx, existing.id));
+    await db.$transaction(async (tx) => {
+      await ensureNotifyDefaults(tx, existing.id);
+      await ensureRoleDefaults(tx, existing.id);
+    });
     const owner = await db.user.findFirst({ where: { companyId: existing.id, role: { key: 'OWNER' } } });
     return { company: existing, owner, created: false };
   }
