@@ -43,9 +43,13 @@ const statusLabel = (def: RecordDefinition, key: string) =>
 const isFinal = (def: RecordDefinition, key: string) =>
   Boolean(def.statuses.find((s) => s.key === key)?.final);
 
-const eventPayload = (
+/**
+ * What every record event carries: for webhooks (the readable values), and for notification rules — `record`
+ * ("SV/26-27/0004 · Sharma farm"), `creatorId` (the "creator" recipient) and `link` (opens the record).
+ */
+export const eventPayload = (
   t: LoadedType,
-  rec: { id: string; code: string; title: string; status: string },
+  rec: { id: string; code: string; title: string; status: string; createdById: string | null },
   data: unknown,
 ) => ({
   typeId: t.id,
@@ -54,8 +58,11 @@ const eventPayload = (
   recordId: rec.id,
   code: rec.code,
   title: rec.title,
+  record: rec.title && rec.title !== rec.code ? `${rec.code} · ${rec.title}` : rec.code,
   status: rec.status,
   statusLabel: statusLabel(t.def, rec.status),
+  creatorId: rec.createdById,
+  link: `/records/${t.id}?record=${rec.id}`,
   data: plainValues(data),
 });
 

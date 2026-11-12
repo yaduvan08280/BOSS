@@ -707,6 +707,9 @@
       "crm_order_step_due": "Order step due",
       "crm_payment_due": "Payment reminder to customer",
       "crm_customer_sleeping": "Customer gone quiet",
+      "record_created": "Record added",
+      "record_status_changed": "Record status changed",
+      "record_note": "Note on a record",
       "slip_late": "Help slip waiting too long",
       "slip_closed": "Help slip closed",
       "mis_weekly": "Weekly MIS",
@@ -757,7 +760,8 @@
       "hr": "HRMS",
       "ims": "Inventory",
       "crm": "Client/Vendor",
-      "ai": "AI"
+      "ai": "AI",
+      "record": "Records"
     },
     "tab": {
       "whatsapp": "WhatsApp API",

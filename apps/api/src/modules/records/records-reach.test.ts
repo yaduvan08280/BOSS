@@ -1,7 +1,9 @@
+import { createHmac } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { makeApp } from '../../test/helpers';
 import { publish, task } from '../forms/test-kit';
-import { makeRecord, makeType, siteVisit, world } from './testkit';
+import { queueWebhooks, sendWebhooks } from '../platform/webhooks';
+import { FY, makeRecord, makeType, siteVisit, world } from './testkit';
 
 let ctx: Awaited<ReturnType<typeof makeApp>>;
 beforeAll(async () => {
@@ -162,5 +164,125 @@ describe('record types reach the rest of MONO', () => {
     expect(await message(save({ place: 'title' }, theirs))).toContain('does not exist any more');
     const draft = (await w.api.post('/api/fms/flows', { meta: { name: 'Draft only', runName: 'Run' } })).body;
     expect(await message(save({ place: 'title' }, draft.id))).toContain('"Draft only" is not published yet');
+  });
+
+  it("U7: the public API lists types, adds, reads, changes and moves records — as the key's maker", async () => {
+    const w = await world(ctx.app);
+    const typeId = await makeType(w.api);
+    const key = (await w.api.post('/api/platform/keys', { name: 'Site app' })).body.key as string;
+    const v1 = (k: string, method: 'GET' | 'POST' | 'PATCH', url: string, payload?: object) =>
+      ctx.app.inject({
+        method,
+        url,
+        headers: { authorization: `Bearer ${k}` },
+        ...(payload ? { payload } : {}),
+      });
+
+    const types = (await v1(key, 'GET', '/api/v1/record-types')).json();
+    expect(types).toEqual([
+      expect.objectContaining({
+        id: typeId,
+        code: 'site_visit',
+        name: 'Site visit',
+        prefix: 'SV',
+        start: 'planned',
+      }),
+    ]);
+    expect(types[0].moves[0]).toEqual({
+      from: 'planned',
+      action: 'visit',
+      label: 'Mark visited',
+      to: 'visited',
+    });
+
+    // By the type's short code; a bad value is refused by the same checks as the screen.
+    const bad = await v1(key, 'POST', '/api/v1/record-types/site_visit/records', { data: { cost: 'lots' } });
+    expect(bad.statusCode).toBe(400);
+    const made = await v1(key, 'POST', '/api/v1/record-types/site_visit/records', {
+      data: { site: 'Tonk mine', cost: 1200, visit_on: '2026-11-20' },
+    });
+    expect(made.statusCode).toBe(200);
+    const id = made.json().id as string;
+    expect(made.json().code).toBe(`SV/${FY}/0001`);
+
+    const changed = await v1(key, 'PATCH', `/api/v1/entries/${id}`, {
+      data: { site: 'Tonk mine', cost: 1500 },
+    });
+    expect(changed.json().changed).toEqual(expect.arrayContaining(['Cost']));
+    const moved = await v1(key, 'POST', `/api/v1/entries/${id}/move`, { action: 'visit' });
+    expect(moved.json()).toMatchObject({ status: 'visited', from: 'planned' });
+    expect((await v1(key, 'POST', `/api/v1/entries/${id}/move`, { action: 'visit' })).statusCode).toBe(409);
+
+    const read = (await v1(key, 'GET', `/api/v1/entries/${id}`)).json();
+    expect(read.record).toMatchObject({
+      code: `SV/${FY}/0001`,
+      status: 'visited',
+      data: { site: 'Tonk mine', cost: 1500 },
+    });
+    expect(read.moves.map((m: { action: string }) => m.action).sort()).toEqual(['approve', 'send_back']);
+    const list = (
+      await v1(key, 'GET', `/api/v1/record-types/${typeId}/records?status=visited&q=tonk`)
+    ).json();
+    expect(list).toMatchObject({
+      total: 1,
+      records: [{ id, status: 'visited', data: { site: 'Tonk mine' } }],
+    });
+    expect((await v1(key, 'GET', `/api/v1/record-types/${typeId}/records?status=planned`)).json().total).toBe(
+      0,
+    );
+    // The audit says a key did it.
+    const audit = await ctx.prisma.auditLog.findFirst({
+      where: { companyId: w.companyId, entityId: id, action: 'record.status_changed' },
+    });
+    expect(audit?.userAgent).toMatch(/^api-key /);
+
+    // Another company's key finds nothing of this one.
+    const other = await world(ctx.app);
+    const theirs = (await other.api.post('/api/platform/keys', { name: 'Theirs' })).body.key as string;
+    expect((await v1(theirs, 'GET', `/api/v1/entries/${id}`)).statusCode).toBe(404);
+    expect((await v1(theirs, 'GET', '/api/v1/record-types/site_visit/records')).statusCode).toBe(404);
+    expect((await v1(theirs, 'POST', `/api/v1/entries/${id}/move`, { action: 'approve' })).statusCode).toBe(
+      404,
+    );
+    expect((await v1('mono_000000000000_nope', 'GET', '/api/v1/record-types')).statusCode).toBe(401);
+  });
+
+  it('U7: a status change is delivered to a webhook, signed', async () => {
+    const w = await world(ctx.app);
+    const typeId = await makeType(w.api);
+    const hook = await w.api.post('/api/platform/webhooks', {
+      url: 'https://93.184.216.34/records',
+      events: ['record.status_changed'],
+    });
+    expect(hook.status).toBe(200);
+    const visit = await makeRecord(w.api, typeId, { site: 'Niwai factory' });
+    await w.api.post(`/api/records/entries/${visit.id}/move`, { action: 'visit' });
+    const events = await ctx.prisma.domainEvent.findMany({ where: { companyId: w.companyId } });
+    let queued = 0;
+    for (const e of events) queued += await queueWebhooks(ctx.prisma, e);
+    expect(queued).toBe(1); // the move, not the "created" event the webhook did not ask for
+    const calls: { url: string; headers: Record<string, string>; body: string }[] = [];
+    await sendWebhooks(
+      ctx.prisma,
+      {
+        secret: 'test-secret-that-is-long-enough-1234567890',
+        production: false,
+        fetch: (async (url: string, init: RequestInit) => {
+          calls.push({ url, headers: init.headers as Record<string, string>, body: String(init.body) });
+          return new Response('ok', { status: 200 });
+        }) as unknown as typeof fetch,
+      },
+      new Date(),
+    );
+    const mine = calls.find((c) => c.url === 'https://93.184.216.34/records')!;
+    const body = JSON.parse(mine.body);
+    expect(body).toMatchObject({
+      event: 'record.status_changed',
+      data: { code: visit.code, status: 'visited', from: 'planned', action: 'visit' },
+    });
+    const sig = createHmac('sha256', hook.body.secret as string)
+      .update(`${mine.headers['X-Mono-Timestamp']}.${mine.body}`)
+      .digest('hex');
+    expect(mine.headers['X-Mono-Signature']).toBe(`sha256=${sig}`);
   });
 });

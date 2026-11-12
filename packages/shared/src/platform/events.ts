@@ -1,5 +1,6 @@
 /**
  * Events about data (not people) that outgoing webhooks can subscribe to, besides every notification event.
+ * `module` is the event's own prefix, so the picker's "whole module" choice (`master.*`) matches its events.
  * Money in payloads is paise as a string; dates are YYYY-MM-DD.
  */
 export const DATA_EVENTS = [
@@ -9,21 +10,18 @@ export const DATA_EVENTS = [
   { event: 'crm.order_cancelled', module: 'crm' },
   { event: 'crm.payment_received', module: 'crm' },
   { event: 'ims.stock_moved', module: 'ims' },
-  { event: 'master.row_added', module: 'masters' },
-  { event: 'master.row_changed', module: 'masters' },
-  { event: 'master.row_deleted', module: 'masters' },
-  { event: 'master.rows_imported', module: 'masters' },
-  { event: 'list.value_added', module: 'masters' },
-  { event: 'list.value_renamed', module: 'masters' },
-  { event: 'list.value_hidden', module: 'masters' },
-  { event: 'list.value_shown', module: 'masters' },
-  { event: 'list.values_merged', module: 'masters' },
-  { event: 'record.created', module: 'records' },
-  { event: 'record.changed', module: 'records' },
-  { event: 'record.status_changed', module: 'records' },
-  { event: 'record.note', module: 'records' },
-  { event: 'record.deleted', module: 'records' },
-  { event: 'record.imported', module: 'records' },
+  { event: 'master.row_added', module: 'master' },
+  { event: 'master.row_changed', module: 'master' },
+  { event: 'master.row_deleted', module: 'master' },
+  { event: 'master.rows_imported', module: 'master' },
+  { event: 'list.value_added', module: 'list' },
+  { event: 'list.value_renamed', module: 'list' },
+  { event: 'list.value_hidden', module: 'list' },
+  { event: 'list.value_shown', module: 'list' },
+  { event: 'list.values_merged', module: 'list' },
+  { event: 'record.changed', module: 'record' },
+  { event: 'record.deleted', module: 'record' },
+  { event: 'record.imported', module: 'record' },
 ] as const;
 
 /** A webhook's event list: exact names, a module's events (`crm.*`) or everything (`*`). */

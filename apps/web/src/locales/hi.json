@@ -707,6 +707,9 @@
       "crm_order_step_due": "ऑर्डर स्टेप बाकी",
       "crm_payment_due": "ग्राहक को भुगतान याद-दिहानी",
       "crm_customer_sleeping": "ग्राहक ने ऑर्डर बंद किए",
+      "record_created": "रिकॉर्ड जोड़ा गया",
+      "record_status_changed": "रिकॉर्ड की स्थिति बदली",
+      "record_note": "रिकॉर्ड पर नोट",
       "slip_late": "हेल्प स्लिप बहुत देर से रुकी",
       "slip_closed": "हेल्प स्लिप बंद",
       "mis_weekly": "साप्ताहिक MIS",
@@ -757,7 +760,8 @@
       "hr": "HRMS",
       "ims": "इन्वेंटरी",
       "crm": "ग्राहक/विक्रेता",
-      "ai": "AI"
+      "ai": "AI",
+      "record": "रिकॉर्ड"
     },
     "tab": {
       "whatsapp": "WhatsApp API",

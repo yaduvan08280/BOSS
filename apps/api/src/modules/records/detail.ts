@@ -5,7 +5,7 @@ import { recordChange } from '../../lib/events';
 import { attachUploads, type Actor } from '../work/actor';
 import { ctxOf } from './access';
 import { fileIdsOf, type Lines } from './form';
-import { loadRecord } from './records';
+import { eventPayload, loadRecord } from './records';
 import { typeView } from './types';
 
 const fileOf = (f: { id: string; originalName: string; mime: string; size: number; createdAt: Date }) => ({
@@ -92,15 +92,7 @@ export async function addNote(db: Db, actor: Actor, id: string, text: string) {
       entityType: 'record',
       entityId: id,
       after: { note },
-      payload: {
-        typeId: t.id,
-        type: t.name,
-        recordId: id,
-        code: rec.code,
-        title: rec.title,
-        status: rec.status,
-        note,
-      },
+      payload: { ...eventPayload(t, rec, rec.data), note },
     });
     return { id: e.id };
   });

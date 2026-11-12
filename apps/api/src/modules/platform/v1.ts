@@ -14,6 +14,7 @@ import { listItems } from '../ims/items';
 import { postMove } from '../ims/moves';
 import { listRows, saveRow } from '../masters/rows';
 import { resolveApiKey } from './keys';
+import { v1RecordRoutes } from './v1-records';
 
 const idParam = z.object({ id: z.string().max(40) });
 const values = z.record(z.string(), z.unknown());
@@ -262,4 +263,7 @@ export async function v1Routes(app: FastifyInstance) {
     { ...keyed(), schema: doc('Add a row to a master', { params: idParam, body: values }) },
     async (q) => saveRow(db, actor(q), q.params.id, q.body),
   );
+
+  // ---- Custom record types and their records
+  v1RecordRoutes(app, { keyed, doc, actor });
 }

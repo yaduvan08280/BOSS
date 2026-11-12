@@ -604,7 +604,40 @@ const ROWS: Row[] = [
     '{{customer}} ने ऑर्डर बंद किए',
     '{{days}} दिन से कोई ऑर्डर नहीं। वापसी कॉल करें।',
   ],
+  [
+    'record.created',
+    'team',
+    ['owner'],
+    'New {{type}}: {{record}}',
+    '{{actor}} added {{record}}.',
+    'नया {{type}}: {{record}}',
+    '{{actor}} ने {{record}} जोड़ा।',
+  ],
+  [
+    'record.status_changed',
+    'team',
+    ['creator'],
+    '{{type}} {{record}}: {{statusLabel}}',
+    '{{actor}} — {{move}}: {{fromLabel}} → {{statusLabel}}. Note: {{note}}',
+    '{{type}} {{record}}: {{statusLabel}}',
+    '{{actor}} — {{move}}: {{fromLabel}} → {{statusLabel}}। नोट: {{note}}',
+  ],
+  [
+    'record.note',
+    'team',
+    ['creator'],
+    'Note on {{type}} {{record}}',
+    '{{actor}}: {{note}}',
+    '{{type}} {{record}} पर नोट',
+    '{{actor}}: {{note}}',
+  ],
 ];
+
+/**
+ * Events whose built-in rule starts switched off: a company's own record types should not start messaging the
+ * owner about every new record until an admin asks for it.
+ */
+export const RULES_OFF_BY_DEFAULT = ['record.created'];
 
 export type NotifyEvent = {
   event: string;

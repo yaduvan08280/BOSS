@@ -1,4 +1,4 @@
-import { NOTIFY_EVENTS, type NotifyEvent, type TemplateChannel } from './catalog';
+import { NOTIFY_EVENTS, RULES_OFF_BY_DEFAULT, type NotifyEvent, type TemplateChannel } from './catalog';
 
 const VAR = /\{\{\s*([a-zA-Z][\w.]*)\s*\}\}/g;
 
@@ -73,13 +73,20 @@ export function defaultTemplates(
   );
 }
 
-export type DefaultRule = { event: string; audience: string; recipients: string[]; channels: string[] };
+export type DefaultRule = {
+  event: string;
+  audience: string;
+  recipients: string[];
+  channels: string[];
+  active: boolean;
+};
 
 export function defaultRules(): DefaultRule[] {
   return NOTIFY_EVENTS.map((e) => ({
     event: e.event,
     audience: e.audience,
     recipients: e.to,
+    active: !RULES_OFF_BY_DEFAULT.includes(e.event),
     channels:
       e.event === 'notify.test'
         ? ['telegram', 'email', 'whatsapp', 'inapp', 'push']

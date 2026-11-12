@@ -22,6 +22,7 @@ describe('catalog', () => {
       ims: 6,
       crm: 6,
       mis: 1,
+      record: 3,
     };
     for (const [module, n] of Object.entries(expected)) {
       expect(

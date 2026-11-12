@@ -49,3 +49,6 @@ export { netOf, queueWebhooks, sendWebhooks, type WebhookNet } from './modules/p
 export { DriveAwareStorage, syncDrive } from './modules/integrations/drive-files';
 export { driveEnvOf } from './modules/integrations/drive';
 export { recordError } from './modules/errors/service';
+export { createType as createRecordType } from './modules/records/types';
+export { addNote as addRecordNote } from './modules/records/detail';
+export { changeStatus as moveRecord, createRecord } from './modules/records/records';
