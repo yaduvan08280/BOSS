@@ -61,11 +61,12 @@ describe('error monitoring', () => {
 });
 
 describe('API ceiling', () => {
-  it('limits calls per IP per minute but leaves health checks alone', async () => {
+  it('limits visitors who are not signed in per address, but leaves health checks alone', async () => {
     const small = await makeApp({ API_RATE_LIMIT: '5' });
     try {
       const codes: number[] = [];
-      for (let i = 0; i < 7; i++) codes.push((await small.app.inject({ method: 'GET', url: '/api/auth/me' })).statusCode);
+      for (let i = 0; i < 7; i++)
+        codes.push((await small.app.inject({ method: 'GET', url: '/api/auth/me' })).statusCode);
       expect(codes.slice(0, 5).every((c) => c === 401)).toBe(true);
       expect(codes.slice(5)).toEqual([429, 429]);
       expect((await small.app.inject({ method: 'GET', url: '/api/health' })).statusCode).not.toBe(429);

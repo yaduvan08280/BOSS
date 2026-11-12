@@ -81,9 +81,10 @@ export async function buildApp(opts: BuildOptions) {
   await app.register(errorsPlugin);
   await app.register(cookie);
   await app.register(rateLimit, { global: false });
-  // A ceiling per IP for every API call (routes keep their own limits too). Behind Caddy the IP is the real
-  // client's (CF-Connecting-IP), so one busy office doesn't share a single limit.
+  // A ceiling for every API call (routes keep their own limits too), counted per signed-in person: a whole
+  // office or outlet sits behind one internet address, so a count per address would lock people out.
   await app.register(ceilingPlugin, {
+    secret: env.APP_SECRET,
     perMinute:
       env.API_RATE_LIMIT === '' ? (env.NODE_ENV === 'production' ? 600 : 0) : Number(env.API_RATE_LIMIT) || 0,
   });

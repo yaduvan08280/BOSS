@@ -36,6 +36,6 @@ reviewed with GGM / the hotel team and frozen before each phase starts.
 | U8 | A record type is drafted by AI from a description; nothing is saved until a person accepts | §2.6 | |
 | U9 | A field marked reportable keeps a typed, indexed copy; existing records are back-filled by the worker | §2.7 | |
 | U10 | Report builder: source → columns → filters → group → totals → table or chart; save, share by role, schedule, export; Ask can read it | §2.7 | |
-| A1 | The request ceiling is counted per signed-in person; many people behind one internet address are not refused | §1.2 | |
+| A1 | The request ceiling is counted per signed-in person; many people behind one internet address are not refused | §1.2 | `apps/api/src/plugins/ceiling.test.ts` |
 
 Consume-by-recipe on a step (plan §2.4) needs recipes, which arrive in Phase 13; it is row I-recipe there, not here.

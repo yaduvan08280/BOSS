@@ -90,8 +90,13 @@ changed in Phase 10; **OK** were already in place and re-checked; **Accepted** a
 ## Rate limits — Fixed
 - Per route (decision 62): login, change-password, public form, Google Sheet import, AI, API key creation, webhook
   test, Drive connect, error reports (20/min), the public API (120/min per key).
-- **Fixed:** a ceiling for every API call of 600 per IP per minute in production (`API_RATE_LIMIT`), as its own counter
+- **Fixed:** a ceiling for every API call of 600 a minute in production (`API_RATE_LIMIT`), as its own counter
   so it never switches off a route's stricter limit. Live updates and the health check are not counted.
+- **Changed 12/11/2026 (Phase 11, row A1):** the ceiling is counted **per signed-in person** (read from the signed
+  access cookie, no database call), because a whole office or outlet shares one internet address and a count per
+  address locked people out of each other's allowance. Visitors who are not signed in — or who send a cookie that
+  does not verify — are still counted per address, and one address is held to 20 people's worth in total as a flood
+  guard.
 - Bodies are limited to 2 MB (imports 4–8 MB).
 
 ## Left for later
