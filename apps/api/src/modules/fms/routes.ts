@@ -26,6 +26,8 @@ import { publicFormRoutes } from './public';
 import { fmsPeopleReport } from './people-report';
 import { flowReport, kpiValues, LIVE_TABS, liveFms, myFms, recordDetail } from './queries';
 import { reassignStep, recordAction } from './records';
+import { recordStock } from '../ims/step-reversal';
+import { previewStepStock } from '../ims/step-stock';
 
 const idParam = z.object({ id: z.string() });
 const values = z.record(z.string(), z.unknown());
@@ -175,6 +177,15 @@ export async function fmsRoutes(app: FastifyInstance, opts: { env: Env }) {
       },
     },
     async (q) => completeStep(app.prisma, actorOf(q), q.params.id, q.body),
+  );
+  // Stock on steps: what "Mark done" would move for the values typed so far, and what a record has moved.
+  r.post(
+    '/api/fms/steps/:id/stock-preview',
+    { ...view, schema: { tags, params: idParam, body: z.object({ data: values.default({}) }) } },
+    async (q) => previewStepStock(app.prisma, actorOf(q), q.params.id, q.body.data),
+  );
+  r.get('/api/fms/records/:id/stock', { ...view, schema: { tags, params: idParam } }, async (q) =>
+    recordStock(app.prisma, actorOf(q), q.params.id),
   );
   r.post(
     '/api/fms/steps/:id/reassign',

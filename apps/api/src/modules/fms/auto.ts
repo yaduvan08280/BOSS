@@ -3,7 +3,7 @@ import type { FlowDefinition, FlowStep } from '@mono/shared';
 import { emitEvent } from '../../lib/events';
 import { fmsStockMoves } from '../ims/fms';
 import { createDocument } from './documents';
-import { log, payloadOf, type Ctx } from './engine';
+import { log, payloadOf, type Ctx } from './engine-helpers';
 
 /** AUTO steps (CLAUDE.md §6.1): the system sends a message, makes a document, or moves stock. */
 export function customerContact(def: FlowDefinition, data: Record<string, unknown>) {
@@ -21,6 +21,8 @@ export async function runAuto(
   record: FmsRecord,
   step: FlowStep,
   data: Record<string, unknown>,
+  /** The record's step row: stock moves keep it, so they can be reversed with their step. */
+  stepId: string | null = null,
 ) {
   const a = step.auto;
   if (a?.action === 'document' && a.documentType) {
@@ -50,7 +52,7 @@ export async function runAuto(
     );
     await log(tx, record, 'auto', { stepKey: step.key, note: 'Message sent' });
   } else if (a?.action === 'stock') {
-    const note = await fmsStockMoves(tx, record, step, ctx.def, data);
+    const note = await fmsStockMoves(tx, record, step, ctx.def, data, stepId);
     await log(tx, record, 'auto', { stepKey: step.key, note });
   } else {
     await log(tx, record, 'auto', { stepKey: step.key, note: 'Done' });

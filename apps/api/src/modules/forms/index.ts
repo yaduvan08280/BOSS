@@ -1,6 +1,7 @@
 import type { Db, Tx } from '@mono/db';
 import { checkFields, REFS_KEY, refsOf, type FlowField, type Refs } from '@mono/shared';
 import { AppError } from '../../lib/errors';
+import { itemLinesStage } from '../ims/item-lines';
 import { formulaStage } from './formula';
 import { learnStage } from './learn';
 import { linkStage } from './links';
@@ -47,7 +48,7 @@ export type FormStage = {
 export type FormTarget = { companyId: string; owner: FormOwner; recordId: string };
 
 /** Order matters: links settle what was picked, lists check typed text, formulas use both, unique sees the final values. */
-const STAGES: FormStage[] = [linkStage, learnStage, formulaStage, uniqueStage];
+const STAGES: FormStage[] = [linkStage, itemLinesStage, learnStage, formulaStage, uniqueStage];
 
 /** Check a form: the basic field rules (shared `checkFields`), then every stage. Nothing is written. */
 export async function checkForm(

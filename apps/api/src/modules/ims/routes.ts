@@ -15,7 +15,8 @@ import {
   listItems,
   updateItem,
 } from './items';
-import { decideAdjustment, listMoves, postMove, sheetQuery } from './moves';
+import { decideAdjustment } from './approvals';
+import { listMoves, postMove, sheetQuery } from './moves';
 import {
   createPo,
   fromOwsSchema,

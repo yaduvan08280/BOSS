@@ -1,84 +1,27 @@
-import type { Db, FmsRecord, Flow, Tx } from '@mono/db';
+import type { Db, FmsRecord, Tx } from '@mono/db';
 import { nextCounter } from '@mono/db';
-import {
-  END,
-  flowDefinitionSchema,
-  mergeData,
-  nextStepKey,
-  plannedAt,
-  recordTitle,
-  type FlowDefinition,
-  type FlowStep,
-  type WorkCalendar,
-} from '@mono/shared';
+import { END, nextStepKey, plannedAt, recordTitle, type FlowStep } from '@mono/shared';
 import { writeAudit } from '../../lib/audit';
 import { AppError, notFound } from '../../lib/errors';
 import { emitEvent } from '../../lib/events';
 import { processForm } from '../forms';
+import { stockOnStepDone } from '../ims/step-stock';
 import { attachUploads, can, type Actor } from '../work/actor';
 import { workCalendar } from './calendar';
 import { createDocument } from './documents';
 import { customerContact, runAuto } from './auto';
+import {
+  log,
+  mayDo,
+  parseDefinition,
+  payloadOf,
+  pickDoer,
+  recordData,
+  telegramActions,
+  type Ctx,
+} from './engine-helpers';
 
-export const fmsLink = (r: { id: string }) => `/fms/live?record=${r.id}`;
-
-export function parseDefinition(json: unknown): FlowDefinition {
-  return flowDefinitionSchema.parse(json ?? {});
-}
-
-/** A step can be finished from a Telegram button only when it asks for nothing but a tap. */
-function telegramActions(step: FlowStep): string[] {
-  const simple =
-    !step.fields.some((f) => f.required) &&
-    !step.checklist.length &&
-    !step.proofRequired &&
-    !step.documents.length;
-  if (!simple) return [];
-  if (step.type === 'DECISION') return ['yes', 'no'];
-  if (step.type === 'APPROVAL') return ['approve'];
-  return ['fmsdone'];
-}
-
-export async function log(
-  tx: Tx,
-  record: Pick<FmsRecord, 'id' | 'companyId'>,
-  type: string,
-  extra: { stepKey?: string; actorId?: string | null; note?: string | null; data?: object } = {},
-) {
-  await tx.fmsRecordEvent.create({
-    data: { companyId: record.companyId, recordId: record.id, type, ...extra },
-  });
-}
-
-/** Among the step's doers, the one with the fewest open steps right now (simple load balancing). */
-async function pickDoer(tx: Tx, step: FlowStep, record: FmsRecord): Promise<string | null> {
-  if (step.type === 'AUTO') return null;
-  if (step.starter && record.startedById) return record.startedById;
-  if (!step.doerIds.length) return record.startedById;
-  if (step.doerIds.length === 1) return step.doerIds[0]!;
-  const loads = await tx.fmsRecordStep.groupBy({
-    by: ['doerId'],
-    where: { companyId: record.companyId, status: 'OPEN', doerId: { in: step.doerIds } },
-    _count: true,
-  });
-  const load = new Map(loads.map((l) => [l.doerId, l._count]));
-  return [...step.doerIds].sort((a, b) => (load.get(a) ?? 0) - (load.get(b) ?? 0))[0]!;
-}
-
-export type Ctx = { flow: Flow; def: FlowDefinition; cal: WorkCalendar; actorId: string | null };
-
-/** The payload every FMS event carries (names for templates come from the ids). */
-export function payloadOf(ctx: Ctx, record: FmsRecord, extra: Record<string, unknown> = {}) {
-  return {
-    flow: ctx.flow.name,
-    run: ctx.flow.runName,
-    record: `${record.title} (#${record.number})`,
-    coordinatorId: ctx.flow.coordinatorId,
-    solverId: ctx.flow.solverId,
-    link: fmsLink(record),
-    ...extra,
-  };
-}
+export { fmsLink, log, mayDo, parseDefinition, payloadOf, recordData, type Ctx } from './engine-helpers';
 
 /**
  * Open a step for a record: pick the doer, work out when it is due, tell them. AUTO steps run right away
@@ -124,7 +67,7 @@ export async function openStep(
 
   if (step.type === 'AUTO') {
     if (step.auto?.action === 'webhook') return row; // the worker calls it and moves on
-    await runAuto(tx, ctx, record, step, data);
+    await runAuto(tx, ctx, record, step, data, row.id);
     const now = new Date();
     await tx.fmsRecordStep.update({ where: { id: row.id }, data: { status: 'DONE', doneAt: now } });
     return openStep(tx, ctx, record, nextStepKey(ctx.def, step.key), now, depth + 1);
@@ -146,15 +89,6 @@ export async function openStep(
     },
   );
   return row;
-}
-
-/** Start form values plus everything entered on finished steps (later steps can use earlier answers). */
-export async function recordData(tx: Tx, record: FmsRecord): Promise<Record<string, unknown>> {
-  const done = await tx.fmsRecordStep.findMany({
-    where: { recordId: record.id, status: 'DONE' },
-    orderBy: { doneAt: 'asc' },
-  });
-  return mergeData(record.data, ...done.map((s) => s.data));
 }
 
 export async function closeRecord(tx: Tx, ctx: Ctx, record: FmsRecord, actorId: string | null) {
@@ -272,16 +206,6 @@ export type StepInput = {
   attachmentIds?: string[];
 };
 
-/** Who may finish a step: its doer, the flow's problem solver (who steps in when stuck), or an FMS admin. */
-function mayDo(actor: Actor, flow: Flow, doerId: string | null) {
-  return (
-    doerId === actor.userId ||
-    flow.solverId === actor.userId ||
-    flow.solverBackupId === actor.userId ||
-    can(actor, 'fms.admin')
-  );
-}
-
 /**
  * Finish a step: form fields, checklist and proof are checked; decisions pick the branch, a rejected
  * approval goes back; documents are made; the next step opens (or the record closes).
@@ -368,6 +292,16 @@ export async function completeStep(db: Db, actor: Actor, stepId: string, input: 
     );
 
     const data = await recordData(tx, record);
+    // Stock on steps: this step's lines move (a short one may refuse the step); a rejection undoes what it sends back over.
+    await stockOnStepDone(tx, {
+      record,
+      def: ctx.def,
+      step,
+      stepId: row.id,
+      data,
+      decision,
+      actorId: actor.userId,
+    });
     for (const code of step.documents) {
       const doc = await createDocument(tx, {
         companyId: record.companyId,
