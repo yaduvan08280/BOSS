@@ -13,3 +13,6 @@ docs/screenshots/*.png
 !docs/screenshots/.gitkeep
 .DS_Store
 data/
+
+# Parallel checkouts made by coding agents
+.claude/worktrees/

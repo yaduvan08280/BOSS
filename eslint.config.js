@@ -9,6 +9,7 @@ export default tseslint.config(
   {
     ignores: [
       'docs/**',
+      '.claude/**',
       '**/node_modules/**',
       '**/dist/**',
       '**/dev-dist/**',

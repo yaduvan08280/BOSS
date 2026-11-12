@@ -4,3 +4,4 @@ packages/db/src/generated
 prisma/migrations
 *.md
 package-lock.json
+.claude
