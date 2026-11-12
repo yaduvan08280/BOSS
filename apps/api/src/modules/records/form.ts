@@ -80,7 +80,8 @@ export async function commitRecord(
   const lines: Lines = {};
   for (const t of def.tables) if (keep[t.key]?.length) lines[t.key] = keep[t.key]!;
   for (const { table, rows } of checked.tables) {
-    for (const row of rows) await commitForm(tx, { ...scope, known: checked.state.values }, table.fields, row);
+    for (const row of rows)
+      await commitForm(tx, { ...scope, known: checked.state.values }, table.fields, row);
     lines[table.key] = rows.map(storedValues);
   }
   return { data: storedValues(checked.state), lines };

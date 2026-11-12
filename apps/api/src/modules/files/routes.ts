@@ -4,6 +4,8 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { AppError, notFound } from '../../lib/errors';
 import type { Storage } from '../../lib/storage';
+import { actorOf } from '../delegation/routes';
+import { assertRecordFile } from '../records/detail';
 import { looksLike } from './sniff';
 
 /** Images, documents and voice notes. SVG/HTML are refused (they could run scripts when opened). */
@@ -82,6 +84,8 @@ export async function fileRoutes(app: FastifyInstance, opts: { storage: Storage 
       const { id } = request.params as { id: string };
       const row = await request.db.attachment.findFirst({ where: { id, deletedAt: null } });
       if (!row) throw notFound('File');
+      // A file of a custom record follows that record type's own permissions.
+      if (row.entityType === 'record') await assertRecordFile(app.prisma, actorOf(request), row.entityId);
       reply.header('Content-Type', row.mime);
       reply.header('Cache-Control', 'private, max-age=86400');
       if (
