@@ -117,5 +117,11 @@
       "checkAmount": "Amount (₹)",
       "nobody": "nobody"
     }
+  },
+  "chkBranch": {
+    "title": "A run for each branch",
+    "hint": "Pick branches to give each its own runs, done by its own people at its own time. The people above are then not used.",
+    "doers": "Who does it at this branch",
+    "add": "Add a branch…"
   }
 }

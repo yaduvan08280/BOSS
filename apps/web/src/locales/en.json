@@ -1999,6 +1999,7 @@
     "noReport": "No finished steps in this period yet.",
     "reportDays": "Last {{n}} days.",
     "ev": {
+      "doer_outside_branch": "Given outside the branch",
       "started": "Started",
       "step_assigned": "Step assigned",
       "step_done": "Step done",

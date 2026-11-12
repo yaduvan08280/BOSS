@@ -1,5 +1,12 @@
 import type { Db, Prisma } from '@mono/db';
-import { checklistMachine, frequencySchema, occurrences, transition } from '@mono/shared';
+import {
+  checklistMachine,
+  frequencySchema,
+  hhmmToMinutes,
+  occurrences,
+  transition,
+  type ChecklistBranchPlan,
+} from '@mono/shared';
 import { emitEvent } from '../../lib/events';
 import { companyCalendar } from '../hr/calendar';
 import { checklistCovers } from '../hr/cover';
@@ -36,63 +43,97 @@ export async function sweepChecklists(db: Db, now = new Date(), onlyMasterId?: s
       const freq = frequencySchema.safeParse(m.frequency);
       if (!freq.success) continue;
       const windowMs = m.windowHours * 3600_000;
-      const dues = occurrences(
-        { frequency: freq.data, dueMin: m.dueMin, startDate: m.startDate, skipHolidays: m.skipHolidays },
-        new Date(now.getTime() - windowMs),
-        new Date(now.getTime() + LEAD_MS),
-        cal,
-      );
       const items = m.items as unknown as Item[];
-      for (const due of dues) {
-        for (const owner of m.doerIds) {
-          const buddy = buddyFor(m.id, owner, due);
-          const doerId = buddy ?? owner;
-          try {
-            await db.$transaction(async (tx) => {
-              const run = await tx.checklistRun.create({
-                data: {
-                  companyId,
-                  // The template's branch, else the branch of the person whose run it is (phase 12).
-                  branchId: m.branchId ?? (await homeBranchOf(tx, companyId, owner)),
-                  masterId: m.id,
-                  doerId,
-                  coveredById: buddy,
-                  verifierId: m.verifierId ?? settings.verifierUserId,
-                  plannedAt: due,
-                  windowEndsAt: new Date(due.getTime() + windowMs),
-                  itemsTotal: items.length,
-                  items: {
-                    create: items.map((it, i) => ({
-                      companyId,
-                      itemKey: it.key,
-                      text: it.text,
-                      sortOrder: i,
-                      requirePhoto: it.requirePhoto,
-                      requireVoice: it.requireVoice,
-                      requireValue: it.requireValue,
-                    })),
-                  },
-                },
-              });
-              await emitEvent(
-                tx,
-                { companyId, actorId: null },
-                {
-                  name: 'checklist.assigned',
-                  entityType: 'checklist_run',
-                  entityId: run.id,
-                  payload: {
+      // One set of runs — or, with branches listed on the template, a set per branch: that branch's people,
+      // its due time, and its own clock when it has a time zone (phase 12).
+      const listed = (m.perBranch as ChecklistBranchPlan[] | null) ?? [];
+      const zones = listed.length
+        ? new Map(
+            (
+              await db.branch.findMany({
+                where: { id: { in: listed.map((p) => p.branchId) }, companyId, deletedAt: null },
+                select: { id: true, timezone: true },
+              })
+            ).map((b) => [b.id, b.timezone]),
+          )
+        : new Map<string, string | null>();
+      const plans = listed.length
+        ? listed
+            .filter((p) => zones.has(p.branchId))
+            .map((p) => ({
+              branchId: p.branchId as string | null,
+              doerIds: p.doerIds,
+              dueMin: p.dueTime ? hhmmToMinutes(p.dueTime) : m.dueMin,
+              verifierId: p.verifierId ?? m.verifierId,
+              tz: zones.get(p.branchId) ?? cal.tz,
+            }))
+        : [
+            {
+              branchId: m.branchId,
+              doerIds: m.doerIds,
+              dueMin: m.dueMin,
+              verifierId: m.verifierId,
+              tz: cal.tz,
+            },
+          ];
+      for (const plan of plans) {
+        const dues = occurrences(
+          { frequency: freq.data, dueMin: plan.dueMin, startDate: m.startDate, skipHolidays: m.skipHolidays },
+          new Date(now.getTime() - windowMs),
+          new Date(now.getTime() + LEAD_MS),
+          { ...cal, tz: plan.tz },
+        );
+        for (const due of dues) {
+          for (const owner of plan.doerIds) {
+            const buddy = buddyFor(m.id, owner, due);
+            const doerId = buddy ?? owner;
+            try {
+              await db.$transaction(async (tx) => {
+                const run = await tx.checklistRun.create({
+                  data: {
+                    companyId,
+                    // The template's branch, else the branch of the person whose run it is (phase 12).
+                    branchId: plan.branchId ?? (await homeBranchOf(tx, companyId, owner)),
+                    masterId: m.id,
                     doerId,
-                    checklist: m.name,
-                    due: due.toISOString(),
-                    link: `/checklists?run=${run.id}`,
+                    coveredById: buddy,
+                    verifierId: plan.verifierId ?? settings.verifierUserId,
+                    plannedAt: due,
+                    windowEndsAt: new Date(due.getTime() + windowMs),
+                    itemsTotal: items.length,
+                    items: {
+                      create: items.map((it, i) => ({
+                        companyId,
+                        itemKey: it.key,
+                        text: it.text,
+                        sortOrder: i,
+                        requirePhoto: it.requirePhoto,
+                        requireVoice: it.requireVoice,
+                        requireValue: it.requireValue,
+                      })),
+                    },
                   },
-                },
-              );
-            });
-            created++;
-          } catch (err) {
-            if ((err as Prisma.PrismaClientKnownRequestError).code !== 'P2002') throw err;
+                });
+                await emitEvent(
+                  tx,
+                  { companyId, actorId: null },
+                  {
+                    name: 'checklist.assigned',
+                    entityType: 'checklist_run',
+                    entityId: run.id,
+                    payload: {
+                      doerId,
+                      checklist: m.name,
+                      due: due.toISOString(),
+                      link: `/checklists?run=${run.id}`,
+                    },
+                  },
+                );
+              });
+              created++;
+            } catch (err) {
+              if ((err as Prisma.PrismaClientKnownRequestError).code !== 'P2002') throw err;
+            }
           }
         }
       }

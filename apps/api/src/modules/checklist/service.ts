@@ -1,4 +1,4 @@
-import type { ChecklistRun, Db, Prisma, Tx } from '@mono/db';
+import { Prisma, type ChecklistRun, type Db, type Tx } from '@mono/db';
 import { formatNumber, nextCounter } from '@mono/db';
 import {
   checklistMachine,
@@ -31,6 +31,19 @@ async function checkPeople(tx: Tx, companyId: string, ids: string[]) {
   if (n !== new Set(ids).size) throw new AppError(400, 'VALIDATION_FAILED', 'Pick active people only');
 }
 
+/** Each branch once, a live branch of this company, with active people. */
+async function checkBranchPlans(tx: Tx, companyId: string, plans: ChecklistMasterInput['perBranch']) {
+  if (!plans?.length) return;
+  const ids = plans.map((p) => p.branchId);
+  if (new Set(ids).size !== ids.length)
+    throw new AppError(400, 'VALIDATION_FAILED', 'A branch is listed twice');
+  const found = await tx.branch.count({ where: { id: { in: ids }, companyId, deletedAt: null } });
+  if (found !== ids.length) throw notFound('Branch');
+  await checkPeople(tx, companyId, [
+    ...new Set(plans.flatMap((p) => [...p.doerIds, ...(p.verifierId ? [p.verifierId] : [])])),
+  ]);
+}
+
 function masterData(input: ChecklistMasterInput) {
   const { dueTime, items, ...rest } = input;
   return {
@@ -39,6 +52,9 @@ function masterData(input: ChecklistMasterInput) {
     branchId: input.branchId ?? null,
     verifierId: input.verifierId ?? null,
     reminderPatternId: input.reminderPatternId ?? null,
+    perBranch: input.perBranch?.length
+      ? (input.perBranch as unknown as Prisma.InputJsonValue)
+      : Prisma.DbNull,
     dueMin: hhmmToMinutes(dueTime),
     items: items as unknown as Prisma.InputJsonValue,
     frequency: input.frequency as unknown as Prisma.InputJsonValue,
@@ -48,6 +64,7 @@ function masterData(input: ChecklistMasterInput) {
 export async function createMaster(tx: Tx, actor: Actor, input: ChecklistMasterInput) {
   if (!can(actor, 'checklist.edit')) throw new AppError(403, 'FORBIDDEN', "You can't set up checklists");
   await checkPeople(tx, actor.companyId, [...input.doerIds, ...(input.verifierId ? [input.verifierId] : [])]);
+  await checkBranchPlans(tx, actor.companyId, input.perBranch);
   const code = formatNumber('CHK', await nextCounter(tx, actor.companyId, 'checklist'));
   const m = await tx.checklistMaster.create({
     data: { ...masterData(input), companyId: actor.companyId, code, createdById: actor.userId },
@@ -82,6 +99,7 @@ export async function updateMaster(tx: Tx, actor: Actor, id: string, input: Part
       ...(input.doerIds ?? []),
       ...(input.verifierId ? [input.verifierId] : []),
     ]);
+  if (input.perBranch) await checkBranchPlans(tx, actor.companyId, input.perBranch);
   const merged = { ...masterOut(before), ...input } as unknown as ChecklistMasterInput;
   const m = await tx.checklistMaster.update({ where: { id }, data: masterData(merged) });
   await writeAudit(

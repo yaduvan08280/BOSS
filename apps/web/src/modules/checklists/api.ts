@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import type { Frequency } from '@mono/shared';
+import type { ChecklistBranchPlan, Frequency } from '@mono/shared';
 import { api, ApiError } from '@/lib/api';
 
 export type Master = {
@@ -18,6 +18,7 @@ export type Master = {
   skipHolidays: boolean;
   startDate: string;
   active: boolean;
+  perBranch?: ChecklistBranchPlan[] | null;
 };
 export type Run = {
   id: string;

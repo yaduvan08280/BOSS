@@ -82,7 +82,26 @@ export const checklistMasterSchema = z.object({
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   active: z.boolean().default(true),
   reminderPatternId: id.nullish(),
+  /**
+   * One template for many branches (phase 12): each branch listed gets its own runs, done by its own people at
+   * its own due time (on its own clock, when the branch has a time zone). Left out = runs for `doerIds` only.
+   */
+  perBranch: z
+    .array(
+      z.object({
+        branchId: id,
+        doerIds: z.array(id).min(1, 'Pick who does it at this branch').max(50),
+        dueTime: z
+          .string()
+          .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use HH:mm')
+          .optional(),
+        verifierId: id.nullish(),
+      }),
+    )
+    .max(200)
+    .nullish(),
 });
+export type ChecklistBranchPlan = NonNullable<z.infer<typeof checklistMasterSchema>['perBranch']>[number];
 export type ChecklistMasterInput = z.infer<typeof checklistMasterSchema>;
 
 export const runItemUpdateSchema = z.object({

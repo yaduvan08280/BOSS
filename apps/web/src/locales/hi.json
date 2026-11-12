@@ -1999,6 +1999,7 @@
     "noReport": "इस अवधि में अभी कोई स्टेप पूरा नहीं।",
     "reportDays": "पिछले {{n}} दिन।",
     "ev": {
+      "doer_outside_branch": "शाखा के बाहर दिया गया",
       "started": "शुरू हुआ",
       "step_assigned": "स्टेप सौंपा",
       "step_done": "स्टेप पूरा",

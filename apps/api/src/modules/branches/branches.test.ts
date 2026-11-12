@@ -180,4 +180,59 @@ describe('branches, regions, entities and reach (phase 12, stage A)', () => {
       'Send the monthly report',
     ]);
   });
+  it('G8: an outlet manager adds and manages only the people of their own branch', async () => {
+    const w = await world(ctx.app);
+    const g = await group(w);
+    const role = await ok<{ id: string }>(
+      w.api.post('/api/org/roles', {
+        name: 'Outlet manager',
+        permissions: ['org.view', 'org.create', 'org.edit', 'org.admin'],
+        reach: 'branches',
+      }),
+    );
+    const boss = await g.at('Farah Rooftop', g.b.rooftop.id, role.id);
+    const atLake = await g.at('Steward Lake', g.b.lake.id);
+    // A new person lands at the manager's own branch — never at another one, and never with a chosen role.
+    const hired = await ok<{ person: { id: string } }>(
+      boss.api.post('/api/org/users', { name: 'New Waiter', mobile: '9811100001' }),
+    );
+    const row = await ctx.prisma.user.findUniqueOrThrow({ where: { id: hired.person.id } });
+    expect(row.branchId).toBe(g.b.rooftop.id);
+    const elsewhere = await boss.api.post('/api/org/users', { name: 'Lake Waiter', branchId: g.b.lake.id });
+    expect(elsewhere.status).toBe(403);
+    expect((await boss.api.post('/api/org/users', { name: 'Chief', roleId: w.role('ADMIN') })).status).toBe(
+      403,
+    );
+    expect(
+      (
+        await boss.api.post('/api/org/users/bulk', {
+          people: [{ name: 'A', mobile: null, email: null, department: null, designation: null }],
+        })
+      ).status,
+    ).toBe(403);
+    // Their own people they edit; another branch's people they can't touch, move in, or sign out.
+    await ok(boss.api.patch(`/api/org/users/${hired.person.id}`, { name: 'New Waiter Singh' }));
+    expect((await boss.api.patch(`/api/org/users/${atLake.id}`, { name: 'Mine now' })).status).toBe(403);
+    expect(
+      (await boss.api.patch(`/api/org/users/${hired.person.id}`, { branchId: g.b.lake.id })).status,
+    ).toBe(403);
+    expect((await boss.api.post(`/api/org/users/${atLake.id}/reset-password`, {})).status).toBe(403);
+    expect((await boss.api.del(`/api/org/users/${atLake.id}`)).status).toBe(403);
+    expect(
+      (
+        await boss.api.post('/api/org/users/bulk-action', {
+          action: 'setRole',
+          userIds: [hired.person.id],
+          roleId: w.role('HOD'),
+        })
+      ).status,
+    ).toBe(403);
+    // Group settings stay with the group: the structure and the approval routes are not theirs to change.
+    expect((await boss.api.post('/api/branches/regions', { name: 'My region' })).status).toBe(403);
+    expect(
+      (await boss.api.put('/api/branches/approvals', { kind: 'hr.leave', steps: [{ who: 'owner' }] })).status,
+    ).toBe(403);
+    // The owner is not limited.
+    await ok(w.api.patch(`/api/org/users/${atLake.id}`, { branchId: g.b.rooftop.id }));
+  });
 });

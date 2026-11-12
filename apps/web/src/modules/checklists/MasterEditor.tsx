@@ -18,6 +18,7 @@ import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { DayChips } from '@/modules/system/company/Shifts';
 import { useChecklistMutation, type Master } from './api';
+import { PerBranch } from './PerBranch';
 
 type Draft = Omit<Master, 'id' | 'code'>;
 const newKey = () => Math.random().toString(36).slice(2, 8);
@@ -161,7 +162,14 @@ export function MasterEditor({
     setD({ ...d, items });
   };
   const submit = () => {
-    const body = { ...d, items: d.items.filter((it) => it.text.trim()) };
+    const plans = (d.perBranch ?? []).filter((p) => p.doerIds.length);
+    const body = {
+      ...d,
+      items: d.items.filter((it) => it.text.trim()),
+      perBranch: plans.length ? plans : null,
+      // With branches listed, the runs are theirs; the template still names everyone who does it.
+      doerIds: plans.length ? [...new Set(plans.flatMap((p) => p.doerIds))] : d.doerIds,
+    };
     const parsed = checklistMasterSchema.safeParse(body);
     if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? null);
     setError(null);
@@ -320,6 +328,12 @@ export function MasterEditor({
               })}
             </div>
           </Field>
+          <PerBranch
+            value={d.perBranch ?? []}
+            onChange={(perBranch) => setD({ ...d, perBranch })}
+            people={people}
+            dueTime={d.dueTime}
+          />
           <Field label={t('task.verifier')}>
             <Select
               value={d.verifierId ?? ''}

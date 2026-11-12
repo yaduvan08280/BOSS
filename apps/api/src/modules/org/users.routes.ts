@@ -13,6 +13,7 @@ import { AppError, forbidden, notFound } from '../../lib/errors';
 import { recordChange } from '../../lib/events';
 import { hashPassword } from '../../lib/password';
 import { inCompanyTx } from '../../lib/tx';
+import { assertGroupWide, assertMyPeople, myBranchFor } from './users.branch';
 import { bulkCreatePeople } from './users.bulk';
 import {
   assertOwnerRemains,
@@ -81,6 +82,7 @@ export async function userRoutes(app: FastifyInstance) {
       inCompanyTx(request, async (tx, ctx) => {
         const { mobile, email } = cleanIdentifiers(request.body);
         await assertUnique(tx, { mobile, email });
+        if (request.body.roleId) assertGroupWide(request, 'choose a role');
         const roleId = request.body.roleId
           ? (await checkRole(tx, request, request.body.roleId)).id
           : (await roleByKey(tx, 'MEMBER')).id;
@@ -88,6 +90,7 @@ export async function userRoutes(app: FastifyInstance) {
         const user = await tx.user.create({
           data: {
             ...rest,
+            branchId: myBranchFor(request, rest.branchId),
             companyId: ctx.companyId,
             mobile,
             email,
@@ -109,7 +112,10 @@ export async function userRoutes(app: FastifyInstance) {
   r.post(
     '/api/org/users/bulk',
     { ...create, schema: { tags: ['org'], body: bulkCreateSchema } },
-    async (request) => inCompanyTx(request, (tx, ctx) => bulkCreatePeople(tx, ctx, request.body)),
+    async (request) => {
+      assertGroupWide(request, 'paste a list of people');
+      return inCompanyTx(request, (tx, ctx) => bulkCreatePeople(tx, ctx, request.body));
+    },
   );
 
   r.patch(
@@ -118,8 +124,10 @@ export async function userRoutes(app: FastifyInstance) {
     async (request) =>
       inCompanyTx(request, async (tx, ctx) => {
         const before = await findPerson(tx, request.params.id);
+        assertMyPeople(request, [before]);
         const { alsoWorksIn, hr, status, roleId, loginEnabled: _ignored, ...rest } = request.body;
         const data: Prisma.UserUncheckedUpdateInput = { ...rest };
+        if (rest.branchId !== undefined) data.branchId = myBranchFor(request, rest.branchId);
         if (rest.mobile !== undefined || rest.email !== undefined) {
           const ids = cleanIdentifiers({
             mobile: rest.mobile ?? before.mobile,
@@ -132,6 +140,7 @@ export async function userRoutes(app: FastifyInstance) {
           throw new AppError(400, 'BAD_REQUEST', 'A person cannot report to themselves');
         if (roleId && roleId !== before.roleId) {
           if (!hasPermission(request.auth!.permissions, 'org.admin')) throw forbidden();
+          assertGroupWide(request, 'choose a role');
           await checkRole(tx, request, roleId);
           if (before.role.key === 'OWNER') await assertOwnerRemains(tx, [before.id]);
           data.roleId = roleId;
@@ -185,6 +194,7 @@ export async function userRoutes(app: FastifyInstance) {
     async (request) =>
       inCompanyTx(request, async (tx, ctx) => {
         const before = await findPerson(tx, request.params.id);
+        assertMyPeople(request, [before]);
         let password: string | null = null;
         if (request.body.enabled) {
           password = await enableLogin(tx, before);
@@ -212,6 +222,7 @@ export async function userRoutes(app: FastifyInstance) {
     async (request) =>
       inCompanyTx(request, async (tx, ctx) => {
         const user = await findPerson(tx, request.params.id);
+        assertMyPeople(request, [user]);
         // A reset replaces the password with a one-time one and signs the person out: never do that to
         // yourself by accident (the sole Owner would be left with only a password shown once).
         if (user.id === ctx.actorId)
@@ -242,6 +253,7 @@ export async function userRoutes(app: FastifyInstance) {
   r.delete('/api/org/users/:id', { ...admin, schema: { tags: ['org'], params: idParam } }, async (request) =>
     inCompanyTx(request, async (tx, ctx) => {
       const user = await findPerson(tx, request.params.id);
+      assertMyPeople(request, [user]);
       if (user.id === ctx.actorId) throw new AppError(400, 'BAD_REQUEST', "You can't delete yourself");
       await assertOwnerRemains(tx, [user.id]);
       await tx.user.update({
@@ -268,6 +280,8 @@ export async function userRoutes(app: FastifyInstance) {
         const body = request.body;
         const users = await tx.user.findMany({ where: { id: { in: body.userIds }, deletedAt: null } });
         if (users.length !== new Set(body.userIds).size) throw notFound('Person');
+        assertMyPeople(request, users);
+        if (body.action === 'setRole') assertGroupWide(request, 'choose a role');
         const passwords: { id: string; code: string; name: string; tempPassword: string }[] = [];
         if (body.action === 'moveDepartment') {
           if (
