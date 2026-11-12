@@ -15,13 +15,17 @@ export function parseDefinition(json: unknown): FlowDefinition {
   return flowDefinitionSchema.parse(json ?? {});
 }
 
-/** A step can be finished from a Telegram button only when it asks for nothing but a tap. */
+/**
+ * A step can be finished from a Telegram button only when it asks for nothing but a tap. A step that moves stock
+ * is done in the app, where the doer sees what will move first.
+ */
 export function telegramActions(step: FlowStep): string[] {
   const simple =
     !step.fields.some((f) => f.required) &&
     !step.checklist.length &&
     !step.proofRequired &&
-    !step.documents.length;
+    !step.documents.length &&
+    !step.stock;
   if (!simple) return [];
   if (step.type === 'DECISION') return ['yes', 'no'];
   if (step.type === 'APPROVAL') return ['approve'];
