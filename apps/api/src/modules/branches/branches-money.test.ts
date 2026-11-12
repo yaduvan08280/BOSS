@@ -91,4 +91,42 @@ describe('countries and currencies (phase 12, stage C)', () => {
     expect(closed).toMatchObject({ currency: 'AED', totalPaise: gulf.totalPaise });
     expect(closed.closed).not.toBeNull();
   });
+  it('G36: a branch abroad runs on its own clock — its shift, its day, its late mark', async () => {
+    const w = await world(ctx.app);
+    const { g } = await twoOutlets(ctx.prisma, w);
+    const marina = await ok<{ id: string }>(
+      w.api.post('/api/org/branches', { name: 'Marina Dubai', type: 'OUTLET', timezone: 'Asia/Dubai' }),
+    );
+    // An unknown time zone is refused.
+    expect(
+      (await w.api.post('/api/org/branches', { name: 'Nowhere', timezone: 'Mars/Olympus' })).status,
+    ).toBe(400);
+    const inDubai = await g.at('Cook Marina', marina.id);
+    const inJaipur = await g.at('Cook Rooftop', g.b.rooftop.id);
+    const { hrPerson } = await import('../hr/people');
+    const { evaluateDay } = await import('../hr/attendance');
+    const { companyCalendar } = await import('../hr/calendar');
+    const dubai = await hrPerson(ctx.prisma, w.companyId, inDubai.id);
+    const jaipur = await hrPerson(ctx.prisma, w.companyId, inJaipur.id);
+    expect([dubai.tz, jaipur.tz]).toEqual(['Asia/Dubai', 'Asia/Kolkata']);
+    expect((await companyCalendar(ctx.prisma, w.companyId, marina.id)).tz).toBe('Asia/Dubai');
+    // A Monday. Both punch in at 05:05 UTC and out at 14:30 UTC.
+    const date = '2031-01-06';
+    for (const p of [dubai, jaipur])
+      await ctx.prisma.punch.createMany({
+        data: [
+          { companyId: w.companyId, userId: p.id, type: 'IN', at: new Date(`${date}T05:05:00Z`) },
+          { companyId: w.companyId, userId: p.id, type: 'OUT', at: new Date(`${date}T14:30:00Z`) },
+        ],
+      });
+    const later = new Date(`${date}T23:00:00Z`);
+    const d = await evaluateDay(ctx.prisma, w.companyId, dubai, date, later);
+    const j = await evaluateDay(ctx.prisma, w.companyId, jaipur, date, later);
+    const shiftStart = (await companyCalendar(ctx.prisma, w.companyId, null)).shift.start;
+    // In Dubai 05:05 UTC is 09:05; in Jaipur it is 10:35 — the same instant, a different lateness.
+    const lateBy = (localMinutes: number) => Math.max(0, localMinutes - shiftStart);
+    expect(d.lateMinutes).toBe(lateBy(9 * 60 + 5));
+    expect(j.lateMinutes).toBe(lateBy(10 * 60 + 35));
+    expect(d.lateMinutes).toBeLessThan(j.lateMinutes);
+  });
 });

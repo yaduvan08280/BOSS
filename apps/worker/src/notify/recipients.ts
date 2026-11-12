@@ -10,6 +10,8 @@ export type Person = {
   email: string | null;
   telegramChatId: string | null;
   prefs: unknown;
+  /** Their branch's clock (quiet hours are counted on it); absent for people with no branch. */
+  branch?: { timezone: string | null } | null;
 };
 /** Someone outside the company (customer, vendor): only an address. */
 export type External = { name: string | null; mobile: string | null; email: string | null };
@@ -22,6 +24,8 @@ const personSelect = {
   email: true,
   telegramChatId: true,
   prefs: true,
+  // The branch's clock, for quiet hours (phase 12).
+  branch: { select: { timezone: true } },
 } as const;
 const active = { deletedAt: null, status: 'ACTIVE' as const };
 

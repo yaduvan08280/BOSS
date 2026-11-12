@@ -169,9 +169,7 @@ export async function punch(db: Db, actor: Actor, input: PunchInput) {
   if (!place.allow) throw new AppError(400, 'VALIDATION_FAILED', `Punch not allowed: ${place.flag}`);
   if (rules.punches.selfie && !input.selfieId)
     throw new AppError(400, 'VALIDATION_FAILED', 'Take a selfie to punch');
-  const tz = (
-    await db.company.findUniqueOrThrow({ where: { id: actor.companyId }, select: { timezone: true } })
-  ).timezone;
+  const tz = p.tz;
   const row = await db.$transaction(async (tx) => {
     const created = await tx.punch.create({
       data: {
@@ -235,11 +233,12 @@ export async function settleAttendance(db: Db, now = new Date(), onlyCompanyId?:
       where: { companyId: c.id, deletedAt: null, status: 'ACTIVE' },
       select: { id: true, createdAt: true },
     });
-    const today = localDate(now, c.timezone);
     for (const u of people) {
       const p = await hrPerson(db, c.id, u.id);
+      // Each person's days are their branch's days.
+      const today = localDate(now, p.tz);
       for (const date of [addDays(today, -1), today]) {
-        if (date < localDate(u.createdAt, c.timezone)) continue;
+        if (date < localDate(u.createdAt, p.tz)) continue;
         if (await db.attendanceDay.findUnique({ where: { userId_date: { userId: u.id, date } } })) continue;
         const r = await settleDay(db, c.id, p, date, now);
         if (!r.saved) continue;

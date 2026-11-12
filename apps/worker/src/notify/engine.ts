@@ -160,7 +160,9 @@ export async function notifyForEvent(event: DomainEvent, deps: EngineDeps): Prom
       for (const p of people) {
         const v: Record<string, string> = { ...vars, recipient: p.name };
         const lang = p.lang === 'hi' ? 'hi' : 'en';
-        const sendAt = urgent ? after : nextSendTime(after, company.timezone, quietHoursOf(p));
+        const sendAt = urgent
+          ? after
+          : nextSendTime(after, p.branch?.timezone ?? company.timezone, quietHoursOf(p));
 
         // In-app is always created, once per person per event.
         if (!notified.has(p.id)) {

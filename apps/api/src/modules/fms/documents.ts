@@ -4,7 +4,8 @@ import {
   fillPaths,
   financialYear,
   formatDate,
-  formatINR,
+  formatMoney,
+  minorUnits,
   itemsTotal,
   pathsIn,
   plainValues,
@@ -80,7 +81,8 @@ export async function createDocument(
   });
 }
 
-const rupees = (n: number) => formatINR(BigInt(Math.round(n * 100)));
+/** An amount in whole units of a currency, written that currency's way (₹ with lakh grouping for rupees). */
+const amount = (n: number, currency = 'INR') => formatMoney(Math.round(n * minorUnits(currency)), currency);
 
 type Paper = {
   number: string;
@@ -116,12 +118,14 @@ export async function paperTexts(
     number: doc.number,
     date: formatDate(doc.date, company.timezone),
     party: doc.party,
-    total: doc.total === null ? null : rupees(Number(doc.total)),
+    total: doc.total === null ? null : amount(Number(doc.total), head?.currency),
     company: head?.name ?? (company.legalName || company.name),
     // Who the paper is from (phase 12): {{entity}}, {{address}}, {{gstin}}, {{branch}}, {{licence.FSSAI}} …
     entity: head?.name ?? null,
     address: head?.address ?? null,
     gstin: head?.taxId ?? null,
+    tax: head?.tax ?? null,
+    'tax.note': head?.taxNote ?? null,
     branch: head?.branch ?? null,
     'branch.address': head?.branchAddress ?? null,
     ...Object.fromEntries((head?.licences ?? []).map((l) => [`licence.${l.name}`, l.number])),
@@ -161,7 +165,16 @@ export async function documentPdf(db: Db, companyId: string, id: string) {
             ...head.licences.map((l) => ({ text: `${l.name} ${l.number}`, color: '#666', fontSize: 8 })),
           ],
           [
-            { text: doc.type.name.toUpperCase(), alignment: 'right', fontSize: 13, bold: true },
+            // A tax paper carries the title the entity's tax profile asks for ("Tax Invoice").
+            {
+              text: (doc.type.code.startsWith('INV') && head.invoiceTitle
+                ? head.invoiceTitle
+                : doc.type.name
+              ).toUpperCase(),
+              alignment: 'right',
+              fontSize: 13,
+              bold: true,
+            },
             { text: doc.number, alignment: 'right' },
             { text: formatDate(doc.date, company.timezone), alignment: 'right', color: '#666' },
             doc.status === 'CANCELLED'
@@ -197,20 +210,21 @@ export async function documentPdf(db: Db, companyId: string, id: string) {
                 ...lines.map((l) => [
                   l.item,
                   String(l.qty),
-                  rupees(l.rate),
-                  { text: rupees(l.amount ?? l.qty * l.rate), alignment: 'right' },
+                  amount(l.rate, head.currency),
+                  { text: amount(l.amount ?? l.qty * l.rate, head.currency), alignment: 'right' },
                 ]),
                 [
                   { text: 'Total', bold: true, colSpan: 3 },
                   '',
                   '',
-                  { text: rupees(Number(doc.total ?? 0)), bold: true, alignment: 'right' },
+                  { text: amount(Number(doc.total ?? 0), head.currency), bold: true, alignment: 'right' },
                 ],
               ],
             },
             layout: 'lightHorizontalLines',
           }
         : '',
+      head.taxNote ? { text: head.taxNote, fontSize: 8, color: '#666', margin: [0, 12, 0, 0] } : '',
       terms ? { text: terms, fontSize: 8, color: '#666', margin: [0, 16, 0, 0] } : '',
       footer ? { text: footer, fontSize: 8, color: '#888', margin: [0, 8, 0, 0] } : '',
       head.footer ? { text: head.footer, fontSize: 8, color: '#888', margin: [0, 6, 0, 0] } : '',

@@ -25,7 +25,7 @@ export async function companyCalendar(
   const branch = branchId
     ? await db.branch.findFirst({
         where: { id: branchId, companyId },
-        select: { entityId: true, state: true },
+        select: { entityId: true, state: true, timezone: true },
       })
     : null;
   const entity = branch?.entityId
@@ -64,7 +64,8 @@ export async function companyCalendar(
   const rows = own.length ? own : offs.filter((o) => o.branchId === null);
   const shiftDays = shift?.weekdays.length ? shift.weekdays : [1, 2, 3, 4, 5, 6];
   return {
-    tz: company.timezone,
+    // The branch's own clock when it has one (phase 12): shifts, due times and days are counted on it.
+    tz: branch?.timezone ?? company.timezone,
     holidays: new Set(holidays.filter((h) => !h.halfDay).map((h) => h.date)),
     halfHolidays: new Set(holidays.filter((h) => h.halfDay).map((h) => h.date)),
     workingWeekdays: new Set(

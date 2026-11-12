@@ -47,6 +47,27 @@ const seriesCode = z
   .trim()
   .regex(/^[A-Z0-9]{1,6}$/, 'Up to 6 capital letters or digits');
 
+/**
+ * An entity's tax regime, as a profile the accountant fills (phase 12, stage C): nothing about any country's tax
+ * is built in. It names the tax number, the rates in use and the lines the law wants on a tax paper.
+ */
+export const TAX_REGIMES = ['GST', 'VAT', 'SALES_TAX', 'NONE'] as const;
+export const taxProfileSchema = z.object({
+  regime: z.enum(TAX_REGIMES),
+  /** What the tax number is called on papers: GSTIN, TRN, VAT No. */
+  idLabel: text(20).nullish(),
+  /** The title a tax invoice must carry there: "Tax Invoice". */
+  invoiceTitle: text(60).nullish(),
+  /** The rates in use, by name: "GST 5%", "VAT 5%". */
+  rates: z
+    .array(z.object({ name: z.string().trim().min(1).max(40), percent: z.number().min(0).max(100) }))
+    .max(30)
+    .optional(),
+  /** A line the law wants printed (place of supply, reverse charge, "prices include VAT"). */
+  note: text(300).nullish(),
+});
+export type TaxProfile = z.infer<typeof taxProfileSchema>;
+
 /** What an entity prints on its papers (phase 12, stage B). Every key is optional. */
 export const entityDetailsSchema = z.object({
   legalName: text(160).nullish(),
@@ -58,6 +79,7 @@ export const entityDetailsSchema = z.object({
   letterheadHeader: text(400).nullish(),
   letterheadFooter: text(400).nullish(),
   licences: z.array(licenceSchema).max(20).optional(),
+  tax: taxProfileSchema.optional(),
 });
 export type EntityDetails = z.infer<typeof entityDetailsSchema>;
 

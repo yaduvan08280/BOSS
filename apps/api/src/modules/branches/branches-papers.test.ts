@@ -163,4 +163,110 @@ describe('entities, number series and papers (phase 12, stage B)', () => {
       'From Ajmer Foods LLP, Lake Road, Ajmer — GSTIN 08BBBBB1111B1Z2 — Lake View Ajmer — FSSAI 1220-LAKE',
     );
   });
+  it("G35: an entity's tax profile, filled by the accountant, names its tax number and prints its legal lines", async () => {
+    const w = await world(ctx.app);
+    const { g, rooftop } = await twoOutlets(ctx.prisma, w);
+    const dubai = await ok<{ id: string }>(
+      w.api.post('/api/branches/entities', {
+        name: 'GGM Gulf LLC',
+        country: 'AE',
+        currency: 'AED',
+        taxId: '100234567800003',
+        details: {
+          seriesCode: 'DXB',
+          tax: {
+            regime: 'VAT',
+            idLabel: 'TRN',
+            invoiceTitle: 'Tax Invoice',
+            rates: [{ name: 'VAT 5%', percent: 5 }],
+            note: 'Prices include 5% VAT',
+          },
+        },
+      }),
+    );
+    const marina = await ok<{ id: string }>(
+      w.api.post('/api/org/branches', { name: 'Marina Dubai', type: 'OUTLET', entityId: dubai.id }),
+    );
+    // The profile is data: a regime outside the list, or a rate over 100%, is refused.
+    const bad = (tax: object) =>
+      w.api.patch(`/api/branches/entities/${dubai.id}`, { name: 'GGM Gulf LLC', details: { tax } });
+    expect((await bad({ regime: 'MAGIC' })).status).toBe(400);
+    expect((await bad({ regime: 'VAT', rates: [{ name: 'VAT', percent: 500 }] })).status).toBe(400);
+    const gulf = await letterheadOf(ctx.prisma, w.companyId, marina.id);
+    expect(gulf).toMatchObject({
+      tax: 'TRN 100234567800003',
+      currency: 'AED',
+      taxRegime: 'VAT',
+      invoiceTitle: 'Tax Invoice',
+      taxNote: 'Prices include 5% VAT',
+      taxRates: [{ name: 'VAT 5%', percent: 5 }],
+    });
+    // An Indian entity with no profile keeps GSTIN and rupees; "no tax" prints no tax number at all.
+    await ok(
+      w.api.patch(`/api/branches/entities/${g.entity.id}`, {
+        name: 'GGM Hotels Rajasthan',
+        taxId: '08AAAAA0000A1Z5',
+      }),
+    );
+    expect(await letterheadOf(ctx.prisma, w.companyId, g.b.rooftop.id)).toMatchObject({
+      tax: 'GSTIN 08AAAAA0000A1Z5',
+      currency: 'INR',
+      taxRegime: null,
+    });
+    await ok(
+      w.api.patch(`/api/branches/entities/${g.entity.id}`, {
+        name: 'GGM Hotels Rajasthan',
+        details: { tax: { regime: 'NONE' } },
+      }),
+    );
+    expect((await letterheadOf(ctx.prisma, w.companyId, g.b.rooftop.id)).tax).toBeNull();
+
+    // A paper from Dubai: its total is in dirhams, and its texts can use the tax number and the legal line.
+    await ok(
+      w.api.put('/api/document-types', {
+        code: 'INV',
+        name: 'Invoice',
+        prefix: 'INV',
+        series: 'entity',
+        header: '{{tax}}',
+        footer: '{{tax.note}} — total {{total}}',
+      }),
+    );
+    const cashier = await g.at('Cashier Marina', marina.id, 'HOD');
+    const flowId = await publish(w.api, 'Billing', {
+      startFields: [
+        { key: 'guest', label: 'Guest', type: 'text', required: true },
+        { key: 'items', label: 'Items', type: 'items' },
+      ],
+      steps: [{ ...task('bill', w.owner.id), documents: ['INV'] }],
+    });
+    const rec = (
+      await start(cashier.api, flowId, {
+        guest: 'Walk-in',
+        items: [{ item: 'Dinner', qty: 2, rate: 150, amount: 300 }],
+      })
+    ).body as { id: string };
+    const step = await ctx.prisma.fmsRecordStep.findFirstOrThrow({
+      where: { recordId: rec.id, status: 'OPEN' },
+    });
+    await ok(w.api.post(`/api/fms/steps/${step.id}/complete`, { data: {} }));
+    const inv = await ctx.prisma.document.findFirstOrThrow({
+      where: { recordId: rec.id },
+      include: { type: true },
+    });
+    expect(inv.number).toMatch(/^INV\/DXB\//);
+    const { documentPdf, paperTexts } = await import('../fms/documents');
+    const company = await ctx.prisma.company.findUniqueOrThrow({ where: { id: w.companyId } });
+    const texts = await paperTexts(
+      ctx.prisma,
+      inv,
+      company,
+      new Map(),
+      await letterheadOf(ctx.prisma, w.companyId, inv.branchId),
+    );
+    expect(texts.header).toBe('TRN 100234567800003');
+    expect(texts.footer).toBe('Prices include 5% VAT — total AED 300.00');
+    expect((await documentPdf(ctx.prisma, w.companyId, inv.id)).pdf.subarray(0, 4).toString()).toBe('%PDF');
+    void rooftop;
+  });
 });

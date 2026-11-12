@@ -251,5 +251,19 @@
     "saved": "1 {{c}} = ₹{{rate}}",
     "none": "No rate for this month",
     "rateFor": "Rupees for 1 {{c}}"
+  },
+  "taxProfile": {
+    "regime": "Tax regime",
+    "hint": "Filled by your accountant. Nothing about any country's tax is built in.",
+    "unset": "Not set",
+    "r": {
+      "GST": "GST",
+      "VAT": "VAT",
+      "SALES_TAX": "Sales tax",
+      "NONE": "No tax"
+    },
+    "idLabel": "What the tax number is called",
+    "invoiceTitle": "Title of a tax invoice",
+    "note": "Line the law wants on papers"
   }
 }

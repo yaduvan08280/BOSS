@@ -27,6 +27,8 @@ export type HrPerson = {
   designationId: string | null;
   /** The legal entity of their branch (phase 12): HR and pay rules can differ by entity. */
   entityId: string | null;
+  /** The clock their days are counted on: their branch's time zone, else the company's. */
+  tz: string;
 };
 
 /** A person with what HR needs: their shift (or the default one), branch, department and HOD. */
@@ -37,7 +39,7 @@ export async function hrPerson(db: Db | Tx, companyId: string, userId: string): 
       id: true,
       name: true,
       branchId: true,
-      branch: { select: { entityId: true } },
+      branch: { select: { entityId: true, timezone: true } },
       defaultBuddyId: true,
       designationId: true,
       mainDepartmentId: true,
@@ -76,6 +78,9 @@ export async function hrPerson(db: Db | Tx, companyId: string, userId: string): 
     departmentId: u.mainDepartmentId,
     branchId: u.branchId,
     entityId: u.branch?.entityId ?? null,
+    tz:
+      u.branch?.timezone ??
+      (await db.company.findUniqueOrThrow({ where: { id: companyId }, select: { timezone: true } })).timezone,
     defaultBuddyId: u.defaultBuddyId,
     hodId: hod && hod !== u.id ? hod : null,
     // Daily or weekly hours: any time of the day counts.

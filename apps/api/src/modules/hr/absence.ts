@@ -273,7 +273,6 @@ export async function watchAbsences(db: Db, now = new Date(), onlyCompanyId?: st
     select: { id: true, timezone: true },
   })) {
     const rules = await hrRulesOf(db, c.id);
-    const today = localDate(now, c.timezone);
     const users = await db.user.findMany({
       where: { companyId: c.id, deletedAt: null, status: 'ACTIVE' },
       select: { id: true },
@@ -281,16 +280,17 @@ export async function watchAbsences(db: Db, now = new Date(), onlyCompanyId?: st
     for (const u of users) {
       const p = await hrPerson(db, c.id, u.id);
       const cal = await companyCalendar(db, c.id, p.branchId);
+      // "Today" on the person's own clock (a branch abroad is hours away from head office).
+      const today = localDate(now, p.tz);
       // Yesterday too: a night shift that started last evening is still running after midnight.
       for (const date of [addDays(today, -1), today]) {
         if (cal.holidays.has(date) || !cal.workingWeekdays.has(weekdayOf(date))) continue;
-        const { mark, end } = absenceMark(date, p, rules.late.halfDayAfterMinutes, c.timezone);
+        const { mark, end } = absenceMark(date, p, rules.late.halfDayAfterMinutes, p.tz);
         if (!mark || now.getTime() < mark.getTime() || now >= end) continue;
         const onLeave = await db.leaveRequest.findFirst({
           where: { userId: p.id, status: 'APPROVED', from: { lte: date }, to: { gte: date } },
         });
-        if (onLeave || !(await punchesAtAll(db, p.id, now)) || (await punchedIn(db, p, date, c.timezone)))
-          continue;
+        if (onLeave || !(await punchesAtAll(db, p.id, now)) || (await punchedIn(db, p, date, p.tz))) continue;
         const items = await openWork(db, p, now, end);
         if (!items.length) continue;
         const states = await coverState(db, p, items, now, end);

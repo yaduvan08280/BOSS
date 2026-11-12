@@ -30,6 +30,12 @@ export type Letterhead = {
   footer: string | null;
   entityCode: string | null;
   branchCode: string | null;
+  /** The entity's currency (INR for the company itself) and its tax profile, when the accountant filled one. */
+  currency: string;
+  taxRegime: string | null;
+  invoiceTitle: string | null;
+  taxNote: string | null;
+  taxRates: { name: string; percent: number }[];
 };
 
 const read = <T>(schema: { safeParse: (v: unknown) => { success: boolean; data?: T } }, json: unknown): T =>
@@ -62,7 +68,11 @@ export async function letterheadOf(
       : [company.city, company.state].filter(Boolean).join(', ') || null,
     phone: b.phone ?? (entity ? (e.phone ?? null) : company.mobile),
     taxId: taxId ?? null,
-    tax: taxId ? `${!entity || entity.country === 'IN' ? 'GSTIN' : 'TRN'} ${taxId}` : null,
+    // The label comes from the entity's tax profile; without one, GSTIN in India and TRN elsewhere.
+    tax:
+      taxId && e.tax?.regime !== 'NONE'
+        ? `${e.tax?.idLabel || (!entity || entity.country === 'IN' ? 'GSTIN' : 'TRN')} ${taxId}`
+        : null,
     branch: branch?.name ?? null,
     branchAddress: b.address ?? ([branch?.city, branch?.state].filter(Boolean).join(', ') || null),
     licences: [...(b.licences ?? []), ...(e.licences ?? [])],
@@ -70,6 +80,11 @@ export async function letterheadOf(
     footer: e.letterheadFooter ?? null,
     entityCode: entity ? (e.seriesCode ?? tail(entity.id)) : null,
     branchCode: branch ? (b.seriesCode ?? tail(branch.id)) : null,
+    currency: entity?.currency ?? 'INR',
+    taxRegime: e.tax?.regime ?? null,
+    invoiceTitle: e.tax?.invoiceTitle ?? null,
+    taxNote: e.tax?.note ?? null,
+    taxRates: e.tax?.rates ?? [],
   };
 }
 

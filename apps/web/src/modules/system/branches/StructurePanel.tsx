@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/form';
 import { del, useOrgMutation, useUsers } from '../api';
 import { regionTree, useStructure, type Entity, type GroupBranch, type Region } from './api';
 import { CloseBranchDialog, CopyBranchDialog } from './BranchLifecycle';
-import { BranchDialog, EntityDialog, RegionDialog } from './StructureDialogs';
+import { BranchDialog } from './BranchDialog';
+import { EntityDialog, RegionDialog } from './StructureDialogs';
 
 type Open =
   | { what: 'entity'; row: Partial<Entity> }
