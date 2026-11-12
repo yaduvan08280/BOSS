@@ -1,5 +1,5 @@
 import { assertPublicUrl } from '../platform/safe-url';
-import type { Db } from '@mono/db';
+import type { Db, Prisma } from '@mono/db';
 import { emitEvent } from '../../lib/events';
 import { parseDefinition, fmsLink } from './engine';
 import { finishAutoStep } from './records';
@@ -17,16 +17,33 @@ const ago = (ms: number) =>
  * coordinator hear (once); at twice the planned time the problem solver is called in (once).
  */
 export async function watchFmsSteps(db: Db, now = new Date()) {
-  const open = await db.fmsRecordStep.findMany({
-    where: {
-      status: 'OPEN',
-      type: { not: 'AUTO' },
-      record: { status: 'RUNNING', deletedAt: null },
-      plannedAt: { lt: new Date(now.getTime() + HOUR) },
-    },
-    include: { record: { include: { flow: true } } },
-    take: 1000,
-  });
+  let sent = 0;
+  // Every open step is looked at, a page at a time: a fixed "first 1,000" would leave a busy company's later
+  // steps without their reminders for good.
+  for (let after: string | undefined; ;) {
+    const page = await db.fmsRecordStep.findMany({
+      where: {
+        status: 'OPEN',
+        type: { not: 'AUTO' },
+        record: { status: 'RUNNING', deletedAt: null },
+        plannedAt: { lt: new Date(now.getTime() + HOUR) },
+        ...(after ? { id: { gt: after } } : {}),
+      },
+      include: { record: { include: { flow: true } } },
+      orderBy: { id: 'asc' },
+      take: 500,
+    });
+    if (!page.length) break;
+    after = page.at(-1)!.id;
+    sent += await watchPage(db, page, now);
+    if (page.length < 500) break;
+  }
+  return sent;
+}
+
+type OpenStep = Prisma.FmsRecordStepGetPayload<{ include: { record: { include: { flow: true } } } }>;
+
+async function watchPage(db: Db, open: OpenStep[], now: Date) {
   let sent = 0;
   for (const s of open) {
     const f = s.record.flow;
