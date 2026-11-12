@@ -5,15 +5,21 @@ Rule for every phase below: the same Definition of Done as CLAUDE.md §17 (380 p
 state machines, audit + events, permissions on the API, company scoping tested, no file over 400 lines), **plus**
 every row of that phase's coverage checklist has an automated test (unit or e2e) before the phase is called done.
 
-"100%" is defined by the **coverage checklist** in §13: 259 workflows a hotel / bar / restaurant runs, plus 42
-universal-core rows (added 12/11/2026) that prove the same engines serve other industries — 301 rows. A workflow is
-covered when a person can do it end to end in MONO, or MONO drives it through a named integration (§10). The
-program is finished only when all 301 rows are green.
+"100%" is defined by the **coverage checklist** in §13: 259 workflows a hotel / bar / restaurant runs, plus (added
+12/11/2026) 42 universal-core rows, 10 architecture rows and 45 proof-pack rows for nine other industries — 356
+rows. A workflow is covered when a person can do it end to end in MONO, or MONO drives it through a named
+integration (§10). Hospitality is signed off when Phases 11–20 are green (311 rows); the whole program when all 356
+are.
 
 **Tweak of 12/11/2026 (every industry):** no hospitality scope was removed or moved later. What changed is *how* it
 is built — as industry-neutral engines with hospitality on top (§1.1) — plus a money core (Phase 12M, §3A), custom
 record types and a report builder (§2.6–2.7), item tracking for other trades (§4), industry packs (§12A) and four
 new decisions (§14, #15–18).
+
+**Answers of 12/11/2026 (second round):** the first hotel group has several branches, a franchise and outlets
+abroad, so Phase 12 keeps all four stages before Phase 13 (#15); the server's place is the customer's choice, so
+MONO must run well either way and under many users at once (§1.2, #16); Tally vouchers now, full accounting in
+MONO left open for later (#17); **every** industry on the list gets a proof pack, in a new Phase 21 (#18).
 
 ---
 
@@ -31,7 +37,8 @@ new decisions (§14, #15–18).
 | 17 | **Hotel: bookings, front desk, folio, night audit, housekeeping, rates** | 14, 15 (room service posts to folio) | |
 | 18 | **Banquets & events, bar & excise register, compliance, franchise royalties and audits** | 13–17 | Uses recipes, folios, the calendar |
 | 19 | **Integrations** (channel manager / OTAs, payment links, aggregators, e-invoice, Tally, booking engine, printers) | 15–18 | Plugs into finished modules |
-| 20 | **Reports, MIS, load test at service peak, offline drill, guides** | all | Sign-off |
+| 20 | **Reports, MIS, load test at service peak, offline drill, guides** | all | Hospitality sign-off |
+| 21 | **Proof packs for nine other industries** (manufacturing, pharmacy, retail, wholesale, mining, logistics, real estate, construction, gold and gems) | 20 | Proves "any company"; the hotel's go-live does not wait for it |
 
 Nothing in a later phase may start before the earlier phase's checklist is fully green.
 
@@ -66,6 +73,47 @@ Rules:
 | Running account (charges posted over time, settled later) | 17 | Guest folio, city ledger | Customer khata, construction running bills, flat payment schedules |
 | Statutory registers (a daily register from moves, exported in a set format) | 18 | Excise register, guest register, Form C | Schedule H drug register, gold stock register, royalty passes |
 | Site agent (printers, scales, scanners on a branch's own network) | 15, 19 | KOT and bill printers | Barcode and label printers, weighbridges, cash drawers |
+
+### 1.2 Architecture for many users at once, wherever the server lives (added 12/11/2026)
+
+The customer chooses where MONO runs (decision #16): the office PC, a server at the main property, or a cloud
+server. The same Docker images must work in all three, and the design must not depend on there being one small box.
+Checked in the code on 12/11/2026:
+
+**Already right (keep it this way):**
+- The API keeps nothing in memory between requests that matters: sessions are in the database, and live updates
+  travel through Postgres `NOTIFY`, so several API copies can run side by side.
+- Events and outgoing messages are taken with row locks (`SKIP LOCKED`), so several workers never send twice.
+- Stock changes are one guarded `UPDATE` (decision 74), safe when two people issue the same item together.
+- Files sit behind a storage interface that can move to S3-compatible storage.
+
+**Must change, and when:**
+
+| # | Change | Why | Phase |
+|---|---|---|---|
+| 1 | Count the request ceiling **per signed-in person / device**, and per IP only for visitors not signed in | Today it is 600 calls a minute per IP. Everyone at one outlet or office shares one internet address, so 30 tablets would lock each other out | 11 (first) |
+| 2 | Run **several API copies** behind Caddy; move the per-route limit counters to a shared store; size the database pool and add a pooler (PgBouncer) | One Node process uses one CPU core; the database pool is at its small default | 12 |
+| 3 | Cache the sign-in check for a few seconds (cleared at once on logout, disable or role change) | Every request reads the user and the session again — two queries before any work | 12 |
+| 4 | Dispatch each event in its own short transaction; separate queues for money (bills, stock), notifications and reports | Today a batch of 50 events is handled inside one transaction; a slow message must never hold up a bill | 12 |
+| 5 | One worker is the **leader** for jobs that must run once (Telegram polling, decision 30; daily jobs); any number of others share the queues | Lets the worker scale without double sends | 12 |
+| 6 | Every write from a device carries an **idempotency key**; orders, tables, bills and bookings carry a **version** | A retry or the offline queue never creates a second bill; two stewards never overwrite each other | 12M / 15 |
+| 7 | Number series handed out without a queue forming (a short lock per series; blocks per device offline) | Bill numbers are the busiest counter in the system | 12M |
+| 8 | Big tables (audit log, events, stock moves, bill lines, punches) split by month; indexes on branch + business date; old months archived | They grow without limit and every list reads them | 13 |
+| 9 | Heavy reports and exports run in the worker with a time budget, optionally on a **read copy** of the database | A year-end report must not slow the dinner service | 13 / 20 |
+| 10 | A **Health** screen for admins: response times, queue depth, database pool, slow queries, disk, last backup | You cannot fix what you cannot see | 12 |
+
+**Three supported shapes**, written up in INSTALL.md with the size each handles:
+one box (today: all services on one machine) · one cloud server with a managed database · several API and worker
+copies with a pooler, a read copy and S3-compatible files. Moving from one shape to the next is a config change,
+not a rewrite.
+
+**Load gates (each is a test that must pass before the phase is signed off):**
+- Phase 12: 300 people signed in across 20 branches from 20 shared internet addresses, 5 companies on one install,
+  p95 under 300 ms, no request refused by the ceiling.
+- Phase 15: the service-peak test of §11 (30 POS devices, 400 KOTs an hour, with back-office users) is run **here**,
+  not left to Phase 20, and repeated in Phase 20.
+- Phase 20: the same again at 10× (a chain of 10 properties) on the largest shape, with one API copy killed in the
+  middle — nothing lost, nothing billed twice.
 
 ---
 
@@ -281,8 +329,8 @@ The scope above is unchanged; it is built and tested in four stages so each can 
 | D | Franchises: isolation, shared brand content, supplies as sales, royalties, brand audits, exit | 3.8 |
 
 Stock and transfers (§3.6) are designed here and built in Phase 13, as before. Phase 12M starts once A and B are
-green. By default C and D are finished before Phase 13; decision #15 lets you move them to just before Phase 18 if
-the first hotel is in one country with no franchise — nothing is dropped either way.
+green. **Decision #15 answered 12/11/2026:** the first hotel group has several branches, a franchise and outlets
+outside India, so C and D are finished before Phase 13, as first planned.
 
 **Done when (G1–G45 in §13):** a group with 2 Indian entities (two states), 1 foreign entity and 1 franchise; 2 central
 kitchens; 7 outlets. An area manager over 4 outlets sees only those; the franchise sees only itself. Kitchen 1
@@ -318,7 +366,10 @@ the same one a shop, a pharmacy, a builder or a jeweller needs.
 - **Currency:** every amount is minor units + a currency code from day one (§3.7), so stage C needs no rewrite.
 - **Accounts:** MONO keeps the day-to-day books (party balances, cash and bank, tax collected and paid) and makes
   **vouchers for Tally** through the agent, with a mapping screen (MONO head → Tally ledger). Final accounts,
-  returns and audit stay in Tally with the accountant (decision #17).
+  returns and audit stay in Tally with the accountant (decision #17, answered 12/11/2026: vouchers to Tally now;
+  MONO as the full accounting book may come later). To keep that door open, every voucher is **stored in MONO as
+  balanced debit and credit lines** against MONO heads, so a full ledger, trial balance and final accounts can be
+  added on top later without touching bills.
 - CRM orders, purchase orders, FMS document steps and the public API all raise bills through this engine.
   Existing orders and payments are migrated; their numbers do not change.
 
@@ -537,9 +588,32 @@ charge, a voided KOT with approval, a printer going offline and the server losin
 - **Offline drill:** pull the internet during a service; pull the server's power (UPS) — written results.
 - Printable guides: steward, cashier, kitchen, bartender, front office, housekeeping, night auditor, store, GM.
 - **Added 12/11/2026 — proof that it is not only a hotel system:** the hospitality pack is exported and installed
-  into an empty company from the Master Library; then **two proof packs** for other industries (decision #18) are
-  set up **from screens only, with no new code** and run through a scripted day each (U37–U42). Anything a proof
-  pack cannot do goes into the core as a fix, not into the pack as a workaround.
+  into an empty company from the Master Library (U37–U42). The packs for the other industries follow in Phase 21.
+
+---
+
+## 11A. Phase 21 — Proof packs for every other industry (added 12/11/2026, decision #18)
+
+One pack for each industry named: **manufacturing, pharmacy, retail, wholesale, mining, logistics, real estate,
+construction, gold and gems** (hospitality is the tenth, already done). Each pack is set up **from screens only,
+with no new code**, installed into an empty company, and run through a scripted working day with five checks:
+
+1. Set up from the pack alone (masters, record types, flows, roles, menu, words on screen).
+2. Buy and receive (purchase, goods receipt, vendor bill, stock in the right tracking mode).
+3. Sell and bill (the trade's own sale: counter bill, dealer invoice, freight bill, running bill, booking + schedule).
+4. The thing special to the trade (table in §12A: expiry and Schedule H, piece + weight + day's rate, BOQ, trips…).
+5. Owner's view: reports, a register, receivables, and the Weekly MIS for that company.
+
+Rules:
+- Anything a pack cannot do goes **into the core as a fix**, never into the pack as a workaround, and gets a test.
+- Order: pharmacy and gold and gems first (the two furthest from a hotel, so they find the most gaps), then
+  retail, wholesale, manufacturing (GGM's own, checked with GGM staff), construction, real estate, logistics, mining.
+- Each pack ships with demo data (`seed:demo` gains a pack option) and a two-page printable guide.
+- A purpose-built screen is allowed only when a trade cannot work without one (as the floor view is for a
+  restaurant); it is listed here before it is built.
+
+**Done when (K1–K45):** all nine scripted days pass in CI, each in its own company on the same install, with the
+hospitality company running beside them.
 
 ---
 
@@ -580,7 +654,7 @@ when a customer needs it, the same way §10 treats OTAs and e-invoice.
 
 ---
 
-## 13. Coverage checklist (the 301 rows that define 100%)
+## 13. Coverage checklist (the 356 rows that define 100%)
 
 Each row becomes a test. Count per area:
 
@@ -595,8 +669,10 @@ Each row becomes a test. Count per area:
 | H Hotel | 50 | rates, tape chart, bookings, groups, check-in, Form C, folio, routing, night audit, housekeeping, minibar, lost & found, OOO |
 | B Banquets, bar, compliance | 20 | enquiry → BEO → indent → bill, excise register, dry days, licences, HACCP logs |
 | X Integrations | 20 | channel manager, booking engine, payment links, aggregator reconciliation, e-invoice, Tally, printers |
-| U Universal core and packs | 42 | U1–U10 record types, child lines, links, reportable fields, report builder · U11–U22 parties, tax profiles by date, bills, credit notes, receivables, payables, cash books, Tally vouchers · U23–U30 serials, attributes, second unit, barcodes, price lists, rate board · U31–U36 one non-hospitality test per engine (booking, counter billing, running account, price rules, registers, site agent) · U37–U42 pack install, upgrade, export and two proof packs |
-| **Total** | **301** | (259 hospitality + 42 universal) |
+| U Universal core and packs | 42 | U1–U10 record types, child lines, links, reportable fields, report builder · U11–U22 parties, tax profiles by date, bills, credit notes, receivables, payables, cash books, Tally vouchers · U23–U30 serials, attributes, second unit, barcodes, price lists, rate board · U31–U36 one non-hospitality test per engine (booking, counter billing, running account, price rules, registers, site agent) · U37–U42 pack install, upgrade, export, two packs in one company, pack words and menu, removing a pack keeps its data |
+| A Architecture for many users | 10 | per-person ceiling, several API copies, shared counters, sign-in cache, short event transactions, leader worker, idempotency keys and versions, number series under load, monthly tables, Health screen (§1.2) |
+| K Proof packs (Phase 21) | 45 | 9 industries × 5 checks: set up from the pack, buy and receive, sell and bill, the trade's special thing, owner's view (§11A) |
+| **Total** | **356** | (259 hospitality + 42 universal + 10 architecture + 45 proof packs) |
 
 The full row list is written into `docs/plans/coverage.md` at the start of Phase 11, reviewed by GGM / the hotel
 team, and frozen before building.
@@ -621,10 +697,10 @@ team, and frozen before building.
 | 12 | Do central kitchens ever send food across borders, or are foreign outlets supplied locally? | 12 |
 | 13 | List of entities (GSTINs / foreign companies), regions, branches and which kitchen feeds which outlet | 12 |
 | 14 | Default approval routing per module (branch manager first or department head first) | 12 |
-| 15 | Is the first hotel in one country with no franchise? If yes, Phase 12 stages C and D may be built just before Phase 18 instead of before Phase 13 (the hotel sees POS and rooms sooner; nothing is dropped) | 12 |
-| 16 | Where the server lives once there are outlets in several cities or countries: the office PC (as today), a server at the main property, or a cloud server. Recommended for several branches: a cloud server, with a site agent at each branch | 12 / 15 |
-| 17 | MONO keeps day-to-day books and sends vouchers to Tally (recommended), or MONO becomes the full accounting book later | 12M |
-| 18 | The two proof packs for Phase 20 (recommended: a pharmacy counter and a jeweller — the two furthest from a hotel) | 20 |
+| 15 | **Answered 12/11/2026:** the first hotel group has several branches, a franchise and outlets abroad → Phase 12 stages C and D stay before Phase 13 | 12 |
+| 16 | **Answered 12/11/2026:** where the server lives is each customer's choice → MONO supports three shapes and passes the load gates of §1.2 on them. Still needed from the hotel before go-live: which shape they choose | 15 |
+| 17 | **Answered 12/11/2026:** vouchers to Tally now; MONO as the full accounting book is left open, and vouchers are stored as balanced lines so it can be added later | 12M |
+| 18 | **Answered 12/11/2026:** all industries listed get a proof pack → Phase 21 (§11A) | 21 |
 
 ## 15. Size
 Roughly the size of Phases 5–10 together (Phase 12 alone is about one large phase). Phase 11 is small enough to start now and is useful for GGM even
@@ -633,3 +709,7 @@ without the hospitality modules.
 The 12/11/2026 tweak adds about one phase of work (Phase 12M), makes Phases 11 and 13 somewhat larger, and makes
 Phases 15–18 somewhat smaller, because bills, bookings, running accounts and registers are each built once. The next
 industry then costs a pack plus a few purpose-built screens, not another ten phases.
+
+The second round of 12/11/2026 adds the architecture work of §1.2 (spread over Phases 11–15, about half a phase in
+all) and Phase 21 (about one phase: mostly setup and scripted tests, plus the core fixes the packs uncover — expect
+most of them from pharmacy and gold and gems).
