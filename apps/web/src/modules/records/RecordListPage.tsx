@@ -5,7 +5,7 @@ import { Link, useParams, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import type { Me } from '@mono/shared';
 import { EmptyState, ErrorState, PageSkeleton } from '@/components/page';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/modules/records/ui';
 import {
   DropdownMenu,
   DropdownMenuContent,

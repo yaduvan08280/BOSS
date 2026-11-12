@@ -123,7 +123,10 @@ export type RecordPermissions = z.infer<typeof recordPermissionsSchema>;
 const prefix = z
   .string()
   .trim()
-  .regex(/^[A-Z][A-Z0-9]{0,7}$/, 'Use 1 to 8 capital letters or digits, starting with a letter (SV, RX, TRIP)');
+  .regex(
+    /^[A-Z][A-Z0-9]{0,7}$/,
+    'Use 1 to 8 capital letters or digits, starting with a letter (SV, RX, TRIP)',
+  );
 
 export const recordTypeInputSchema = z.object({
   name: z.string().trim().min(2).max(60),
@@ -219,7 +222,7 @@ export function checkRecordDefinition(def: RecordDefinition): string[] {
   }
   // Every status must be reachable from the start, or records could never stand in it.
   const reach = new Set([def.start]);
-  for (let grew = true; grew; ) {
+  for (let grew = true; grew;) {
     grew = false;
     for (const m of def.moves)
       if (reach.has(m.from) && !reach.has(m.to)) {

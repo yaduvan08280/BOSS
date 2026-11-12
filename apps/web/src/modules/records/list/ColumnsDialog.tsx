@@ -2,7 +2,7 @@ import { ArrowDown, ArrowUp } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { listable, type RecordDefinition } from '@mono/shared';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/modules/records/ui';
 import { Dialog } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/form';
 import { BUILTIN, columnLabel } from './columns';

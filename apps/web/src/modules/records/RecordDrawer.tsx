@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { OrgPerson } from '@mono/shared';
 import { ErrorState, PageSkeleton } from '@/components/page';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/modules/records/ui';
 import { Confirm, Dialog } from '@/components/ui/dialog';
 import { Field, Textarea } from '@/components/ui/form';
 import { Sheet, SheetContent } from '@/components/ui/sheet';

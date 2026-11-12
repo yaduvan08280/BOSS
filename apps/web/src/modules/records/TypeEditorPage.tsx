@@ -5,7 +5,7 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { hasPermission, type Me, type RecordTypeInput } from '@mono/shared';
 import { ErrorState, PageSkeleton } from '@/components/page';
 import { StatusChip } from '@/components/status-chip';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/modules/records/ui';
 import { TabStrip } from '@/components/work';
 import { ApiError } from '@/lib/api';
 import { FieldsEditor } from '@/modules/fms/FieldsEditor';
@@ -88,25 +88,29 @@ function Editor({ type }: { type?: RecordTypeView }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <Button asChild variant="ghost" size="sm">
+        <Button asChild variant="ghost" size="sm" className="max-sm:order-1">
           <Link to="/records/types">
             <ArrowLeft /> {t('records.types.title')}
           </Link>
         </Button>
-        <h1 className="min-w-0 flex-1 truncate text-lg font-semibold sm:text-xl">
+        {/* On phones the name gets a line of its own (it was squeezed to one letter beside the buttons). */}
+        <h1 className="min-w-0 flex-1 truncate text-lg font-semibold max-sm:order-3 max-sm:basis-full sm:text-xl">
           {draft.name || t('records.types.new')}
         </h1>
-        {all.length ? (
-          <StatusChip tone="warn">{t('records.ed.toFix', { count: all.length })}</StatusChip>
-        ) : (
-          <StatusChip tone="ok">{t('records.ed.ready')}</StatusChip>
-        )}
+        <span className="max-sm:order-2 max-sm:ml-auto">
+          {all.length ? (
+            <StatusChip tone="warn">{t('records.ed.toFix', { count: all.length })}</StatusChip>
+          ) : (
+            <StatusChip tone="ok">{t('records.ed.ready')}</StatusChip>
+          )}
+        </span>
         {type && (
-          <Button asChild variant="secondary" size="sm">
+          <Button asChild variant="secondary" size="sm" className="max-sm:order-4">
             <Link to={`/records/${type.id}`}>{t('records.ed.openList')}</Link>
           </Button>
         )}
         <Button
+          className="max-sm:order-4"
           disabled={problems.length > 0 || ownSection || save.isPending || (!dirty && !!type)}
           onClick={onSave}
         >

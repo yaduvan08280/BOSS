@@ -2,7 +2,7 @@ import { FileText, Loader2, Send, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileDrop } from '@/components/file-drop';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/modules/records/ui';
 import { Textarea } from '@/components/ui/form';
 import type { Uploaded } from '@/lib/upload';
 import { formatShortDateTime } from '@/lib/when';

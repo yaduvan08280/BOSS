@@ -2,7 +2,7 @@ import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { OrgPerson } from '@mono/shared';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/modules/records/ui';
 import { Dialog } from '@/components/ui/dialog';
 import { ApiError } from '@/lib/api';
 import { FieldsForm } from '@/modules/fms/FieldsForm';

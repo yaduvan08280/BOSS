@@ -1,7 +1,7 @@
 import { Plus, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { RecordTable } from '@mono/shared';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/modules/records/ui';
 import { Input } from '@/components/ui/input';
 import { FieldsEditor } from '@/modules/fms/FieldsEditor';
 import type { FormOwner } from '@/modules/fms/form/ctx';

@@ -82,16 +82,23 @@ describe('record type definition', () => {
   });
 
   it('U1: the shape is strict — unknown keys, bad prefixes, colours outside the fixed set are refused', () => {
-    const base = { name: 'Trip', pluralName: 'Trips', definition: siteVisit(), menu: { section: null, icon: 'truck' } };
+    const base = {
+      name: 'Trip',
+      pluralName: 'Trips',
+      definition: siteVisit(),
+      menu: { section: null, icon: 'truck' },
+    };
     expect(recordTypeInputSchema.safeParse({ ...base, prefix: 'sv' }).success).toBe(false);
     expect(recordTypeInputSchema.safeParse({ ...base, prefix: 'TOOLONGPREFIX' }).success).toBe(false);
     expect(recordTypeInputSchema.safeParse({ ...base, prefix: 'TR' }).success).toBe(true);
     expect(
-      recordTypeInputSchema.safeParse({ ...base, prefix: 'TR', menu: { section: null, icon: 'skull' } }).success,
+      recordTypeInputSchema.safeParse({ ...base, prefix: 'TR', menu: { section: null, icon: 'skull' } })
+        .success,
     ).toBe(false);
     const def = siteVisit();
     expect(
-      recordDefinitionSchema.safeParse({ ...def, statuses: [{ key: 'a', label: 'A', kind: 'pink' }] }).success,
+      recordDefinitionSchema.safeParse({ ...def, statuses: [{ key: 'a', label: 'A', kind: 'pink' }] })
+        .success,
     ).toBe(false);
     expect(recordDefinitionSchema.safeParse({ ...def, surprise: true }).success).toBe(false);
     expect(
@@ -202,9 +209,9 @@ describe('record type definition', () => {
   });
 
   it('U1: a record type itself is archived and brought back through a machine', () => {
-    expect(transition(recordTypeMachine, { from: 'ACTIVE', action: 'archive', roles: ['admin'], ctx: {} }).to).toBe(
-      'ARCHIVED',
-    );
+    expect(
+      transition(recordTypeMachine, { from: 'ACTIVE', action: 'archive', roles: ['admin'], ctx: {} }).to,
+    ).toBe('ARCHIVED');
     expect(() =>
       transition(recordTypeMachine, { from: 'ARCHIVED', action: 'archive', roles: ['admin'], ctx: {} }),
     ).toThrow(TransitionError);
@@ -214,8 +221,19 @@ describe('record type definition', () => {
     const def = siteVisit();
     expect(recordTitleOf(def, { site: ' Tonk mine ', cost: 5 }, 'SV/26-27/0001')).toBe('Tonk mine');
     expect(recordTitleOf(def, { cost: 5 }, 'SV/26-27/0001')).toBe('SV/26-27/0001');
-    expect(recordTitleOf({ ...def, displayField: 'kind' }, { site: 'X', kind: 'Repair' }, 'c')).toBe('Repair');
-    expect(defaultColumns(def)).toEqual(['code', 'title', 'status', 'site', 'visit_on', 'cost', 'kind', 'createdAt']);
+    expect(recordTitleOf({ ...def, displayField: 'kind' }, { site: 'X', kind: 'Repair' }, 'c')).toBe(
+      'Repair',
+    );
+    expect(defaultColumns(def)).toEqual([
+      'code',
+      'title',
+      'status',
+      'site',
+      'visit_on',
+      'cost',
+      'kind',
+      'createdAt',
+    ]);
     expect(defaultColumns({ ...def, columns: ['code', 'cost'] })).toEqual(['code', 'cost']);
     expect(filterOpsFor(def.fields[2]!)).toEqual(['eq', 'gte', 'lte', 'filled', 'empty']);
     expect(filterOpsFor(def.fields[3]!)).toEqual(['eq', 'filled', 'empty']);

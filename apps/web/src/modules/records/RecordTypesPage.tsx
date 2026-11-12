@@ -5,7 +5,7 @@ import { Link } from 'react-router';
 import { financialYear, type Me } from '@mono/shared';
 import { EmptyState, ErrorState, PageSkeleton } from '@/components/page';
 import { StatusChip } from '@/components/status-chip';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/modules/records/ui';
 import { Card } from '@/components/ui/card';
 import { Confirm } from '@/components/ui/dialog';
 import { recordsApi, useRecordsMutation, useRecordTypes, type RecordTypeView } from './api';

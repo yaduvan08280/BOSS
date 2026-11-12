@@ -1,7 +1,7 @@
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { listable, type RecordDefinition } from '@mono/shared';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/modules/records/ui';
 import { cn } from '@/lib/utils';
 import type { ListParams, RecordList } from '../api';
 import { RecordCell } from './cells';

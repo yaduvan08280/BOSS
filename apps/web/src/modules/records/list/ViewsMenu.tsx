@@ -2,7 +2,7 @@ import { Bookmark, BookmarkPlus, Loader2, Trash2, Users } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { RecordViewConfig } from '@mono/shared';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/modules/records/ui';
 import { Dialog } from '@/components/ui/dialog';
 import {
   DropdownMenu,

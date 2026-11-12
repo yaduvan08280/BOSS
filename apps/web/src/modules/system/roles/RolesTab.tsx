@@ -155,7 +155,7 @@ export function RolesTab() {
             <tbody className="divide-y">
               {modules.map((m) => (
                 <tr key={m}>
-                  <td className="py-2.5 font-medium">{t(`org.modules.${m}`)}</td>
+                  <td className="py-2.5 font-medium">{t([`org.modules.${m}`, `${m}.title`])}</td>
                   {actions.map((a) => (
                     <td key={a} className="text-center">
                       <Checkbox

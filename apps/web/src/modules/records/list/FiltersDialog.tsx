@@ -10,7 +10,7 @@ import {
   type RecordFilter,
   type RecordFilterOp,
 } from '@mono/shared';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/modules/records/ui';
 import { DateInput } from '@/components/ui/date-input';
 import { Dialog } from '@/components/ui/dialog';
 import { Field, Select } from '@/components/ui/form';

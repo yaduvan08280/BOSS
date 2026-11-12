@@ -8,7 +8,7 @@ import {
   type RecordStatus,
 } from '@mono/shared';
 import { StatusChip } from '@/components/status-chip';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/modules/records/ui';
 import { Checkbox, Field, Select } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
