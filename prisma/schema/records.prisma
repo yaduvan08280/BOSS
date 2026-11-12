@@ -1,0 +1,108 @@
+// Custom record types (phase 11, plan §2.6): a company's own things — a site visit, a prescription, a trip —
+// with fields, child lines, a number series, statuses with allowed moves, and permissions per type.
+
+model RecordType {
+  id          String    @id @default(cuid(2))
+  companyId   String    @map("company_id")
+  /// "Site visit"
+  name        String
+  /// "Site visits" — the list screen and the menu entry
+  pluralName  String    @map("plural_name")
+  /// Short name for links and the API ("site_visit"); freed (null) when the type is deleted.
+  code        String?
+  /// Number series: {PREFIX}/{FY}/{0001}
+  prefix      String
+  description String?
+  /// { fields, tables, statuses, start, moves, displayField?, columns? } — see packages/shared/src/records
+  definition  Json
+  /// { section: string | null, icon: string } — where it shows in the left menu (null section = hidden)
+  menu        Json
+  /// { view, create, edit, approve } — each a list of role ids, or "*" for everyone
+  permissions Json
+  /// ACTIVE | ARCHIVED
+  status      String    @default("ACTIVE")
+  createdById String?   @map("created_by_id")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  records RecordEntry[]
+  views   RecordView[]
+
+  @@unique([companyId, code])
+  @@index([companyId, deletedAt, status])
+  @@map("record_types")
+}
+
+/// One record of a record type. (Not called `Record`: that is a TypeScript word.)
+model RecordEntry {
+  id          String    @id @default(cuid(2))
+  companyId   String    @map("company_id")
+  typeId      String    @map("type_id")
+  /// Per type, per financial year; never reused.
+  number      Int
+  fy          String
+  /// "SV/26-27/0001"
+  code        String
+  title       String
+  /// A status key of the type's definition; changed only through the shared transition().
+  status      String
+  /// Field values, with the links of picked rows under `_refs`.
+  data        Json
+  /// Child lines: { tableKey: [ row, … ] }
+  lines       Json      @default("{}")
+  createdById String?   @map("created_by_id")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  type   RecordType    @relation(fields: [typeId], references: [id])
+  events RecordEvent[]
+
+  @@unique([typeId, fy, number])
+  @@index([companyId, typeId, deletedAt, status])
+  @@index([companyId, typeId, createdAt])
+  @@index([companyId, typeId, title])
+  @@index([companyId, typeId, code])
+  @@map("records")
+}
+
+/// History and notes of a record: created | changed | status | note | file | file_removed | deleted
+model RecordEvent {
+  id         String   @id @default(cuid(2))
+  companyId  String   @map("company_id")
+  recordId   String   @map("record_id")
+  type       String
+  actorId    String?  @map("actor_id")
+  note       String?
+  fromStatus String?  @map("from_status")
+  toStatus   String?  @map("to_status")
+  /// What changed ({ fields: [...] }), the move's action, a file's name …
+  data       Json?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  record RecordEntry @relation(fields: [recordId], references: [id])
+
+  @@index([recordId, createdAt])
+  @@index([companyId, createdAt])
+  @@map("record_events")
+}
+
+/// A saved view of a type's list: search, filters, sort and columns. Mine, or shared with everyone.
+model RecordView {
+  id        String   @id @default(cuid(2))
+  companyId String   @map("company_id")
+  typeId    String   @map("type_id")
+  userId    String   @map("user_id")
+  name      String
+  shared    Boolean  @default(false)
+  /// { q?, status?, from?, to?, filters?, sort?, dir?, columns? }
+  config    Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  type RecordType @relation(fields: [typeId], references: [id])
+
+  @@index([companyId, typeId, userId])
+  @@map("record_views")
+}

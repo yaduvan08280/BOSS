@@ -60,3 +60,4 @@ export * from './crm/scot';
 export * from './machines/crm';
 export * from './masters/library';
 export * from './platform/events';
+export * from './records';
