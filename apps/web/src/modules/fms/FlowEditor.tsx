@@ -39,6 +39,7 @@ import { FieldsEditor } from './FieldsEditor';
 import { keyFor } from './keys';
 import { FlowDetails } from './FlowDetails';
 import { FmsChart } from './FmsChart';
+import { KnownFieldsFor } from './formula/KnownFieldsFor';
 import { PublishProblems } from './PublishProblems';
 import { StepEditor } from './StepEditor';
 
@@ -122,11 +123,7 @@ function Editor({ flow }: { flow: FlowDetail; me: Me }) {
     steps.splice(i + by, 0, x!);
     edit({ ...def, steps });
   };
-  const allFields = [...def.startFields, ...def.steps.flatMap((s) => s.fields)].map((f) => ({
-    key: f.key,
-    label: f.label,
-    type: f.type,
-  }));
+  const allFields = [...def.startFields, ...def.steps.flatMap((s) => s.fields)];
   const status =
     flow.status === 'PUBLISHED'
       ? flow.dirty || changed
@@ -329,19 +326,21 @@ function Editor({ flow }: { flow: FlowDetail; me: Me }) {
             )}
             <div className="rounded-card border bg-card p-4">
               {step ? (
-                <StepEditor
-                  key={step.key}
-                  step={step}
-                  steps={def.steps}
-                  people={people}
-                  docTypes={docTypes}
-                  fields={allFields}
-                  onChange={setStep}
-                  onDelete={() => (
-                    edit({ ...def, steps: def.steps.filter((s) => s.key !== step.key) }),
-                    setSelected(null)
-                  )}
-                />
+                <KnownFieldsFor def={def} stepKey={step.key}>
+                  <StepEditor
+                    key={step.key}
+                    step={step}
+                    steps={def.steps}
+                    people={people}
+                    docTypes={docTypes}
+                    fields={allFields}
+                    onChange={setStep}
+                    onDelete={() => (
+                      edit({ ...def, steps: def.steps.filter((s) => s.key !== step.key) }),
+                      setSelected(null)
+                    )}
+                  />
+                </KnownFieldsFor>
               ) : (
                 <p className="text-sm text-muted-foreground">{t('fms.b.pickStep')}</p>
               )}

@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import type { FlowDefinition, FlowIssue } from '@mono/shared';
 import { Dialog } from '@/components/ui/dialog';
+import { FormulaIssueText } from './formula/IssueText';
 
 /** What stops a flow from being published; a click jumps to the step. */
 export function PublishProblems({
@@ -33,7 +34,7 @@ export function PublishProblems({
                   : t('fms.b.wholeFlow')}
               </span>
               {' — '}
-              {t(`fms.issue.${p.code}`)}
+              {p.code === 'formula' ? <FormulaIssueText issue={p} def={def} /> : t(`fms.issue.${p.code}`)}
             </button>
           </li>
         ))}

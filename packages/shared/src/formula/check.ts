@@ -17,6 +17,9 @@ const isFn = (name: string): name is FormulaFn => (FORMULA_FUNCTIONS as readonly
 /** Values of one group can be compared with each other. */
 const group = (k: Kind) => (k === 'dt' ? 'date' : k);
 
+/** Can a formula read a field of this type at all? (Photos, files, long text, phone numbers… can't be used.) */
+export const formulaCanRead = (type: string): boolean => type === 'formula' || fieldKind(type) !== null;
+
 /** Does formula field `from` read `target`, directly or through other formulas? */
 function reaches(byKey: Map<string, FormulaField>, from: string, target: string): boolean {
   const seen = new Set<string>();

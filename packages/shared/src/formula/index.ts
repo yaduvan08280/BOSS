@@ -17,7 +17,7 @@ export {
   type ParsedFormula,
 } from './types';
 export { formulaFields, parseFormula } from './parse';
-export { checkFormula, formulaGives } from './check';
+export { checkFormula, formulaCanRead, formulaGives } from './check';
 export { evalFormula, FORMULA_DEFAULT_TZ, type FormulaOptions } from './eval';
 export { computeFormulas } from './compute';
 export { FORMULA_MESSAGES, formulaMessage } from './message';

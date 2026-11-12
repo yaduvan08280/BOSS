@@ -15,5 +15,8 @@ export function showValue(
     if (field?.type === 'datetime' || /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(v)) return formatDateTime(v, tz);
   }
   if (field?.type === 'amount' && typeof v === 'number') return `₹${v.toLocaleString('en-IN')}`;
+  // A formula's number: Indian grouping, and as many decimals as the formula kept.
+  if (field?.type === 'formula' && typeof v === 'number')
+    return v.toLocaleString('en-IN', { maximumFractionDigits: 9 });
   return String(v);
 }
