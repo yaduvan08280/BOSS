@@ -1,0 +1,102 @@
+{
+  "nav.reports": "Reports",
+  "navDesc.reports": "Counts and totals from your processes and records",
+  "reports": {
+    "title": "Reports",
+    "intro": "Build a report on any process or record type: choose columns, filter, group and total. Reports use the fields marked “reportable”.",
+    "new": "New report",
+    "none": "No reports yet",
+    "noneBody": "Make the first one: pick a process or a record type and group it the way you want to see it.",
+    "noneShared": "Nobody has shared a report with you yet.",
+    "mine": "Made by you",
+    "by": "By {{name}}",
+    "shared": "Shared",
+    "name": "Name of the report",
+    "saved": "“{{name}}” saved",
+    "deleted": "Report deleted",
+    "delete": "Delete",
+    "deleteTitle": "Delete “{{name}}”?",
+    "deleteBody": "People it is shared with will no longer see it.",
+    "noSources": "There is nothing to report on yet. Publish a process or make a record type first.",
+    "noRows": "Nothing matches these filters.",
+    "matching_one": "{{count}} record matches",
+    "matching_other": "{{count}} records match",
+    "total": "Total",
+    "pending": "Older records are still being copied for: {{fields}}. Numbers may be incomplete for a few minutes.",
+    "chartLabel": "{{measure}} by {{by}}",
+    "kind": {
+      "flow": "Process",
+      "recordType": "Records"
+    },
+    "export": {
+      "xlsx": "Excel",
+      "pdf": "PDF",
+      "csv": "CSV"
+    },
+    "look": {
+      "table": "Table",
+      "bar": "Bars",
+      "line": "Line",
+      "pie": "Pie"
+    },
+    "bucket": {
+      "day": "By day",
+      "week": "By week",
+      "month": "By month",
+      "quarter": "By quarter",
+      "fy": "By financial year"
+    },
+    "fn": {
+      "count": "Count",
+      "sum": "Total of",
+      "avg": "Average of",
+      "min": "Lowest",
+      "max": "Highest"
+    },
+    "op": {
+      "eq": "is",
+      "contains": "contains",
+      "gte": "is at least",
+      "lte": "is at most",
+      "between": "is between",
+      "last_days": "in the last … days",
+      "this_week": "this week",
+      "this_month": "this month",
+      "this_fy": "this financial year",
+      "filled": "is filled",
+      "empty": "is empty"
+    },
+    "b": {
+      "source": "What to report on",
+      "sourceHint": "A process or one of your record types.",
+      "noReportable": "This source has no reportable fields yet. Mark fields “reportable” in its form to use them here; until then you can use the number, title, status, date and person.",
+      "columns": "Columns",
+      "columnsHint": "The columns of the list. Tap to add or take off.",
+      "columnsGrouped": "A grouped report shows one row per group, so it has no columns of its own.",
+      "filters": "Filters",
+      "filtersHint": "Only records that pass every filter are counted.",
+      "filterField": "Field",
+      "filterOp": "How",
+      "value": "Value",
+      "from": "From",
+      "to": "To",
+      "days": "Days",
+      "addFilter": "Add a filter",
+      "removeFilter": "Remove this filter",
+      "group": "Group by",
+      "groupHint": "One row per value: by customer, by month, by status …",
+      "groupField": "Field to group by",
+      "noGroup": "No group (a plain list)",
+      "bucket": "How dates are grouped",
+      "totals": "Totals",
+      "totalsHint": "What to work out for each group, and for the whole report.",
+      "totalFn": "What to work out",
+      "totalField": "Of which field",
+      "addTotal": "Add a total",
+      "removeTotal": "Remove this total",
+      "look": "Show as",
+      "share": "Share with",
+      "shareHint": "People with these roles can open the report (they can't change it). They see only what they may see in its source."
+    }
+  }
+}

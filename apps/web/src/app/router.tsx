@@ -81,6 +81,8 @@ const RecordTypesPage = page(() => import('@/modules/records/RecordTypesPage'), 
 const TypeEditorPage = page(() => import('@/modules/records/TypeEditorPage'), 'TypeEditorPage');
 const RecordListPage = page(() => import('@/modules/records/RecordListPage'), 'RecordListPage');
 const ListsPage = page(() => import('@/modules/lists/ListsPage'), 'ListsPage');
+const ReportsPage = page(() => import('@/modules/reports/ReportsPage'), 'ReportsPage');
+const ReportBuilderPage = page(() => import('@/modules/reports/ReportBuilderPage'), 'ReportBuilderPage');
 const RulesWizard = page(() => import('@/modules/hr/RulesWizard'), 'RulesWizard');
 
 const placeholderRoutes = ALL_ITEMS.filter((i) => i.phase > 0).map((i) => ({
@@ -144,6 +146,9 @@ export const router = createBrowserRouter([
       { path: '/records/types/new', element: <WithMe render={(me) => <TypeEditorPage me={me} />} /> },
       { path: '/records/types/:id', element: <WithMe render={(me) => <TypeEditorPage me={me} />} /> },
       { path: '/records/:typeId', element: <WithMe render={(me) => <RecordListPage me={me} />} /> },
+      { path: '/reports', element: <ReportsPage /> },
+      { path: '/reports/new', element: <WithMe render={(me) => <ReportBuilderPage me={me} />} /> },
+      { path: '/reports/:id', element: <WithMe render={(me) => <ReportBuilderPage me={me} />} /> },
       { path: '/fms/live', element: <WithMe render={(me) => <LiveFmsPage me={me} />} /> },
       { path: '/fms/my-steps', element: <WithMe render={(me) => <MyStepsPage me={me} />} /> },
       { path: '/documents', element: <WithMe render={(me) => <DocumentsPage me={me} />} /> },
