@@ -1,13 +1,14 @@
 import type { Db, Prisma } from '@mono/db';
-import { addDays, financialYear, itemsTotal, localDate, weekOf, zonedToUtc } from '@mono/shared';
+import { addDays, localDate, zonedToUtc } from '@mono/shared';
 import { notFound } from '../../lib/errors';
 import { can, type Actor } from '../work/actor';
 import { parseDefinition } from './engine';
+import { liveColumnValues } from './paths';
 
 export const LIVE_TABS = ['running', 'late', 'dueToday', 'onHold', 'closed'] as const;
 export type LiveTab = (typeof LIVE_TABS)[number];
 
-async function dayRange(db: Db, companyId: string) {
+export async function dayRange(db: Db, companyId: string) {
   const c = await db.company.findUniqueOrThrow({
     where: { id: companyId },
     select: { timezone: true, fyStartMonth: true },
@@ -34,12 +35,13 @@ export async function liveFms(db: Db, actor: Actor, flowId: string | undefined, 
       currentVersionId: true,
       coordinatorId: true,
       solverId: true,
+      liveColumns: true,
     },
   });
   const flow = flows.find((f) => f.id === flowId) ?? flows[0];
-  if (!flow) return { flows, flow: null, stages: [], tiles: null, records: [] };
+  if (!flow) return { flows, flow: null, stages: [], tiles: null, columns: [], records: [] };
   const now = new Date();
-  const { from, to } = await dayRange(db, actor.companyId);
+  const { from, to, tz } = await dayRange(db, actor.companyId);
   const version = flow.currentVersionId
     ? await db.flowVersion.findUnique({ where: { id: flow.currentVersionId } })
     : null;
@@ -93,16 +95,20 @@ export async function liveFms(db: Db, actor: Actor, flowId: string | undefined, 
       where: { ...base, status: { in: ['CLOSED', 'CANCELLED'] }, closedAt: { gte: addDaysUtc(now, -90) } },
     }),
   ]);
+  // The extra columns this process's list shows (linked, remembered and worked-out values — plan §2.5).
+  const extra = await liveColumnValues(db, actor, flow, def, tz, records);
   return {
     flows,
     flow,
     stages,
     tiles: { running, late: lateIds.size, dueToday: todayIds.size, onHold, closed },
+    columns: extra.columns,
     records: records.map((r) => {
       const steps = parseDefinition(r.version.definition).steps.length;
       const { version: _v, ...rest } = r;
       return {
         ...rest,
+        cols: extra.values.get(r.id) ?? {},
         of: steps,
         lateMs: Math.max(0, ...r.steps.map((s) => now.getTime() - s.plannedAt.getTime())),
       };
@@ -308,93 +314,4 @@ export async function flowReport(db: Db, actor: Actor, flowId: string, days = 90
       onTimePct: Math.round((p.onTime / p.total) * 100),
     })),
   };
-}
-
-type Period = 'TODAY' | 'WEEK' | 'MONTH' | 'FY';
-
-/** KPI cards: each card's value this period and the period before. */
-export async function kpiValues(db: Db, actor: Actor, flowId: string) {
-  const cards = await db.kpiCard.findMany({
-    where: { companyId: actor.companyId, flowId },
-    orderBy: { position: 'asc' },
-  });
-  if (!cards.length) return [];
-  const { tz, fyStart } = await dayRange(db, actor.companyId);
-  const now = new Date();
-  const range = (p: Period, back: 0 | 1): [Date, Date] => {
-    const today = localDate(now, tz);
-    if (p === 'TODAY')
-      return [zonedToUtc(addDays(today, -back), 0, tz), zonedToUtc(addDays(today, 1 - back), 0, tz)];
-    if (p === 'WEEK') {
-      const w = weekOf(now, tz);
-      return [addDaysUtc(w.from, -7 * back), addDaysUtc(w.to, -7 * back)];
-    }
-    if (p === 'MONTH') {
-      const [y, m] = today.split('-').map(Number) as [number, number];
-      const start = (yy: number, mm: number) =>
-        `${yy + Math.floor((mm - 1) / 12)}-${String(((((mm - 1) % 12) + 12) % 12) + 1).padStart(2, '0')}-01`;
-      return [zonedToUtc(start(y, m - back), 0, tz), zonedToUtc(start(y, m - back + 1), 0, tz)];
-    }
-    const fy = financialYear(now, tz, fyStart);
-    const s = `${fy.start - back}-${String(fyStart).padStart(2, '0')}-01`;
-    const e = `${fy.start - back + 1}-${String(fyStart).padStart(2, '0')}-01`;
-    return [zonedToUtc(s, 0, tz), zonedToUtc(e, 0, tz)];
-  };
-  const records = await db.fmsRecord.findMany({
-    where: {
-      companyId: actor.companyId,
-      flowId,
-      deletedAt: null,
-      status: { not: 'CANCELLED' },
-      startedAt: { gte: range('FY', 1)[0] },
-    },
-    select: {
-      startedAt: true,
-      data: true,
-      steps: { where: { status: 'DONE' }, select: { stepKey: true, doneAt: true, data: true } },
-    },
-  });
-  const value = (source: string, agg: string, [a, b]: [Date, Date]) => {
-    const nums: number[] = [];
-    let count = 0;
-    for (const r of records) {
-      if (source === 'count' || source.startsWith('start:')) {
-        if (r.startedAt < a || r.startedAt >= b) continue;
-        if (source === 'count') {
-          count++;
-          continue;
-        }
-        const v = (r.data as Record<string, unknown>)[source.slice(6)];
-        push(v);
-      } else {
-        const [, key, field] = source.split(':');
-        for (const s of r.steps)
-          if (s.stepKey === key && s.doneAt && s.doneAt >= a && s.doneAt < b)
-            push((s.data as Record<string, unknown>)[field!]);
-      }
-    }
-    function push(v: unknown) {
-      if (v === undefined || v === null || v === '') return;
-      count++;
-      const n = Array.isArray(v) ? itemsTotal({ v }) : Number(v);
-      if (n !== null && Number.isFinite(n)) nums.push(n);
-    }
-    if (agg === 'COUNT' || source === 'count') return count;
-    if (!nums.length) return null;
-    const total = nums.reduce((x, y) => x + y, 0);
-    const v =
-      agg === 'TOTAL'
-        ? total
-        : agg === 'AVERAGE'
-          ? total / nums.length
-          : agg === 'MIN'
-            ? Math.min(...nums)
-            : Math.max(...nums);
-    return Math.round(v * 100) / 100;
-  };
-  return cards.map((c) => ({
-    ...c,
-    value: value(c.source, c.aggregation, range(c.period as Period, 0)),
-    previous: value(c.source, c.aggregation, range(c.period as Period, 1)),
-  }));
 }

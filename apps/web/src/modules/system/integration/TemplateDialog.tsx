@@ -183,6 +183,11 @@ export function TemplateDialog({ template, onClose }: { template: Template | 'ne
               >{`{{${v}}}`}</button>
             ))}
           </div>
+          {d.event?.startsWith('fms.') && (
+            <p className="text-xs text-muted-foreground">
+              {t('show.holesMsg', { a: '{{data.field}}', b: '{{data.field.column}}' })}
+            </p>
+          )}
         </div>
         <div>
           <div className="mb-1.5 text-sm font-medium">{t('notify.tpl.preview')}</div>

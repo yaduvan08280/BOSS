@@ -12,7 +12,10 @@ import { personLabel } from '@/lib/people';
 import { useWorkMutation } from '@/lib/work';
 import { useDepartments } from '@/modules/system/api';
 import { aiApi, useAiStatus } from '@/modules/ai/api';
-import type { FlowDetail, KpiCard } from './api';
+import { useFlowPaths, type FlowDetail, type KpiCard } from './api';
+
+/** Field types a KPI card can total: numbers, amounts, formulas, and item lines (as their total). */
+const KPI_TYPES = ['number', 'amount', 'items', 'formula'];
 
 /** Details (run name, departments, coordinator & solver, video, public form) and the KPI dashboard. */
 export function FlowDetails({
@@ -162,16 +165,32 @@ function KpiEditor({ flow, def }: { flow: FlowDetail; def: FlowDefinition }) {
     [['fms']],
     () => t('fms.b.saved'),
   );
-  const sources = [
-    { value: 'count', label: t('fms.k.count', { run: flow.runName }) },
+  // What a card can read: the count, numbers of the forms (formulas and item totals too), and — from the
+  // server's list of the process's values — columns of the rows its fields link to ("Item → Rate").
+  const paths = useFlowPaths(flow.id);
+  const stepName = new Map(def.steps.map((s) => [s.key, s.name]));
+  const own = [
     ...def.startFields
-      .filter((f) => ['number', 'amount', 'items'].includes(f.type))
+      .filter((f) => KPI_TYPES.includes(f.type))
       .map((f) => ({ value: `start:${f.key}`, label: `${t('fms.b.startForm')}: ${f.label}` })),
     ...def.steps.flatMap((s) =>
       s.fields
-        .filter((f) => ['number', 'amount', 'items'].includes(f.type))
+        .filter((f) => KPI_TYPES.includes(f.type))
         .map((f) => ({ value: `step:${s.key}:${f.key}`, label: `${s.name}: ${f.label}` })),
     ),
+  ];
+  const linked = (paths.data ?? [])
+    .filter((p) => p.numeric === null)
+    .map((p) => {
+      const where = p.kpi.startsWith('start:')
+        ? t('fms.b.startForm')
+        : (stepName.get(p.kpi.split(':')[1]!) ?? '');
+      return { value: p.kpi, label: `${where}: ${p.label}` };
+    });
+  const sources = [
+    { value: 'count', label: t('fms.k.count', { run: flow.runName }) },
+    ...own,
+    ...linked.filter((l) => !own.some((o) => o.value === l.value)),
   ];
   const set = (i: number, patch: Partial<KpiCard>) =>
     setCards(cards.map((c, j) => (j === i ? { ...c, ...patch } : c)));

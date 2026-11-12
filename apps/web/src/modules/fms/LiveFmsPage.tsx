@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Clock, Download, Plus, Workflow } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Me } from '@mono/shared';
+import { hasPermission, type Me } from '@mono/shared';
 import { EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/components/page';
 import { StatusChip } from '@/components/status-chip';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { useDueLabel, useParamState } from '@/lib/work';
 import { formatDateTime } from '@/lib/when';
 import { useUsers } from '@/modules/system/api';
 import { RECORD_TONE, useLive } from './api';
+import { ExtraValues, LiveColumnsButton } from './LiveColumns';
 import { RecordDrawer } from './RecordDrawer';
 import { StartDialog } from './StartDialog';
 
@@ -46,9 +47,20 @@ export function LiveFmsPage({ me }: { me: Me }) {
         s?.doerId ? names.get(s.doerId) : '',
         s ? formatDateTime(s.plannedAt, tz) : '',
         t(`fms.status.${r.status}`),
+        ...data.columns.map((c) => r.cols?.[c.path] ?? ''),
       ];
     });
-    const text = [['#', 'Record', 'Started', 'Step', 'With', 'Due', 'Status'], ...rows]
+    const head = [
+      '#',
+      'Record',
+      'Started',
+      'Step',
+      'With',
+      'Due',
+      'Status',
+      ...data.columns.map((c) => c.label),
+    ];
+    const text = [head, ...rows]
       .map((l) => l.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(','))
       .join('\n');
     const a = document.createElement('a');
@@ -82,6 +94,9 @@ export function LiveFmsPage({ me }: { me: Me }) {
               ))}
             </Select>
             <div className="ml-auto flex gap-2">
+              {hasPermission(me.user.permissions, 'fms.edit') && (
+                <LiveColumnsButton flowId={flow.id} chosen={flow.liveColumns} />
+              )}
               <Button size="sm" onClick={csv}>
                 <Download /> {t('task.rep.export')}
               </Button>
@@ -144,6 +159,7 @@ export function LiveFmsPage({ me }: { me: Me }) {
                           <span className="font-mono">#{r.number}</span> ·{' '}
                           {t('fms.startedOn', { at: formatDateTime(r.startedAt, tz) })}
                         </div>
+                        <ExtraValues columns={data!.columns} cols={r.cols} />
                       </div>
                       <div className="text-sm">
                         {s ? (

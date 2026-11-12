@@ -24,7 +24,9 @@ import { completeStep, parseDefinition, startRecord } from './engine';
 import { AppError } from '../../lib/errors';
 import { publicFormRoutes } from './public';
 import { fmsPeopleReport } from './people-report';
-import { flowReport, kpiValues, LIVE_TABS, liveFms, myFms, recordDetail } from './queries';
+import { kpiValues } from './kpi';
+import { flowPaths, setLiveColumns } from './paths';
+import { flowReport, LIVE_TABS, liveFms, myFms, recordDetail } from './queries';
 import { reassignStep, recordAction } from './records';
 import { recordStock } from '../ims/step-reversal';
 import { previewStepStock } from '../ims/step-stock';
@@ -120,6 +122,18 @@ export async function fmsRoutes(app: FastifyInstance, opts: { env: Env }) {
       },
     },
     async (q) => liveFms(app.prisma, actorOf(q), q.query.flowId, q.query.tab),
+  );
+  // Values a process can show (its fields, and the columns of the rows they link to), and the list's extra columns.
+  r.get('/api/fms/flows/:id/paths', { ...view, schema: { tags, params: idParam } }, async (q) =>
+    flowPaths(app.prisma, actorOf(q), q.params.id),
+  );
+  r.put(
+    '/api/fms/flows/:id/live-columns',
+    {
+      ...view,
+      schema: { tags, params: idParam, body: z.object({ columns: z.array(z.string().max(90)).max(20) }) },
+    },
+    async (q) => setLiveColumns(app.prisma, actorOf(q), q.params.id, q.body.columns),
   );
   r.get('/api/fms/my', { ...view, schema: { tags } }, async (q) => myFms(app.prisma, actorOf(q)));
   // The start form of the published version (never the unpublished draft).

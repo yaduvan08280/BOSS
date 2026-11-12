@@ -276,7 +276,11 @@ export async function setPublicForm(db: Db, actor: Actor, id: string, enabled: b
 
 export const kpiCardSchema = z.object({
   label: z.string().trim().min(1).max(60),
-  source: z.string().regex(/^(count|start:[a-z0-9_]+|step:[a-z0-9_]+:[a-z0-9_]+)$/),
+  // `count`, a start-form value or a step's value; the value may be a column of a linked row (`start:item.rate`).
+  source: z
+    .string()
+    .max(140)
+    .regex(/^(count|start:[a-z0-9_]+(\.[a-z0-9_]+)?|step:[a-z0-9_]+:[a-z0-9_]+(\.[a-z0-9_]+)?)$/),
   aggregation: z.enum(['COUNT', 'TOTAL', 'AVERAGE', 'MIN', 'MAX']),
   period: z.enum(['TODAY', 'WEEK', 'MONTH', 'FY']),
 });

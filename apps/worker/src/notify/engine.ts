@@ -1,5 +1,5 @@
 import type { Db, DomainEvent, Prisma } from '@mono/db';
-import { createInAppNotification } from '@mono/api/services';
+import { createInAppNotification, fmsRecordVars } from '@mono/api/services';
 import {
   DEFAULT_QUIET_HOURS,
   nextSendTime,
@@ -82,6 +82,9 @@ export async function notifyForEvent(event: DomainEvent, deps: EngineDeps): Prom
     baseUrl: deps.baseUrl,
   };
   const vars = await buildVars(db, ctx, payload, event.actorId);
+  // A message about a process record can also name its values: {{data.customer}}, {{data.customer.city}}.
+  if (event.entityType === 'fms_record' && event.entityId)
+    Object.assign(vars, await fmsRecordVars(db, company.id, event.entityId, company.timezone));
   const def = notifyEvent(event.name);
   const templates = (await db.template.findMany({
     where: { companyId: company.id, event: event.name, deletedAt: null },

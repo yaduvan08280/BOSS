@@ -1,15 +1,20 @@
 import type { Db, Tx } from '@mono/db';
 import { nextCounter } from '@mono/db';
 import {
+  fillPaths,
   financialYear,
   formatDate,
   formatINR,
-  formatLocalDate,
   itemsTotal,
+  pathsIn,
+  plainValues,
+  showStored,
+  type FlowField,
   type ItemLine,
 } from '@mono/shared';
 import { renderPdf } from '../../lib/pdf';
 import { AppError } from '../../lib/errors';
+import { pathReaders, recordValues } from './show';
 
 /** QUO/26-27/0001 — numbered per document type, per financial year (CLAUDE.md §6.2 Documents). */
 export async function createDocument(
@@ -58,14 +63,58 @@ export async function createDocument(
 
 const rupees = (n: number) => formatINR(BigInt(Math.round(n * 100)));
 
+type Paper = {
+  number: string;
+  date: Date;
+  party: string | null;
+  total: unknown;
+  data: unknown;
+  type: { header: string | null; terms: string | null; footer: string | null };
+};
+
+/**
+ * The texts of a paper with their holes filled (plan §2.5): {{field}}, a column of a linked row
+ * {{field.column}} (read through the link, as the row is today), or the paper's own {{number}}, {{date}},
+ * {{party}}, {{total}}, {{company}}. A name with no value prints nothing — never raw braces.
+ */
+export async function paperTexts(
+  db: Db,
+  doc: Paper,
+  company: { id: string; name: string; legalName: string | null; timezone: string },
+  fields: Map<string, FlowField>,
+) {
+  const texts = [doc.type.header, doc.type.terms, doc.type.footer];
+  const [reader] = await pathReaders(
+    db,
+    company.id,
+    company.timezone,
+    fields,
+    [doc.data],
+    texts.flatMap(pathsIn),
+  );
+  const own: Record<string, string | null> = {
+    number: doc.number,
+    date: formatDate(doc.date, company.timezone),
+    party: doc.party,
+    total: doc.total === null ? null : rupees(Number(doc.total)),
+    company: company.legalName || company.name,
+  };
+  const fill = (text: string | null) => (text ? fillPaths(text, (p) => reader!.text(p) ?? own[p]) : '');
+  return { header: fill(doc.type.header), terms: fill(doc.type.terms), footer: fill(doc.type.footer) };
+}
+
 /** A clean A4 PDF of a document: company, number, party, item lines with totals, terms. */
 export async function documentPdf(db: Db, companyId: string, id: string) {
   const doc = await db.document.findFirst({ where: { id, companyId }, include: { type: true } });
   if (!doc) throw new AppError(404, 'NOT_FOUND', 'Document not found');
   const company = await db.company.findUniqueOrThrow({ where: { id: companyId } });
-  const data = doc.data as Record<string, unknown>;
+  const data = plainValues(doc.data);
   const lines = (Object.values(data).find(Array.isArray) as ItemLine[] | undefined) ?? [];
   const facts = Object.entries(data).filter(([, v]) => ['string', 'number', 'boolean'].includes(typeof v));
+  const fields: Map<string, FlowField> = doc.recordId
+    ? ((await recordValues(db, companyId, doc.recordId))?.fields ?? new Map())
+    : new Map();
+  const { header, terms, footer } = await paperTexts(db, doc, company, fields);
   const pdf = await renderPdf({
     pageSize: 'A4',
     pageMargins: [36, 40, 36, 48],
@@ -88,22 +137,16 @@ export async function documentPdf(db: Db, companyId: string, id: string) {
           ],
         ],
       },
-      doc.type.header ? { text: doc.type.header, margin: [0, 12, 0, 0] } : '',
+      header ? { text: header, margin: [0, 12, 0, 0] } : '',
       doc.party ? { text: [{ text: 'To: ', bold: true }, doc.party], margin: [0, 14, 0, 6] } : '',
       facts.length
         ? {
             table: {
               widths: [140, '*'],
-              // Dates as DD/MM/YYYY, never the stored YYYY-MM-DD.
+              // The field's label, and its value as people read it (DD/MM/YYYY, ₹ with grouping, Yes / No).
               body: facts.map(([k, v]) => [
-                { text: k, color: '#666' },
-                typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)
-                  ? formatLocalDate(v)
-                  : typeof v === 'boolean'
-                    ? v
-                      ? 'Yes'
-                      : 'No'
-                    : String(v),
+                { text: fields.get(k)?.label ?? k, color: '#666' },
+                showStored(fields.get(k), v, company.timezone) ?? '',
               ]),
             },
             layout: 'noBorders',
@@ -134,8 +177,8 @@ export async function documentPdf(db: Db, companyId: string, id: string) {
             layout: 'lightHorizontalLines',
           }
         : '',
-      doc.type.terms ? { text: doc.type.terms, fontSize: 8, color: '#666', margin: [0, 16, 0, 0] } : '',
-      doc.type.footer ? { text: doc.type.footer, fontSize: 8, color: '#888', margin: [0, 8, 0, 0] } : '',
+      terms ? { text: terms, fontSize: 8, color: '#666', margin: [0, 16, 0, 0] } : '',
+      footer ? { text: footer, fontSize: 8, color: '#888', margin: [0, 8, 0, 0] } : '',
     ],
   });
   return { pdf, number: doc.number };

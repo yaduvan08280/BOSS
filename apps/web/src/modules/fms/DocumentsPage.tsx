@@ -229,6 +229,10 @@ function DocTypeDialog({ value, onClose }: { value: Partial<DocType>; onClose: (
         <Field label={t('fms.doc.footer')} className="sm:col-span-3">
           <Input value={d.footer ?? ''} onChange={(e) => setD({ ...d, footer: e.target.value })} />
         </Field>
+        <p className="text-xs text-muted-foreground sm:col-span-3">
+          {t('show.holes', { a: '{{field}}', b: '{{field.column}}' })}{' '}
+          <span className="font-mono">{'{{number}} {{date}} {{party}} {{total}} {{company}}'}</span>
+        </p>
       </div>
     </Dialog>
   );

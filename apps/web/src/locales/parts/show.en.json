@@ -1,0 +1,16 @@
+{
+  "show": {
+    "columns": "Columns",
+    "columnsTitle": "Columns of this list",
+    "columnsBody": "Show any value of the process beside each record: a field, a remembered or worked-out value, or a column of the row a field links to. Up to {{max}}, for everyone.",
+    "search": "Find a value",
+    "count": "{{n}} of {{max}} chosen",
+    "none": "This process has no values to show yet.",
+    "noMatch": "Nothing matches.",
+    "save": "Save columns",
+    "saved": "Columns saved",
+    "kpiLinked": "Linked values",
+    "holes": "You can name the record's values in this text: {{a}} for a field, {{b}} for a column of the row it links to.",
+    "holesMsg": "For process messages you can also use {{a}} and {{b}} — values of the record and of the rows it links to."
+  }
+}

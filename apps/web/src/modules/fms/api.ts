@@ -85,6 +85,8 @@ export type RecordRow = {
   steps: StepRow[];
   of: number;
   lateMs?: number;
+  /** Live FMS: the chosen extra columns' values, by path. */
+  cols?: Record<string, string>;
 };
 export type RecordDetail = RecordRow & {
   data: Record<string, unknown>;
@@ -128,13 +130,30 @@ export const useFlow = (id: string | undefined) =>
     queryFn: () => api<FlowDetail>(`/api/fms/flows/${id}`),
     enabled: Boolean(id),
   });
+/** A value a process can show: a field, or a column of the row a field links to. */
+export type FlowPath = {
+  path: string;
+  label: string;
+  group: string;
+  kpi: string;
+  numeric: boolean | null;
+  shown: boolean;
+};
+export const useFlowPaths = (flowId: string | undefined) =>
+  useQuery({
+    queryKey: ['fms', 'paths', flowId],
+    queryFn: () => api<FlowPath[]>(`/api/fms/flows/${flowId}/paths`),
+    enabled: Boolean(flowId),
+  });
 export const useLive = (flowId: string | null, tab: string) =>
   useQuery({
     queryKey: ['fms', 'live', flowId, tab],
     queryFn: () =>
       api<{
         flows: { id: string; code: string; name: string; runName: string }[];
-        flow: { id: string; name: string; runName: string } | null;
+        flow: { id: string; name: string; runName: string; liveColumns: string[] } | null;
+        /** The list's extra columns (value paths with their labels); each record's values are in `cols`. */
+        columns: { path: string; label: string }[];
         stages: { key: string; name: string; type: string; count: number; late: number }[];
         tiles: Record<'running' | 'late' | 'dueToday' | 'onHold' | 'closed', number> | null;
         records: RecordRow[];

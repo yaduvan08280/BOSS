@@ -26,6 +26,9 @@ model Flow {
   /// Public "share a form" link (start form for customers/vendors).
   publicToken         String?   @unique @map("public_token")
   publicEnabled       Boolean   @default(false) @map("public_enabled")
+  /// Extra columns of the Live FMS list: value paths (`customer`, `customer.city`). A view setting, not part
+  /// of the published definition.
+  liveColumns         String[]  @default([]) @map("live_columns")
   createdById         String?   @map("created_by_id")
   createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
