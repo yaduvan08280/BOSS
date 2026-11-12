@@ -292,7 +292,9 @@
       "noShift_one": "No shift added yet",
       "noShift_other": "No shift added yet",
       "telegramNotLinked_one": "{{count}} person hasn't linked Telegram",
-      "telegramNotLinked_other": "{{count}} people haven't linked Telegram"
+      "telegramNotLinked_other": "{{count}} people haven't linked Telegram",
+      "branchesWithoutManager_one": "{{count}} branch has no manager",
+      "branchesWithoutManager_other": "{{count}} branches have no manager"
     },
     "openDesigner": "Open the flow designer",
     "openBuilder": "Open the FMS builder"

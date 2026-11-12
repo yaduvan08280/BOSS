@@ -248,6 +248,48 @@ describe('work carries its branch, and reach holds everywhere (phase 12, stage A
     expect(await asked(lake.id)).toEqual(['Polish the lake cutlery', 'Sign the lease']);
   });
 
+  it('G21: a master row or a record can be for one branch or for the whole group', async () => {
+    const w = await world(ctx.app);
+    const { g, rooftop, lake } = await twoOutlets(ctx.prisma, w);
+    const vendors = await ok<{ id: string }>(w.api.post('/api/masters/library/vendors', {}));
+    const add = (api: World['api'], name: string, branch?: string | null) =>
+      api.post(`/api/masters/${vendors.id}/rows`, {
+        code: name.toUpperCase().replace(/\W/g, '-'),
+        name,
+        ...(branch === undefined ? {} : { _branchId: branch }),
+      });
+    await ok(add(w.api, 'Group Dairy'));
+    await ok(add(w.api, 'Jaipur Greens', g.b.rooftop.id));
+    await ok(add(lake.api, 'Ajmer Bakery', g.b.lake.id));
+    const names = async (api: World['api']) =>
+      (await ok<{ rows: { label: string }[] }>(api.get(`/api/masters/${vendors.id}/rows`))).rows.map(
+        (r) => r.label,
+      );
+    expect(await names(w.api)).toEqual(['Ajmer Bakery', 'Group Dairy', 'Jaipur Greens']);
+    expect(await names(rooftop.api)).toEqual(['Group Dairy', 'Jaipur Greens']);
+    expect(await names(lake.api)).toEqual(['Ajmer Bakery', 'Group Dairy']);
+    // A manager can't add a row for another branch, nor one for the whole group.
+    expect((await add(lake.api, 'Sneaky', g.b.rooftop.id)).status).toBe(403);
+    expect((await add(lake.api, 'For all', null)).status).toBe(403);
+
+    // A record: the owner files one for the lake and one for everyone.
+    const typeId = await makeType(w.api);
+    const make = (api: World['api'], site: string, branchId?: string | null) =>
+      api.post(`/api/records/types/${typeId}/records`, {
+        data: { site },
+        ...(branchId === undefined ? {} : { branchId }),
+      });
+    await ok(make(w.api, 'Lake audit', g.b.lake.id));
+    await ok(make(w.api, 'Group policy', null));
+    const sites = async (api: World['api']) =>
+      (await ok<{ rows: { title: string }[] }>(api.get(`/api/records/types/${typeId}/records`))).rows
+        .map((r) => r.title)
+        .sort();
+    expect(await sites(lake.api)).toEqual(['Group policy', 'Lake audit']);
+    expect(await sites(rooftop.api)).toEqual(['Group policy']);
+    expect((await make(rooftop.api, 'Not mine', g.b.lake.id)).status).toBe(403);
+  });
+
   it('G6: an API key and a webhook see as far as the person who made them', async () => {
     const w = await world(ctx.app);
     const { rooftop, lake } = await twoOutlets(ctx.prisma, w);

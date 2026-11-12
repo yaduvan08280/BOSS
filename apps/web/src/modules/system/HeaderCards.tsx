@@ -16,6 +16,7 @@ const GAP_LINKS: Record<string, string> = {
   noBranch: '/system/company/branches',
   noShift: '/system/company/shifts',
   telegramNotLinked: '/system/integration',
+  branchesWithoutManager: '/system/branches',
 };
 
 function CardShell({

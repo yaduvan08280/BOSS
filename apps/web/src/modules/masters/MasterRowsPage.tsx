@@ -1,3 +1,4 @@
+import { BranchPlace } from '@/components/branch-place';
 import { ArrowLeft, FileUp, Link2, Loader2, Pencil, Plus, Table2, Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -174,8 +175,9 @@ function RowDialog({
   const users = useUsers();
   const [values, setValues] = useState<Record<string, unknown>>(row?.data ?? {});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [place, setPlace] = useState(row?.branchId ?? '');
   const save = useMastersMutation(
-    () => mastersApi.saveRow(data.master.id, values, row?.id),
+    () => mastersApi.saveRow(data.master.id, { ...values, _branchId: place || null }, row?.id),
     (r) => t('masters.saved', { name: r.label }),
   );
   return (
@@ -208,6 +210,9 @@ function RowDialog({
         people={users.data ?? []}
         owner={{ kind: 'master', id: data.master.id }}
       />
+      <div className="mt-4">
+        <BranchPlace value={place} onChange={setPlace} />
+      </div>
     </Dialog>
   );
 }

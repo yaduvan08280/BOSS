@@ -14,7 +14,11 @@ export async function systemRoutes(app: FastifyInstance) {
     async (request) => {
       const db = request.db;
       const company = await app.prisma.company.findUniqueOrThrow({ where: { id: request.auth!.companyId } });
-      const active = { deletedAt: null, status: 'ACTIVE' as const };
+      // Looking at some branches only (a manager's reach, or the top bar's switcher): the people cards and the
+      // health check are about those branches (phase 12).
+      const mine = request.reach?.branchIds ?? null;
+      const here = mine ? { branchId: { in: mine } } : {};
+      const active = { deletedAt: null, status: 'ACTIVE' as const, ...here };
       const [
         people,
         departments,
@@ -40,12 +44,23 @@ export async function systemRoutes(app: FastifyInstance) {
         db.user.count({ where: { ...active, designationId: { not: null } } }),
         db.department.count({ where: { deletedAt: null, parentId: null, hodUserId: null } }),
         db.shift.count({ where: { deletedAt: null } }),
-        db.branch.count({ where: { deletedAt: null } }),
+        db.branch.count({ where: { deletedAt: null, ...(mine ? { id: { in: mine } } : {}) } }),
         db.designation.count({ where: { deletedAt: null } }),
         db.companyContact.count({ where: { deletedAt: null } }),
         db.role.count({ where: { deletedAt: null } }),
-        db.user.count({ where: { deletedAt: null } }),
+        db.user.count({ where: { deletedAt: null, ...here } }),
       ]);
+      // Branches nobody manages (asked only once the company has more than one).
+      const managed = await app.prisma.branchManager.findMany({
+        where: { companyId: company.id, role: 'MANAGER', branchId: { not: null } },
+        select: { branchId: true },
+      });
+      const live = await db.branch.findMany({
+        where: { deletedAt: null, ...(mine ? { id: { in: mine } } : {}) },
+        select: { id: true },
+      });
+      const allBranches = mine ? await db.branch.count({ where: { deletedAt: null } }) : live.length;
+      const unmanaged = live.filter((b) => !managed.some((m) => m.branchId === b.id)).length;
       const profileDone = Boolean(
         company.name && company.city && company.state && company.ownerName && company.mobile,
       );
@@ -64,13 +79,16 @@ export async function systemRoutes(app: FastifyInstance) {
         { key: 'noBranch', ok: branches > 0, count: branches > 0 ? 0 : 1 },
         { key: 'noShift', ok: shifts > 0, count: shifts > 0 ? 0 : 1 },
         { key: 'telegramNotLinked', ok: people > 0 && telegram === people, count: people - telegram },
+        ...(allBranches > 1
+          ? [{ key: 'branchesWithoutManager', ok: unmanaged === 0, count: unmanaged }]
+          : []),
       ];
       const ready = checks.filter((c) => c.ok).length;
       const summary: SystemSummary = {
         company: { stepsDone: steps.filter(Boolean).length, stepsTotal: steps.length, people, departments },
         engine: { modules: 5 },
         processes: await processSummary(db),
-        people: await loadSummary(db, people),
+        people: await loadSummary(db, people, here),
         health: {
           percent: Math.round((ready / checks.length) * 100),
           ready,
@@ -157,9 +175,9 @@ async function processSummary(db: ScopedDb) {
  * People view: open work per person (tasks, FMS steps, tickets to fix, checklists due today) —
  * heavy 10+, balanced 4–9, light 1–3, free 0 — and how many are doers in a live process.
  */
-async function loadSummary(db: ScopedDb, total: number) {
+async function loadSummary(db: ScopedDb, total: number, here: { branchId?: { in: string[] } }) {
   const [people, tasks, steps, tickets, runs, versions] = await Promise.all([
-    db.user.findMany({ where: { deletedAt: null, status: 'ACTIVE' }, select: { id: true } }),
+    db.user.findMany({ where: { deletedAt: null, status: 'ACTIVE', ...here }, select: { id: true } }),
     db.task.groupBy({
       by: ['doerId'],
       where: { deletedAt: null, status: { in: ['OPEN', 'AWAITING_ACCEPTANCE'] } },

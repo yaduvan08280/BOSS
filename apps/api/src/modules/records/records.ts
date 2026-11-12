@@ -16,7 +16,7 @@ import { ctxOf, loadType, mustBeActive, type LoadedType } from './access';
 import { checkRecord, commitRecord, fileIdsOf, refuseIfInvalid, type Lines, type RecordInput } from './form';
 import { runStatusHooks } from './hooks';
 import { fyNow, recordCode, takeNumbers } from './numbering';
-import { homeBranchOf } from '../branches/reach';
+import { homeBranchOf, placeAt } from '../branches/reach';
 
 export const formScope = (actor: Actor, t: LoadedType, recordId?: string): FormScope => ({
   companyId: actor.companyId,
@@ -86,7 +86,10 @@ export async function createRecord(db: Db, actor: Actor, typeId: string, input: 
         id,
         companyId: actor.companyId,
         // A record belongs to the branch of whoever made it (phase 12).
-        branchId: await homeBranchOf(tx, actor.companyId, actor.userId),
+        branchId:
+          input.branchId === undefined
+            ? await homeBranchOf(tx, actor.companyId, actor.userId)
+            : await placeAt(tx, actor.companyId, input.branchId),
         typeId: t.id,
         number,
         fy,

@@ -175,7 +175,7 @@ export const useStartableFlows = () =>
 export const useRecordsMutation = <I, O = unknown>(fn: (i: I) => Promise<O>, success?: (o: O) => string) =>
   useWorkMutation(fn, [['records']], success);
 
-type Body = { data: Record<string, unknown>; lines?: Record<string, unknown[]> };
+type Body = { data: Record<string, unknown>; lines?: Record<string, unknown[]>; branchId?: string | null };
 const post = <T>(url: string, body?: unknown) => api<T>(url, { method: 'POST', body: body ?? {} });
 
 export const recordsApi = {

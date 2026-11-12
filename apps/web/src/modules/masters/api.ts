@@ -13,7 +13,14 @@ export type MasterRows = {
     displayField: string | null;
     source: string;
   };
-  rows: { id: string; key: string | null; label: string; data: Record<string, unknown>; updatedAt: string }[];
+  rows: {
+    id: string;
+    key: string | null;
+    label: string;
+    data: Record<string, unknown>;
+    branchId: string | null;
+    updatedAt: string;
+  }[];
   total: number;
   canEdit: boolean;
 };

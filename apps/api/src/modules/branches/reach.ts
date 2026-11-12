@@ -1,4 +1,5 @@
-import type { Db, Reach, Tx } from '@mono/db';
+import { currentReach, type Db, type Reach, type Tx } from '@mono/db';
+import { AppError } from '../../lib/errors';
 
 export const REACHES = ['own', 'branches', 'entity', 'group'] as const;
 export type RoleReach = (typeof REACHES)[number];
@@ -124,4 +125,25 @@ export async function reachOfUser(db: Db | Tx, companyId: string, userId: string
   });
   if (!u) return null;
   return reachFor(db, { companyId, userId, permissions: u.role.permissions, reach: u.role.reach });
+}
+
+/**
+ * Where a new master row or record may be put (phase 12): a branch the person may see, or — for people who see the
+ * whole group — nowhere in particular (null = group-wide, everyone reads it).
+ */
+export async function placeAt(
+  db: Db | Tx,
+  companyId: string,
+  branchId: string | null,
+): Promise<string | null> {
+  const mine = currentReach()?.branchIds ?? null;
+  if (branchId === null) {
+    if (mine) throw new AppError(403, 'FORBIDDEN', "Only the group's people make something for every branch");
+    return null;
+  }
+  if (mine && !mine.includes(branchId))
+    throw new AppError(403, 'FORBIDDEN', "That branch isn't one of yours");
+  if (!(await db.branch.count({ where: { id: branchId, companyId, deletedAt: null } })))
+    throw new AppError(404, 'NOT_FOUND', 'Branch not found');
+  return branchId;
 }

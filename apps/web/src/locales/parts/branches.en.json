@@ -156,5 +156,11 @@
     "how": "Score = the average of attendance, checklists done (100 − missed) and tasks on time, for the parts that have data. A branch's numbers come from its own people and the work that belongs to it."
   },
   "nav.outlets": "Outlet comparison",
-  "navDesc.outlets": "Branches side by side: attendance, checklists, tickets, on-time work"
+  "navDesc.outlets": "Branches side by side: attendance, checklists, tickets, on-time work",
+  "branchPlace": {
+    "label": "For which branch",
+    "hint": "People of other branches won't see it.",
+    "own": "My own branch",
+    "all": "Every branch"
+  }
 }

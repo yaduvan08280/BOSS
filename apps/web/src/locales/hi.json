@@ -292,7 +292,9 @@
       "noShift_one": "अभी कोई शिफ़्ट नहीं",
       "noShift_other": "अभी कोई शिफ़्ट नहीं",
       "telegramNotLinked_one": "{{count}} व्यक्ति ने Telegram नहीं जोड़ा",
-      "telegramNotLinked_other": "{{count}} लोगों ने Telegram नहीं जोड़ा"
+      "telegramNotLinked_other": "{{count}} लोगों ने Telegram नहीं जोड़ा",
+      "branchesWithoutManager_one": "{{count}} शाखा का कोई प्रबंधक नहीं",
+      "branchesWithoutManager_other": "{{count}} शाखाओं का कोई प्रबंधक नहीं"
     },
     "openDesigner": "फ़्लो डिज़ाइनर खोलें",
     "openBuilder": "FMS बिल्डर खोलें"

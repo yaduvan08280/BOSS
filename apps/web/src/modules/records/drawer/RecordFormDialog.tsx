@@ -1,3 +1,4 @@
+import { BranchPlace, OWN } from '@/components/branch-place';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -48,9 +49,12 @@ export function RecordFormDialog({
     ),
   );
   const [problems, setProblems] = useState<Problems>({});
+  const [place, setPlace] = useState(OWN);
   const save = useRecordsMutation(
     (body: ReturnType<typeof toRecordBody>) =>
-      detail ? recordsApi.update(detail.record.id, body) : recordsApi.create(type.id, body),
+      detail
+        ? recordsApi.update(detail.record.id, body)
+        : recordsApi.create(type.id, { ...body, ...(place === OWN ? {} : { branchId: place || null }) }),
     (r) => t(detail ? 'records.form.changed' : 'records.form.made', { code: r.code }),
   );
   const submit = () => {
@@ -85,6 +89,7 @@ export function RecordFormDialog({
       }
     >
       <div className="space-y-6 pb-2">
+        {!detail && <BranchPlace value={place} onChange={setPlace} withOwn />}
         <FieldsForm
           fields={def.fields}
           values={values}

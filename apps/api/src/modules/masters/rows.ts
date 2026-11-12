@@ -1,3 +1,4 @@
+import { placeAt } from '../branches/reach';
 import type { Db } from '@mono/db';
 import { checkFields, fieldSchema, MASTER_LIBRARY, splitTable, type FlowField } from '@mono/shared';
 import { createId } from '@paralleldrive/cuid2';
@@ -58,7 +59,14 @@ export async function listRows(db: Db, actor: Actor, masterId: string, q?: strin
       displayField: m.displayField,
       source: m.source,
     },
-    rows: rows.map((r) => ({ id: r.id, key: r.key, label: r.label, data: r.data, updatedAt: r.updatedAt })),
+    rows: rows.map((r) => ({
+      id: r.id,
+      key: r.key,
+      label: r.label,
+      data: r.data,
+      branchId: r.branchId,
+      updatedAt: r.updatedAt,
+    })),
     total,
     canEdit: can(actor, 'core.edit'),
   };
@@ -81,6 +89,13 @@ export async function saveRow(
 ) {
   needEdit(actor);
   const m = await loadMaster(db, actor.companyId, masterId);
+  // `_branchId` is not a field: it says which branch the row is for (null = every branch; left out = unchanged).
+  const { _branchId, ...fields } = input;
+  input = fields;
+  const place =
+    _branchId === undefined
+      ? undefined
+      : await placeAt(db, actor.companyId, typeof _branchId === 'string' && _branchId ? _branchId : null);
   const scope: FormScope = {
     companyId: actor.companyId,
     actorId: actor.userId,
@@ -106,12 +121,16 @@ export async function saveRow(
     if (id && !before) throw notFound('Row');
     await commitForm(tx, scope, m.fields, state);
     const row = id
-      ? await tx.masterRow.update({ where: { id }, data: { data: values as object, key, label } })
+      ? await tx.masterRow.update({
+          where: { id },
+          data: { data: values as object, key, label, ...(place !== undefined ? { branchId: place } : {}) },
+        })
       : await tx.masterRow.create({
           data: {
             id: scope.recordId,
             companyId: actor.companyId,
             masterId,
+            branchId: place ?? null,
             data: values as object,
             key,
             label,

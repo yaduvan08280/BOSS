@@ -30,6 +30,8 @@ const recordBody = z.object({
   data: z.record(z.string(), z.unknown()),
   /** Child lines by table key; a table left out stays as it is. */
   lines: z.record(z.string(), z.array(z.record(z.string(), z.unknown())).max(500)).optional(),
+  /** The branch a new record belongs to (null = the whole group). Left out = the maker's own branch. */
+  branchId: z.string().max(40).nullable().optional(),
 });
 
 /** The list's query string: lists are comma-separated, the field filters travel as JSON. */

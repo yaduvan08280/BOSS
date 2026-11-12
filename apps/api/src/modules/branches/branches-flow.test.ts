@@ -206,4 +206,33 @@ describe('processes, checklists and the flow designer per branch (phase 12, stag
     expect((await rows(rooftop.api)).map((r) => r.name)).toEqual(['Rooftop Jaipur']);
     expect((await rows(lake.api)).map((r) => r.name)).toEqual(['Lake View Ajmer']);
   });
+  it('G19: the header cards and the health check are about the branch being looked at', async () => {
+    const w = await world(ctx.app);
+    const { g } = await twoOutlets(ctx.prisma, w);
+    await g.at('Cook Rooftop', g.b.rooftop.id);
+    type Summary = {
+      company: { people: number };
+      counts: { users: number; branches: number };
+      health: { gaps: { key: string; count: number }[] };
+    };
+    const summary = (only?: string) =>
+      ok<Summary>(w.api.get('/api/system/summary', only ? { 'x-mono-branch': only } : undefined));
+    const all = await summary();
+    // The owner, two outlet managers and the cook; four branches, none with a manager yet.
+    expect(all.company.people).toBe(4);
+    expect(all.counts.branches).toBe(4);
+    expect(all.health.gaps.find((x) => x.key === 'branchesWithoutManager')?.count).toBe(4);
+    const rooftop = await summary(g.b.rooftop.id);
+    expect(rooftop.company.people).toBe(2);
+    expect(rooftop.counts).toMatchObject({ users: 2, branches: 1 });
+    expect(rooftop.health.gaps.find((x) => x.key === 'branchesWithoutManager')?.count).toBe(1);
+    // A manager set for the rooftop clears that gap there.
+    const boss = await g.at('Farah Boss', g.b.rooftop.id);
+    await ok(
+      w.api.put('/api/branches/managers', { branchId: g.b.rooftop.id, role: 'MANAGER', userIds: [boss.id] }),
+    );
+    expect((await summary(g.b.rooftop.id)).health.gaps.some((x) => x.key === 'branchesWithoutManager')).toBe(
+      false,
+    );
+  });
 });

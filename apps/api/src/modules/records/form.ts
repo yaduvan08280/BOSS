@@ -3,7 +3,12 @@ import type { FlowField, RecordDefinition, RecordTable } from '@mono/shared';
 import { AppError } from '../../lib/errors';
 import { checkForm, commitForm, storedValues, type FormScope, type FormState } from '../forms';
 
-export type RecordInput = { data: Record<string, unknown>; lines?: Record<string, unknown> };
+export type RecordInput = {
+  data: Record<string, unknown>;
+  lines?: Record<string, unknown>;
+  /** Phase 12: the branch a new record belongs to (null = the whole group). Left out = the maker's own branch. */
+  branchId?: string | null;
+};
 export type Lines = Record<string, Record<string, unknown>[]>;
 
 const MAX_ROWS = 200;
