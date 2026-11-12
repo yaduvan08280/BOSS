@@ -88,6 +88,8 @@ model MasterDef {
 model MasterRow {
   id          String    @id @default(cuid(2))
   companyId   String    @map("company_id")
+  /// A row of one branch (phase 12); null = the whole group reads it.
+  branchId    String?   @map("branch_id")
   masterId    String    @map("master_id")
   data        Json
   /// The key field's value (null after a delete, so the key can be used again).

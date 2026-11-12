@@ -3,6 +3,8 @@
 model Task {
   id                    String    @id @default(cuid(2))
   companyId             String    @map("company_id")
+  /// The branch this belongs to (phase 12): the starter's or doer's home branch. Null = group-wide / before branches.
+  branchId              String?   @map("branch_id")
   /// Human number per company: #70
   number                Int
   description           String
@@ -39,6 +41,7 @@ model Task {
   @@index([companyId, status, plannedAt])
   @@index([companyId, doerId, status])
   @@index([companyId, verifierId, status])
+  @@index([companyId, branchId])
   @@map("tasks")
 }
 
@@ -104,6 +107,8 @@ model ChecklistMaster {
 model ChecklistRun {
   id           String    @id @default(cuid(2))
   companyId    String    @map("company_id")
+  /// The branch this belongs to (phase 12): the starter's or doer's home branch. Null = group-wide / before branches.
+  branchId     String?   @map("branch_id")
   masterId     String    @map("master_id")
   doerId       String    @map("doer_id")
   verifierId   String?   @map("verifier_id")
@@ -130,6 +135,7 @@ model ChecklistRun {
   @@unique([masterId, plannedAt, doerId])
   @@index([companyId, status, plannedAt])
   @@index([companyId, doerId, status])
+  @@index([companyId, branchId])
   @@map("checklist_runs")
 }
 

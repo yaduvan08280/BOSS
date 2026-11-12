@@ -4,7 +4,7 @@ import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import Fastify, { type FastifyServerOptions } from 'fastify';
 import { jsonSchemaTransform, serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
-import { createPrisma, type Db } from '@mono/db';
+import { createPrisma, runWithReachSlot, type Db } from '@mono/db';
 import type { Env } from './env';
 import { EventListener } from './lib/events';
 import authPlugin from './plugins/auth';
@@ -75,6 +75,9 @@ export async function buildApp(opts: BuildOptions) {
   const prisma = opts.prisma ?? createPrisma(env.DATABASE_URL);
   const listener = opts.listener ?? new EventListener(env.DATABASE_URL, app.log);
   app.decorate('prisma', prisma);
+  // Every request runs in its own reach slot; `authenticate` fills it once the person is known, and the
+  // database client then limits what that request reads (phase 12, plan §3.3).
+  app.addHook('onRequest', (_request, _reply, done) => runWithReachSlot(done));
   app.addHook('onClose', async () => {
     await listener.stop();
     if (!opts.prisma) await prisma.$disconnect();

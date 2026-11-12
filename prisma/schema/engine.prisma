@@ -3,6 +3,8 @@
 model Slip {
   id               String    @id @default(cuid(2))
   companyId        String    @map("company_id")
+  /// The branch this belongs to (phase 12): the starter's or doer's home branch. Null = group-wide / before branches.
+  branchId         String?   @map("branch_id")
   number           Int
   problem          String
   raiserId         String    @map("raiser_id")
@@ -35,6 +37,7 @@ model Slip {
   @@unique([companyId, number])
   @@index([companyId, status, stepSince])
   @@index([companyId, raiserId, status])
+  @@index([companyId, branchId])
   @@map("slips")
 }
 
@@ -73,6 +76,8 @@ model SlipEvent {
 model Ticket {
   id              String    @id @default(cuid(2))
   companyId       String    @map("company_id")
+  /// The branch this belongs to (phase 12): the starter's or doer's home branch. Null = group-wide / before branches.
+  branchId        String?   @map("branch_id")
   number          Int
   title           String
   description     String    @default("")
@@ -102,6 +107,7 @@ model Ticket {
   @@index([companyId, status, plannedFixAt])
   @@index([companyId, solverId, status])
   @@index([companyId, raiserId, status])
+  @@index([companyId, branchId])
   @@map("tickets")
 }
 

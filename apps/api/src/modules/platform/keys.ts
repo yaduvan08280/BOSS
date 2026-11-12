@@ -102,7 +102,7 @@ export async function resolveApiKey(db: Db, raw: string | undefined) {
   if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
   const user = await db.user.findFirst({
     where: { id: k.createdById, companyId: k.companyId, deletedAt: null, status: 'ACTIVE' },
-    select: { id: true, role: { select: { key: true, permissions: true } } },
+    select: { id: true, role: { select: { key: true, permissions: true, reach: true } } },
   });
   if (!user) return null;
   if (!k.lastUsedAt || Date.now() - k.lastUsedAt.getTime() > 60_000)
@@ -114,5 +114,6 @@ export async function resolveApiKey(db: Db, raw: string | undefined) {
     userId: user.id,
     roleKey: user.role.key,
     permissions: user.role.permissions,
+    reach: user.role.reach,
   };
 }

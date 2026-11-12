@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
-import { forCompany, type Db, type ScopedDb } from '@mono/db';
+import { forCompany, setReach, type Db, type Reach, type ScopedDb } from '@mono/db';
+import { reachFor } from '../modules/branches/reach';
 import { hasPermission, type PermissionKey } from '@mono/shared';
 import type { ActorContext } from '../lib/audit';
 import { AppError, forbidden, unauthenticated } from '../lib/errors';
@@ -19,6 +20,8 @@ declare module 'fastify' {
     auth: AuthContext | null;
     /** Company-scoped DB client; only set after `authenticate`. */
     db: ScopedDb;
+    /** How far the signed-in person sees (phase 12); only set after `authenticate`. */
+    reach: Reach | null;
   }
   interface FastifyInstance {
     prisma: Db;
@@ -46,6 +49,7 @@ export function actorOf(request: FastifyRequest): ActorContext {
 export default fp(async function authPlugin(app: FastifyInstance, opts: { secret: string }) {
   app.decorateRequest('auth', null);
   app.decorateRequest('db', null as unknown as ScopedDb);
+  app.decorateRequest('reach', null);
 
   app.decorate('authenticate', async (request: FastifyRequest) => {
     const token = request.cookies[ACCESS_COOKIE];
@@ -54,7 +58,11 @@ export default fp(async function authPlugin(app: FastifyInstance, opts: { secret
     if (!claims) throw unauthenticated('Your session expired');
     const user = await app.prisma.user.findFirst({
       where: { id: claims.sub, companyId: claims.cid, deletedAt: null, status: 'ACTIVE', loginEnabled: true },
-      select: { id: true, mustChangePassword: true, role: { select: { key: true, permissions: true } } },
+      select: {
+        id: true,
+        mustChangePassword: true,
+        role: { select: { key: true, permissions: true, reach: true } },
+      },
     });
     const session = await app.prisma.session.findFirst({
       where: { id: claims.sid, userId: claims.sub, revokedAt: null },
@@ -77,6 +85,15 @@ export default fp(async function authPlugin(app: FastifyInstance, opts: { secret
       permissions: user.role.permissions,
     };
     request.db = forCompany(app.prisma, claims.cid);
+    // From here on, everything this request reads is limited to the person's reach (phase 12). The top bar's
+    // branch switcher sends the branch it shows; it can only narrow.
+    const only = request.headers['x-mono-branch'];
+    request.reach = await reachFor(
+      app.prisma,
+      { companyId: claims.cid, userId: user.id, permissions: user.role.permissions, reach: user.role.reach },
+      typeof only === 'string' && only ? only : null,
+    );
+    setReach(request.reach);
   });
 
   app.decorate(

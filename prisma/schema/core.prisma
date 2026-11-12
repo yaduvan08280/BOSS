@@ -69,6 +69,13 @@ model Branch {
   lng       Decimal?  @db.Decimal(9, 6)
   radiusM   Int?      @map("radius_m")
   isDefault Boolean   @default(false) @map("is_default")
+  /// Phase 12: the legal entity (one GSTIN / foreign registration) and the region this branch sits in.
+  entityId  String?   @map("entity_id")
+  regionId  String?   @map("region_id")
+  /// OUTLET | KITCHEN | STORE | OFFICE | HOTEL
+  type      String    @default("OFFICE")
+  /// The branch's own clock (IANA name); null = the company's.
+  timezone  String?
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
@@ -150,6 +157,8 @@ model Role {
   key         String?
   /// Permission keys like "delegation.view", or "*".
   permissions String[]  @default([])
+  /// How far the role sees (phase 12): own | branches | entity | group. Existing roles keep "group".
+  reach       String    @default("group")
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(3)

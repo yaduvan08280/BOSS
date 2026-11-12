@@ -86,6 +86,8 @@ model CustomerTag {
 model SalesOrder {
   id         String   @id @default(cuid(2))
   companyId  String   @map("company_id")
+  /// The branch this belongs to (phase 12): the starter's or doer's home branch. Null = group-wide / before branches.
+  branchId   String?  @map("branch_id")
   /// SO/26-27/0001
   number     String
   customerId String   @map("customer_id")
@@ -115,6 +117,7 @@ model SalesOrder {
   @@unique([companyId, number])
   @@index([companyId, orderDate])
   @@index([customerId, orderDate])
+  @@index([companyId, branchId])
   @@map("sales_orders")
 }
 

@@ -97,6 +97,13 @@ export const COMPANY_SCOPED_MODELS = new Set([
   'ReportValue',
   'ReportBackfill',
   'Report',
+  'LegalEntity',
+  'Region',
+  'Location',
+  'BranchManager',
+  'UserBranch',
+  'DepartmentHead',
+  'ApprovalRoute',
 ]);
 
 /** Models with `deletedAt` (soft delete). Kept in sync with the schema by `scope.test.ts`. */
@@ -132,6 +139,9 @@ export const SOFT_DELETE_MODELS = new Set([
   'RecordType',
   'RecordEntry',
   'Report',
+  'LegalEntity',
+  'Region',
+  'Location',
 ]);
 
 const LIST_READS = new Set(['findMany', 'findFirst', 'findFirstOrThrow', 'count', 'aggregate', 'groupBy']);

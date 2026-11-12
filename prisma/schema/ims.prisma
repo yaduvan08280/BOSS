@@ -144,6 +144,8 @@ model MaxReview {
 model PurchaseOrder {
   id          String    @id @default(cuid(2))
   companyId   String    @map("company_id")
+  /// The branch this belongs to (phase 12): the starter's or doer's home branch. Null = group-wide / before branches.
+  branchId    String?   @map("branch_id")
   /// PO/26-27/0001
   number      String
   vendor      String
@@ -164,6 +166,7 @@ model PurchaseOrder {
 
   @@unique([companyId, number])
   @@index([companyId, status])
+  @@index([companyId, branchId])
   @@map("purchase_orders")
 }
 

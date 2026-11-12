@@ -1,7 +1,8 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { forCompany } from '@mono/db';
+import { forCompany, setReach } from '@mono/db';
+import { reachFor } from '../branches/reach';
 import { moveSchema } from '@mono/shared';
 import { unauthenticated } from '../../lib/errors';
 import { listCustomers, saveCustomer, customerSchema } from '../crm/customers';
@@ -46,6 +47,14 @@ export async function v1Routes(app: FastifyInstance) {
       roleKey: k.roleKey,
       permissions: k.permissions,
     };
+    // A key sees exactly as far as its maker (phase 12, row G6).
+    q.reach = await reachFor(db, {
+      companyId: k.companyId,
+      userId: k.userId,
+      permissions: k.permissions,
+      reach: k.reach,
+    });
+    setReach(q.reach);
     q.db = forCompany(db, k.companyId);
   };
   // A fresh hook list and rate-limit config per route (decision 62).

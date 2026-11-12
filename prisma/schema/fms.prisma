@@ -63,6 +63,8 @@ model FlowVersion {
 model FmsRecord {
   id            String    @id @default(cuid(2))
   companyId     String    @map("company_id")
+  /// The branch this belongs to (phase 12): the starter's or doer's home branch. Null = group-wide / before branches.
+  branchId      String?   @map("branch_id")
   flowId        String    @map("flow_id")
   flowVersionId String    @map("flow_version_id")
   /// #n per flow
@@ -89,6 +91,7 @@ model FmsRecord {
   @@unique([flowId, number])
   @@index([companyId, status])
   @@index([companyId, flowId, status])
+  @@index([companyId, branchId])
   @@map("fms_records")
 }
 
@@ -179,6 +182,8 @@ model DocumentType {
 model Document {
   id          String   @id @default(cuid(2))
   companyId   String   @map("company_id")
+  /// The branch this belongs to (phase 12): the starter's or doer's home branch. Null = group-wide / before branches.
+  branchId    String?  @map("branch_id")
   typeId      String   @map("type_id")
   /// QUO/26-27/0001
   number      String
@@ -202,6 +207,7 @@ model Document {
   @@unique([companyId, number])
   @@index([companyId, typeId, date])
   @@index([recordId])
+  @@index([companyId, branchId])
   @@map("documents")
 }
 

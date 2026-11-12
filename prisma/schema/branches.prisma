@@ -1,0 +1,122 @@
+/// Phase 12 (plan §3.1): Group (the company) → legal entity → region → branch → location.
+
+/// One GSTIN, or one foreign registration. Own, or a franchise (hard isolation — stage D).
+model LegalEntity {
+  id        String    @id @default(cuid(2))
+  companyId String    @map("company_id")
+  name      String
+  /// OWN | FRANCHISE
+  kind      String    @default("OWN")
+  /// ISO country code and currency; Indian entities keep IN / INR.
+  country   String    @default("IN")
+  currency  String    @default("INR")
+  state     String?
+  /// GSTIN, or the foreign tax registration (TRN / VAT number).
+  taxId     String?   @map("tax_id")
+  isDefault Boolean   @default(false) @map("is_default")
+  /// Letterhead, address, licences, tax profile … (stages B and C fill these).
+  details   Json      @default("{}")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([companyId])
+  @@map("legal_entities")
+}
+
+/// A grouping of branches inside an entity ("Rajasthan", "Dubai"), to any depth.
+model Region {
+  id        String    @id @default(cuid(2))
+  companyId String    @map("company_id")
+  entityId  String?   @map("entity_id")
+  parentId  String?   @map("parent_id")
+  name      String
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([companyId])
+  @@map("regions")
+}
+
+/// A stock point inside a branch (main store, cold room, kitchen, bar). Stock per location arrives in phase 13.
+model Location {
+  id        String    @id @default(cuid(2))
+  companyId String    @map("company_id")
+  branchId  String    @map("branch_id")
+  name      String
+  /// STORE | KITCHEN | BAR | COLD_ROOM | OTHER
+  kind      String    @default("STORE")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([companyId, branchId])
+  @@map("locations")
+}
+
+/// Who runs what: a branch's managers and HR, a region's area managers. One person may hold many.
+model BranchManager {
+  id        String   @id @default(cuid(2))
+  companyId String   @map("company_id")
+  userId    String   @map("user_id")
+  /// Exactly one of the two is set.
+  branchId  String?  @map("branch_id")
+  regionId  String?  @map("region_id")
+  /// MANAGER (a branch) | AREA (a region) | HR (a branch's HR person)
+  role      String   @default("MANAGER")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([userId, branchId, regionId, role])
+  @@index([companyId, branchId])
+  @@index([companyId, regionId])
+  @@index([companyId, userId])
+  @@map("branch_managers")
+}
+
+/// Branches a person works at besides their home branch (`User.branchId`).
+model UserBranch {
+  id        String   @id @default(cuid(2))
+  companyId String   @map("company_id")
+  userId    String   @map("user_id")
+  branchId  String   @map("branch_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([userId, branchId])
+  @@index([companyId, branchId])
+  @@map("user_branches")
+}
+
+/// The head of a department at one branch (the Kitchen head at Outlet 3); `Department.hodUserId` stays group-wide.
+model DepartmentHead {
+  id           String   @id @default(cuid(2))
+  companyId    String   @map("company_id")
+  departmentId String   @map("department_id")
+  branchId     String   @map("branch_id")
+  userId       String   @map("user_id")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([departmentId, branchId])
+  @@index([companyId, branchId])
+  @@map("department_heads")
+}
+
+/// Who approves, in what order (plan §3.2, decision 14: the owner decides). One row per module + request type,
+/// for the whole group, or overriding it for an entity or a branch.
+model ApprovalRoute {
+  id          String   @id @default(cuid(2))
+  companyId   String   @map("company_id")
+  /// hr.leave | hr.correction | ims.adjustment | slip | ticket …
+  kind        String
+  /// Null + null = the group's chain; one of them set = an override there.
+  entityId    String?  @map("entity_id")
+  branchId    String?  @map("branch_id")
+  /// ApprovalStep[] (shared zod): who, skip rules, hours before it goes up.
+  steps       Json
+  updatedById String?  @map("updated_by_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([companyId, kind, entityId, branchId])
+  @@map("approval_routes")
+}

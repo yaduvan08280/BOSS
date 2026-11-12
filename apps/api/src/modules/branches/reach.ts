@@ -1,0 +1,88 @@
+import type { Db, Reach, Tx } from '@mono/db';
+
+export const REACHES = ['own', 'branches', 'entity', 'group'] as const;
+export type RoleReach = (typeof REACHES)[number];
+
+/** A region and every region under it. */
+function withChildren(all: { id: string; parentId: string | null }[], roots: string[]): string[] {
+  const out = new Set(roots);
+  for (let grew = true; grew;) {
+    grew = false;
+    for (const r of all)
+      if (r.parentId && out.has(r.parentId) && !out.has(r.id)) {
+        out.add(r.id);
+        grew = true;
+      }
+  }
+  return [...out];
+}
+
+/**
+ * The branches a person is part of: their home branch, the ones they also work at, the ones they manage (or are
+ * the HR person of), and every branch of the regions they are area manager of.
+ */
+export async function branchesOf(db: Db | Tx, companyId: string, userId: string): Promise<string[]> {
+  const [user, works, manages] = await Promise.all([
+    db.user.findFirst({ where: { id: userId, companyId }, select: { branchId: true } }),
+    db.userBranch.findMany({ where: { companyId, userId }, select: { branchId: true } }),
+    db.branchManager.findMany({ where: { companyId, userId }, select: { branchId: true, regionId: true } }),
+  ]);
+  const ids = new Set<string>();
+  if (user?.branchId) ids.add(user.branchId);
+  for (const w of works) ids.add(w.branchId);
+  for (const m of manages) if (m.branchId) ids.add(m.branchId);
+  const regions = manages.flatMap((m) => (m.regionId ? [m.regionId] : []));
+  if (regions.length) {
+    const all = await db.region.findMany({
+      where: { companyId, deletedAt: null },
+      select: { id: true, parentId: true },
+    });
+    const under = await db.branch.findMany({
+      where: { companyId, deletedAt: null, regionId: { in: withChildren(all, regions) } },
+      select: { id: true },
+    });
+    for (const b of under) ids.add(b.id);
+  }
+  return [...ids];
+}
+
+/**
+ * How far a person sees (plan §3.3). Owners and roles with the reach "group" see everything. "entity" widens a
+ * person's branches to every branch of their legal entities. "branches" and "own" are the person's branches at
+ * the database fence — "own" people are narrowed further by each module's own rules (my tasks, my leave), as
+ * before. `only` is the branch picked in the top bar's switcher: it narrows, and never widens.
+ */
+export async function reachFor(
+  db: Db | Tx,
+  who: { companyId: string; userId: string; permissions: string[]; reach: string },
+  only?: string | null,
+): Promise<Reach> {
+  const everything = who.permissions.includes('*') || who.reach === 'group';
+  let ids: string[] | null = null;
+  if (!everything) {
+    ids = await branchesOf(db, who.companyId, who.userId);
+    if (who.reach === 'entity' && ids.length) {
+      const mine = await db.branch.findMany({
+        where: { companyId: who.companyId, id: { in: ids }, entityId: { not: null } },
+        select: { entityId: true },
+      });
+      const entities = [...new Set(mine.map((b) => b.entityId!))];
+      if (entities.length) {
+        const all = await db.branch.findMany({
+          where: { companyId: who.companyId, deletedAt: null, entityId: { in: entities } },
+          select: { id: true },
+        });
+        ids = [...new Set([...ids, ...all.map((b) => b.id)])];
+      }
+    }
+  }
+  if (only) {
+    if (
+      ids
+        ? ids.includes(only)
+        : await db.branch.count({ where: { id: only, companyId: who.companyId, deletedAt: null } })
+    )
+      ids = [only];
+  }
+  return { userId: who.userId, branchIds: ids };
+}

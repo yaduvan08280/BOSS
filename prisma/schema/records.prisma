@@ -38,6 +38,8 @@ model RecordType {
 model RecordEntry {
   id          String    @id @default(cuid(2))
   companyId   String    @map("company_id")
+  /// The branch this belongs to (phase 12): the starter's or doer's home branch. Null = group-wide / before branches.
+  branchId    String?   @map("branch_id")
   typeId      String    @map("type_id")
   /// Per type, per financial year; never reused.
   number      Int
@@ -64,6 +66,7 @@ model RecordEntry {
   @@index([companyId, typeId, createdAt])
   @@index([companyId, typeId, title])
   @@index([companyId, typeId, code])
+  @@index([companyId, branchId])
   @@map("records")
 }
 
