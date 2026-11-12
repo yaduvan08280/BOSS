@@ -334,11 +334,12 @@ describe('linked choices: who may read them', () => {
       startFields: [{ key: 'pr', label: 'Request', type: 'master', master: `rec:${flow}` }],
       steps: [task('check', o.owner.id)],
     });
-    for (const params of [
+    const closed: Record<string, string>[] = [
       { source: `fms:${flow}:vendor` },
       { source: `rec:${flow}` },
       { owner: `flow:${pick}`, field: 'pr' },
-    ])
+    ];
+    for (const params of closed)
       expect((await options(guard.api, params)).status, JSON.stringify(params)).toBe(403);
     expect((await guard.api.get(`/api/masters/columns?source=rec:${flow}`)).status).toBe(403);
     expect((await guard.api.post('/api/masters/links', { refs: [`rec:${rec.id}`] })).body).toEqual({});

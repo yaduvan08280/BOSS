@@ -12,6 +12,7 @@ import { formatDateTime } from '@/lib/when';
 import { useUsers } from '@/modules/system/api';
 import { RECORD_TONE, useMyFms, useRecord } from './api';
 import { RecordDrawer } from './RecordDrawer';
+import { knownOf } from './record-links';
 import { StartDialog } from './StartDialog';
 import { StepDialog } from './StepDialog';
 
@@ -187,6 +188,9 @@ function DoStep({
     <StepDialog
       stepId={stepId}
       step={step}
+      flowId={r.flow.id}
+      recordId={r.id}
+      known={knownOf(r)}
       title={`${r.title} · #${r.number}`}
       tz={tz}
       people={people}

@@ -17,7 +17,7 @@ export function CustomersPage({ me }: { me: Me }) {
   const { t } = useTranslation();
   const q = useCustomers();
   const progress = useProgress();
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get('q') ?? '');
   const [chip, setChip] = useState('all');
   const [open, setOpen] = useState<string | null>(null);
   const [editing, setEditing] = useState<CustomerRow | 'new' | null>(null);

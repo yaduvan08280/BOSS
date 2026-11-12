@@ -4,8 +4,8 @@ import { FIELD_TYPES, type FlowField } from '@mono/shared';
 import { Button } from '@/components/ui/button';
 import { Checkbox, Select } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useMasters } from '@/modules/ai/api';
 import { FieldExtras } from './field-extras';
+import { SourcePicker } from './field-extras/SourcePicker';
 import type { FormOwner } from './form/ctx';
 import { keyFor } from './keys';
 
@@ -21,7 +21,6 @@ export function FieldsEditor({
   owner?: FormOwner;
 }) {
   const { t } = useTranslation();
-  const masters = useMasters();
   const set = (i: number, patch: Partial<FlowField>) =>
     onChange(fields.map((f, j) => (j === i ? { ...f, ...patch } : f)));
   const move = (i: number, by: number) => {
@@ -100,24 +99,7 @@ export function FieldsEditor({
               }
             />
           )}
-          {f.type === 'master' && (
-            <Select
-              aria-label={t('fms.b.master')}
-              value={f.master ?? 'customers'}
-              onChange={(e) => set(i, { master: e.target.value })}
-            >
-              {['customers', 'items', 'vendors', 'people'].map((m) => (
-                <option key={m} value={m}>
-                  {t(`fms.master.${m}`)}
-                </option>
-              ))}
-              {(masters.data ?? []).map((m) => (
-                <option key={m.id} value={`m:${m.id}`}>
-                  {m.name}
-                </option>
-              ))}
-            </Select>
-          )}
+          {f.type === 'master' && <SourcePicker field={f} onChange={(patch) => set(i, patch)} />}
           <FieldExtras field={f} fields={fields} onChange={(patch) => set(i, patch)} owner={owner} />
           <Input
             aria-label={t('fms.b.help')}

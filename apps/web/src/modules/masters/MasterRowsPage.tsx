@@ -21,7 +21,8 @@ export function MasterRowsPage({ me }: { me: Me }) {
   const { t } = useTranslation();
   const { id = '' } = useParams();
   const q = useRows(id);
-  const [search, setSearch] = useState('');
+  // A linked value elsewhere opens this page already searched for its row (`?q=`).
+  const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get('q') ?? '');
   const [editing, setEditing] = useState<Row | 'new' | null>(null);
   const [removing, setRemoving] = useState<Row | null>(null);
   const [importing, setImporting] = useState(false);
@@ -205,6 +206,7 @@ function RowDialog({
         onChange={(v) => setValues(v as Record<string, unknown>)}
         errors={errors}
         people={users.data ?? []}
+        owner={{ kind: 'master', id: data.master.id }}
       />
     </Dialog>
   );

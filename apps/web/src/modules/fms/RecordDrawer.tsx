@@ -15,6 +15,8 @@ import { cn } from '@/lib/utils';
 import { useDueLabel, useWorkMutation } from '@/lib/work';
 import { formatDateTime } from '@/lib/when';
 import { RECORD_TONE, useRecord, type RecordDetail, type StepRow } from './api';
+import { knownOf, useRecordLinks } from './record-links';
+import { FieldValue, StepValues } from './RecordValues';
 import { showValue } from './show';
 import { StepDialog } from './StepDialog';
 
@@ -46,6 +48,7 @@ export function RecordDrawer({
     [['fms']],
   );
   const open = r?.steps.find((s) => s.status === 'OPEN');
+  const links = useRecordLinks(r);
 
   return (
     <Sheet open onOpenChange={(o) => !o && onClose()}>
@@ -75,14 +78,13 @@ export function RecordDrawer({
                 </p>
               )}
               <div>
-                {r.definition.startFields.map((f) => {
-                  const shown = showValue(f, r.data[f.key], tz, [t('fms.yes'), t('fms.no')]);
-                  return shown ? (
+                {r.definition.startFields.map((f) =>
+                  showValue(f, r.data[f.key], tz, ['y', 'n']) ? (
                     <InfoRow key={f.key} label={f.label}>
-                      {shown}
+                      <FieldValue field={f} data={r.data} links={links} tz={tz} />
                     </InfoRow>
-                  ) : null;
-                })}
+                  ) : null,
+                )}
                 <InfoRow label={t('fms.startedBy')}>
                   {r.startedById ? names.get(r.startedById) : t(`fms.source.${r.source}`)}
                 </InfoRow>
@@ -141,20 +143,12 @@ export function RecordDrawer({
                         </div>
                         {s.decision && <div className="mt-1 text-xs">{t(`fms.decision.${s.decision}`)}</div>}
                         {s.note && <p className="mt-1 text-xs text-muted-foreground">{s.note}</p>}
-                        {Object.entries(s.data).length > 0 && (
-                          <div className="mt-1 text-xs text-muted-foreground">
-                            {Object.entries(s.data)
-                              .map(([k, v]) => {
-                                const f = r.definition.steps
-                                  .find((x) => x.key === s.stepKey)
-                                  ?.fields.find((x) => x.key === k);
-                                const shown = showValue(f, v, tz, [t('fms.yes'), t('fms.no')]);
-                                return shown ? `${f?.label ?? k}: ${shown}` : null;
-                              })
-                              .filter(Boolean)
-                              .join(' · ')}
-                          </div>
-                        )}
+                        <StepValues
+                          data={s.data}
+                          fields={r.definition.steps.find((x) => x.key === s.stepKey)?.fields ?? []}
+                          links={links}
+                          tz={tz}
+                        />
                         {r.files.some((f) => f.entityId === s.id) && (
                           <div className="mt-2 flex flex-wrap gap-1.5">
                             {r.files
@@ -262,6 +256,9 @@ export function RecordDrawer({
           <StepDialog
             stepId={doing.id}
             step={r.definition.steps.find((s) => s.key === doing.stepKey)!}
+            flowId={r.flow.id}
+            recordId={r.id}
+            known={knownOf(r)}
             title={`${r.title} · #${r.number}`}
             tz={tz}
             people={people}

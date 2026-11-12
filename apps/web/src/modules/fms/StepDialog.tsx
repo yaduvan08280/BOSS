@@ -17,6 +17,9 @@ import { toPayload, type Values } from './payload';
 export function StepDialog({
   stepId,
   step,
+  flowId,
+  recordId,
+  known,
   title,
   tz,
   people,
@@ -24,6 +27,10 @@ export function StepDialog({
 }: {
   stepId: string;
   step: FlowStep;
+  /** The record this step belongs to and what it already holds: linked choices and formulas read them. */
+  flowId: string;
+  recordId: string;
+  known: Values;
   title: string;
   tz: string;
   people: OrgPerson[];
@@ -106,6 +113,8 @@ export function StepDialog({
             onChange={setValues}
             errors={errors}
             people={people}
+            owner={{ kind: 'flow', id: flowId, step: step.key, record: recordId }}
+            known={known}
           />
         )}
         {step.checklist.length > 0 && (

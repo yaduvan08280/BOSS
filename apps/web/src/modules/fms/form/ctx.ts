@@ -2,7 +2,13 @@ import type { FlowField, OrgPerson, Refs } from '@mono/shared';
 import type { Values } from '../payload';
 
 /** Where a form lives (a flow, a master, a record type): value lists and choices are asked for per owner. */
-export type FormOwner = { kind: 'flow' | 'master' | 'recordType'; id: string };
+export type FormOwner = {
+  kind: 'flow' | 'master' | 'recordType';
+  id: string;
+  /** A flow's step form: the step, and the record being filled (it keeps the version it started on). */
+  step?: string;
+  record?: string;
+};
 
 /** What every field input can reach: the whole form, not only its own value (auto-fill, dependent choices, formulas). */
 export type FormCtx = {

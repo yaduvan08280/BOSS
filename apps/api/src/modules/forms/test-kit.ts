@@ -1,4 +1,4 @@
-import { makeApp, makeCompany, ownerClient, signedIn } from '../../test/helpers';
+import { makeCompany, ownerClient, signedIn, type makeApp } from '../../test/helpers';
 
 export type Ctx = Awaited<ReturnType<typeof makeApp>>;
 export type Api = Awaited<ReturnType<typeof signedIn>>;
