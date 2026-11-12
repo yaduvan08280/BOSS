@@ -1,4 +1,4 @@
-import { Building2, Landmark, MapPinned, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Archive, Building2, Copy, Landmark, MapPinned, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EmptyState, ErrorState, PageSkeleton } from '@/components/page';
@@ -7,12 +7,14 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/form';
 import { del, useOrgMutation, useUsers } from '../api';
 import { regionTree, useStructure, type Entity, type GroupBranch, type Region } from './api';
+import { CloseBranchDialog, CopyBranchDialog } from './BranchLifecycle';
 import { BranchDialog, EntityDialog, RegionDialog } from './StructureDialogs';
 
 type Open =
   | { what: 'entity'; row: Partial<Entity> }
   | { what: 'region'; row: Partial<Region> }
   | { what: 'branch'; row: Partial<GroupBranch> }
+  | { what: 'copy' | 'close'; row: GroupBranch }
   | null;
 
 function Section({
@@ -190,7 +192,34 @@ export function StructurePanel() {
                           : t('branches.noManager')}
                       </div>
                     </div>
-                    {actions(() => setOpen({ what: 'branch', row: b }), `/api/org/branches/${b.id}`)}
+                    <div className="flex shrink-0 flex-wrap justify-end">
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={t('branches.copy.button')}
+                        title={t('branches.copy.button')}
+                        onClick={() => setOpen({ what: 'copy', row: b })}
+                      >
+                        <Copy />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={t('org.edit')}
+                        onClick={() => setOpen({ what: 'branch', row: b })}
+                      >
+                        <Pencil />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={t('branches.close.button')}
+                        title={t('branches.close.button')}
+                        onClick={() => setOpen({ what: 'close', row: b })}
+                      >
+                        <Archive />
+                      </Button>
+                    </div>
                   </Card>
                 </li>
               );
@@ -202,6 +231,14 @@ export function StructurePanel() {
       {open?.what === 'entity' && <EntityDialog entity={open.row} onClose={close} />}
       {open?.what === 'region' && <RegionDialog region={open.row} {...shared} />}
       {open?.what === 'branch' && <BranchDialog branch={open.row} {...shared} />}
+      {open?.what === 'copy' && <CopyBranchDialog branch={open.row} onClose={close} />}
+      {open?.what === 'close' && (
+        <CloseBranchDialog
+          branch={open.row}
+          others={s.branches.filter((b) => b.id !== open.row.id)}
+          onClose={close}
+        />
+      )}
     </div>
   );
 }

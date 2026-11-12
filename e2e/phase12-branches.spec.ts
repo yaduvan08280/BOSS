@@ -136,3 +136,34 @@ test('outlet comparison lists the branches with their numbers', async ({ page },
   await expectNoSideScroll(page);
   if (shots) await page.screenshot({ path: `docs/screenshots/phase12/${info.project.name}-outlets.png` });
 });
+
+/** G20: open an outlet as a copy of another, then close it (nothing was left there). */
+test('a branch is opened as a copy and closed again', async ({ page }, info) => {
+  const t = tag(info.project.name);
+  await signIn(page);
+  const base = await call<{ id: string }>(page, 'POST', '/api/org/branches', {
+    name: `Base ${t}`,
+    type: 'OUTLET',
+  });
+  await page.goto('/system/branches');
+  await settled(page);
+  const dialog = page.getByRole('dialog');
+  const card = (name: string) => page.locator('li', { hasText: name });
+  await card(`Base ${t}`).getByRole('button', { name: 'Open a new branch like this one' }).click();
+  await dialog.getByLabel('Name of the new branch').fill(`Twin ${t}`);
+  await dialog.getByRole('button', { name: 'Open the branch' }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(card(`Twin ${t}`).getByText('Outlet')).toBeVisible();
+  // Closing: nothing is left there, so it closes at once and leaves the list.
+  for (const name of [`Twin ${t}`, `Base ${t}`]) {
+    await card(name).getByRole('button', { name: 'Close this branch' }).click();
+    await expect(dialog.getByText('Nothing is left at this branch')).toBeVisible();
+    if (name.startsWith('Twin') && shots)
+      await page.screenshot({ path: `docs/screenshots/phase12/${info.project.name}-close-branch.png` });
+    await dialog.getByRole('button', { name: 'Close the branch' }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(card(name)).toHaveCount(0);
+  }
+  await expectNoSideScroll(page);
+  void base;
+});

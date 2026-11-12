@@ -235,4 +235,81 @@ describe('processes, checklists and the flow designer per branch (phase 12, stag
       false,
     );
   });
+  it('G20: an outlet opens as a copy of another, and closes only once its people and open work have moved', async () => {
+    const w = await world(ctx.app);
+    const { g, rooftop } = await twoOutlets(ctx.prisma, w);
+    const cook = await g.at('Cook Rooftop', g.b.rooftop.id);
+    await ok(w.api.post('/api/branches/locations', { name: 'Dry store', branchId: g.b.rooftop.id }));
+    await ok(
+      w.api.put('/api/branches/approvals', {
+        kind: 'hr.leave',
+        branchId: g.b.rooftop.id,
+        steps: [{ who: 'owner' }],
+      }),
+    );
+    const master = await ok<{ id: string }>(
+      w.api.post('/api/checklists/masters', {
+        name: 'Opening round',
+        items: [{ key: 'a', text: 'Gas valves checked' }],
+        frequency: { type: 'daily' },
+        dueTime: '10:00',
+        windowHours: 4,
+        doerIds: [cook.id],
+        startDate: '2030-01-01',
+        perBranch: [{ branchId: g.b.rooftop.id, doerIds: [cook.id], dueTime: '09:15' }],
+      }),
+    );
+    // Copy: kind, region, entity, stock locations, approval routes and the checklist place — never the people.
+    const copy = await ok<{ id: string; copied: object; todo: object }>(
+      w.api.post(`/api/branches/${g.b.rooftop.id}/copy`, { name: 'Rooftop Two', code: 'RT2' }),
+    );
+    expect(copy.copied).toEqual({ locations: 1, routes: 1, checklists: 1 });
+    expect(copy.todo).toMatchObject({ manager: true, checklistDoers: 1 });
+    const made = await ctx.prisma.branch.findUniqueOrThrow({ where: { id: copy.id } });
+    expect(made).toMatchObject({ type: 'OUTLET', regionId: g.jaipur.id, entityId: g.entity.id });
+    const plans = (await ctx.prisma.checklistMaster.findUniqueOrThrow({ where: { id: master.id } }))
+      .perBranch;
+    expect(plans).toEqual([
+      { branchId: g.b.rooftop.id, doerIds: [cook.id], dueTime: '09:15' },
+      { branchId: copy.id, doerIds: [], dueTime: '09:15' },
+    ]);
+    expect(await ctx.prisma.user.count({ where: { branchId: copy.id } })).toBe(0);
+    // Until people are chosen there, the new branch gets no runs (and the sweep doesn't fail).
+    await sweepChecklists(ctx.prisma, new Date('2030-01-07T03:00:00Z'), master.id);
+    expect(await ctx.prisma.checklistRun.count({ where: { masterId: master.id, branchId: copy.id } })).toBe(
+      0,
+    );
+
+    // Close: refused while people and open work are still there …
+    await give(w, cook.id, 'Deep-clean the grill');
+    const preview = await ok<{ clear: boolean; holds: { people: number; tasks: number } }>(
+      w.api.get(`/api/branches/${g.b.rooftop.id}/close`),
+    );
+    expect(preview).toMatchObject({ clear: false, holds: { people: 2, tasks: 1 } });
+    expect((await w.api.post(`/api/branches/${g.b.rooftop.id}/close`, {})).status).toBe(409);
+    // … an outlet manager can't close anything …
+    expect((await rooftop.api.post(`/api/branches/${g.b.rooftop.id}/close`, {})).status).toBe(403);
+    // … the default branch can't close until another one is the default …
+    await ok(w.api.patch(`/api/org/branches/${copy.id}`, { name: 'Rooftop Two', isDefault: true }));
+    // … and done in one step once they have somewhere to go.
+    await ok(w.api.post(`/api/branches/${g.b.rooftop.id}/close`, { moveToBranchId: copy.id }));
+    expect((await ctx.prisma.user.findUniqueOrThrow({ where: { id: cook.id } })).branchId).toBe(copy.id);
+    const task_ = await ctx.prisma.task.findFirstOrThrow({
+      where: { companyId: w.companyId, description: 'Deep-clean the grill' },
+    });
+    expect(task_.branchId).toBe(copy.id);
+    const closed = await ctx.prisma.branch.findUniqueOrThrow({ where: { id: g.b.rooftop.id } });
+    expect(closed.closedAt).not.toBeNull();
+    // It leaves the pickers, the structure and the checklist; its approval route goes with it.
+    const names = (
+      await ok<{ branches: { name: string }[] }>(w.api.get('/api/branches/structure'))
+    ).branches.map((b) => b.name);
+    expect(names).not.toContain('Rooftop Jaipur');
+    expect(names).toContain('Rooftop Two');
+    const after = (await ctx.prisma.checklistMaster.findUniqueOrThrow({ where: { id: master.id } }))
+      .perBranch;
+    expect(after).toEqual([{ branchId: copy.id, doerIds: [], dueTime: '09:15' }]);
+    expect(await ctx.prisma.approvalRoute.count({ where: { branchId: g.b.rooftop.id } })).toBe(0);
+    expect(await ctx.prisma.approvalRoute.count({ where: { branchId: copy.id } })).toBe(1);
+  });
 });

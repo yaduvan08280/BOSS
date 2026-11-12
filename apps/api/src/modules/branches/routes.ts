@@ -15,6 +15,7 @@ import { forbidden } from '../../lib/errors';
 import { actorOf } from '../delegation/routes';
 import { chainFor, deleteRoute, listRoutes, saveRoute } from './approvals';
 import { compareOutlets } from './compare';
+import { closeBranch, closePreview, copyBranch } from './lifecycle';
 import {
   deleteEntity,
   deleteLocation,
@@ -151,5 +152,34 @@ export async function branchRoutes(app: FastifyInstance) {
       },
     },
     async (q) => ({ rows: await compareOutlets(db, actorOf(q), q.query.from, q.query.to) }),
+  );
+  // Opening an outlet by copying another, and closing one once its people and open work have a new home.
+  r.post(
+    '/api/branches/:id/copy',
+    {
+      ...groupWide(),
+      schema: {
+        tags,
+        params: idParam,
+        body: z.object({
+          name: z.string().trim().min(1, 'Enter a name').max(120),
+          code: z.string().trim().max(20).nullish(),
+          city: z.string().trim().max(80).nullish(),
+          regionId: z.string().max(40).nullish(),
+        }),
+      },
+    },
+    async (q) => copyBranch(db, actorOf(q), q.params.id, q.body),
+  );
+  r.get('/api/branches/:id/close', { ...groupWide(), schema: { tags, params: idParam } }, async (q) =>
+    closePreview(db, actorOf(q), q.params.id),
+  );
+  r.post(
+    '/api/branches/:id/close',
+    {
+      ...groupWide(),
+      schema: { tags, params: idParam, body: z.object({ moveToBranchId: z.string().max(40).nullish() }) },
+    },
+    async (q) => closeBranch(db, actorOf(q), q.params.id, q.body.moveToBranchId),
   );
 }

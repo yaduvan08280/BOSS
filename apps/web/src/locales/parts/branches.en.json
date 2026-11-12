@@ -118,7 +118,42 @@
       "nobody": "nobody"
     },
     "entityOf": "{{name}} (company)",
-    "regionOf": "{{name}} (region)"
+    "regionOf": "{{name}} (region)",
+    "copy": {
+      "button": "Open a new branch like this one",
+      "title": "New branch like {{name}}",
+      "what": "The new branch gets the same kind, region, entity, stock locations, approval steps and checklists.",
+      "name": "Name of the new branch",
+      "go": "Open the branch",
+      "after": "People are not copied. Afterwards choose its manager, add its people and pick who does each checklist there.",
+      "done": "Opened. Copied {{locations}} stock locations, {{routes}} approval routes and {{checklists}} checklists."
+    },
+    "close": {
+      "button": "Close this branch",
+      "title": "Close {{name}}",
+      "what": "A closed branch leaves every list and picker. Finished work keeps showing it. This can't be undone here.",
+      "clear": "Nothing is left at this branch. It can be closed.",
+      "still": "Still at this branch:",
+      "moveTo": "Move them to",
+      "go": "Close the branch",
+      "done": "{{name}} is closed",
+      "holds": {
+        "people_one": "{{count}} person",
+        "people_other": "{{count}} people",
+        "tasks_one": "{{count}} open task",
+        "tasks_other": "{{count}} open tasks",
+        "checklistRuns_one": "{{count}} checklist run",
+        "checklistRuns_other": "{{count}} checklist runs",
+        "slips_one": "{{count}} open help slip",
+        "slips_other": "{{count}} open help slips",
+        "tickets_one": "{{count}} open ticket",
+        "tickets_other": "{{count}} open tickets",
+        "records_one": "{{count}} running process record",
+        "records_other": "{{count}} running process records",
+        "purchaseOrders_one": "{{count}} open purchase order",
+        "purchaseOrders_other": "{{count}} open purchase orders"
+      }
+    }
   },
   "chkBranch": {
     "title": "A run for each branch",
