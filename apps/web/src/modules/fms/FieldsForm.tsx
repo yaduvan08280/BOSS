@@ -1,19 +1,21 @@
-import { Eraser, LocateFixed, Plus, X } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { LocateFixed } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { FlowField, OrgPerson } from '@mono/shared';
+import { refsOf, withRef, type FlowField, type OrgPerson } from '@mono/shared';
 import { DateInput, DateTimeInput } from '@/components/ui/date-input';
 import { FileDrop } from '@/components/file-drop';
 import { Button } from '@/components/ui/button';
 import { Field, Select, Textarea } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { personLabel } from '@/lib/people';
-import { uploadFile, type Uploaded } from '@/lib/upload';
+import type { Uploaded } from '@/lib/upload';
 import { cn } from '@/lib/utils';
-import { MasterPicker } from '@/modules/masters/MasterPicker';
-
+import type { FormCtx, FormOwner } from './form/ctx';
+import { FormulaValue } from './form/FormulaValue';
+import { ItemLines } from './form/ItemLines';
+import { LearnInput } from './form/LearnInput';
+import { LinkedInput } from './form/LinkedInput';
+import { SignaturePad } from './form/SignaturePad';
 import type { Values } from './payload';
-type Line = { item: string; qty: string; rate: string };
 
 /** Every field type of §6.1, as one form. Used for start forms, step forms and the public form. */
 export function FieldsForm({
@@ -23,6 +25,8 @@ export function FieldsForm({
   errors = {},
   people = [],
   publicForm = false,
+  owner,
+  known = {},
 }: {
   fields: FlowField[];
   values: Values;
@@ -30,14 +34,30 @@ export function FieldsForm({
   errors?: Record<string, string>;
   people?: OrgPerson[];
   publicForm?: boolean;
+  /** Where this form lives: needed by value lists and linked choices. */
+  owner?: FormOwner;
+  /** Values already on the record (the start form and earlier steps). */
+  known?: Values;
 }) {
-  const set = (k: string, v: unknown) => onChange({ ...values, [k]: v });
+  const ctx: FormCtx = {
+    fields,
+    values,
+    refs: refsOf(values),
+    // A typed value has no link; a picked one carries its row's.
+    set: (k, v, ref) => onChange(withRef({ ...values, [k]: v }, k, ref)),
+    patch: (vs, refs = {}) =>
+      onChange(Object.entries(refs).reduce((d, [k, r]) => withRef(d, k, r), { ...values, ...vs })),
+    owner,
+    known,
+    publicForm,
+    people,
+  };
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       {fields.map((f) => (
         <Field
           key={f.key}
-          label={`${f.label}${f.required ? ' *' : ''}`}
+          label={`${f.label}${f.required && f.type !== 'formula' ? ' *' : ''}`}
           hint={f.help}
           error={errors[f.key]}
           className={cn(
@@ -45,33 +65,17 @@ export function FieldsForm({
               'sm:col-span-2',
           )}
         >
-          <FieldInput
-            field={f}
-            value={values[f.key]}
-            onChange={(v) => set(f.key, v)}
-            people={people}
-            publicForm={publicForm}
-          />
+          <FieldInput field={f} value={values[f.key]} ctx={ctx} />
         </Field>
       ))}
     </div>
   );
 }
 
-function FieldInput({
-  field: f,
-  value,
-  onChange,
-  people,
-  publicForm,
-}: {
-  field: FlowField;
-  value: unknown;
-  onChange: (v: unknown) => void;
-  people: OrgPerson[];
-  publicForm: boolean;
-}) {
+function FieldInput({ field: f, value, ctx }: { field: FlowField; value: unknown; ctx: FormCtx }) {
   const { t } = useTranslation();
+  const { people, publicForm } = ctx;
+  const onChange = (v: unknown) => ctx.set(f.key, v);
   const str = typeof value === 'string' ? value : value === undefined || value === null ? '' : String(value);
   switch (f.type) {
     case 'longtext':
@@ -154,7 +158,9 @@ function FieldInput({
         <SignaturePad value={value as Uploaded[] | undefined} onChange={onChange} />
       );
     case 'items':
-      return <ItemLines value={Array.isArray(value) ? (value as Line[]) : []} onChange={onChange} />;
+      return <ItemLines field={f} value={value} ctx={ctx} />;
+    case 'formula':
+      return <FormulaValue field={f} value={value} ctx={ctx} />;
     case 'master':
       if (f.master === 'people' && !publicForm)
         return (
@@ -170,10 +176,7 @@ function FieldInput({
           </Select>
         );
       // Any master (customers, items, vendors, your own): search and pick; the public form just types.
-      if (!publicForm)
-        return (
-          <MasterPicker source={f.master ?? 'customers'} value={str} onChange={onChange} label={f.label} />
-        );
+      if (!publicForm) return <LinkedInput field={f} value={value} ctx={ctx} />;
       return <Input value={str} onChange={(e) => onChange(e.target.value)} />;
     case 'location':
       return (
@@ -205,135 +208,7 @@ function FieldInput({
     case 'email':
       return <Input type="email" inputMode="email" value={str} onChange={(e) => onChange(e.target.value)} />;
     default:
+      if (f.learn && !publicForm) return <LearnInput field={f} value={value} ctx={ctx} />;
       return <Input value={str} onChange={(e) => onChange(e.target.value)} />;
   }
-}
-
-/** Item lines: item, quantity, rate; the amount is worked out. */
-function ItemLines({ value, onChange }: { value: Line[]; onChange: (v: Line[]) => void }) {
-  const { t } = useTranslation();
-  const lines = value.length ? value : [{ item: '', qty: '', rate: '' }];
-  const set = (i: number, patch: Partial<Line>) =>
-    onChange(lines.map((l, j) => (j === i ? { ...l, ...patch } : l)));
-  const amount = (l: Line) => (Number(l.qty) || 0) * (Number(l.rate) || 0);
-  const total = lines.reduce((a, l) => a + amount(l), 0);
-  return (
-    <div className="space-y-2">
-      {lines.map((l, i) => (
-        <div
-          key={i}
-          className="grid grid-cols-[1fr_70px_90px_auto] items-center gap-1.5 sm:grid-cols-[1fr_90px_110px_110px_auto]"
-        >
-          <Input
-            aria-label={t('fms.item')}
-            placeholder={t('fms.item')}
-            value={l.item}
-            onChange={(e) => set(i, { item: e.target.value })}
-          />
-          <Input
-            aria-label={t('fms.qty')}
-            placeholder={t('fms.qty')}
-            inputMode="decimal"
-            value={l.qty}
-            onChange={(e) => set(i, { qty: e.target.value })}
-          />
-          <Input
-            aria-label={t('fms.rate')}
-            placeholder={t('fms.rate')}
-            inputMode="decimal"
-            value={l.rate}
-            onChange={(e) => set(i, { rate: e.target.value })}
-          />
-          <span className="tabular hidden text-right text-sm sm:block">
-            ₹{amount(l).toLocaleString('en-IN')}
-          </span>
-          <Button
-            type="button"
-            size="icon-sm"
-            variant="ghost"
-            aria-label={t('common.remove')}
-            onClick={() => onChange(lines.filter((_, j) => j !== i))}
-          >
-            <X />
-          </Button>
-        </div>
-      ))}
-      <div className="flex items-center justify-between">
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() => onChange([...lines, { item: '', qty: '', rate: '' }])}
-        >
-          <Plus /> {t('fms.addLine')}
-        </Button>
-        <span className="tabular text-sm font-semibold">
-          {t('fms.total')}: ₹{total.toLocaleString('en-IN')}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-/** Draw with a finger or mouse; saved as an image. */
-function SignaturePad({ value, onChange }: { value?: Uploaded[]; onChange: (v: Uploaded[]) => void }) {
-  const { t } = useTranslation();
-  const canvas = useRef<HTMLCanvasElement>(null);
-  const [drawing, setDrawing] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const pos = (e: React.PointerEvent) => {
-    const r = canvas.current!.getBoundingClientRect();
-    return [
-      ((e.clientX - r.left) * canvas.current!.width) / r.width,
-      ((e.clientY - r.top) * canvas.current!.height) / r.height,
-    ] as const;
-  };
-  const save = () =>
-    canvas.current!.toBlob(async (blob) => {
-      if (!blob) return;
-      setBusy(true);
-      try {
-        onChange([await uploadFile(blob, `signature-${Date.now()}.png`)]);
-      } finally {
-        setBusy(false);
-      }
-    }, 'image/png');
-  if (value?.length)
-    return (
-      <div className="flex items-center gap-3">
-        <img src={value[0]!.url} alt={t('fms.signature')} className="h-16 rounded-control border bg-white" />
-        <Button type="button" size="sm" variant="ghost" onClick={() => onChange([])}>
-          <Eraser /> {t('fms.signAgain')}
-        </Button>
-      </div>
-    );
-  return (
-    <div className="space-y-2">
-      <canvas
-        ref={canvas}
-        width={600}
-        height={160}
-        aria-label={t('fms.signHere')}
-        className="h-32 w-full touch-none rounded-control border bg-white"
-        onPointerDown={(e) => {
-          const ctx = canvas.current!.getContext('2d')!;
-          ctx.lineWidth = 2.5;
-          ctx.lineCap = 'round';
-          ctx.beginPath();
-          ctx.moveTo(...pos(e));
-          setDrawing(true);
-        }}
-        onPointerMove={(e) => {
-          if (!drawing) return;
-          const ctx = canvas.current!.getContext('2d')!;
-          ctx.lineTo(...pos(e));
-          ctx.stroke();
-        }}
-        onPointerUp={() => setDrawing(false)}
-      />
-      <Button type="button" size="sm" disabled={busy} onClick={save}>
-        {t('fms.saveSignature')}
-      </Button>
-    </div>
-  );
 }

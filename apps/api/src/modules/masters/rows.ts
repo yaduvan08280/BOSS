@@ -3,6 +3,7 @@ import { checkFields, fieldSchema, MASTER_LIBRARY, splitTable, type FlowField } 
 import { z } from 'zod';
 import { writeAudit } from '../../lib/audit';
 import { emitEvent, recordChange } from '../../lib/events';
+import { checkForm, commitForm, storedValues, type FormScope } from '../forms';
 import { AppError, notFound } from '../../lib/errors';
 import { saveMaster } from '../ai/masters';
 import { can, type Actor } from '../work/actor';
@@ -79,9 +80,17 @@ export async function saveRow(
 ) {
   needEdit(actor);
   const m = await loadMaster(db, actor.companyId, masterId);
-  const { values, errors } = checkFields(m.fields, input);
-  if (Object.keys(errors).length)
-    throw new AppError(400, 'VALIDATION_FAILED', Object.values(errors)[0]!, { fields: errors });
+  const scope: FormScope = {
+    companyId: actor.companyId,
+    actorId: actor.userId,
+    owner: { kind: 'master', id: masterId },
+    recordId: id,
+    canAddValues: true,
+  };
+  const state = await checkForm(db, scope, m.fields, input);
+  if (Object.keys(state.errors).length)
+    throw new AppError(400, 'VALIDATION_FAILED', Object.values(state.errors)[0]!, { fields: state.errors });
+  const values = storedValues(state);
   const { key, label } = keyAndLabel(m, values);
   if (m.keyField && !key)
     throw new AppError(
@@ -93,6 +102,7 @@ export async function saveRow(
   return db.$transaction(async (tx) => {
     const before = id ? await tx.masterRow.findFirst({ where: { id, masterId, deletedAt: null } }) : null;
     if (id && !before) throw notFound('Row');
+    await commitForm(tx, scope, m.fields, state);
     const row = id
       ? await tx.masterRow.update({ where: { id }, data: { data: values as object, key, label } })
       : await tx.masterRow.create({

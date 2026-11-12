@@ -19,6 +19,7 @@ export const FIELD_TYPES = [
   'items',
   'master',
   'location',
+  'formula',
 ] as const;
 export type FieldType = (typeof FIELD_TYPES)[number];
 
@@ -32,8 +33,45 @@ export const fieldSchema = z.object({
   help: z.string().max(200).optional(),
   /** dropdown / multiselect choices */
   options: z.array(z.string().trim().min(1).max(80)).max(50).optional(),
-  /** "from a master": which master (customers, items, vendors, people…) */
-  master: z.string().max(40).optional(),
+  /**
+   * "from a master": where the choices come from — customers, items, vendors, people, `m:<masterId>`,
+   * `fms:<flowId>:<field>` (values typed in another flow), `rec:<flowId>` (a whole record of a flow),
+   * `rt:<recordTypeId>` (a record of a record type). See `parseSource`.
+   */
+  master: z.string().max(90).optional(),
+  // ---- Linked fields (phase 11). Every one is optional, so flows saved before it read exactly as they did.
+  /** "Remember what people type": offers the values already entered; the last option is always "Write…". */
+  learn: z.boolean().optional(),
+  /** learn: a named list shared by several forms (default: this field's own list). */
+  list: key.optional(),
+  /** learn: false = once the list has values, only admins add new ones. */
+  writeAllowed: z.boolean().optional(),
+  /** master `rec:`: which records are offered. */
+  recFilter: z
+    .object({
+      /** Only records standing at this step. */
+      step: z.string().max(40).optional(),
+      running: z.boolean().optional(),
+      /** Only records the person started. */
+      mine: z.boolean().optional(),
+      /** Only records started in the last N days. */
+      days: z.number().int().min(1).max(3650).optional(),
+    })
+    .optional(),
+  /** Refuse a value already used in another live record (booking reference, bill number, room + date). */
+  unique: z.boolean().optional(),
+  /** When a row / record / item is picked here, copy its columns into other fields: { fieldKey: column }. */
+  fill: z.record(key, z.string().max(60)).optional(),
+  /** A field filled by another field can't be changed by hand. */
+  locked: z.boolean().optional(),
+  /** The choices depend on another field: only rows whose `column` equals that field's value. */
+  filterBy: z.object({ field: key, column: z.string().max(60) }).optional(),
+  /** formula: the expression (read-only; MONO works it out). */
+  formula: z.string().max(500).optional(),
+  /** Keep a typed, indexed copy of this field for lists, filters and reports. */
+  reportable: z.boolean().optional(),
+  /** items: lines may be typed by hand (not only picked from the item master). */
+  freeItems: z.boolean().optional(),
 });
 export type FlowField = z.infer<typeof fieldSchema>;
 
@@ -58,6 +96,24 @@ export const stepTimeSchema = z.object({
 export type StepTime = z.infer<typeof stepTimeSchema>;
 
 export const AUTO_ACTIONS = ['message', 'document', 'webhook', 'stock'] as const;
+
+/** A stock place on a step: a fixed location, or the value of a form field. */
+const stockPlace = z.object({
+  fixed: z.string().trim().max(80).optional(),
+  field: z.string().max(40).optional(),
+});
+
+/** Stock moved when a step is done (any step type, phase 11). Reversed if the step is undone or the record cancelled. */
+export const stepStockSchema = z.object({
+  action: z.enum(['ISSUE', 'RECEIVE', 'TRANSFER']),
+  /** Which "items" field holds the lines (default: the first one in the record). */
+  itemsField: z.string().max(40).optional(),
+  from: stockPlace.optional(),
+  to: stockPlace.optional(),
+  /** Not enough stock: refuse the step, or let it pass and ask the store keeper to approve. */
+  short: z.enum(['block', 'flag']).default('block'),
+});
+export type StepStock = z.infer<typeof stepStockSchema>;
 
 export const stepSchema = z.object({
   key,
@@ -93,6 +149,8 @@ export const stepSchema = z.object({
       itemsField: z.string().max(40).optional(),
     })
     .optional(),
+  /** Stock moved when this step is done (phase 11); AUTO steps may still use `auto.action = 'stock'`. */
+  stock: stepStockSchema.optional(),
   /** Send the customer a WhatsApp update when this step is done. */
   notifyCustomer: z.boolean().default(false),
 });

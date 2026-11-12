@@ -2090,7 +2090,8 @@
       "email": "Email",
       "items": "Item lines",
       "master": "From a master",
-      "location": "Location"
+      "location": "Location",
+      "formula": "Formula (worked out)"
     },
     "master": {
       "customers": "Customers",

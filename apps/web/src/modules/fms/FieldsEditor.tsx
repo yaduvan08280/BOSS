@@ -5,15 +5,20 @@ import { Button } from '@/components/ui/button';
 import { Checkbox, Select } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useMasters } from '@/modules/ai/api';
+import { FieldExtras } from './field-extras';
+import type { FormOwner } from './form/ctx';
 import { keyFor } from './keys';
 
 /** Edit a form: label, type, required, choices, help. Keys come from the label and never change after. */
 export function FieldsEditor({
   fields,
   onChange,
+  owner,
 }: {
   fields: FlowField[];
   onChange: (f: FlowField[]) => void;
+  /** The flow / master / record type these fields belong to, once it is saved. */
+  owner?: FormOwner;
 }) {
   const { t } = useTranslation();
   const masters = useMasters();
@@ -113,6 +118,7 @@ export function FieldsEditor({
               ))}
             </Select>
           )}
+          <FieldExtras field={f} fields={fields} onChange={(patch) => set(i, patch)} owner={owner} />
           <Input
             aria-label={t('fms.b.help')}
             placeholder={t('fms.b.help')}

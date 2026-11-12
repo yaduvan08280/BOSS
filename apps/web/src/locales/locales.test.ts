@@ -1,13 +1,33 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import en from './en.json';
-import hi from './hi.json';
+import enBase from './en.json';
+import hiBase from './hi.json';
+
+/** The main files plus every feature file in ./parts (the same merge the app does at start-up). */
+const partsDir = join(import.meta.dirname, 'parts');
+const parts = (lang: string) =>
+  readdirSync(partsDir)
+    .filter((f) => f.endsWith(`.${lang}.json`))
+    .sort()
+    .map((f) => JSON.parse(readFileSync(join(partsDir, f), 'utf8')) as Record<string, unknown>);
+const en: Record<string, unknown> = Object.assign({}, enBase, ...parts('en'));
+const hi: Record<string, unknown> = Object.assign({}, hiBase, ...parts('hi'));
 
 const keys = (o: object, p = ''): string[] =>
   Object.entries(o).flatMap(([k, v]) => (typeof v === 'object' && v ? keys(v, `${p}${k}.`) : [`${p}${k}`]));
 
 describe('translations', () => {
+  it('feature files add new sections and never replace one', () => {
+    for (const lang of ['en', 'hi'] as const) {
+      const seen = new Set(Object.keys(lang === 'en' ? enBase : hiBase));
+      for (const part of parts(lang))
+        for (const section of Object.keys(part)) {
+          expect(seen.has(section), `${lang}: section "${section}" is defined twice`).toBe(false);
+          seen.add(section);
+        }
+    }
+  });
   it('Hindi has exactly the same keys as English', () => {
     expect(keys(hi).sort()).toEqual(keys(en).sort());
   });

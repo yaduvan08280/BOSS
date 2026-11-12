@@ -138,12 +138,25 @@ describe('masters', () => {
     await s.api.post('/api/crm/customers', { name: 'Shree Ram Tiles', city: 'Ajmer' });
     const opt = async (source: string, q = '') =>
       (await s.member.get(`/api/masters/options?source=${encodeURIComponent(source)}&q=${q}`)).body;
+    // Each choice also carries the link to its row and the row's columns (phase 11: auto-fill, dependent choices).
     expect(await opt('vendors', 'poly')).toEqual([
-      { value: 'Polyrocks Vadodara', label: 'Polyrocks Vadodara', sub: 'V-2' },
+      {
+        value: 'Polyrocks Vadodara',
+        label: 'Polyrocks Vadodara',
+        sub: 'V-2',
+        ref: expect.stringMatching(/^row:/),
+        columns: { code: 'V-2', name: 'Polyrocks Vadodara' },
+      },
     ]);
     expect(await opt(`m:${s.vendors.id}`)).toHaveLength(2);
-    expect(await opt('items', 'rm-1')).toEqual([
-      { value: 'Polyester resin', label: 'Polyester resin', sub: 'RM-1 · kg' },
+    expect(await opt('items', 'rm-1')).toMatchObject([
+      {
+        value: 'Polyester resin',
+        label: 'Polyester resin',
+        sub: 'RM-1 · kg',
+        ref: expect.stringMatching(/^item:/),
+        columns: { code: 'RM-1', unit: 'kg', stock: 0 },
+      },
     ]);
     expect((await opt('customers', 'shree'))[0]).toMatchObject({
       value: 'Shree Ram Tiles',

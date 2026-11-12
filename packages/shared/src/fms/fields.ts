@@ -1,6 +1,14 @@
 import type { FlowField } from './definition';
 
-export type ItemLine = { item: string; qty: number; rate: number; amount?: number };
+/** `itemId` and `unit` are there when the line was picked from the item master (phase 11). */
+export type ItemLine = {
+  item: string;
+  qty: number;
+  rate: number;
+  amount?: number;
+  itemId?: string;
+  unit?: string;
+};
 
 const filled = (v: unknown) =>
   !(v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0));
@@ -16,6 +24,8 @@ export function checkFields(
   const values: Record<string, unknown> = {};
   const errors: Record<string, string> = {};
   for (const f of fields) {
+    // A formula is never typed: the server works it out after the other fields are checked.
+    if (f.type === 'formula') continue;
     const v = input[f.key];
     if (!filled(v)) {
       if (f.required && f.type !== 'yesno') errors[f.key] = `${f.label} is required`;
@@ -92,7 +102,14 @@ export function checkFields(
             errors[f.key] = `${f.label}: every line needs an item, a quantity and a rate`;
             break;
           }
-          lines.push({ item, qty, rate, amount: Math.round(qty * rate * 100) / 100 });
+          lines.push({
+            item,
+            qty,
+            rate,
+            amount: Math.round(qty * rate * 100) / 100,
+            ...(typeof raw?.itemId === 'string' && raw.itemId ? { itemId: raw.itemId } : {}),
+            ...(typeof raw?.unit === 'string' && raw.unit ? { unit: raw.unit.slice(0, 20) } : {}),
+          });
         }
         if (!errors[f.key]) {
           if (f.required && !lines.length) errors[f.key] = `${f.label} is required`;

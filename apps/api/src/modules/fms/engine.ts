@@ -1,9 +1,9 @@
 import type { Db, FmsRecord, Flow, Tx } from '@mono/db';
 import { nextCounter } from '@mono/db';
 import {
-  checkFields,
   END,
   flowDefinitionSchema,
+  mergeData,
   nextStepKey,
   plannedAt,
   recordTitle,
@@ -14,6 +14,7 @@ import {
 import { writeAudit } from '../../lib/audit';
 import { AppError, notFound } from '../../lib/errors';
 import { emitEvent } from '../../lib/events';
+import { processForm } from '../forms';
 import { attachUploads, can, type Actor } from '../work/actor';
 import { workCalendar } from './calendar';
 import { createDocument } from './documents';
@@ -148,12 +149,12 @@ export async function openStep(
 }
 
 /** Start form values plus everything entered on finished steps (later steps can use earlier answers). */
-async function recordData(tx: Tx, record: FmsRecord): Promise<Record<string, unknown>> {
+export async function recordData(tx: Tx, record: FmsRecord): Promise<Record<string, unknown>> {
   const done = await tx.fmsRecordStep.findMany({
     where: { recordId: record.id, status: 'DONE' },
     orderBy: { doneAt: 'asc' },
   });
-  return Object.assign({}, record.data as object, ...done.map((s) => s.data as object));
+  return mergeData(record.data, ...done.map((s) => s.data));
 }
 
 export async function closeRecord(tx: Tx, ctx: Ctx, record: FmsRecord, actorId: string | null) {
@@ -211,9 +212,17 @@ export async function startRecord(
     if (!flow || flow.status !== 'PUBLISHED' || !flow.currentVersionId)
       throw new AppError(409, 'CONFLICT', 'This process is not published yet');
     const ctx = await contextFor(tx, flow.id, flow.currentVersionId, input.startedById);
-    const { values, errors } = checkFields(ctx.def.startFields, input.data);
-    if (Object.keys(errors).length)
-      throw new AppError(400, 'VALIDATION_FAILED', Object.values(errors)[0]!, { fields: errors });
+    const values = await processForm(
+      tx,
+      {
+        companyId: flow.companyId,
+        actorId: input.startedById,
+        owner: { kind: 'flow', id: flow.id },
+        publicForm: input.source === 'public',
+      },
+      ctx.def.startFields,
+      input.data,
+    );
     const number = await nextCounter(tx, flow.companyId, `fms:${flow.id}`);
     const record = await tx.fmsRecord.create({
       data: {
@@ -293,9 +302,19 @@ export async function completeStep(db: Db, actor: Actor, stepId: string, input: 
       );
     const step = ctx.def.steps.find((s) => s.key === row.stepKey)!;
 
-    const { values, errors } = checkFields(step.fields, input.data ?? {});
-    if (Object.keys(errors).length)
-      throw new AppError(400, 'VALIDATION_FAILED', Object.values(errors)[0]!, { fields: errors });
+    const values = await processForm(
+      tx,
+      {
+        companyId: record.companyId,
+        actorId: actor.userId,
+        owner: { kind: 'flow', id: record.flowId },
+        recordId: record.id,
+        known: await recordData(tx, record),
+        canAddValues: can(actor, 'fms.admin'),
+      },
+      step.fields,
+      input.data ?? {},
+    );
     const ticked = new Set(input.checklistDone ?? []);
     const missing = step.checklist.filter((c) => !ticked.has(c));
     if (missing.length) throw new AppError(400, 'VALIDATION_FAILED', `Tick the checklist: ${missing[0]}`);

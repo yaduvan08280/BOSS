@@ -5,6 +5,7 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 const appName = process.env.APP_NAME ?? 'MONO';
+const apiTarget = `http://127.0.0.1:${process.env.PORT ?? 3000}`;
 
 export default defineConfig({
   plugins: [
@@ -38,11 +39,12 @@ export default defineConfig({
     }),
   ],
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
+  // WEB_PORT / PORT let a second copy of the app run beside the first (several checkouts on one machine).
   server: {
-    port: 5173,
+    port: Number(process.env.WEB_PORT ?? 5173),
     host: true,
-    proxy: { '/api': { target: 'http://127.0.0.1:3000', changeOrigin: false } },
+    proxy: { '/api': { target: apiTarget, changeOrigin: false } },
   },
-  preview: { port: 4173, proxy: { '/api': { target: 'http://127.0.0.1:3000' } } },
+  preview: { port: 4173, proxy: { '/api': { target: apiTarget } } },
   build: { sourcemap: true, chunkSizeWarningLimit: 900 },
 });
