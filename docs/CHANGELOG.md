@@ -1,5 +1,43 @@
 # Changelog
 
+## Phase 11 — Linked fields, record types and reports (12/11/2026)
+
+What lets any industry fit its own work into MONO without code. Plan: `docs/plans/hospitality-100-plan.md` §2; the
+29 rows that define "done" and the test that proves each are in `docs/plans/coverage.md`.
+
+**Fields that remember, link and work things out** (every form: process start forms and steps, master rows, records)
+- **Remember what people type**: a text field becomes a dropdown of the values already entered, most used first, with **Write…** as the last choice. A named shared list can be used by fields in different forms. **Masters → Lists**: rename, merge and hide values (old records keep what they said); "only admins add" makes the field a strict dropdown.
+- **Choices from another process**: a dropdown offers the values typed in a field of another process, or a whole record of another process (`#12 · Sharma wedding · 14/12/2026`), limited to a step, to running records, to the person's own, or to the last N days.
+- **A picked value keeps its link**: renaming the row never breaks it, and the record shows the new name. Links are stored beside the text (`_refs`), so everything that read the text before still works.
+- **Unique** fields (a second live record with the same value is refused; cancelling frees it), **auto-fill** (pick an item → unit and rate fill; locked or editable), **dependent choices** (pick an Outlet → only its Tables).
+- **Formula fields**: `qty * rate`, nights between two dates, the sum of item lines, percentages — worked out on the server by a small safe language (never `eval`), shown live in the form, checked on Publish.
+- **Item lines pick from the item master** (code or name) with unit, rate and live stock; typed items only where the form allows.
+- **Stock on any step**: a step can issue, receive or transfer stock, from / to a fixed place or one taken from a field, with a preview before "Mark done". Not enough stock blocks the step, or (by setting) lets it through flagged for approval. Sending a record back past the step, or cancelling it, reverses the stock with new moves.
+- **Show values anywhere**: one path language — `field`, or `field.column` for a column of the row a field links to. Live FMS shows up to six chosen values per record (**Columns**), KPI cards total formula fields and numbers of linked rows, document header / terms / footer fill `{{field}}` and `{{field.column}}`, and process messages can say `{{data.field}}` and `{{data.field.column}}`.
+
+**Record types** (Masters → Record types)
+- A company's own things — a site visit, a prescription, a trip — set up from screens alone: fields, child tables, a number series `{PREFIX}/{FY}/{0001}`, statuses with allowed moves and who may make each (run through the shared `transition()`), a place in the left menu, and view / create / edit / approve rights per type.
+- Each type gets its own list (search, filters by any field, sort, saved views, cards on phones), a drawer with Notes, History and Files, import with every problem by line, and export to CSV / Excel.
+- Records link to records of other types and to customers, items and masters; they can be picked in any form.
+- **A move can start a process**: its start form is filled from the record; if the process can't start, the move is refused.
+- `record.*` events drive notification rules (status changed and note → the record's maker), webhooks, and the public API: `/api/v1/record-types`, `/record-types/:id/records`, `/entries/:id`, `/entries/:id/move`.
+- **Build with AI**: describe the record type; the editor opens on the AI's draft, unsaved, for a person to check.
+
+**Reports** (Systems → Reports)
+- A field marked **reportable** keeps a typed, indexed copy (text, number, day, link) written with the record. Marking a field later copies the existing records in the background; the report says so until it is done.
+- **Report builder**: a process or a record type → columns → filters → group (text, or dates by day / week / month / quarter / financial year) → totals (count, total, average, lowest, highest) → table, bars, line or pie. Save, share with roles (view only), export Excel / PDF / CSV, and **send it by itself** every day, week or month.
+- Reports never run SQL made from what people type: names are checked against the source, values are bound, the company is always in the query, and a reader sees only what they may see in the source.
+- **Ask** can answer from a saved report the person may open.
+
+**Under the bonnet**
+- One form pipeline on the server (`apps/api/src/modules/forms`): links → item lines → lists → formulas → unique → reportable copies, used by every form.
+- The request ceiling counts per signed-in person (many people behind one office address are no longer refused together), with a flood guard per address.
+- New modules in the Roles matrix: **Records** and **Reports**. Built-in roles of companies made earlier get their default rights when the server starts, where a role holds nothing of the module yet.
+- Webhook picker: "whole module" choices (`master.*`, `list.*`, `record.*`) now match their events.
+- Migrations: `phase11_lists`, `phase11_records`, `phase11_links`, `phase11_stock_steps`, `phase11_live_columns`, `phase11_reports`.
+
+**Not in this phase** (said plainly): Hindi strings are machine-drafted and need review (decision 14); PDFs still use Helvetica, so ₹ and Hindi do not print in report PDFs; KPI cards do not yet read saved reports; child lines of records are not imported, searched or reported on; "Build with AI" for record types is tested with a scripted model, not yet against a live key.
+
 ## Fix — leftover "arrives in phase N" notices replaced (09/11/2026)
 
 Five spots still showed a placeholder for features that were already built. Each now works:

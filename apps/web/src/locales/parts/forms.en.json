@@ -1,5 +1,11 @@
 {
   "forms": {
-    "more": "More settings"
+    "more": "More settings",
+    "report": {
+      "use": "Use in reports",
+      "copying": "Copying older records: {{copied}} of {{total}}",
+      "ready": "Ready to use in reports.",
+      "afterSave": "It can be used in reports once this form is saved (a process: once it is published)."
+    }
   }
 }

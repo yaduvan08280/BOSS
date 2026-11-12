@@ -13,6 +13,8 @@ export default defineConfig({
     baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:5173',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
+    // A machine that brings its own Chromium (some CI images): E2E_CHROMIUM=/path/to/chromium
+    ...(process.env.E2E_CHROMIUM ? { launchOptions: { executablePath: process.env.E2E_CHROMIUM } } : {}),
   },
   projects: [
     { name: 'phone', use: { ...devices['Pixel 7'], viewport: { width: 380, height: 820 } } },
