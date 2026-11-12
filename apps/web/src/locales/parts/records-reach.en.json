@@ -1,0 +1,25 @@
+{
+  "recordsReach": {
+    "started": "Started {{flow}} #{{n}}",
+    "start": {
+      "toggle": "This move starts a process",
+      "none": "There is no published process yet. Publish one in FMS Builder first.",
+      "process": "Process to start",
+      "processHint": "It starts for the person who makes the move. If its start form can't be filled, the move is refused.",
+      "gone": "The process chosen before is gone — choose another",
+      "values": "Fill its start form from the record",
+      "from": "Where {{field}} comes from",
+      "src": {
+        "empty": "Leave empty",
+        "record": "This record (as a link)",
+        "code": "The record's number",
+        "title": "The record's title",
+        "field": "Field: {{field}}",
+        "text": "Fixed words"
+      },
+      "words": "Fixed words for {{field}}",
+      "wordsPh": "Type the words",
+      "needed": "The process needs this to start"
+    }
+  }
+}

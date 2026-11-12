@@ -167,7 +167,7 @@ function Editor({ type }: { type?: RecordTypeView }) {
         </div>
       )}
       {tab === 'lines' && <LinesTab draft={draft} set={set} owner={owner} typeId={type?.id} />}
-      {tab === 'statuses' && <StatusesTab draft={draft} set={set} roles={roles} />}
+      {tab === 'statuses' && <StatusesTab draft={draft} set={set} roles={roles} typeId={type?.id} />}
       {tab === 'permissions' && <PermissionsTab draft={draft} set={set} roles={roles} />}
     </div>
   );

@@ -16,6 +16,7 @@ import { AppError } from '../../lib/errors';
 import { recordChange } from '../../lib/events';
 import { can, type Actor } from '../work/actor';
 import { ctxOf, loadType, roleIdOf, shapeType, type LoadedType } from './access';
+import { checkStartFlows, startableFlows } from './start-flow';
 
 const needAdmin = (actor: Actor) => {
   if (!can(actor, 'records.admin')) throw new AppError(403, 'FORBIDDEN', 'Only admins set up record types');
@@ -139,6 +140,7 @@ export async function readType(db: Db, actor: Actor, id: string) {
 export async function createType(db: Db, actor: Actor, input: RecordTypeInput) {
   needAdmin(actor);
   refuseProblems(input.definition);
+  await checkStartFlows(db, actor.companyId, input.definition);
   const permissions = input.permissions ?? (await defaultPermissions(db, actor.companyId));
   await checkRoles(db, actor.companyId, permissions, input.definition);
   await nameFree(db, actor.companyId, input.name);
@@ -217,6 +219,7 @@ export async function updateType(db: Db, actor: Actor, id: string, patch: Record
   const permissions = patch.permissions ?? t.permissions;
   if (patch.definition) {
     refuseProblems(def);
+    await checkStartFlows(db, actor.companyId, def);
     const refused: string[] = [];
     for (const c of riskyChanges(t.def, def)) {
       const n = await heldBy(db, id, c);
@@ -313,4 +316,10 @@ export async function menuEntries(db: Db, actor: Actor) {
       icon: t.menu.icon,
       path: `/records/${t.id}`,
     }));
+}
+
+/** Published processes a move can start, with their start fields — for the people who set record types up. */
+export async function flowsToStart(db: Db, actor: Actor) {
+  needAdmin(actor);
+  return startableFlows(db, actor.companyId);
 }

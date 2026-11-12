@@ -1,6 +1,7 @@
 import { FileText, Loader2, Send, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import { FileDrop } from '@/components/file-drop';
 import { Button } from '@/modules/records/ui';
 import { Textarea } from '@/components/ui/form';
@@ -8,14 +9,22 @@ import type { Uploaded } from '@/lib/upload';
 import { formatShortDateTime } from '@/lib/when';
 import { recordsApi, useRecordsMutation, type RecordDetail, type RecordEventRow } from '../api';
 
-function Entry({ e, tz, title }: { e: RecordEventRow; tz: string; title: string }) {
+function Entry({ e, tz, title, to }: { e: RecordEventRow; tz: string; title: string; to?: string }) {
   return (
     <li className="relative text-sm">
       <span className="absolute -left-[21px] top-1.5 size-2.5 rounded-full border-2 border-card bg-primary" />
       <div className="text-xs text-muted-foreground">
         <span className="tabular">{formatShortDateTime(e.at, tz)}</span> · {e.by ?? 'MONO'}
       </div>
-      <div className="font-medium">{title}</div>
+      <div className="font-medium">
+        {to ? (
+          <Link to={to} className="underline underline-offset-2">
+            {title}
+          </Link>
+        ) : (
+          title
+        )}
+      </div>
       {e.note && <p className="mt-0.5 whitespace-pre-wrap text-muted-foreground">{e.note}</p>}
     </li>
   );
@@ -88,6 +97,8 @@ export function HistoryTab({ detail, tz }: { detail: RecordDetail; tz: string })
         return t('records.ev.file', { files: (e.data?.files ?? []).join(', ') });
       case 'file_removed':
         return t('records.ev.fileRemoved', { files: (e.data?.files ?? []).join(', ') });
+      case 'flow_started':
+        return t('recordsReach.started', { flow: e.data?.flow ?? '', n: e.data?.number ?? '' });
       default:
         return t('records.ev.deleted');
     }
@@ -95,7 +106,17 @@ export function HistoryTab({ detail, tz }: { detail: RecordDetail; tz: string })
   return (
     <ol className="space-y-3 border-l pl-4">
       {detail.events.map((e) => (
-        <Entry key={e.id} e={e} tz={tz} title={title(e)} />
+        <Entry
+          key={e.id}
+          e={e}
+          tz={tz}
+          title={title(e)}
+          to={
+            e.type === 'flow_started' && e.data?.fmsRecordId
+              ? `/fms/live?record=${e.data.fmsRecordId}`
+              : undefined
+          }
+        />
       ))}
     </ol>
   );

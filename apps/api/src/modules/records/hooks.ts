@@ -1,8 +1,9 @@
 import type { Tx } from '@mono/db';
 import type { RecordMove } from '@mono/shared';
 import type { LoadedType } from './access';
+import { startFlowOnMove } from './start-flow';
 
-/** What a status change hands to whatever listens (second wave: "a status change starts a process"). */
+/** What a status change hands to whatever listens ("this move starts a process"). */
 export type StatusChange = {
   companyId: string;
   actorId: string;
@@ -17,11 +18,10 @@ export type StatusChange = {
 export type StatusHook = (tx: Tx, change: StatusChange) => Promise<void>;
 
 /**
- * Runs inside the transaction that changes a record's status, after the status, the history line and the domain
- * event are written. Nothing is registered yet: starting an FMS flow from a move plugs in here
- * (`statusHooks.push(startFlowOnMove)`), so a failing hook rolls the status change back with it.
+ * Run inside the transaction that changes a record's status, after the status, the history line and the domain
+ * event are written, so a failing hook rolls the status change back with it.
  */
-export const statusHooks: StatusHook[] = [];
+export const statusHooks: StatusHook[] = [startFlowOnMove];
 
 export async function runStatusHooks(tx: Tx, change: StatusChange) {
   for (const hook of statusHooks) await hook(tx, change);

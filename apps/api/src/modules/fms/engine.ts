@@ -128,19 +128,23 @@ export async function contextFor(
   };
 }
 
+export type StartInput = {
+  companyId: string;
+  flowId: string;
+  data: Record<string, unknown>;
+  startedById: string | null;
+  source: string;
+  attachmentIds?: string[];
+};
+
 /** Start a record from the start form (web, the public form, or the API). */
-export async function startRecord(
-  db: Db,
-  input: {
-    companyId: string;
-    flowId: string;
-    data: Record<string, unknown>;
-    startedById: string | null;
-    source: string;
-    attachmentIds?: string[];
-  },
-) {
-  return db.$transaction(async (tx) => {
+export function startRecord(db: Db, input: StartInput) {
+  return db.$transaction((tx) => startRecordIn(tx, input));
+}
+
+/** The same, inside a transaction that is already open (a record type's move that starts a process). */
+export async function startRecordIn(tx: Tx, input: StartInput) {
+  {
     const flow = await tx.flow.findFirst({
       where: { id: input.flowId, companyId: input.companyId, deletedAt: null },
     });
@@ -199,7 +203,7 @@ export async function startRecord(
     );
     await openStep(tx, ctx, record, ctx.def.steps[0]?.key ?? END, record.startedAt);
     return record;
-  });
+  }
 }
 
 export type StepInput = {

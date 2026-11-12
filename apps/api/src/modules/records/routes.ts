@@ -13,7 +13,16 @@ import { addFiles, addNote, recordDetail, removeFile } from './detail';
 import { exportRecords, importRecords, IMPORT_MAX_ROWS } from './io';
 import { deleteView, listRecords, listViews, saveView, type ListQuery } from './list';
 import { changeStatus, createRecord, deleteRecord, updateRecord } from './records';
-import { createType, deleteType, listTypes, menuEntries, readType, setTypeStatus, updateType } from './types';
+import {
+  createType,
+  deleteType,
+  flowsToStart,
+  listTypes,
+  menuEntries,
+  readType,
+  setTypeStatus,
+  updateType,
+} from './types';
 
 const idParam = z.object({ id: z.string().max(40) });
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -77,6 +86,9 @@ export async function recordRoutes(app: FastifyInstance) {
   const db = app.prisma;
 
   r.get('/api/records/menu', { ...signedIn(), schema: { tags } }, async (q) => menuEntries(db, actorOf(q)));
+
+  // Published processes a move may start (type editor → Statuses & moves → "Start a process").
+  r.get('/api/records/flows', { ...signedIn(), schema: { tags } }, async (q) => flowsToStart(db, actorOf(q)));
 
   // ---- Record types
   r.get('/api/records/types', { ...signedIn(), schema: { tags } }, async (q) => listTypes(db, actorOf(q)));

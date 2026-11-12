@@ -65,7 +65,7 @@ export type RecordFile = {
 };
 export type RecordEventRow = {
   id: string;
-  type: 'created' | 'changed' | 'status' | 'note' | 'file' | 'file_removed' | 'deleted';
+  type: 'created' | 'changed' | 'status' | 'note' | 'file' | 'file_removed' | 'flow_started' | 'deleted';
   at: string;
   by: string | null;
   note: string | null;
@@ -78,6 +78,10 @@ export type RecordEventRow = {
     from?: string;
     to?: string;
     imported?: boolean;
+    /** `flow_started`: the process a move started, and its record. */
+    flow?: string;
+    number?: number;
+    fmsRecordId?: string;
   } | null;
 };
 export type RecordDetail = {
@@ -150,6 +154,20 @@ export const useRecord = (id: string) =>
   useQuery({
     queryKey: ['records', 'entry', id],
     queryFn: () => api<RecordDetail>(`/api/records/entries/${id}`),
+    retry: false,
+  });
+
+/** A published process a move may start, with its start form (type editor → Statuses & moves). */
+export type StartableFlow = {
+  id: string;
+  code: string;
+  name: string;
+  startFields: { key: string; label: string; type: string; required: boolean; master: string | null }[];
+};
+export const useStartableFlows = () =>
+  useQuery({
+    queryKey: ['records', 'flows'],
+    queryFn: () => api<StartableFlow[]>('/api/records/flows'),
     retry: false,
   });
 

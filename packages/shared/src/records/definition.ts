@@ -37,6 +37,26 @@ export type RecordStatus = z.infer<typeof recordStatusSchema>;
 export const MOVE_WHO = ['edit', 'approve', 'creator'] as const;
 const who = z.string().regex(/^(edit|approve|creator|role:[a-z0-9]{6,40})$/, 'Unknown "who"');
 
+/**
+ * Where a start-form value of the started process comes from: `record` (this record, as a link when the field
+ * picks records of this type), `code` (its number), `title`, `field:<key>` (one of its fields, link included) or
+ * `text:<fixed words>`.
+ */
+const startSource = z
+  .string()
+  .max(240)
+  .regex(/^(record|code|title|field:[a-z][a-z0-9_]{0,39}|text:[\s\S]*)$/, 'Unknown source');
+
+/** "This move starts a process": the published flow and how its start form is filled from the record. */
+export const recordMoveStartSchema = z
+  .strictObject({
+    flowId: z.string().min(1).max(40),
+    /** Start-form field key → where its value comes from. Fields left out stay empty. */
+    map: z.record(z.string().regex(/^[a-z][a-z0-9_]{0,39}$/), startSource),
+  })
+  .describe('A process started when the move is made');
+export type RecordMoveStart = z.infer<typeof recordMoveStartSchema>;
+
 export const recordMoveSchema = z
   .strictObject({
     from: key,
@@ -47,6 +67,8 @@ export const recordMoveSchema = z
     who: z.array(who).min(1, 'Say who may make this move').max(12),
     /** The person must write why (a rejection, a cancellation). */
     noteRequired: z.boolean().optional(),
+    /** The move also starts a process; if that process's start form refuses, the move is refused. */
+    startFlow: recordMoveStartSchema.optional(),
   })
   .describe('An allowed change of status');
 export type RecordMove = z.infer<typeof recordMoveSchema>;
@@ -219,6 +241,11 @@ export function checkRecordDefinition(def: RecordDefinition): string[] {
     if (seen.has(`${m.from}:${m.action}`))
       out.push(`"${label(m.from)}" has two moves with the same key "${m.action}": remove one`);
     seen.add(`${m.from}:${m.action}`);
+    for (const [target, src] of Object.entries(m.startFlow?.map ?? {}))
+      if (src.startsWith('field:') && !fieldKeys.includes(src.slice(6)))
+        out.push(
+          `${name} starts a process with a field that does not exist any more ("${target}"): pick again`,
+        );
   }
   // Every status must be reachable from the start, or records could never stand in it.
   const reach = new Set([def.start]);

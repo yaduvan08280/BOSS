@@ -14,11 +14,17 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { keyFor } from '@/modules/fms/keys';
 import type { TabProps } from './draft';
+import { StartFlow } from './StartFlow';
 
 type RoleOption = { id: string; name: string };
 
 /** Statuses (each with one of the fixed status colours) and the moves between them, with who may make each. */
-export function StatusesTab({ draft, set, roles }: TabProps & { roles: RoleOption[] }) {
+export function StatusesTab({
+  draft,
+  set,
+  roles,
+  typeId,
+}: TabProps & { roles: RoleOption[]; typeId?: string }) {
   const { t } = useTranslation();
   const def = draft.definition;
   const save = (p: Partial<RecordDefinition>) => set({ definition: { ...def, ...p } });
@@ -198,6 +204,12 @@ export function StatusesTab({ draft, set, roles }: TabProps & { roles: RoleOptio
               />
               {t('records.ed.noteRequired')}
             </label>
+            <StartFlow
+              move={m}
+              def={def}
+              typeId={typeId}
+              onChange={(startFlow) => setMove(i, { startFlow })}
+            />
           </div>
         ))}
         <Button
