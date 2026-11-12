@@ -55,11 +55,11 @@ Written 12/11/2026 from plan §3 and the answers to decisions 9–14. Stages: A 
 
 | Row | Stage | Workflow | Plan | Test |
 |---|---|---|---|---|
-| G1 | A | Structure: group → legal entity → region (any depth) → branch (outlet / central kitchen / store / office / hotel) → location, set up from System Master → Branches | §3.1 | |
-| G2 | A | A branch has one or more branch managers; a region has area managers; one person may manage any set of branches | §3.2 | |
-| G3 | A | A role has a reach (own records / my branches / my entity / whole group); a person's branches = home + managed + worked at | §3.3 | |
-| G4 | A | Reach is enforced in the database layer for every branch-bearing model; a test fails when such a model is missing from the list | §3.3 | |
-| G5 | A | An area manager over 4 outlets sees only those in lists, counts, search, exports and Ask | §3.3 | |
+| G1 | A | Structure: group → legal entity → region (any depth) → branch (outlet / central kitchen / store / office / hotel) → location, set up from System Master → Branches | §3.1 | `apps/api/src/modules/branches/branches.test.ts` (API; the set-up screen is not built yet) |
+| G2 | A | A branch has one or more branch managers; a region has area managers; one person may manage any set of branches | §3.2 | `apps/api/src/modules/branches/branches.test.ts` |
+| G3 | A | A role has a reach (own records / my branches / my entity / whole group); a person's branches = home + managed + worked at | §3.3 | `apps/api/src/modules/branches/branches.test.ts`, `packages/db/src/reach.test.ts` |
+| G4 | A | Reach is enforced in the database layer for every branch-bearing model; a test fails when such a model is missing from the list | §3.3 | `packages/db/src/reach.test.ts` |
+| G5 | A | An area manager over 4 outlets sees only those in lists, counts, search, exports and Ask | §3.3 | part: tasks (`apps/api/src/modules/branches/branches.test.ts`). Still to do: the other lists, counts, search, exports, Ask |
 | G6 | A | An API key and a webhook carry their maker's reach | §3.3 | |
 | G7 | A | Branch switcher in the top bar ("All my branches" or one) for people with more than one branch | §3.3 | |
 | G8 | A | A branch manager adds and manages only their branch's people; group settings stay with owner / group admins | §3.3 | |

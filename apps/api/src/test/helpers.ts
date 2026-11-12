@@ -75,18 +75,20 @@ export async function signedIn(app: App, identifier: string, password: string) {
     method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
     url: string,
     payload?: unknown,
+    extra: Record<string, string> = {},
   ) => {
     const r = await app.inject({
       method,
       url,
-      headers: { cookie: asHeader(jar), origin: ORIGIN },
+      headers: { cookie: asHeader(jar), origin: ORIGIN, ...extra },
       ...(payload !== undefined ? { payload: payload as object } : {}),
     });
     jar = cookieHeader(r, jar);
     return { status: r.statusCode, body: r.body ? (JSON.parse(r.body) as any) : null }; // eslint-disable-line @typescript-eslint/no-explicit-any
   };
   return {
-    get: (url: string) => call('GET', url),
+    /** `headers`: extra request headers (the top bar's branch switcher sends `x-mono-branch`). */
+    get: (url: string, headers?: Record<string, string>) => call('GET', url, undefined, headers),
     post: (url: string, body?: unknown) => call('POST', url, body ?? {}),
     put: (url: string, body: unknown) => call('PUT', url, body),
     patch: (url: string, body: unknown) => call('PATCH', url, body),

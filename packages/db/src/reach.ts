@@ -6,7 +6,12 @@ import type { PrismaClient } from './generated/client';
  * whole group. With a list, every read of a branch-bearing model returns only rows of those branches, rows with
  * no branch (group-wide, or made before branches existed) and rows the person is personally part of.
  */
-export type Reach = { userId: string; branchIds: string[] | null };
+export type Reach = {
+  userId: string;
+  branchIds: string[] | null;
+  /** The person picked one branch in the top bar: show that branch only, not their own rows elsewhere. */
+  strict?: boolean;
+};
 
 const store = new AsyncLocalStorage<{ reach: Reach | null }>();
 
@@ -74,7 +79,8 @@ export function reachWhere(model: string, reach: Reach | null): Where | null {
   if (!reach || reach.branchIds === null) return null;
   const part = BRANCH_SCOPED_MODELS[model];
   if (!part) return null;
-  return { OR: [{ branchId: null }, { branchId: { in: reach.branchIds } }, ...part(reach.userId)] };
+  const own = reach.strict ? [] : part(reach.userId);
+  return { OR: [{ branchId: null }, { branchId: { in: reach.branchIds } }, ...own] };
 }
 
 /** The base client with reach built in: there is no way to read a branch-bearing table around it. */

@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
 import { forCompany, setReach, type Db, type Reach, type ScopedDb } from '@mono/db';
-import { reachFor } from '../modules/branches/reach';
+import { narrowTo, reachFor } from '../modules/branches/reach';
 import { hasPermission, type PermissionKey } from '@mono/shared';
 import type { ActorContext } from '../lib/audit';
 import { AppError, forbidden, unauthenticated } from '../lib/errors';
@@ -22,6 +22,8 @@ declare module 'fastify' {
     db: ScopedDb;
     /** How far the signed-in person sees (phase 12); only set after `authenticate`. */
     reach: Reach | null;
+    /** The same before the top bar's branch switcher narrowed it. */
+    reachAll: Reach | null;
   }
   interface FastifyInstance {
     prisma: Db;
@@ -50,6 +52,7 @@ export default fp(async function authPlugin(app: FastifyInstance, opts: { secret
   app.decorateRequest('auth', null);
   app.decorateRequest('db', null as unknown as ScopedDb);
   app.decorateRequest('reach', null);
+  app.decorateRequest('reachAll', null);
 
   app.decorate('authenticate', async (request: FastifyRequest) => {
     const token = request.cookies[ACCESS_COOKIE];
@@ -88,9 +91,16 @@ export default fp(async function authPlugin(app: FastifyInstance, opts: { secret
     // From here on, everything this request reads is limited to the person's reach (phase 12). The top bar's
     // branch switcher sends the branch it shows; it can only narrow.
     const only = request.headers['x-mono-branch'];
-    request.reach = await reachFor(
+    request.reachAll = await reachFor(app.prisma, {
+      companyId: claims.cid,
+      userId: user.id,
+      permissions: user.role.permissions,
+      reach: user.role.reach,
+    });
+    request.reach = await narrowTo(
       app.prisma,
-      { companyId: claims.cid, userId: user.id, permissions: user.role.permissions, reach: user.role.reach },
+      claims.cid,
+      request.reachAll,
       typeof only === 'string' && only ? only : null,
     );
     setReach(request.reach);

@@ -130,9 +130,21 @@ export async function setupRoutes(app: FastifyInstance) {
     }
   }
 
+  /** The entity and region a branch names must be this company's (the scoped client only finds its own). */
+  async function checkPlace(
+    tx: Parameters<Parameters<typeof inCompanyTx>[1]>[0],
+    body: { entityId?: string | null; regionId?: string | null },
+  ) {
+    if (body.entityId && !(await tx.legalEntity.count({ where: { id: body.entityId, deletedAt: null } })))
+      throw notFound('Legal entity');
+    if (body.regionId && !(await tx.region.count({ where: { id: body.regionId, deletedAt: null } })))
+      throw notFound('Region');
+  }
+
   r.post('/api/org/branches', { ...edit, schema: { tags: ['org'], body: branchSchema } }, async (request) =>
     inCompanyTx(request, async (tx, ctx) => {
       await checkParent(tx, request.body.parentId);
+      await checkPlace(tx, request.body);
       const first = (await tx.branch.count({ where: { companyId: ctx.companyId, deletedAt: null } })) === 0;
       if (request.body.isDefault)
         await tx.branch.updateMany({ where: { companyId: ctx.companyId }, data: { isDefault: false } });
@@ -161,6 +173,7 @@ export async function setupRoutes(app: FastifyInstance) {
         const before = await tx.branch.findFirst({ where: { id: request.params.id, deletedAt: null } });
         if (!before) throw notFound('Branch');
         await checkParent(tx, request.body.parentId, before.id);
+        await checkPlace(tx, request.body);
         if (request.body.isDefault)
           await tx.branch.updateMany({ where: { companyId: ctx.companyId }, data: { isDefault: false } });
         const row = await tx.branch.update({ where: { id: before.id }, data: request.body });

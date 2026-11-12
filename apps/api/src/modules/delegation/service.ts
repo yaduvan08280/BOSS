@@ -16,6 +16,7 @@ import { writeAudit } from '../../lib/audit';
 import { emitEvent } from '../../lib/events';
 import { attachUploads, can, teamOf, type Actor } from '../work/actor';
 import { moduleSettings } from '../work/settings';
+import { homeBranchOf } from '../branches/reach';
 
 const short = (s: string) => (s.length > 80 ? `${s.slice(0, 77)}…` : s);
 const link = (t: { id: string }) => `/delegation?task=${t.id}`;
@@ -117,6 +118,8 @@ export async function createTask(
   const task = await tx.task.create({
     data: {
       companyId: actor.companyId,
+      // The work happens where the doer is: the task belongs to the doer's home branch (phase 12).
+      branchId: await homeBranchOf(tx, actor.companyId, input.doerId),
       number,
       description: input.description,
       doerId: input.doerId,

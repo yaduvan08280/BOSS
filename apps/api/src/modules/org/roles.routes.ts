@@ -50,6 +50,7 @@ export async function roleRoutes(app: FastifyInstance) {
           companyId: ctx.companyId,
           name: request.body.name,
           permissions: cleanPermissions(request.body.permissions),
+          ...(request.body.reach ? { reach: request.body.reach } : {}),
         },
       });
       await recordChange(tx, ctx, {
@@ -79,6 +80,7 @@ export async function roleRoutes(app: FastifyInstance) {
           data: {
             ...(request.body.name ? { name: request.body.name } : {}),
             ...(request.body.permissions ? { permissions: cleanPermissions(request.body.permissions) } : {}),
+            ...(request.body.reach ? { reach: request.body.reach } : {}),
           },
         });
         await recordChange(tx, ctx, {

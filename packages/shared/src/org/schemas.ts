@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { LANGUAGES, THEME_MODES, USER_STATUS } from '../enums';
 import { themeSettingsSchema } from '../auth/schemas';
+import { BRANCH_TYPES, ROLE_REACHES, timezoneSchema } from '../branches/schemas';
 
 const optionalText = (max = 200) =>
   z
@@ -51,6 +52,11 @@ export const branchSchema = z.object({
   city: optionalText(80),
   state: optionalText(80),
   isDefault: z.boolean().optional(),
+  // Phase 12: where the branch sits and what it is. All optional, so older callers keep working.
+  entityId: id.nullish(),
+  regionId: id.nullish(),
+  type: z.enum(BRANCH_TYPES).optional(),
+  timezone: timezoneSchema.nullish(),
 });
 export type BranchInput = z.infer<typeof branchSchema>;
 
@@ -129,6 +135,8 @@ export type BulkAction = z.infer<typeof bulkActionSchema>;
 export const roleSchema = z.object({
   name: z.string().trim().min(1).max(60),
   permissions: z.array(z.string().max(60)).max(200),
+  /** How far the role sees (phase 12): own records, my branches, my entity, or the whole group. */
+  reach: z.enum(ROLE_REACHES).optional(),
 });
 
 export const moveInDepartmentSchema = z.object({

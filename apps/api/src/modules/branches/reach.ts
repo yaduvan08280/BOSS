@@ -50,12 +50,11 @@ export async function branchesOf(db: Db | Tx, companyId: string, userId: string)
  * How far a person sees (plan §3.3). Owners and roles with the reach "group" see everything. "entity" widens a
  * person's branches to every branch of their legal entities. "branches" and "own" are the person's branches at
  * the database fence — "own" people are narrowed further by each module's own rules (my tasks, my leave), as
- * before. `only` is the branch picked in the top bar's switcher: it narrows, and never widens.
+ * before.
  */
 export async function reachFor(
   db: Db | Tx,
   who: { companyId: string; userId: string; permissions: string[]; reach: string },
-  only?: string | null,
 ): Promise<Reach> {
   const everything = who.permissions.includes('*') || who.reach === 'group';
   let ids: string[] | null = null;
@@ -76,13 +75,26 @@ export async function reachFor(
       }
     }
   }
-  if (only) {
-    if (
-      ids
-        ? ids.includes(only)
-        : await db.branch.count({ where: { id: only, companyId: who.companyId, deletedAt: null } })
-    )
-      ids = [only];
-  }
   return { userId: who.userId, branchIds: ids };
+}
+
+/** The branch picked in the top bar's switcher narrows a reach to that one branch; it can never widen it. */
+export async function narrowTo(
+  db: Db | Tx,
+  companyId: string,
+  reach: Reach,
+  only: string | null,
+): Promise<Reach> {
+  if (!only) return reach;
+  const allowed = reach.branchIds
+    ? reach.branchIds.includes(only)
+    : (await db.branch.count({ where: { id: only, companyId, deletedAt: null } })) > 0;
+  return allowed ? { userId: reach.userId, branchIds: [only], strict: true } : reach;
+}
+
+/** A person's home branch — the branch new work for them belongs to (null when the company has none set). */
+export async function homeBranchOf(db: Db | Tx, companyId: string, userId: string | null | undefined) {
+  if (!userId) return null;
+  const u = await db.user.findFirst({ where: { id: userId, companyId }, select: { branchId: true } });
+  return u?.branchId ?? null;
 }

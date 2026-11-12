@@ -42,6 +42,7 @@ import { masterRoutes } from './modules/masters/routes';
 import { recordRoutes } from './modules/records/routes';
 import { listRoutes } from './modules/lists/routes';
 import { reportRoutes } from './modules/reports/routes';
+import { branchRoutes } from './modules/branches/routes';
 import { platformRoutes } from './modules/platform/routes';
 import { v1Routes } from './modules/platform/v1';
 import { LocalDiskStorage, type Storage } from './lib/storage';
@@ -151,6 +152,7 @@ export async function buildApp(opts: BuildOptions) {
   await app.register(recordRoutes);
   await app.register(listRoutes);
   await app.register(reportRoutes);
+  await app.register(branchRoutes);
   await app.register(platformRoutes, { env });
   await app.register(v1Routes);
   await app.register(integrationRoutes, { env });
