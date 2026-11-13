@@ -1,0 +1,290 @@
+// Phase 17 — Hotel (property management): rate plans and day restrictions, stays with a room for every night,
+// group blocks, folios, the business date and night audit, housekeeping, lost & found.
+
+/// A property's rules (check-in / out times, early and late charges, extras, minibar, housekeeping).
+model HotelSettings {
+  id           String   @id @default(cuid(2))
+  companyId    String   @map("company_id")
+  branchId     String   @unique @map("branch_id")
+  rules        Json
+  /// The hotel's business date: it moves on only with the night audit.
+  businessDate String   @map("business_date")
+  updatedById  String?  @map("updated_by_id")
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([companyId])
+  @@map("hotel_settings")
+}
+
+/// What a night costs: rates per room type with weekend, seasons, length of stay, minimum stay, cancel rules.
+model RatePlan {
+  id            String    @id @default(cuid(2))
+  companyId     String    @map("company_id")
+  branchId      String    @map("branch_id")
+  code          String
+  name          String
+  meal          String    @default("EP")
+  kind          String    @default("RACK")
+  partyId       String?   @map("party_id")
+  commissionPct Decimal   @default(0) @map("commission_pct") @db.Decimal(5, 2)
+  /// { rates, weekendDays, seasons, los, minStay, cancel, noShow }
+  rules         Json
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([companyId, branchId])
+  @@map("rate_plans")
+}
+
+/// A restriction on a room type for one day: stop-sell, closed to arrival, a minimum stay.
+model RoomDay {
+  id              String  @id @default(cuid(2))
+  companyId       String  @map("company_id")
+  branchId        String  @map("branch_id")
+  roomTypeId      String  @map("room_type_id")
+  day             String
+  stopSell        Boolean @default(false) @map("stop_sell")
+  closedToArrival Boolean @default(false) @map("closed_to_arrival")
+  minStay         Int?    @map("min_stay")
+
+  @@unique([roomTypeId, day])
+  @@index([companyId, branchId, day])
+  @@map("room_days")
+}
+
+/// Rooms held for a group until a release date.
+model GroupBlock {
+  id          String   @id @default(cuid(2))
+  companyId   String   @map("company_id")
+  branchId    String   @map("branch_id")
+  name        String
+  ratePlanId  String   @map("rate_plan_id")
+  partyId     String?  @map("party_id")
+  arrive      String
+  depart      String
+  /// [{ roomTypeId, count }]
+  rooms       Json
+  releaseOn   String   @map("release_on")
+  /// HELD | RELEASED | CANCELLED
+  status      String   @default("HELD")
+  note        String?
+  createdById String?  @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([companyId, branchId, status])
+  @@map("group_blocks")
+}
+
+/// A booking and the stay it becomes.
+model Stay {
+  id             String    @id @default(cuid(2))
+  companyId      String    @map("company_id")
+  branchId       String    @map("branch_id")
+  number         String
+  guestId        String    @map("guest_id")
+  /// The guest's party in the money core (advances and the guest's folio are in this name).
+  partyId        String    @map("party_id")
+  companyPartyId String?   @map("company_party_id")
+  agentPartyId   String?   @map("agent_party_id")
+  commissionPct  Decimal   @default(0) @map("commission_pct") @db.Decimal(5, 2)
+  ratePlanId     String    @map("rate_plan_id")
+  meal           String    @default("EP")
+  roomTypeId     String    @map("room_type_id")
+  kind           String    @default("INDIVIDUAL")
+  source         String    @default("DIRECT")
+  blockId        String?   @map("block_id")
+  /// BOOKED | CHECKED_IN | CHECKED_OUT | CANCELLED | NO_SHOW
+  status         String    @default("BOOKED")
+  arrive         String
+  depart         String
+  adults         Int       @default(1)
+  children       Int       @default(0)
+  note           String?
+  /// What was written down at check-in (ID, nationality, Form C fields, files).
+  kyc            Json?
+  /// A foreign guest: when Form C is due, when it was filed, whether the reminder went.
+  formCDueAt     DateTime? @map("form_c_due_at") @db.Timestamptz(3)
+  formCFiledAt   DateTime? @map("form_c_filed_at") @db.Timestamptz(3)
+  formCReminded  Boolean   @default(false) @map("form_c_reminded")
+  /// [{ kinds, folio }] — which folio a kind of charge goes to.
+  routing        Json?
+  keys           Int       @default(0)
+  /// [{ name, at, out, note }]
+  visitors       Json?
+  /// [{ at, from, to, reason, byId }]
+  moves          Json?
+  cancelReason   String?   @map("cancel_reason")
+  /// The guest's own link (the voucher).
+  token          String    @unique
+  checkedInAt    DateTime? @map("checked_in_at") @db.Timestamptz(3)
+  checkedOutAt   DateTime? @map("checked_out_at") @db.Timestamptz(3)
+  createdById    String?   @map("created_by_id")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([companyId, number])
+  @@index([companyId, branchId, status])
+  @@index([companyId, branchId, arrive])
+  @@index([companyId, guestId])
+  @@map("stays")
+}
+
+/// One room for one night: a stay's night (with its rate), or a room that is out of order that day. A room can
+/// be in only one row a day — so two stays can never overlap in a room.
+model RoomNight {
+  id         String  @id @default(cuid(2))
+  companyId  String  @map("company_id")
+  branchId   String  @map("branch_id")
+  roomTypeId String  @map("room_type_id")
+  /// Null until a room is assigned.
+  roomId     String? @map("room_id")
+  day        String
+  stayId     String? @map("stay_id")
+  /// A room taken off sale (out of order / out of service) by this block.
+  blockId    String? @map("block_id")
+  rate       BigInt  @default(0)
+  /// The night audit posted this night's room charge.
+  posted     Boolean @default(false)
+
+  @@unique([roomId, day])
+  @@unique([stayId, day])
+  @@index([companyId, branchId, day])
+  @@index([roomTypeId, day])
+  @@map("room_nights")
+}
+
+/// A room taken off sale for some days (maintenance through a help ticket, or out of service).
+model RoomBlock {
+  id          String    @id @default(cuid(2))
+  companyId   String    @map("company_id")
+  branchId    String    @map("branch_id")
+  roomId      String    @map("room_id")
+  /// OUT_OF_ORDER | OUT_OF_SERVICE
+  kind        String    @default("OUT_OF_ORDER")
+  fromDay     String    @map("from_day")
+  toDay       String    @map("to_day")
+  reason      String
+  ticketId    String?   @map("ticket_id")
+  releasedAt  DateTime? @map("released_at") @db.Timestamptz(3)
+  createdById String?   @map("created_by_id")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([companyId, branchId])
+  @@index([ticketId])
+  @@map("room_blocks")
+}
+
+/// A bill being built during a stay. A stay has one for the guest and may have more (the company's, a friend's).
+model Folio {
+  id        String    @id @default(cuid(2))
+  companyId String    @map("company_id")
+  branchId  String    @map("branch_id")
+  stayId    String    @map("stay_id")
+  /// 1 = the guest's own.
+  no        Int       @default(1)
+  name      String
+  /// Who pays it.
+  partyId   String    @map("party_id")
+  /// OPEN | CLOSED
+  status    String    @default("OPEN")
+  /// The invoice made when it was closed.
+  billId    String?   @map("bill_id")
+  closedAt  DateTime? @map("closed_at") @db.Timestamptz(3)
+
+  @@unique([stayId, no])
+  @@index([companyId, branchId, status])
+  @@map("folios")
+}
+
+/// A charge on a folio (before tax), or money taken on it.
+model FolioLine {
+  id         String   @id @default(cuid(2))
+  companyId  String   @map("company_id")
+  folioId    String   @map("folio_id")
+  stayId     String   @map("stay_id")
+  /// The hotel's business date it belongs to.
+  day        String
+  /// ROOM | FOOD | MINIBAR | LAUNDRY | EXTRA | EARLY | LATE | CANCEL | NO_SHOW | PAYMENT
+  kind       String
+  text       String
+  qty        Decimal  @default(1) @db.Decimal(14, 3)
+  /// Minor units before tax; a payment is the money taken (positive).
+  amount     BigInt
+  taxCode    String?  @map("tax_code")
+  hsn        String?
+  /// Where it came from: pos_check, room_night, minibar … or the money paper of a payment.
+  refType    String?  @map("ref_type")
+  refId      String?  @map("ref_id")
+  /// An allowance: the line was taken off, with why.
+  voided     Boolean  @default(false)
+  voidReason String?  @map("void_reason")
+  postedById String?  @map("posted_by_id")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([folioId])
+  @@index([companyId, stayId])
+  @@index([refType, refId])
+  @@map("folio_lines")
+}
+
+/// One night audit of a property: the pack it produced.
+model NightAudit {
+  id        String   @id @default(cuid(2))
+  companyId String   @map("company_id")
+  branchId  String   @map("branch_id")
+  day       String
+  pack      Json
+  runById   String?  @map("run_by_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([branchId, day])
+  @@map("night_audits")
+}
+
+/// Housekeeping work on a room for a day: cleaning, turndown.
+model HkTask {
+  id            String    @id @default(cuid(2))
+  companyId     String    @map("company_id")
+  branchId      String    @map("branch_id")
+  roomId        String    @map("room_id")
+  day           String
+  /// CLEAN | TURNDOWN
+  kind          String    @default("CLEAN")
+  assigneeId    String?   @map("assignee_id")
+  /// OPEN | DONE | INSPECTED
+  status        String    @default("OPEN")
+  /// [{ text, done }]
+  checklist     Json
+  /// [{ itemId, name, qty }] taken from the minibar
+  minibar       Json?
+  note          String?
+  doneAt        DateTime? @map("done_at") @db.Timestamptz(3)
+  doneById      String?   @map("done_by_id")
+  inspectedById String?   @map("inspected_by_id")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([roomId, day, kind])
+  @@index([companyId, branchId, day])
+  @@map("hk_tasks")
+}
+
+model LostFound {
+  id         String    @id @default(cuid(2))
+  companyId  String    @map("company_id")
+  branchId   String    @map("branch_id")
+  roomId     String?   @map("room_id")
+  item       String
+  foundOn    String    @map("found_on")
+  foundById  String?   @map("found_by_id")
+  /// HELD | RETURNED | DISPOSED
+  status     String    @default("HELD")
+  returnedTo String?   @map("returned_to")
+  note       String?
+  closedAt   DateTime? @map("closed_at") @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([companyId, branchId, status])
+  @@map("lost_found")
+}

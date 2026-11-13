@@ -46,6 +46,18 @@ export const COMPANY_SCOPED_MODELS = new Set([
   'MenuItem',
   'ModifierGroup',
   'MenuPrice',
+  'HotelSettings',
+  'RatePlan',
+  'RoomDay',
+  'GroupBlock',
+  'Stay',
+  'RoomNight',
+  'RoomBlock',
+  'Folio',
+  'FolioLine',
+  'NightAudit',
+  'HkTask',
+  'LostFound',
   'Guest',
   'Reservation',
   'WaitlistEntry',
@@ -161,6 +173,7 @@ export const COMPANY_SCOPED_MODELS = new Set([
 
 /** Models with `deletedAt` (soft delete). Kept in sync with the schema by `scope.test.ts`. */
 export const SOFT_DELETE_MODELS = new Set([
+  'RatePlan',
   'Guest',
   'Party',
   'PaymentMode',

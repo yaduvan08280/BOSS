@@ -15,6 +15,7 @@ import { emitEvent } from '../../lib/events';
 import { applyMove } from '../ims/moves';
 import { booksOf } from '../ims/recipes';
 import { createBillIn, voidBill } from '../money/bills';
+import { chargeRoom, roomTarget, unchargeRoom, type RoomTarget } from '../hotel/pos-hook';
 import { releaseCredit } from '../money/credit';
 import type { Actor } from '../work/actor';
 import { ctxOf, need } from './access';
@@ -158,13 +159,19 @@ export async function payCheck(db: Db, actor: Actor, checkId: string, input: z.i
       'VALIDATION_FAILED',
       `Only ${(due / 100).toFixed(2)} is left to pay on this bill`,
     );
+  const rooms = new Map<(typeof p.payments)[number], RoomTarget>();
   for (const x of p.payments) {
     const mode = modes.get(x.modeId);
     if (!mode) throw new AppError(400, 'VALIDATION_FAILED', 'That way of paying is not set up');
     if (mode.needsRef && !x.reference)
       throw new AppError(400, 'VALIDATION_FAILED', `${mode.name} needs a reference`);
-    if (mode.kind === 'ROOM' && !(x.reference ?? order.roomNo))
-      throw new AppError(400, 'VALIDATION_FAILED', 'A room charge needs the room number');
+    if (mode.kind === 'ROOM') {
+      const roomNo = x.reference ?? order.roomNo;
+      if (!roomNo) throw new AppError(400, 'VALIDATION_FAILED', 'A room charge needs the room number');
+      // At a hotel the bill goes on the folio of whoever is in that room (nobody there → refused).
+      const target = await roomTarget(db, actor.companyId, outlet.branchId, roomNo);
+      if (target) rooms.set(x, target);
+    }
     if (mode.kind === 'COMPLIMENTARY')
       throw new AppError(
         400,
@@ -180,8 +187,18 @@ export async function payCheck(db: Db, actor: Actor, checkId: string, input: z.i
     for (const x of p.payments) {
       const mode = modes.get(x.modeId)!;
       let receiptId: string | null = null;
-      // Company credit is not money in: the invoice stays owed by the company (receivables).
-      if (mode.kind !== 'COMPANY') {
+      const room = rooms.get(x);
+      const folioLineId = room
+        ? await chargeRoom(tx, ctx, room, {
+            checkId: check.id,
+            number: check.number,
+            outlet: outlet.name,
+            amount: x.amount,
+          })
+        : undefined;
+      // Company credit is not money in: the invoice stays owed by the company (receivables). Nor is a bill sent
+      // to a hotel room: it is paid with the folio at check-out.
+      if (mode.kind !== 'COMPANY' && !room) {
         const receipt = await createBillIn(
           tx,
           actor,
@@ -213,6 +230,7 @@ export async function payCheck(db: Db, actor: Actor, checkId: string, input: z.i
         amount: x.amount,
         reference: x.reference ?? (mode.kind === 'ROOM' ? order.roomNo : null) ?? null,
         receiptId,
+        ...(room ? { stayId: room.stayId, folioLineId } : {}),
         byId: actor.userId,
         at: new Date().toISOString(),
       });
@@ -368,6 +386,9 @@ export async function refund(db: Db, actor: Actor, payments: unknown) {
           data: { depositState: 'PAID' },
         });
       });
+    } else if (p.folioLineId) {
+      const { folioLineId } = p;
+      await db.$transaction((tx) => unchargeRoom(tx, folioLineId));
     } else if (p.receiptId) await voidBill(db, accounts, p.receiptId, 'Bill cancelled');
   }
 }

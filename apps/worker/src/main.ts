@@ -24,6 +24,7 @@ import {
   carryOverCrm,
   sendQueuedPrints,
   reservationSweep,
+  hotelSweep,
   watchRenewals,
   settleAttendance,
   watchAbsences,
@@ -200,6 +201,9 @@ await boss.work(
     // Money core: orders and payments from before the bill engine get their papers (nothing once caught up).
     const carried = await carryOverCrm(prisma);
     if (carried) log.info({ carried }, 'CRM orders and payments carried into bills');
+    // Hotels: group blocks past their release date, Form C reminders, rooms whose maintenance ticket closed.
+    const hotels = await hotelSweep(prisma);
+    if (hotels.released || hotels.formC || hotels.rooms) log.info({ hotels }, 'Hotel sweep');
     const crmCalls = await crmSweep(prisma);
     if (crmCalls) log.info({ crmCalls }, 'CRM calls made');
     if (

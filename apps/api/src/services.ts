@@ -62,3 +62,4 @@ export { watchRenewals } from './modules/franchise/renewals';
 export { carryOverCrm } from './modules/money/mirror';
 export { sendQueued as sendQueuedPrints } from './modules/hosp/print';
 export { reservationSweep } from './modules/hosp/res-jobs';
+export { hotelSweep } from './modules/hotel/reports';

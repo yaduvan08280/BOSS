@@ -82,11 +82,14 @@ export type Payment = {
   /** An advance (a table deposit) set against the bill, and the bill it was set against. */
   advanceId?: string;
   billId?: string;
+  /** A bill sent to a hotel room: the stay and the line it made on the folio. */
+  stayId?: string;
+  folioLineId?: string;
 };
-/** What was put on a company's account rather than paid: it stays owed in the money core. */
+/** What was put on a company's account or a hotel room's folio rather than paid: it stays owed in the money core. */
 export const creditOf = (payments: unknown) =>
   ((payments as Payment[] | null) ?? [])
-    .filter((p) => p.kind === 'COMPANY')
+    .filter((p) => p.kind === 'COMPANY' || Boolean(p.stayId))
     .reduce((n, p) => n + p.amount, 0);
 
 /** Print the bill again: it is marked DUPLICATE and counted. */

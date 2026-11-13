@@ -262,3 +262,58 @@ Through the screens (`e2e/phase15-pos.spec.ts`, 380 and 1440) — one table, not
 | R20 | **Marketing consent** recorded with when, how (staff / online / the guest) and by whom; taking it back is recorded too and nothing is overwritten; the list of guests who may be sent offers; another company never sees a guest | §7 | `apps/api/src/modules/hosp/res-guests.test.ts`, `apps/api/src/modules/hosp/res-book.test.ts` |
 
 Through the screens (`e2e/phase16-reservations.spec.ts`, 380 and 1440): the booking rules with a deposit and the public page switched on, a phone booking that takes the best-fit table, a party of four confirmed by its deposit, arriving and seating, the POS floor showing both tables seated, the deposit used on the bill and the rest paid in cash, the booking finished with its deposit used, a walk-in quoted, called and seated from the waitlist, the guest's profile with the dish they ordered and consent switched on, the public page booking a table with the sum question and the guest's link cancelling it (R1–R4, R7, R8, R11, R12, R15–R20). Not browser-tested: joined tables and the double-booking refusal (R4, R5), changing a booking (R6), the messages (R9), the reminder (R10), the Reserved table on the floor (R13), no-shows and returning a deposit (R14), a request waiting for a host to confirm. Not built: a payment link for deposits (no gateway chosen — plan decision 3).
+
+## Phase 17 — Hotel / property management (50 rows; drafted from the plan §8 on 13/11/2026, not yet reviewed by GGM)
+
+| # | Row | Plan | Test |
+|---|---|---|---|
+| H1 | **Rate plans** EP / CP / MAP / AP: a rate per room type, extra adult and child above the type's usual number; a plan sells only the types it prices | §8 | `packages/shared/src/hosp/hotel.test.ts`, `apps/api/src/modules/hotel/hotel-rates.test.ts` |
+| H2 | **Weekend rates and seasons**: weekend nights at their own rate; a season changes the rate by a percentage between two days | §8 | `packages/shared/src/hosp/hotel.test.ts`, `apps/api/src/modules/hotel/hotel-rates.test.ts` |
+| H3 | **Length of stay, minimum stay, closed to arrival**: a discount from N nights; a plan's or a day's minimum stay; a day nobody may arrive on | §8 | `packages/shared/src/hosp/hotel.test.ts`, `apps/api/src/modules/hotel/hotel-rates.test.ts` |
+| H4 | **Corporate and agent rates**: a plan for one company or travel agent (it must name the party) | §8 | `apps/api/src/modules/hotel/hotel-rates.test.ts` |
+| H5 | **Inventory per room type per day**: rooms − nights sold − rooms out of order − what a group block still holds; **stop-sell**; sold out names the day | §8 | `apps/api/src/modules/hotel/hotel-rates.test.ts` |
+| H6 | **A stay is priced night by night** and each night keeps its rate on the booking | §8 | `packages/shared/src/hosp/hotel.test.ts`, `apps/api/src/modules/hotel/hotel-rates.test.ts` |
+| H7 | **Room calendar (tape chart)**: rooms × days with each room's state, the stays in their cells, bookings with no room yet | §8 | `apps/api/src/modules/hotel/hotel-tape.test.ts` |
+| H8 | **Move / extend on the chart, no overlaps possible**: a room for a booking, a longer or shorter stay; a room holds one stay a night — refused for a person and by a database unique index | §8 | `apps/api/src/modules/hotel/hotel-tape.test.ts` |
+| H9 | **Individual booking**: the guest by mobile (the same profile the restaurant uses), a number, a room type and optionally a room; past days and a room of another type refused | §8 | `apps/api/src/modules/hotel/hotel-rates.test.ts` |
+| H10 | **Group block** with a release date: rooms held by type, bookings picked up from it at its plan and inside its dates, the rest back on sale after the release date | §8 | `apps/api/src/modules/hotel/hotel-rates.test.ts` |
+| H11 | **Corporate booking**: the company gets its own folio and the room is routed to it | §8 | `apps/api/src/modules/hotel/hotel-rates.test.ts` |
+| H12 | **Travel agent booking**: the plan's commission % is kept on the booking | §8 | `apps/api/src/modules/hotel/hotel-rates.test.ts` |
+| H13 | **Advances**: an ADVANCE paper in the payer's name, shown as money on the folio; a mode that needs a reference refuses without one; an unused advance is returned (voided) | §8 | `apps/api/src/modules/hotel/hotel-rates.test.ts` |
+| H14 | **Cancellation policy and charges**: free until the plan's hours before arrival, else the first night / a share / all — on the folio, taxed, paid from the advance | §8 | `packages/shared/src/hosp/hotel.test.ts`, `apps/api/src/modules/hotel/hotel-rates.test.ts` |
+| H15 | **No-show charge** by the plan (none / first night / all), by hand or by the night audit | §8 | `packages/shared/src/hosp/hotel.test.ts`, `apps/api/src/modules/hotel/hotel-rates.test.ts`, `apps/api/src/modules/hotel/hotel-ops.test.ts` |
+| H16 | **Booking voucher** to the guest (WhatsApp / email by the company's rules) with a link that shows the booking without signing in | §8 | `apps/api/src/modules/hotel/hotel-rates.test.ts` |
+| H17 | **Arrivals, in-house, departures and due-outs** lists on the hotel's business date | §8 | `apps/api/src/modules/hotel/hotel-desk.test.ts` |
+| H18 | **Check-in**: the ID, a photo of it and the guest's signature are required; not before the arrival day | §8 | `packages/shared/src/hosp/hotel.test.ts`, `apps/api/src/modules/hotel/hotel-desk.test.ts` |
+| H19 | **Form C** for foreign guests: due within the rule's hours of check-in, the managers reminded once, filed only when every field is there, a CSV for the FRRO portal | §8 | `packages/shared/src/hosp/hotel.test.ts`, `apps/api/src/modules/hotel/hotel-desk.test.ts` |
+| H20 | **Room assignment and upgrade**: only a clean room is given; a better room at the booked rate (free upgrade) or at its own rate (paid) | §8 | `apps/api/src/modules/hotel/hotel-desk.test.ts` |
+| H21 | **Room move** during the stay: nights already slept stay where they were, the reason is kept, the room left goes to housekeeping | §8 | `apps/api/src/modules/hotel/hotel-desk.test.ts` |
+| H22 | **Early check-in and late check-out charges** by the property's rules (grace, a share of the night, the whole night after a time), charged once | §8 | `packages/shared/src/hosp/hotel.test.ts`, `apps/api/src/modules/hotel/hotel-desk.test.ts` |
+| H23 | **Extend / shorten a stay** in the house: new nights need a free room and are priced by the plan; a night already charged is never given up | §8 | `apps/api/src/modules/hotel/hotel-tape.test.ts`, `apps/api/src/modules/hotel/hotel-desk.test.ts` |
+| H24 | **Key handover and visitor log** | §8 | `apps/api/src/modules/hotel/hotel-desk.test.ts` |
+| H25 | **Room charges** go on the folio night by night (by the night audit), with the room and the meal plan in the text | §8 | `apps/api/src/modules/hotel/hotel-desk.test.ts`, `apps/api/src/modules/hotel/hotel-ops.test.ts` |
+| H26 | **POS room-service postings**: a restaurant bill sent to a room goes on the folio of whoever is checked in to it (nobody there → refused), stays owed, and is paid with the folio — never invoiced twice; a cancelled bill comes off the folio | §8 | `apps/api/src/modules/hotel/hotel-folio.test.ts` |
+| H27 | **Laundry, minibar and extras** from the property's list, or typed, each with its tax code | §8 | `apps/api/src/modules/hotel/hotel-desk.test.ts`, `apps/api/src/modules/hotel/hotel-hk.test.ts` |
+| H28 | **Advances and payments on the folio**: advances go against the bill first; too much or too little money is refused; several modes | §8 | `apps/api/src/modules/hotel/hotel-desk.test.ts` |
+| H29 | **Split folio**: more folios on one stay, charges moved between them | §8 | `apps/api/src/modules/hotel/hotel-folio.test.ts` |
+| H30 | **Routing rules**: kinds of charge go to a folio (room to the company, extras to the guest) | §8 | `packages/shared/src/hosp/hotel.test.ts`, `apps/api/src/modules/hotel/hotel-folio.test.ts` |
+| H31 | **Bill to company**: the company's folio may be left owing and shows in Money owed; the guest's own must be paid | §8 | `apps/api/src/modules/hotel/hotel-folio.test.ts` |
+| H32 | **GST invoice at check-out by tariff slab**: one tax invoice per folio, each room night taxed by the slab its rate falls in (12 % / 18 % in the test's rates — typed by the accountant) | §8 | `apps/api/src/modules/hotel/hotel-desk.test.ts` |
+| H33 | **Allowances and credit notes**: a supervisor takes a charge off an open folio with a reason; after the invoice a correction is a credit note | §8 | `apps/api/src/modules/hotel/hotel-desk.test.ts` |
+| H34 | **Folio transfer** between rooms | §8 | `apps/api/src/modules/hotel/hotel-folio.test.ts` |
+| H35 | **Check-out**: every folio closed first, nights not slept back on sale, the room to housekeeping; nothing more can be charged | §8 | `packages/shared/src/hosp/hotel.test.ts`, `apps/api/src/modules/hotel/hotel-desk.test.ts` |
+| H36 | **Night audit posts room and tax charges** for everyone in the house, once a night | §8 | `apps/api/src/modules/hotel/hotel-ops.test.ts` |
+| H37 | **Night audit marks no-shows** with the plan's charge | §8 | `apps/api/src/modules/hotel/hotel-ops.test.ts` |
+| H38 | **Night audit checks** what is still open: guests due out, open folios of people who left, unpaid restaurant bills | §8 | `apps/api/src/modules/hotel/hotel-ops.test.ts` |
+| H39 | **The business date** moves only with the night audit; a day can never be audited twice; supervisors only | §8 | `apps/api/src/modules/hotel/hotel-ops.test.ts` |
+| H40 | **Night audit pack**: occupancy, ADR, RevPAR, room revenue, revenue by outlet, money by mode | §8 | `packages/shared/src/hosp/hotel.test.ts`, `apps/api/src/modules/hotel/hotel-ops.test.ts` |
+| H41 | **Room status**: vacant clean / vacant dirty / occupied / inspected / out of order / out of service, through a state machine | §8 | `packages/shared/src/hosp/hotel.test.ts`, `apps/api/src/modules/hotel/hotel-hk.test.ts` |
+| H42 | **Daily board and assignments by floor** | §8 | `apps/api/src/modules/hotel/hotel-hk.test.ts` |
+| H43 | **Cleaning checklist per room and inspection**: done only when every line is ticked; a supervisor passes it or sends it back | §8 | `packages/shared/src/hosp/hotel.test.ts`, `apps/api/src/modules/hotel/hotel-hk.test.ts` |
+| H44 | **Minibar check** posts to the folio and takes the stock | §8 | `apps/api/src/modules/hotel/hotel-hk.test.ts` |
+| H45 | **Linen and amenities** issued from stock when a room is cleaned | §8 | `apps/api/src/modules/hotel/hotel-hk.test.ts` |
+| H46 | **Lost & found** register; **turndown** tasks | §8 | `apps/api/src/modules/hotel/hotel-hk.test.ts` |
+| H47 | **Maintenance**: an out-of-order room is a help ticket and a block — off sale until the ticket closes, then back, dirty; a room with a booking can't be blocked | §8 | `apps/api/src/modules/hotel/hotel-ops.test.ts` |
+| H48 | **Guest requests** → tickets with a time limit, from the front desk or the QR link in the room (no sign-in; only while a guest is in it) | §8 | `apps/api/src/modules/hotel/hotel-ops.test.ts` |
+| H49 | **Guest (police) register** and **occupancy statistics** | §8 | `apps/api/src/modules/hotel/hotel-story.test.ts` |
+| H50 | **The stay story**: a 3-night CP stay with a room move, two room-service bills, the minibar, a split folio (room to the company, extras to the guest) and a no-show the same night, closed through the night audit — every paper issued once | §8 | `apps/api/src/modules/hotel/hotel-story.test.ts` |
