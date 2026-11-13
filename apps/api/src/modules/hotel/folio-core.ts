@@ -29,8 +29,21 @@ export async function folioFor(tx: Tx, stay: Stay, kind: FolioKind, folioNo?: nu
   const open = folios.filter((f) => f.status === 'OPEN');
   const folio =
     open.find((f) => f.no === want) ?? (folioNo ? undefined : (open.find((f) => f.no === 1) ?? open[0]));
-  if (!folio) throw new AppError(409, 'CONFLICT', 'That folio is closed — nothing more can be charged to it');
-  return folio;
+  if (folio) return folio;
+  if (folioNo)
+    throw new AppError(409, 'CONFLICT', 'That folio is closed — nothing more can be charged to it');
+  // Every folio was closed during the stay (an interim bill): what comes after goes on a new one for the guest.
+  const first = folios.find((f) => f.no === 1);
+  return tx.folio.create({
+    data: {
+      companyId: stay.companyId,
+      branchId: stay.branchId,
+      stayId: stay.id,
+      no: Math.max(0, ...folios.map((f) => f.no)) + 1,
+      name: first?.name ?? 'Guest',
+      partyId: stay.partyId,
+    },
+  });
 }
 
 export async function postCharge(tx: Tx, ctx: ActorContext, hotel: Hotel, stay: Stay, c: Charge) {

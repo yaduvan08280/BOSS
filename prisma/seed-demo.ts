@@ -18,6 +18,7 @@ import { seedDemoRecords } from './seed-demo-records';
 import { seedDemoBranches } from './seed-demo-branches';
 import { seedDemoMoney } from './seed-demo-money';
 import { seedDemoHosp } from './seed-demo-hosp';
+import { seedDemoHotel } from './seed-demo-hotel';
 import { seedDemoReservations } from './seed-demo-reservations';
 import { seedDemoStock } from './seed-demo-stock';
 
@@ -260,6 +261,8 @@ try {
     console.log(
       'Demo reservations: the public booking page, 4 guests, 3 bookings for tomorrow, 1 party waiting',
     );
+  if (await seedDemoHotel(prisma, company.id))
+    console.log('Demo hotel: two rate plans and two bookings (one arriving today) on the demo rooms.');
 } finally {
   await prisma.$disconnect();
 }

@@ -1,5 +1,49 @@
 # Changelog
 
+## Phase 17 — Hotel / property management (13/11/2026)
+
+A hotel can run its rooms on MONO. Plan: `docs/plans/hospitality-100-plan.md` §8; rows H1–H50 in
+`docs/plans/coverage.md` (drafted from the plan, not yet reviewed by GGM). Under Hospitality once the module is on;
+a property is a branch that has rooms.
+
+- **Room rates** (Hospitality → Room rates): rate plans EP / CP / MAP / AP with a rate per room type. Through the
+  API a plan also carries weekend rates, seasons, a length-of-stay discount, a minimum stay, extra adult / child,
+  its cancellation and no-show rule, and can be for one company or travel agent (with a commission). Days can be
+  closed for sale, closed to arrival or given a minimum stay; what is left to sell is counted per room type per day.
+- **Bookings**: priced night by night before they are made; the guest is the same profile the restaurant uses.
+  Group blocks hold rooms until a release date; a company's booking bills the room to the company; an agent's
+  keeps the commission. Advances are ADVANCE papers; cancelling follows the plan (free in time, else a charge on
+  the folio); the guest gets a voucher link.
+- **Room calendar** (Hospitality → Room calendar): rooms down, days across. A room holds one stay a night — the
+  database itself refuses anything else. Give a waiting booking its room; tap a stay to open it.
+- **Front desk** (Hospitality → Front desk): arrivals, in the house, departures, overdue to leave. Check-in needs
+  a clean room, the ID, a photo of it and the signed card; a foreign guest's **Form C** is tracked (due in 24
+  hours, a reminder to the managers, a file for the FRRO portal). Room move, free or paid upgrade, early / late
+  charges by the property's rules, more or fewer nights, keys, visitors, check-out.
+- **Folio**: room nights (posted by the night audit), restaurant bills sent to the room, minibar, laundry, extras,
+  advances. Several folios on a stay with routing rules (room to the company, extras to the guest), charges moved
+  between folios and between rooms, allowances by a supervisor. Closing a folio makes **one GST invoice, each room
+  night taxed by the slab its tariff falls in**; a company's folio may be left owing (it shows in Money owed).
+- **POS → room**: at a hotel, a bill paid by "room charge" goes on the folio of whoever is checked in to that room
+  (nobody there → refused) and is paid with the folio — it is never invoiced twice.
+- **Night audit** (Hospitality → Night audit): marks no-shows with the plan's charge, posts the night's room
+  charges, lists what is still open, moves the hotel's date, and keeps the day's pack — occupancy, average rate,
+  revenue per room, revenue by outlet, money by mode.
+- **Housekeeping** (Hospitality → Housekeeping): every room's state, the day's cleaning with a checklist,
+  inspection, rooms taken off sale (with a help ticket when the property has a maintenance person — the room
+  comes back when the ticket closes), lost & found. Through the API: assignments by floor, turndown, the minibar
+  check (to the folio and off the stock), linen issued from stock.
+- **Guest requests** are help tickets with a time limit, from the desk or from the room's own QR page.
+- Registers through the API: the guest (police) register and occupancy statistics.
+
+Not built, or not proved through the screens: dragging on the calendar (a room is chosen from a list; moves and
+date changes are in the stay's window); OTA / channel-manager bookings (plan §10, Phase 19); a PDF of the invoice
+or voucher; a printed QR (the link is made, not the image); the signature is an uploaded photo of the signed card,
+not drawn on screen. API only (no screen yet): seasons, weekend rates, length of stay, restrictions, group blocks,
+corporate / agent plans, split folios, routing, moving charges, allowances, credit notes, Form C filing and
+export, assignments by floor, turndown, minibar, the registers, the property's rules. Tax slabs must be typed by
+the accountant. Hindi strings need review.
+
 ## Phase 16 — Table reservations, waitlist, guests (13/11/2026)
 
 A restaurant takes bookings on MONO. Plan: `docs/plans/hospitality-100-plan.md` §7; rows R1–R20 in

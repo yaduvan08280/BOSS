@@ -100,6 +100,13 @@ const HospitalitySetupTab = page(() => import('@/modules/hosp/SetupTab'), 'Hospi
 const PosPage = page(() => import('@/modules/pos/PosPage'), 'PosPage');
 const KdsPage = page(() => import('@/modules/pos/KdsPage'), 'KdsPage');
 const PosDayPage = page(() => import('@/modules/pos/DayPage'), 'DayPage');
+const FrontDeskPage = page(() => import('@/modules/hotel/FrontDeskPage'), 'FrontDeskPage');
+const TapePage = page(() => import('@/modules/hotel/TapePage'), 'TapePage');
+const HousekeepingPage = page(() => import('@/modules/hotel/HousekeepingPage'), 'HousekeepingPage');
+const HotelAuditPage = page(() => import('@/modules/hotel/AuditPage'), 'AuditPage');
+const HotelRatesPage = page(() => import('@/modules/hotel/RatesPage'), 'RatesPage');
+const StayVoucherPage = page(() => import('@/modules/hotel/PublicPages'), 'StayVoucherPage');
+const RoomRequestPage = page(() => import('@/modules/hotel/PublicPages'), 'RoomRequestPage');
 const BookPage = page(() => import('@/modules/reservations/BookPage'), 'BookPage');
 const GuestsPage = page(() => import('@/modules/reservations/GuestsPage'), 'GuestsPage');
 const PublicBookPage = page(() => import('@/modules/reservations/PublicBookPage'), 'PublicBookPage');
@@ -121,6 +128,23 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={null}>
         <PublicFormPage />
+      </Suspense>
+    ),
+  },
+  // The guest's booking voucher and the QR page of a room (phase 17) — no sign-in.
+  {
+    path: '/stay/:token',
+    element: (
+      <Suspense fallback={null}>
+        <StayVoucherPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/room/:token',
+    element: (
+      <Suspense fallback={null}>
+        <RoomRequestPage />
       </Suspense>
     ),
   },
@@ -191,6 +215,11 @@ export const router = createBrowserRouter([
       { path: '/hosp/pos', element: <WithMe render={(me) => <PosPage me={me} />} /> },
       { path: '/hosp/kds', element: <KdsPage /> },
       { path: '/hosp/day', element: <PosDayPage /> },
+      { path: '/hotel/desk', element: <WithMe render={(me) => <FrontDeskPage me={me} />} /> },
+      { path: '/hotel/calendar', element: <WithMe render={(me) => <TapePage me={me} />} /> },
+      { path: '/hotel/housekeeping', element: <WithMe render={(me) => <HousekeepingPage me={me} />} /> },
+      { path: '/hotel/audit', element: <WithMe render={(me) => <HotelAuditPage me={me} />} /> },
+      { path: '/hotel/rates', element: <WithMe render={(me) => <HotelRatesPage me={me} />} /> },
       { path: '/hosp/reservations', element: <WithMe render={(me) => <BookPage me={me} />} /> },
       { path: '/hosp/guests', element: <WithMe render={(me) => <GuestsPage me={me} />} /> },
       { path: '/hosp/menu', element: <WithMe render={(me) => <HospMenuPage me={me} />} /> },

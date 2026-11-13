@@ -281,7 +281,7 @@ describe('Hotel: the front desk and the folio (phase 17)', { timeout: 60_000 }, 
     expect((await ctx.prisma.room.findUniqueOrThrow({ where: { id: h.rooms['101']! } })).hkStatus).toBe(
       'DIRTY',
     );
-    expect((await charge(dlx.id, { extraKey: 'laundry' })).status).toBe(409);
+    expect(msg(await charge(dlx.id, { extraKey: 'laundry' }))).toBe('The guest is not in the hotel');
     // After the invoice, a correction is a credit note against it.
     expect(
       (
