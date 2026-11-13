@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { ApiError } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { rupees } from '@/modules/stock/api';
-import { post, useLiveMenu, useOrder, usePosMutation, type LiveItem, type OrderItem } from './api';
+import { post, useFloor, useLiveMenu, useOrder, usePosMutation, type LiveItem, type OrderItem } from './api';
 import { BillDialog } from './BillDialog';
 import { PickDialog, VoidDialog } from './OrderDialogs';
 import { enqueue, loadQueue, newKey, saveQueue } from './queue';
@@ -43,6 +43,8 @@ export function OrderPanel({
   const { t } = useTranslation();
   const order = useOrder(orderId);
   const menu = useLiveMenu(outletId);
+  // The floor is already polled by the POS screen: its cache names the order's tables for the header.
+  const floor = useFloor(outletId);
   const [cat, setCat] = useState('');
   const [cart, setCart] = useState<Line[]>([]);
   const [pick, setPick] = useState<LiveItem | null>(null);
@@ -109,7 +111,20 @@ export function OrderPanel({
       open
       wide
       onOpenChange={(v) => !v && onClose()}
-      title={o ? t('pos.orderNo', { number: o.number }) : t('pos.order')}
+      title={
+        o
+          ? [
+              t('pos.orderNo', { number: o.number }),
+              (floor.data?.floors ?? [])
+                .flatMap((f) => f.tables)
+                .filter((tb) => o.tableIds.includes(tb.id))
+                .map((tb) => tb.name)
+                .join(' + ') || (o.roomNo ? `#${o.roomNo}` : ''),
+            ]
+              .filter(Boolean)
+              .join(' · ')
+          : t('pos.order')
+      }
       description={
         o ? `${t(`pos.type.${o.type}`)} · ${t(`pos.status.${o.status}`)} · ${rupees(o.total)}` : undefined
       }

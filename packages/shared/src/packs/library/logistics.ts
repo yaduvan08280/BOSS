@@ -15,7 +15,7 @@ export const logisticsPack: PackInput = {
       name: 'Traffic desk',
       permissions: [...rights.everyday, ...rights.work('records', 'fms', 'money')],
     },
-    { key: 'driver', name: 'Driver', permissions: [...rights.work('delegation', 'records', 'fms')] },
+    { key: 'driver', name: 'Driver', permissions: [...rights.everyday, ...rights.work('records')] },
   ],
   taxCodes: [{ code: 'GTA5', name: 'GST on goods transport' }],
   masters: [

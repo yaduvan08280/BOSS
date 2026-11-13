@@ -104,6 +104,7 @@ export async function updateMaster(tx: Tx, actor: Actor, id: string, input: Part
   if (input.perBranch) await checkBranchPlans(tx, actor.companyId, input.perBranch);
   const merged = { ...masterOut(before), ...input } as unknown as ChecklistMasterInput;
   const m = await tx.checklistMaster.update({ where: { id }, data: masterData(merged) });
+  await handOverRuns(tx, before.id, before.doerIds, merged);
   await writeAudit(
     tx,
     { ...actor, actorId: actor.userId },
@@ -121,6 +122,41 @@ export async function updateMaster(tx: Tx, actor: Actor, id: string, input: Part
     { name: 'checklist.master_changed', entityType: 'checklist_master', entityId: id },
   );
   return masterOut(m);
+}
+
+/**
+ * The doers changed: runs not yet due that nobody has touched go to the person who took over (in order), before
+ * the save's sweep makes the new doers' runs, so the same occurrence is never there twice. Started, covered and
+ * past runs stay with whoever had them. Per-branch plans make their own runs and are left alone.
+ */
+async function handOverRuns(tx: Tx, masterId: string, oldDoers: string[], next: ChecklistMasterInput) {
+  if (next.perBranch?.length || !next.doerIds) return;
+  const gone = oldDoers.filter((d) => !next.doerIds.includes(d));
+  const added = next.doerIds.filter((d) => !oldDoers.includes(d));
+  for (const [i, from] of gone.entries()) {
+    const to = added[i];
+    const runs = await tx.checklistRun.findMany({
+      where: {
+        masterId,
+        doerId: from,
+        status: 'OPEN',
+        itemsDone: 0,
+        coveredById: null,
+        plannedAt: { gt: new Date() },
+      },
+      select: { id: true, plannedAt: true },
+    });
+    for (const r of runs) {
+      const taken =
+        !to || (await tx.checklistRun.count({ where: { masterId, doerId: to, plannedAt: r.plannedAt } })) > 0;
+      if (taken) continue;
+      // A run belongs to the template's branch, else its doer's (decision 120).
+      const branchId =
+        next.branchId ??
+        (await tx.user.findUnique({ where: { id: to }, select: { branchId: true } }))?.branchId;
+      await tx.checklistRun.update({ where: { id: r.id }, data: { doerId: to, branchId: branchId ?? null } });
+    }
+  }
 }
 
 export async function deleteMaster(tx: Tx, actor: Actor, id: string) {

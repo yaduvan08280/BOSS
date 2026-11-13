@@ -191,6 +191,8 @@ export async function getMe(db: Db, userId: string, appName: string): Promise<Me
       roleKey: user.role.key,
       permissions: user.role.permissions,
       mustChangePassword: user.mustChangePassword,
+      /** Home branch: screens with an outlet or property picker start there. */
+      branchId: user.branchId,
       favourites: Array.isArray(prefs.favourites)
         ? prefs.favourites.filter((f): f is string => typeof f === 'string')
         : [],

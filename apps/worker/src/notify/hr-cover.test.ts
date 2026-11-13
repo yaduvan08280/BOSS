@@ -54,7 +54,9 @@ describe('leave with a Buddy, end to end', () => {
 
     // Asha has two tasks due during her leave tomorrow.
     const today = localDate(new Date(), TZ);
-    const leaveDay = addDays(today, 1);
+    // Tomorrow, or the day after when tomorrow is a Sunday (the weekly off: a leave there is 0 days).
+    const next = addDays(today, 1);
+    const leaveDay = new Date(`${next}T00:00:00Z`).getUTCDay() === 0 ? addDays(next, 1) : next;
     const at = (d: string, hhmm: string) =>
       zonedToUtc(d, Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3)), TZ);
     const ownerActor = (await actorFor(db, company.id, owner!.id))!;

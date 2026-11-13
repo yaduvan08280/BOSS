@@ -51,6 +51,8 @@ describe('franchises (phase 12, stage D)', () => {
       description: 'Come work for us',
     });
     expect(outside.status).toBeGreaterThanOrEqual(400);
+    // …and are told why: the cook is active, just outside the branches they can reach.
+    expect(outside.body.error.message).toMatch(/outside the ones you can reach/);
 
     // A group admin without the oversight right sees the group, not the franchise.
     const admin = await ctx.prisma.role.findUniqueOrThrow({ where: { id: w.role('ADMIN') } });
@@ -65,6 +67,14 @@ describe('franchises (phase 12, stage D)', () => {
     const seen = (await ok<{ name: string }[]>(viewer.api.get('/api/org/users'))).map((p) => p.name);
     expect(seen).toContain('Cook Rooftop');
     expect(seen).not.toContain('Waiter Kota');
+    // Giving the franchise's waiter a task says they are out of reach, not inactive.
+    const toWaiter = await viewer.api.post('/api/tasks', {
+      doerId: f.waiter.id,
+      plannedAt: new Date(Date.now() + 86_400_000).toISOString(),
+      description: 'Send the brand audit plan',
+    });
+    expect(toWaiter.status).toBe(400);
+    expect(toWaiter.body.error.message).toMatch(/outside the ones you can reach/);
     const mine = await ok<{ branches: { name: string }[] }>(viewer.api.get('/api/branches/mine'));
     expect(mine.branches.map((b) => b.name)).not.toContain('Kota Outlet');
     // With the right (a built-in Admin has it), and for the owner, everything is there.

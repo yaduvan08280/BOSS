@@ -1,0 +1,186 @@
+<title>MONO Channel Integrations</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,600&display=swap">
+<style>
+/* Layout: one reading column with wide tables that scroll on their own; a sticky contents strip on wide screens. */
+:root{
+  --bg:#f6f4ef; --paper:#fffdf8; --ink:#1f1d1a; --muted:#6b655c; --line:#e3ddd1;
+  --accent:#b8771f; --accent-soft:#f3e3c7; --ok:#2f7a4f; --warn:#a8641a; --bad:#a83a32; --code:#efe9dd;
+  --display:"Fraunces",Georgia,serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#171614;--paper:#1f1d1a;--ink:#ece6da;--muted:#a59d90;--line:#35312b;--accent:#e2a24c;--accent-soft:#3a2d18;--ok:#6cc08f;--warn:#e2a24c;--bad:#e07a70;--code:#2a2723;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#171614;--paper:#1f1d1a;--ink:#ece6da;--muted:#a59d90;--line:#35312b;--accent:#e2a24c;--accent-soft:#3a2d18;--ok:#6cc08f;--warn:#e2a24c;--bad:#e07a70;--code:#2a2723;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.65 var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:860px;margin:0 auto;padding-block:40px 80px;display:grid;gap:36px}
+h1{font:600 clamp(30px,5vw,44px)/1.1 var(--display);margin:0;text-wrap:balance}
+h2{font:600 24px/1.2 var(--display);margin:0 0 12px;text-wrap:balance}
+h3{font:600 16px/1.3 var(--body);margin:18px 0 6px}
+p{margin:0 0 10px;max-width:68ch}
+.lede{font-size:17px;color:var(--muted)}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+section{display:grid;gap:4px;min-width:0}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px 20px;min-width:0}
+.answer{border-left:4px solid var(--accent)}
+ul,ol{margin:0 0 10px;padding-left:20px}
+li{margin:3px 0}
+code,.mono{font-family:var(--mono);font-size:13px}
+code{background:var(--code);padding:1px 5px;border-radius:4px}
+pre{background:var(--code);padding:12px 14px;border-radius:8px;overflow-x:auto;font:13px/1.5 var(--mono);margin:6px 0 12px}
+.wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:14px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font:600 12px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+.pill{display:inline-block;font:500 11px/1 var(--mono);padding:4px 7px;border-radius:99px;white-space:nowrap}
+.p-ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.p-warn{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.p-bad{background:color-mix(in srgb,var(--bad) 15%,transparent);color:var(--bad)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.step{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start}
+.step b.n{font:600 13px/1 var(--mono);color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:6px 8px}
+.small{font-size:13px;color:var(--muted)}
+a{color:var(--accent)}
+nav{display:flex;flex-wrap:wrap;gap:6px 14px;font:13px var(--mono)}
+nav a{text-decoration:none}
+</style>
+
+<main>
+  <header style="display:grid;gap:12px">
+    <span class="eyebrow">For Nikhil · MONO × TORA SKYLOUNGE · 14/11/2026</span>
+    <h1>Connecting MONO to Booking.com, Agoda, District and Zomato</h1>
+    <p class="lede">How room bookings, rates, table reservations, food orders and payments from outside platforms can land in MONO and be managed from one place, what MONO already has, what to build, and in which order.</p>
+    <nav>
+      <a href="#answer">Short answer</a><a href="#today">What MONO has</a><a href="#platforms">Platform by platform</a><a href="#design">Design</a><a href="#roadmap">Roadmap</a><a href="#rules">Tax & compliance</a><a href="#ask">What to ask</a><a href="#sources">Sources</a>
+    </nav>
+  </header>
+
+  <section id="answer">
+    <div class="card answer">
+      <h2>The short answer</h2>
+      <p>You will not connect MONO to each platform one by one. There are three doors, and each needs a partner:</p>
+      <ol>
+        <li><b>Hotel rooms (Booking.com, Agoda, MakeMyTrip/Goibibo, Expedia, Airbnb)</b>: connect MONO to <b>one channel manager</b> such as AxisRooms, STAAH, eZee Centrix, Aiosell or SiteMinder. It already holds certified links to every OTA. MONO sends rooms left, rates and restrictions to it, and receives bookings, changes and cancellations back. Getting Booking.com certification directly is slow and often closed to new partners.</li>
+        <li><b>Food delivery (Zomato, Swiggy)</b>: Zomato has an official <b>POS developer platform</b> with menu, order and outlet APIs, so MONO can register as a POS vendor. Swiggy gives order APIs only to approved POS partners. Until you are approved, a middleware such as UrbanPiper can relay both.</li>
+        <li><b>Table bookings (District, EazyDiner, Swiggy Dineout)</b>: none of them publishes a reservation API. Ask each one's partner team for access. Until then, MONO can create a reservation automatically from each booking confirmation email, tagged with its source, so the floor still sees every booking.</li>
+      </ol>
+      <p>Payments (deposits, advances, OTA payouts and aggregator settlements) come in through a payment gateway such as Razorpay or Cashfree, plus settlement files that MONO reconciles against bills.</p>
+    </div>
+  </section>
+
+  <section id="today">
+    <span class="eyebrow">Starting point</span>
+    <h2>What MONO already has (Phase 19)</h2>
+    <div class="grid2">
+      <div class="card"><h3>Channel manager contract</h3><p class="small">MONO's own plain JSON contract: <code>POST {base}/ari</code> sends rooms left, price, stop-sell, closed to arrival and minimum stay. <code>GET {base}/bookings?since=</code> pulls bookings, and the webhook <code>/api/hooks/channel/&lt;token&gt;</code> receives them. Bookings are made once per <code>channelRef</code>, never refused, and flagged <i>overbooked</i> when the house is full.</p></div>
+      <div class="card"><h3>Payments</h3><p class="small">A gateway connection (keys encrypted with <code>APP_SECRET</code>), payment links for deposits and advances, a UPI QR on printed bills, and receipts set against bills.</p></div>
+      <div class="card"><h3>Aggregator orders</h3><p class="small">POS orders can be tagged <code>aggregator</code> + <code>aggregatorRef</code>. A Zomato/Swiggy payout file can be checked and recorded against those orders.</p></div>
+      <div class="card"><h3>Booking page & e-invoice</h3><p class="small">A public room-booking page per property (<code>/rooms/&lt;token&gt;</code>), a table-booking page per outlet, a GST e-invoice adapter, and the site agent for printers and Tally.</p></div>
+    </div>
+    <p class="small">Gaps named in CLAUDE.md §18: nothing has been tried against a live account. The channel manager and e-invoice adapters speak MONO's own contract, so each real provider needs a small mapping. Not built yet: direct order push from Zomato/Swiggy, refunds through the gateway, and e-way bills.</p>
+  </section>
+
+  <section id="platforms">
+    <span class="eyebrow">Platform by platform</span>
+    <h2>Who connects how</h2>
+    <div class="wrap"><table>
+      <thead><tr><th>Platform</th><th>What TORA uses it for</th><th>Official route</th><th>Access</th><th>Recommended path</th></tr></thead>
+      <tbody>
+        <tr><td><b>Booking.com</b></td><td>Room bookings for Tora Stays (Vaishali)</td><td>Connectivity APIs (OTA 2003B XML over TLS 1.2): rates & availability, reservations, content</td><td><span class="pill p-bad">Hard</span> PCI/PII compliance, a minimum number of properties, certification; onboarding is sometimes closed</td><td>Through a certified channel manager</td></tr>
+        <tr><td><b>Agoda</b></td><td>Room bookings (strong with foreign guests)</td><td>YCS API for channel managers (rates, availability, inventory, bookings) + Onboarding/Content Push API</td><td><span class="pill p-warn">Partner only</span> needs a Connectivity ID; maps Agoda property, room and rate IDs</td><td>Through the same channel manager</td></tr>
+        <tr><td><b>MakeMyTrip / Goibibo</b></td><td>Largest Indian OTA for domestic guests</td><td>InGo-MMT connectivity for channel managers</td><td><span class="pill p-warn">Partner only</span></td><td>Through the channel manager (check it covers MMT)</td></tr>
+        <tr><td><b>Zomato</b> (delivery)</td><td>Takeaway/delivery from the Murlipura kitchen</td><td>POS developer platform: menu (add, edit, out of stock), orders (accept, reject, status), outlet (hours, open/closed, delivery charges), webhooks, sandbox</td><td><span class="pill p-ok">Open to POS vendors</span> sign up on the developer portal</td><td>Build directly in MONO (Phase B)</td></tr>
+        <tr><td><b>Swiggy</b> (delivery)</td><td>Same as Zomato</td><td>POS partner programme; Builders Club (Food, Instamart, Dineout) with OAuth 2.1 + PKCE</td><td><span class="pill p-warn">Approval needed</span></td><td>Apply; meanwhile use middleware (UrbanPiper or similar)</td></tr>
+        <tr><td><b>District</b> (Zomato's going-out app)</td><td>Table bookings, cover-charge/peak-hour reservations, events at the rooftop</td><td>No public reservation API; settings change through District's point of contact</td><td><span class="pill p-bad">No API found</span></td><td>Ask for partner access; meanwhile turn confirmation emails into reservations</td></tr>
+        <tr><td><b>EazyDiner</b></td><td>Table bookings + PayEazy bill payments (TORA is listed)</td><td>No public partner API found</td><td><span class="pill p-bad">No API found</span></td><td>Same as District; reconcile PayEazy settlements as a payment mode</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section id="design">
+    <span class="eyebrow">How it fits in MONO</span>
+    <h2>Design</h2>
+    <pre class="mermaid">flowchart LR
+  BK[Booking.com] --> CM[Channel manager]
+  AG[Agoda] --> CM
+  MMT[MakeMyTrip] --> CM
+  CM <-- ARI push / bookings --> HOTEL[MONO hotel: stays, folios, room calendar]
+  ZO[Zomato POS API] <-- orders, menu, 86 --> POS[MONO POS: orders, KOT, bills]
+  SW[Swiggy via partner or middleware] <--> POS
+  DI[District / EazyDiner emails] --> PARSE[MONO mail-in parser] --> RES[MONO reservations]
+  PG[Razorpay / Cashfree] <-- links, webhooks --> MONEY[MONO money: receipts, settlements]
+  POS --> MONEY
+  HOTEL --> MONEY</pre>
+    <h3>1 · Rooms: map the channel manager onto MONO's contract</h3>
+    <ul>
+      <li>Keep MONO's internal contract and add one adapter per provider (<code>connect/providers/axisrooms.ts</code> …). It turns MONO's ARI rows into the provider's request and the provider's booking into MONO's booking.</li>
+      <li>Mapping tables: room type code ↔ provider room ID, rate plan code ↔ provider rate ID, per channel where the provider needs it. These live on the CHANNEL connection's <code>meta</code>.</li>
+      <li>Push ARI on every change that alters rooms left or a price (bookings, blocks, out of order, rate edits), debounced to one push per room type per day range, with a full refresh each night after the night audit.</li>
+      <li>Booking in: create the <code>Stay</code> with <code>source: OTA</code>, <code>channel</code>, <code>channelRef</code>, the OTA's price kept in the note, and commission on an AGENT rate plan. Modify moves the nights; cancel goes through the stay machine.</li>
+      <li>Payments: many OTA bookings are prepaid with a virtual card (VCC). <b>MONO must never store card numbers.</b> Read the card only inside the channel manager's PCI vault, and charge it on the gateway or card machine. Record the receipt in MONO with a reference.</li>
+    </ul>
+    <h3>2 · Food delivery: Zomato as a POS integration</h3>
+    <ul>
+      <li>New connection kind <code>AGGREGATOR</code> per outlet: keys, outlet ID on Zomato, an auto-accept switch and the prep time.</li>
+      <li><b>Order webhook → POS order</b> (<code>type: DELIVERY</code>, <code>aggregator: ZOMATO</code>, <code>aggregatorRef</code>). Items are matched by a mapping (menu item ↔ Zomato item/variant/add-on ID), KOTs fire to the stations, and accept/reject goes back to Zomato. Status updates follow the kitchen display: ready → handed over.</li>
+      <li><b>Menu push</b> from MONO's menu, with prices per outlet and availability windows. <b>86 sync</b>: when an item is switched off by a person or by stock, MONO marks it out of stock on Zomato.</li>
+      <li><b>Outlet status</b>: opening hours from the outlet; a "pause orders" button on the POS for rush hours.</li>
+      <li>Settlement: the weekly payout file is matched against the orders' <code>aggregatorRef</code>, and the commission and TCS/TDS lines are booked (the payout import already exists).</li>
+    </ul>
+    <h3>3 · Table bookings from District and EazyDiner</h3>
+    <ul>
+      <li>Ask both partner teams for an API or a booking feed. If they give one, add it as a <code>RESERVATION_PARTNER</code> connection.</li>
+      <li>Until then, use a mail-in parser. Forward booking confirmation emails to a dedicated inbox such as <code>bookings@…</code>. MONO reads the guest name, phone if present, party size, date, time and booking ID, then creates a reservation with <code>source: ONLINE</code> plus a partner tag. Duplicates are refused by the booking ID, and a cancellation email cancels the booking.</li>
+      <li>EazyDiner PayEazy and District payments are already a payment mode in TORA's set-up ("EazyDiner / District pay"), so their settlements reconcile like card settlements.</li>
+    </ul>
+  </section>
+
+  <section id="roadmap">
+    <span class="eyebrow">Order of work</span>
+    <h2>Roadmap</h2>
+    <div class="card" style="display:grid;gap:12px">
+      <div class="step"><b class="n">A</b><div><b>Pick the channel manager</b> (1 week). Ask AxisRooms, STAAH, eZee Centrix, Aiosell and SiteMinder for their PMS API docs, a test account, their certification steps for a new PMS, and their coverage of Booking.com, Agoda and MMT. Choose the one with a documented, two-way PMS API and an Indian support team.</div></div>
+      <div class="step"><b class="n">B</b><div><b>Rooms adapter + certification</b> (3–5 weeks). Write the provider mapping on MONO's contract, the mapping screen, debounced ARI push, booking pull plus webhook, and modify/cancel. Pass the channel manager's PMS certification, then switch on Tora Stays with Booking.com and Agoda.</div></div>
+      <div class="step"><b class="n">C</b><div><b>Zomato POS integration</b> (4–6 weeks). Register on the developer platform. In the sandbox, build menu push, the order webhook to POS, accept/reject/status, 86 sync, outlet status and settlement matching. Then go live at the Murlipura kitchen.</div></div>
+      <div class="step"><b class="n">D</b><div><b>Swiggy</b> (depends on approval). Apply to the POS partner programme. If it is slow, connect through middleware with the same order pipeline as Zomato.</div></div>
+      <div class="step"><b class="n">E</b><div><b>District / EazyDiner</b> (1–2 weeks for the mail-in parser). Start partner conversations in parallel.</div></div>
+      <div class="step"><b class="n">F</b><div><b>Payments & reports</b> (2 weeks). Gateway refunds, VCC handling through the channel manager vault, and a channel-mix report: covers, rooms and revenue by source, with commission and net revenue.</div></div>
+    </div>
+  </section>
+
+  <section id="rules">
+    <span class="eyebrow">Before going live</span>
+    <h2>Tax, data and compliance</h2>
+    <ul>
+      <li><b>GST on aggregator food orders</b>: since 01/01/2022, Zomato and Swiggy collect and pay the 5% GST on restaurant services sold through them (section 9(5)). So MONO must bill aggregator orders without charging GST again, and record them as supplies through an e-commerce operator. The accountant should confirm before go-live.</li>
+      <li><b>Rooms</b>: GST by tariff slab (5% up to ₹7,500 a night, 18% above, after the September 2025 rate change). The OTA's commission invoice carries its own GST (input credit rules apply). TCS by the e-commerce operator shows on payout statements.</li>
+      <li><b>Card data</b>: PCI DSS. MONO never stores card numbers or CVV. Virtual cards are read in the channel manager's vault.</li>
+      <li><b>Guest data</b>: the Digital Personal Data Protection Act, 2023. Keep marketing consent per guest (MONO already logs consent) and only use OTA guest data for the stay.</li>
+      <li><b>Foreign guests</b>: Form C within 24 hours. MONO's rule already chases it, and OTA bookings of foreign nationals should flag it at check-in.</li>
+      <li><b>Liquor</b>: never list liquor on delivery apps, which aren't licensed to sell it. Keep it off the Zomato menu push by category.</li>
+    </ul>
+  </section>
+
+  <section id="ask">
+    <span class="eyebrow">Checklist</span>
+    <h2>What to ask each partner</h2>
+    <div class="grid2">
+      <div class="card"><h3>Channel manager</h3><ul class="small"><li>Do you have a documented PMS API with ARI push and booking push/pull?</li><li>How do you certify a new PMS, and how long does it take?</li><li>Which OTAs do you cover in India (Booking.com, Agoda, MMT/Goibibo, Expedia, Airbnb)?</li><li>How do you handle virtual cards and PCI?</li><li>What does it cost for 18 rooms, and is the API included?</li></ul></div>
+      <div class="card"><h3>Zomato / Swiggy</h3><ul class="small"><li>Can MONO join as a POS vendor (sandbox, go-live checks)?</li><li>Webhook signing, retries and order timeouts?</li><li>How are variants, add-ons and combos mapped?</li><li>How does stock-out sync work, and what are the rate limits?</li><li>What format are payout and settlement reports in, and can they be fetched by API?</li></ul></div>
+      <div class="card"><h3>District / EazyDiner</h3><ul class="small"><li>Is there a reservation API or a booking webhook for POS partners?</li><li>Can we receive a daily booking feed (CSV or email)?</li><li>How are cover charges and PayEazy payments settled, and how often?</li></ul></div>
+    </div>
+  </section>
+
+  <section id="sources">
+    <span class="eyebrow">Sources (checked 14/11/2026)</span>
+    <ul class="small">
+      <li><a href="https://connectivity.booking.com/s/article/Requirements-for-becoming-a-Booking-com-Connectivity-Partner?language=en_US">Booking.com: requirements for connectivity partners</a> · <a href="https://developers.booking.com/connectivity/docs">Booking.com Connectivity APIs</a> · <a href="https://www.altexsoft.com/blog/booking-com-partnerships-apis-extranet-pulse-app/">AltexSoft overview</a></li>
+      <li><a href="https://developer.agoda.com/supply/docs/introduction">Agoda supply (YCS) API</a> · <a href="https://www.agodaconnectivity.com/documentation/onboarding-api">Agoda onboarding API</a> · <a href="https://agodapropertypartnerhelp.zendesk.com/hc/en-us/articles/115012703528-How-do-I-manage-my-Channel-Manager-connection">Agoda: channel manager connection</a></li>
+      <li><a href="https://www.zomato.com/developer/integration/docs/overview/">Zomato POS developer platform</a> · <a href="https://www.zomato.com/developer/integration/docs/api-documentation/order-management/">Zomato order management</a> · <a href="https://www.zomato.com/policies/zomato-dining-services/">Zomato/District dining merchant terms</a></li>
+      <li><a href="https://mcp.swiggy.com/builders/docs/reference/dineout/">Swiggy Builders Club: Dineout</a> · <a href="https://queuebuster.co/pos-software-partners/swiggy">A POS vendor's Swiggy integration</a></li>
+      <li><a href="https://www.eazydiner.com/jaipur/tora-sky-lounge-restaurant-bar-murlipura-jaipur-720205">TORA on EazyDiner</a> · <a href="https://blog.axisrooms.com/best-channel-manager-software-in-india/">Indian channel managers compared (vendor blog)</a></li>
+    </ul>
+    <p class="small">Vendor estimates (certification time, prices) come from vendor blogs and should be confirmed with each partner.</p>
+  </section>
+</main>

@@ -121,7 +121,14 @@ export const rights = {
   view,
   work,
   lead,
-  everyday: [...work('delegation', 'ticket', 'slip'), ...view('checklist', 'hr')],
+  /**
+   * What everybody in a trade role needs, like the built-in Member: their tasks, checklists, slips and tickets,
+   * their process steps and papers, punching and leave, search, and the people list the pickers read.
+   */
+  everyday: [
+    ...work('delegation', 'checklist', 'slip', 'ticket', 'fms', 'docs', 'hr', 'search'),
+    ...view('org'),
+  ],
 };
 export const item = (code: string, name: string, unit: string, category: string, extras: Field = {}) => ({
   code,

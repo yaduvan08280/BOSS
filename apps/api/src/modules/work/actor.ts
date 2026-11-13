@@ -1,4 +1,5 @@
 import type { Db, Tx } from '@mono/db';
+import { withReachOf } from '@mono/db';
 import { hasPermission } from '@mono/shared';
 import { AppError } from '../../lib/errors';
 
@@ -95,5 +96,18 @@ export async function checkPerson(db: Db | Tx, companyId: string, id: string, wh
     where: { id, companyId, deletedAt: null, status: 'ACTIVE' },
     select: { id: true },
   });
-  if (!u) throw new AppError(400, 'VALIDATION_FAILED', `${what} is not an active person`);
+  if (u) return;
+  // The person may be active but outside the branches this person can see (a franchise, another branch):
+  // say so instead of calling them inactive.
+  const hidden = await withReachOf(
+    null,
+    async () =>
+      await db.user.findFirst({
+        where: { id, companyId, deletedAt: null, status: 'ACTIVE' },
+        select: { id: true },
+      }),
+  );
+  if (hidden)
+    throw new AppError(400, 'VALIDATION_FAILED', `${what} works at a branch outside the ones you can reach`);
+  throw new AppError(400, 'VALIDATION_FAILED', `${what} is not an active person`);
 }

@@ -176,7 +176,16 @@ export async function setupRoutes(app: FastifyInstance) {
         await checkPlace(tx, request.body);
         if (request.body.isDefault)
           await tx.branch.updateMany({ where: { companyId: ctx.companyId }, data: { isDefault: false } });
-        const row = await tx.branch.update({ where: { id: before.id }, data: request.body });
+        // Details are merged: what is sent replaces, what is left out stays (the dialog does not send the phone
+        // or the extra punching gates), and null clears.
+        const { details, ...rest } = request.body;
+        const row = await tx.branch.update({
+          where: { id: before.id },
+          data: {
+            ...rest,
+            ...(details ? { details: { ...((before.details as object | null) ?? {}), ...details } } : {}),
+          },
+        });
         await recordChange(tx, ctx, {
           event: 'branch.updated',
           entityType: 'branch',

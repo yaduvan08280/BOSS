@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { DateInput } from '@/components/ui/date-input';
 import { Select } from '@/components/ui/form';
 import { useOutlets } from '@/modules/hosp/api';
+import { useOutletChoice } from '@/modules/hosp/outletChoice';
 import { Seg } from '@/modules/stock/ui';
 import { useBook, useWaitlist, type Res } from './api';
 import { BookingDialog } from './BookingDialog';
@@ -18,13 +19,13 @@ import { WaitlistPanel } from './WaitlistPanel';
 export function BookPage({ me }: { me: Me }) {
   const { t } = useTranslation();
   const outlets = useOutlets();
-  const [outletId, setOutletId] = useState('');
+  const [current, setOutletId] = useOutletChoice(outlets.data);
   const [day, setDay] = useState('');
   const [tab, setTab] = useState<'book' | 'waitlist'>('book');
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Res | null>(null);
   const [rules, setRules] = useState(false);
-  const current = outletId || outlets.data?.[0]?.id || '';
+
   const book = useBook(current, day);
   const waiting = useWaitlist(current);
   const canHost = hasPermission(me.user.permissions, 'hosp.create');

@@ -10,6 +10,7 @@ import { Dialog } from '@/components/ui/dialog';
 import { Field, Select } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useOutlets } from '@/modules/hosp/api';
+import { useOutletChoice } from '@/modules/hosp/outletChoice';
 import { rupees } from '@/modules/stock/api';
 import { post, useChecks, useDay, usePosMutation, type Check } from './api';
 
@@ -17,8 +18,8 @@ import { post, useChecks, useDay, usePosMutation, type Check } from './api';
 export function DayPage() {
   const { t } = useTranslation();
   const outlets = useOutlets();
-  const [outletId, setOutletId] = useState('');
-  const current = outletId || outlets.data?.[0]?.id || '';
+  const [current, setOutletId] = useOutletChoice(outlets.data);
+
   const day = useDay(current);
   const checks = useChecks(current);
   const [cash, setCash] = useState<Record<string, string>>({});

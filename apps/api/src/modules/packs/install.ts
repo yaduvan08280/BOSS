@@ -119,7 +119,11 @@ export async function installPack(db: Db, actor: Actor, input: unknown): Promise
         )?.id,
       async (id) => Boolean(await db.role.count({ where: { id, companyId, deletedAt: null } })),
       async () =>
-        (await db.role.create({ data: { companyId, name: r.name, permissions: r.permissions } })).id,
+        (
+          await db.role.create({
+            data: { companyId, name: r.name, permissions: [...new Set(r.permissions)] },
+          })
+        ).id,
     );
 
   for (const t of pack.taxCodes)

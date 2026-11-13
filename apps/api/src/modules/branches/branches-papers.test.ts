@@ -90,6 +90,33 @@ describe('entities, number series and papers (phase 12, stage B)', () => {
     expect(s.entities.find((e) => e.name === 'GGM Hotels Rajasthan')!.details.seriesCode).toBe('RJ');
   });
 
+  it("G22b: saving part of a branch's details keeps the rest — the phone and punching gates survive an address edit", async () => {
+    const w = await world(ctx.app);
+    const { g } = await twoEntities(w);
+    const id = g.b.rooftop.id;
+    const gate = { name: 'Staff entrance', lat: 26.96, lng: 75.77, radiusM: 80 };
+    await ok(w.api.patch(`/api/org/branches/${id}`, { details: { phone: '+911412345678', fences: [gate] } }));
+    // The branch dialog sends address, series code and licences only.
+    await ok(
+      w.api.patch(`/api/org/branches/${id}`, {
+        details: { address: 'Janak Square, Jaipur', seriesCode: null, licences: [] },
+      }),
+    );
+    const row = await ctx.prisma.branch.findUniqueOrThrow({ where: { id } });
+    expect(row.details).toMatchObject({
+      address: 'Janak Square, Jaipur',
+      phone: '+911412345678',
+      fences: [gate],
+      licences: [],
+    });
+    // null still clears a value.
+    await ok(w.api.patch(`/api/org/branches/${id}`, { details: { phone: null } }));
+    expect((await ctx.prisma.branch.findUniqueOrThrow({ where: { id } })).details).toMatchObject({
+      phone: null,
+      fences: [gate],
+    });
+  });
+
   it('G23, G24: a series per entity or branch; the paper prints the right entity, branch and licences', async () => {
     const w = await world(ctx.app);
     const { rooftop, lake } = await twoEntities(w);

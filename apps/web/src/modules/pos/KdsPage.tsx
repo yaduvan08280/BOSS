@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/form';
 import { cn } from '@/lib/utils';
 import { useOutlets } from '@/modules/hosp/api';
+import { useOutletChoice } from '@/modules/hosp/outletChoice';
 import { Seg } from '@/modules/stock/ui';
 import { post, useKds, usePosMutation } from './api';
 
@@ -19,10 +20,10 @@ const TONE = {
 export function KdsPage() {
   const { t } = useTranslation();
   const outlets = useOutlets();
-  const [outletId, setOutletId] = useState('');
+  const [current, setOutletId] = useOutletChoice(outlets.data);
   const [stationId, setStationId] = useState('');
   const [show, setShow] = useState<'open' | 'bumped'>('open');
-  const current = outletId || outlets.data?.[0]?.id || '';
+
   const q = useKds(current, stationId, show);
   const act = usePosMutation((a: { id: string; action: 'ready' | 'bump' | 'recall' }) =>
     post(`/api/pos/kots/${a.id}/${a.action}`),

@@ -339,7 +339,9 @@ describe('leave and Buddy rules', () => {
     const { api, asha, ravi, hod, owner } = await hrTeam();
     const rules = (await api.get('/api/hr/rules')).body.rules;
     await api.put('/api/hr/rules', { ...rules, buddy: { ...rules.buddy, noBuddy: 'block' } });
-    const day = addDays(localDate(new Date(), TZ), 1);
+    // Tomorrow, or the day after when tomorrow is a Sunday (the weekly off: a leave there is 0 days).
+    const next = addDays(localDate(new Date(), TZ), 1);
+    const day = new Date(`${next}T00:00:00Z`).getUTCDay() === 0 ? addDays(next, 1) : next;
     const task = (
       await api.post('/api/tasks', {
         doerId: asha.id,

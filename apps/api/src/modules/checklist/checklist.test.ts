@@ -13,6 +13,50 @@ const rnd = () => `9${String(Date.now()).slice(-6)}${String(Math.floor(Math.rand
 const MONDAY_0830 = new Date('2030-01-07T03:00:00Z');
 
 describe('checklists', () => {
+  it('a new doer takes over the runs nobody has started; started ones stay — never two runs for one occurrence', async () => {
+    const { api, company, owner } = await ownerClient(ctx.app);
+    const made = (await api.post('/api/org/users', { name: 'Pooja Captain', mobile: rnd() })).body;
+    const master = await api.post('/api/checklists/masters', {
+      name: 'Rooftop opening',
+      items: [{ key: 'a', text: 'Tables laid' }],
+      frequency: { type: 'daily' },
+      dueTime: '11:30',
+      windowHours: 3,
+      doerIds: [owner.id],
+      startDate: '2030-01-01',
+    });
+    expect(master.status).toBe(200);
+    const at = (h: number) => new Date(Date.now() + h * 3_600_000);
+    const run = (plannedAt: Date, itemsDone = 0) =>
+      ctx.prisma.checklistRun.create({
+        data: {
+          companyId: company.id,
+          masterId: master.body.id,
+          doerId: owner.id,
+          plannedAt,
+          windowEndsAt: new Date(plannedAt.getTime() + 3 * 3_600_000),
+          itemsTotal: 1,
+          itemsDone,
+        },
+      });
+    const untouched = await run(at(5));
+    const started = await run(at(29), 1);
+    const due = await run(at(-1));
+    expect(
+      (await api.patch(`/api/checklists/masters/${master.body.id}`, { doerIds: [made.person.id] })).status,
+    ).toBe(200);
+    const doer = async (id: string) =>
+      (await ctx.prisma.checklistRun.findUniqueOrThrow({ where: { id } })).doerId;
+    expect(await doer(untouched.id)).toBe(made.person.id);
+    expect(await doer(started.id)).toBe(owner.id);
+    expect(await doer(due.id)).toBe(owner.id);
+    expect(
+      await ctx.prisma.checklistRun.count({
+        where: { masterId: master.body.id, plannedAt: untouched.plannedAt },
+      }),
+    ).toBe(1);
+  });
+
   it('sweeps idempotently, needs proof, submits, verifies, and misses what is left', async () => {
     const { api, company, owner } = await ownerClient(ctx.app);
     const mobile = rnd();

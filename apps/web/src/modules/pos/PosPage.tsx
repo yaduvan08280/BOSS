@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { ApiError } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { useOutlets } from '@/modules/hosp/api';
+import { useOutletChoice } from '@/modules/hosp/outletChoice';
 import { rupees } from '@/modules/stock/api';
 import { post, useApprovals, useFloor, usePosMutation, type Approval, type TableState } from './api';
 import { OrderPanel } from './OrderPanel';
@@ -30,8 +31,8 @@ const STATE: Record<TableState, string> = {
 export function PosPage({ me }: { me: Me }) {
   const { t } = useTranslation();
   const outlets = useOutlets();
-  const [outletId, setOutletId] = useState('');
-  const current = outletId || outlets.data?.[0]?.id || '';
+  const [current, setOutletId] = useOutletChoice(outlets.data);
+
   const floor = useFloor(current);
   const approvals = useApprovals(current);
   const [orderId, setOrderId] = useState<string | null>(null);

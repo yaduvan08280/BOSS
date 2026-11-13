@@ -1,10 +1,11 @@
 import type { PackInput } from '../schema';
 import { ME } from '../schema';
+import { rights } from './kit';
 
 const view = (...m: string[]) => m.map((x) => `${x}.view`);
 const work = (...m: string[]) => m.flatMap((x) => [`${x}.view`, `${x}.create`]);
 const lead = (...m: string[]) => m.flatMap((x) => [`${x}.view`, `${x}.create`, `${x}.edit`, `${x}.approve`]);
-const everyday = [...work('delegation', 'ticket', 'slip'), ...view('checklist', 'hr')];
+const { everyday } = rights;
 const daily = { type: 'daily' };
 const checklist = (name: string, dueTime: string, lines: string[]) => ({
   key: name
@@ -72,6 +73,7 @@ export const hospitalityPack: PackInput = {
       key: 'gm',
       name: 'General manager',
       permissions: [
+        ...everyday,
         ...lead('hosp', 'ims', 'money', 'delegation', 'checklist', 'ticket', 'slip', 'hr'),
         ...view('reports', 'crm', 'fms'),
       ],

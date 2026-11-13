@@ -1,5 +1,28 @@
 # Changelog
 
+## 14/11/2026 — Fixes found setting up a restaurant group (TORA SKYLOUNGE demo)
+
+Found while setting up a full rooftop-bar demo through the API and clicking through it at 390 and 1440 px
+(`scripts/tora-demo/`, `docs/plans/tora-demo-guide.md`).
+
+- **Pack roles can do their daily work**: every role in every library pack now has what the built-in Member has
+  — their process steps, checklists, punching in and leave, search and the people list. Before, a steward or a
+  driver got "You don't have access" on My FMS steps and could not ask for leave. Companies that installed a pack
+  earlier keep their roles as they are (an upgrade never changes a role): add the rights in System Master → Roles.
+- **A person outside your branches is named as such**: giving work to someone at a branch you can't reach (a
+  franchise's people) now says "works at a branch outside the ones you can reach", not "is not an active person".
+- **Saving a branch keeps its phone and punching gates**: the branch dialog saves the address, series code and
+  licences; details it does not send are now kept (they were wiped). `null` still clears a value.
+- **Changing a checklist's doer moves the runs nobody started** to the new doer (in order), so the same
+  occurrence no longer shows twice; started, covered and past runs stay with whoever had them.
+- **Outlet screens start at your outlet**: POS, kitchen display, reservations and day close open on the outlet
+  you picked last, else one at your home branch (dining rooms before room service), not the first by name.
+  `/api/auth/me` returns the person's home `branchId`.
+- **The order sheet names its table** ("Order 8 · R2").
+- **Phones**: the search box on the Delegation sheet, Users, Org chart and Message templates takes the full
+  width instead of shrinking beside the filters.
+- Tests that booked leave for "tomorrow" failed on Saturdays (Sunday is the weekly off); they skip Sunday now.
+
 ## 13/11/2026 — Fixes from the owner's review
 
 - **Tab bars that ran off the screen**: System Master's tabs and every work-screen tab strip now show an arrow at the edge while there is more that way, scroll with the mouse wheel, and bring the current tab into view (`components/scroll-row.tsx`).

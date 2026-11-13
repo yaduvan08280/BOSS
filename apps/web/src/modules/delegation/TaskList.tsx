@@ -153,7 +153,7 @@ export function TaskList({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        <label className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-control border bg-card px-3 sm:max-w-xs">
+        <label className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-control border bg-card px-3 max-sm:w-full max-sm:flex-none sm:max-w-xs">
           <Search className="size-4 text-muted-foreground" />
           <input
             value={q}

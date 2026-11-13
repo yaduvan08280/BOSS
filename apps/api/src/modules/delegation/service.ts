@@ -1,5 +1,5 @@
 import type { Db, Task, Tx } from '@mono/db';
-import { nextCounter } from '@mono/db';
+import { nextCounter, withReachOf } from '@mono/db';
 import {
   delegationMachine,
   initialTaskStatus,
@@ -47,7 +47,20 @@ export async function checkPerson(tx: Tx, companyId: string, id: string, what: s
     where: { id, companyId, deletedAt: null, status: 'ACTIVE' },
     select: { id: true },
   });
-  if (!u) throw new AppError(400, 'VALIDATION_FAILED', `${what} is not an active person`);
+  if (u) return;
+  // The person may be active but outside the branches this person can see (a franchise, another branch):
+  // say so instead of calling them inactive.
+  const hidden = await withReachOf(
+    null,
+    async () =>
+      await tx.user.findFirst({
+        where: { id, companyId, deletedAt: null, status: 'ACTIVE' },
+        select: { id: true },
+      }),
+  );
+  if (hidden)
+    throw new AppError(400, 'VALIDATION_FAILED', `${what} works at a branch outside the ones you can reach`);
+  throw new AppError(400, 'VALIDATION_FAILED', `${what} is not an active person`);
 }
 
 export async function log(

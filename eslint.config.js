@@ -17,6 +17,8 @@ export default tseslint.config(
       'prisma/migrations/**',
       'playwright-report/**',
       'test-results/**',
+      // One-off demo set-up scripts (plain Node, run by hand): see scripts/tora-demo/README.md.
+      'scripts/tora-demo/**',
     ],
   },
   js.configs.recommended,

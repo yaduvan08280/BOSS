@@ -51,6 +51,7 @@ export const meSchema = z.object({
     roleKey: z.string().nullable(),
     permissions: z.array(z.string()),
     mustChangePassword: z.boolean(),
+    branchId: z.string().nullable().optional(),
     favourites: z.array(z.string()),
   }),
   company: z.object({

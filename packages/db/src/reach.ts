@@ -58,7 +58,8 @@ export function setReach(reach: Reach | null) {
   if (slot) slot.reach = reach;
 }
 export const currentReach = (): Reach | null => store.getStore()?.reach ?? null;
-/** For tests and jobs that act as a person outside a web request. */
+/** For tests and jobs that act as a person outside a web request. `fn` must await its queries itself: Prisma
+ * queries are lazy and run when awaited, so a query returned un-awaited would run outside this reach. */
 export const withReachOf = <T>(reach: Reach | null, fn: () => Promise<T>): Promise<T> =>
   store.run({ reach }, fn);
 
@@ -112,26 +113,43 @@ export const BRANCH_FREE_MODELS: Record<string, string> = {
   BranchStay: 'set-up data: where a person works from which day',
   AttendanceDay: 'attendance is listed by HR scope (HR all, an HOD their team, everyone themselves)',
   PaymentMode: 'set-up data: how money is taken at a branch',
-  HotelSettings: "a hotel's rows are reached through its branch: the hotel services check the branch against the person's branches",
-  RatePlan: "a hotel's rows are reached through its branch: the hotel services check the branch against the person's branches",
-  RoomDay: "a hotel's rows are reached through its branch: the hotel services check the branch against the person's branches",
-  GroupBlock: "a hotel's rows are reached through its branch: the hotel services check the branch against the person's branches",
+  HotelSettings:
+    "a hotel's rows are reached through its branch: the hotel services check the branch against the person's branches",
+  RatePlan:
+    "a hotel's rows are reached through its branch: the hotel services check the branch against the person's branches",
+  RoomDay:
+    "a hotel's rows are reached through its branch: the hotel services check the branch against the person's branches",
+  GroupBlock:
+    "a hotel's rows are reached through its branch: the hotel services check the branch against the person's branches",
   Stay: "a hotel's rows are reached through its branch: the hotel services check the branch against the person's branches",
-  RoomNight: "a hotel's rows are reached through its branch: the hotel services check the branch against the person's branches",
-  RoomBlock: "a hotel's rows are reached through its branch: the hotel services check the branch against the person's branches",
-  Folio: "a hotel's rows are reached through its branch: the hotel services check the branch against the person's branches",
-  NightAudit: "a hotel's rows are reached through its branch: the hotel services check the branch against the person's branches",
-  HkTask: "a hotel's rows are reached through its branch: the hotel services check the branch against the person's branches",
-  LostFound: "a hotel's rows are reached through its branch: the hotel services check the branch against the person's branches",
-  BranchRule: "reached through its branch: the banquet and compliance services check the branch against the person's branches",
+  RoomNight:
+    "a hotel's rows are reached through its branch: the hotel services check the branch against the person's branches",
+  RoomBlock:
+    "a hotel's rows are reached through its branch: the hotel services check the branch against the person's branches",
+  Folio:
+    "a hotel's rows are reached through its branch: the hotel services check the branch against the person's branches",
+  NightAudit:
+    "a hotel's rows are reached through its branch: the hotel services check the branch against the person's branches",
+  HkTask:
+    "a hotel's rows are reached through its branch: the hotel services check the branch against the person's branches",
+  LostFound:
+    "a hotel's rows are reached through its branch: the hotel services check the branch against the person's branches",
+  BranchRule:
+    "reached through its branch: the banquet and compliance services check the branch against the person's branches",
   Hall: "reached through its branch: the banquet and compliance services check the branch against the person's branches",
-  BanquetEvent: "reached through its branch: the banquet and compliance services check the branch against the person's branches",
-  ComplianceItem: "reached through its branch: the banquet and compliance services check the branch against the person's branches",
-  TempPoint: "reached through its branch: the banquet and compliance services check the branch against the person's branches",
-  TempReading: "reached through its branch: the banquet and compliance services check the branch against the person's branches",
-  AgentToken: "a site agent's key is managed by admins and used by the agent itself, never listed by branch reach",
-  Reservation: "reached through its outlet: the reservation services check the outlet against the person's branches",
-  WaitlistEntry: "reached through its outlet, like a reservation",
+  BanquetEvent:
+    "reached through its branch: the banquet and compliance services check the branch against the person's branches",
+  ComplianceItem:
+    "reached through its branch: the banquet and compliance services check the branch against the person's branches",
+  TempPoint:
+    "reached through its branch: the banquet and compliance services check the branch against the person's branches",
+  TempReading:
+    "reached through its branch: the banquet and compliance services check the branch against the person's branches",
+  AgentToken:
+    "a site agent's key is managed by admins and used by the agent itself, never listed by branch reach",
+  Reservation:
+    "reached through its outlet: the reservation services check the outlet against the person's branches",
+  WaitlistEntry: 'reached through its outlet, like a reservation',
   PosOrder: "reached through its outlet: the POS services check the outlet against the person's branches",
   Outlet: "set-up data, listed through the branch (the hospitality services filter by the person's branches)",
   RoomType: 'set-up data, listed through the branch',
