@@ -160,7 +160,9 @@
       "notes": "Notes and coins counted",
       "notesHint": "Separated by commas",
       "blindCash": "Blind cash count — whoever counts does not see what is expected",
-      "save": "Save the rules"
+      "save": "Save the rules",
+      "voidUpTo": "Void up to ₹",
+      "voidOf": "Void up to ₹ for {{role}}"
     },
     "modes": {
       "title": "How money is taken",

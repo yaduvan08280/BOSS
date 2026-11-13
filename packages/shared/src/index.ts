@@ -74,3 +74,6 @@ export * from './ims/pricing';
 export * from './machines/stock';
 export * from './hosp/setup';
 export * from './hosp/menu';
+export * from './hosp/pos';
+export * from './hosp/escpos';
+export * from './machines/pos';

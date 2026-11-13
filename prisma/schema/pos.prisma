@@ -1,0 +1,252 @@
+// Phase 15 — POS: orders and their items, kitchen tickets, checks (bills), print jobs, devices and their
+// reserved bill numbers, shifts and closed days.
+
+model PosOrder {
+  id          String    @id @default(cuid(2))
+  companyId   String    @map("company_id")
+  branchId    String    @map("branch_id")
+  outletId    String    @map("outlet_id")
+  /// The order's number that business day at the outlet.
+  number      Int
+  /// YYYY-MM-DD (the day it belongs to by the cut-off)
+  businessDay String    @map("business_day")
+  /// DINE_IN | TAKEAWAY | DELIVERY | ROOM_SERVICE | STAFF_MEAL | COUNTER
+  type        String    @default("DINE_IN")
+  /// OPEN | BILLED | PAID | CANCELLED (`orderMachine`)
+  status      String    @default("OPEN")
+  tableIds    String[]  @default([]) @map("table_ids")
+  covers      Int       @default(1)
+  stewardId   String?   @map("steward_id")
+  guestName   String?   @map("guest_name")
+  partyId     String?   @map("party_id")
+  roomNo      String?   @map("room_no")
+  note        String?
+  /// Idempotency key from the device.
+  clientId    String?   @map("client_id")
+  /// How the order's items are split into checks: null = one check; EQUAL / AMOUNT keep one bill paid in parts.
+  split       Json?
+  createdById String?   @map("created_by_id")
+  openedAt    DateTime  @default(now()) @map("opened_at") @db.Timestamptz(3)
+  closedAt    DateTime? @map("closed_at") @db.Timestamptz(3)
+
+  items PosOrderItem[]
+
+  @@unique([companyId, clientId])
+  @@unique([outletId, businessDay, number])
+  @@index([companyId, outletId, status])
+  @@map("pos_orders")
+}
+
+model PosOrderItem {
+  id           String    @id @default(cuid(2))
+  companyId    String    @map("company_id")
+  orderId      String    @map("order_id")
+  menuItemId   String    @map("menu_item_id")
+  name         String
+  category     String    @default("")
+  variantKey   String    @default("") @map("variant_key")
+  variantName  String?   @map("variant_name")
+  qty          Decimal   @db.Decimal(10, 3)
+  /// Price of one, minor units (with its add-ons).
+  price        BigInt
+  /// [{ groupId, key, name, price, itemId, qty, unit }]
+  modifiers    Json?
+  note         String?
+  course       String?
+  seat         Int?
+  /// HELD | FIRED | READY | SERVED | VOID (`orderItemMachine`)
+  status       String    @default("HELD")
+  stationId    String?   @map("station_id")
+  kotId        String?   @map("kot_id")
+  taxCode      String?   @map("tax_code")
+  hsn          String?
+  /// The stock item it uses and how much of its recipe.
+  stockItemId  String?   @map("stock_item_id")
+  factor       Decimal   @default(1) @db.Decimal(8, 3)
+  /// Which check of the order it is billed on.
+  checkNo      Int       @default(1) @map("check_no")
+  nc           Boolean   @default(false)
+  ncReason     String?   @map("nc_reason")
+  voidReason   String?   @map("void_reason")
+  voidById     String?   @map("void_by_id")
+  /// A void that waits for an approver: { reason, cooked, askedById, askedAt }.
+  voidAsk      Json?     @map("void_ask")
+  /// It was already cooked when voided (its ingredients were written off as waste).
+  cooked       Boolean   @default(false)
+  /// Stock could not be taken when the bill was paid (what was short).
+  stockNote    String?   @map("stock_note")
+  clientId     String?   @map("client_id")
+  createdById  String?   @map("created_by_id")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  firedAt      DateTime? @map("fired_at") @db.Timestamptz(3)
+  readyAt      DateTime? @map("ready_at") @db.Timestamptz(3)
+
+  order PosOrder @relation(fields: [orderId], references: [id])
+
+  @@unique([orderId, clientId])
+  @@index([companyId, orderId])
+  @@index([kotId])
+  @@map("pos_order_items")
+}
+
+/// A kitchen order ticket: the items of one firing that go to one station.
+model Kot {
+  id          String    @id @default(cuid(2))
+  companyId   String    @map("company_id")
+  outletId    String    @map("outlet_id")
+  orderId     String    @map("order_id")
+  stationId   String?   @map("station_id")
+  /// Numbered per outlet per business day.
+  number      Int
+  businessDay String    @map("business_day")
+  /// NEW | READY | BUMPED | CANCELLED (`kotMachine`)
+  status      String    @default("NEW")
+  firedAt     DateTime  @default(now()) @map("fired_at") @db.Timestamptz(3)
+  readyAt     DateTime? @map("ready_at") @db.Timestamptz(3)
+  bumpedAt    DateTime? @map("bumped_at") @db.Timestamptz(3)
+  firedById   String?   @map("fired_by_id")
+
+  @@unique([outletId, businessDay, number])
+  @@index([companyId, outletId, status])
+  @@index([orderId])
+  @@map("kots")
+}
+
+/// One bill of an order: its money paper, what was taken off, tips, how often it was printed.
+model PosCheck {
+  id            String    @id @default(cuid(2))
+  companyId     String    @map("company_id")
+  outletId      String    @map("outlet_id")
+  orderId       String    @map("order_id")
+  checkNo       Int       @default(1) @map("check_no")
+  businessDay   String    @map("business_day")
+  /// OPEN | PAID | CANCELLED (`checkMachine`)
+  status        String    @default("OPEN")
+  /// The invoice in the money core.
+  billId        String    @map("bill_id")
+  number        String
+  total         BigInt
+  serviceCharge BigInt    @default(0) @map("service_charge")
+  /// { key, kind, value, amount, reason, byId, approvedById }
+  discount      Json?
+  ncReason      String?   @map("nc_reason")
+  /// [{ amount, stewardId, modeId }]
+  tips          Json?
+  /// Parts it is paid in (an equal or by-amount split): [amount, …]
+  parts         Json?
+  /// How it was paid: [{ modeId, mode, kind, amount, reference, receiptId, byId, at }]
+  payments      Json?
+  printed       Int       @default(0)
+  cancelReason  String?   @map("cancel_reason")
+  cancelledById String?   @map("cancelled_by_id")
+  /// The credit note that undid it.
+  creditNoteId  String?   @map("credit_note_id")
+  createdById   String?   @map("created_by_id")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  paidAt        DateTime? @map("paid_at") @db.Timestamptz(3)
+
+  // A cancelled check keeps its row: the same check number of an order can be billed again.
+  @@index([orderId, checkNo])
+  @@unique([billId])
+  @@index([companyId, outletId, businessDay])
+  @@map("pos_checks")
+}
+
+/// A discount or void above someone's limit, waiting for an approver.
+model PosApproval {
+  id          String    @id @default(cuid(2))
+  companyId   String    @map("company_id")
+  outletId    String    @map("outlet_id")
+  orderId     String    @map("order_id")
+  /// DISCOUNT | VOID | CANCEL_BILL
+  kind        String
+  /// What is asked: the check input, the item, the reason, the amount.
+  ask         Json
+  /// PENDING | APPROVED | REJECTED
+  status      String    @default("PENDING")
+  askedById   String    @map("asked_by_id")
+  decidedById String?   @map("decided_by_id")
+  note        String?
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  decidedAt   DateTime? @map("decided_at") @db.Timestamptz(3)
+
+  @@index([companyId, outletId, status])
+  @@map("pos_approvals")
+}
+
+/// Something to print: sent by the server to a network printer, or pulled by a branch's site agent.
+model PrintJob {
+  id        String    @id @default(cuid(2))
+  companyId String    @map("company_id")
+  printerId String    @map("printer_id")
+  /// KOT | BILL
+  kind      String
+  /// The paper it prints (a ticket or a check).
+  refId     String?   @map("ref_id")
+  /// ESC/POS bytes, base64.
+  payload   String
+  /// QUEUED | SENT | FAILED
+  status    String    @default("QUEUED")
+  tries     Int       @default(0)
+  error     String?
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  sentAt    DateTime? @map("sent_at") @db.Timestamptz(3)
+
+  @@index([companyId, status])
+  @@index([printerId, status])
+  @@map("print_jobs")
+}
+
+/// A device that bills (a tablet at an outlet) and the block of bill numbers reserved for it.
+model PosDevice {
+  id        String   @id @default(cuid(2))
+  companyId String   @map("company_id")
+  outletId  String   @map("outlet_id")
+  name      String
+  /// Numbers reserved and not yet used: ["INV/RJ/26-27/0101", …]
+  numbers   String[] @default([])
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([outletId, name])
+  @@map("pos_devices")
+}
+
+/// A closed business day of an outlet (the Z report): expected against counted, by mode; the cash by note.
+model PosDay {
+  id           String    @id @default(cuid(2))
+  companyId    String    @map("company_id")
+  outletId     String    @map("outlet_id")
+  businessDay  String    @map("business_day")
+  /// CLOSED | REOPENED
+  status       String    @default("CLOSED")
+  /// The report as it stood when closed.
+  report       Json
+  /// { "500": 3, "100": 12 … }
+  cash         Json?
+  closedById   String?   @map("closed_by_id")
+  closedAt     DateTime  @default(now()) @map("closed_at") @db.Timestamptz(3)
+  reopenedById String?   @map("reopened_by_id")
+  reopenReason String?   @map("reopen_reason")
+  reopenedAt   DateTime? @map("reopened_at") @db.Timestamptz(3)
+
+  @@unique([outletId, businessDay])
+  @@map("pos_days")
+}
+
+/// A cashier's shift at an outlet (the X report is its totals so far).
+model PosShift {
+  id         String    @id @default(cuid(2))
+  companyId  String    @map("company_id")
+  outletId   String    @map("outlet_id")
+  userId     String    @map("user_id")
+  /// Cash in the drawer at the start, minor units.
+  float      BigInt    @default(0)
+  openedAt   DateTime  @default(now()) @map("opened_at") @db.Timestamptz(3)
+  closedAt   DateTime? @map("closed_at") @db.Timestamptz(3)
+  /// The X report when the shift was closed, and the cash counted.
+  report     Json?
+  cash       Json?
+
+  @@index([companyId, outletId, closedAt])
+  @@map("pos_shifts")
+}

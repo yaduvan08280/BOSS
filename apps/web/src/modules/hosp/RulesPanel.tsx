@@ -27,7 +27,7 @@ export function RulesPanel({ rules }: { rules: HospRules }) {
       ...d,
       limits: [
         ...d.limits.filter((l) => l.roleId !== roleId),
-        { roleId, maxPct: 0, maxPaise: 0, nc: false, ...limitOf(roleId), ...patch },
+        { roleId, maxPct: 0, maxPaise: 0, nc: false, voidPaise: 0, ...limitOf(roleId), ...patch },
       ],
     });
   const setDiscount = (i: number, patch: Partial<HospRules['discounts'][number]>) =>
@@ -110,7 +110,7 @@ export function RulesPanel({ rules }: { rules: HospRules }) {
           {(roles.data?.roles ?? []).map((r) => (
             <li
               key={r.id}
-              className="grid grid-cols-2 items-center gap-2 sm:grid-cols-[1fr_120px_140px_auto]"
+              className="grid grid-cols-2 items-center gap-2 sm:grid-cols-[1fr_110px_120px_130px_auto]"
             >
               <span className="text-sm font-medium">{r.name}</span>
               <Input
@@ -126,6 +126,13 @@ export function RulesPanel({ rules }: { rules: HospRules }) {
                 inputMode="decimal"
                 value={limitOf(r.id)?.maxPaise ? limitOf(r.id)!.maxPaise / 100 : ''}
                 onChange={(e) => setLimit(r.id, { maxPaise: Math.round(Number(e.target.value || 0) * 100) })}
+              />
+              <Input
+                aria-label={t('hosp.rules.voidOf', { role: r.name })}
+                placeholder={t('hosp.rules.voidUpTo')}
+                inputMode="decimal"
+                value={limitOf(r.id)?.voidPaise ? limitOf(r.id)!.voidPaise / 100 : ''}
+                onChange={(e) => setLimit(r.id, { voidPaise: Math.round(Number(e.target.value || 0) * 100) })}
               />
               <label className="flex items-center gap-2 text-sm">
                 <Checkbox

@@ -112,6 +112,7 @@ export const BRANCH_FREE_MODELS: Record<string, string> = {
   BranchStay: 'set-up data: where a person works from which day',
   AttendanceDay: 'attendance is listed by HR scope (HR all, an HOD their team, everyone themselves)',
   PaymentMode: 'set-up data: how money is taken at a branch',
+  PosOrder: "reached through its outlet: the POS services check the outlet against the person's branches",
   Outlet: "set-up data, listed through the branch (the hospitality services filter by the person's branches)",
   RoomType: 'set-up data, listed through the branch',
   Room: 'set-up data, listed through the branch',

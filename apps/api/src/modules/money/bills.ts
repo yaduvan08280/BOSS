@@ -200,6 +200,31 @@ export async function issueBill(db: Db, actor: Actor, id: string) {
   });
 }
 
+/**
+ * Take the next `count` numbers of a paper's series at a branch without making the papers yet: a device that
+ * bills while the server can't be reached uses them later (phase 15), so numbers never clash.
+ */
+export async function reserveNumbers(
+  tx: Tx,
+  companyId: string,
+  branchId: string | null,
+  type: BillType,
+  date: string,
+  count: number,
+) {
+  const company = await tx.company.findUniqueOrThrow({
+    where: { id: companyId },
+    select: { timezone: true, fyStartMonth: true },
+  });
+  const fy = financialYear(new Date(`${date}T12:00:00Z`), company.timezone, company.fyStartMonth ?? 4).short;
+  const head = await letterheadOf(tx, companyId, branchId);
+  const series = seriesOf('entity', head, `bill:${type}`, BILL_PREFIX[type], fy);
+  const out: string[] = [];
+  for (let i = 0; i < count; i += 1)
+    out.push(series.number(await nextCounter(tx, companyId, series.counterKey, fy)));
+  return out;
+}
+
 async function issueIn(tx: Tx, actor: Actor, bill: Bill, opts: Options) {
   const money = MONEY_BILLS.includes(bill.type as BillType);
   const ctx = { due: Number(bill.total), total: Number(bill.total), money };

@@ -22,6 +22,7 @@ import {
   runCovers,
   applyBranchMoves,
   carryOverCrm,
+  sendQueuedPrints,
   watchRenewals,
   settleAttendance,
   watchAbsences,
@@ -217,6 +218,8 @@ await boss.work(
   QUEUE_WORK_1MIN,
   watched(QUEUE_WORK_1MIN, async () => {
     await remindChecklists(prisma);
+    // POS: kitchen tickets and bills that have not reached their network printer yet are tried again.
+    await sendQueuedPrints(prisma);
     await expireChecklists(prisma);
     const briefs = await eaJobs(prisma);
     const mis = await sendWeeklyMis(prisma);

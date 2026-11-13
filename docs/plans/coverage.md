@@ -188,3 +188,48 @@ Through the screens (`e2e/phase13-stock.spec.ts`, 380 and 1440): a case is recei
 | S16 | **The set-up story**: an outlet with 3 stations, a floor of 20 tables, 40 rooms of 4 types, a menu of 120 items with variants and modifiers, charges | §5 | `packages/shared/src/hosp/hosp.test.ts`, `apps/api/src/modules/hosp/menu.test.ts` (through the calls the screens make; the browser test covers a smaller set-up) |
 
 Through the screens (`e2e/phase14-hospitality.spec.ts`, 380 and 1440): the module is switched on, an outlet gets its service charge and a station, a floor gets six tables at once and one is changed, a room type gets four rooms, a no-charge reason is saved, a menu is pasted (a bad line is named), an item with a variant is added and switched off (S1–S6, S10, S12, S13, S15, S16). Not browser-tested: dragging a table, printers and ticket routing, payment modes, role limits, day-close rules, room-type edits, connecting rooms. API only (no screen): modifier groups, combos, prices per outlet and time band, availability windows, the outlet's price list, stewards on a table, single rooms with features, the live menu of an outlet (used by the POS).
+
+## Phase 15 — POS, KOT, kitchen display, billing, payments, day close (40 rows; drafted from the plan §6 on 13/11/2026, not yet reviewed by GGM)
+
+| # | Row | Plan | Test |
+|---|---|---|---|
+| P1 | **Floor view** with each table's live state: free, seated, ordered, billed, paid; orders without a table beside it | §6 | `packages/shared/src/hosp/pos.test.ts`, `apps/api/src/modules/hosp/pos-order.test.ts` ("reserved" arrives with reservations, Phase 16) |
+| P2 | **Open an order**: table, covers, steward; dine-in, takeaway, delivery, room service, staff meal, counter; one running order a table | §6 | `apps/api/src/modules/hosp/pos-order.test.ts` |
+| P3 | Items with **variants, modifiers and notes**; a size must be chosen; only the add-ons the item offers | §6 | `apps/api/src/modules/hosp/pos-order.test.ts` |
+| P4 | **Course**, **hold / fire** by course, **seat numbers** | §6 | `apps/api/src/modules/hosp/pos-order.test.ts` |
+| P5 | **KOT per station**, numbered per business day | §6 | `apps/api/src/modules/hosp/pos-order.test.ts` |
+| P6 | A KOT is **printed** where the station has a printer and shown on the kitchen display otherwise | §6 | `apps/api/src/modules/hosp/pos-order.test.ts`, `apps/api/src/modules/hosp/pos-day.test.ts` |
+| P7 | **KOT edits and cancellations need a reason**; above a role limit an approval (never the asker's own); a void report | §6 | `apps/api/src/modules/hosp/pos-order.test.ts` |
+| P8 | **Kitchen display**: tickets per station with timers that turn amber and red | §6 | `packages/shared/src/hosp/pos.test.ts`, `apps/api/src/modules/hosp/pos-order.test.ts` (the colours are the pure rule; the display returns each ticket's age) |
+| P9 | KDS **bump** an item or ticket, **recall** | §6 | `apps/api/src/modules/hosp/pos-order.test.ts` |
+| P10 | KDS **"all day" counts** and the **expo** view of every station | §6 | `apps/api/src/modules/hosp/pos-order.test.ts` |
+| P11 | **Move** an order to another table | §6 | `apps/api/src/modules/hosp/pos-order.test.ts` |
+| P12 | **Merge** two tables' orders | §6 | `apps/api/src/modules/hosp/pos-order.test.ts` |
+| P13 | **Split a table / transfer items** to another table | §6 | `apps/api/src/modules/hosp/pos-order.test.ts` |
+| P14 | **Change the steward** | §6 | `apps/api/src/modules/hosp/pos-order.test.ts` |
+| P15 | **Bill**: a GST invoice through the money core — per-item tax, HSN / SAC, a company's name and GSTIN for B2B | §6 | `apps/api/src/modules/hosp/pos-bill.test.ts` |
+| P16 | **Voluntary service charge**: on table and room service, taken off when the guest asks | §6 | `apps/api/src/modules/hosp/pos-bill.test.ts` |
+| P17 | **Discounts with approval** above the role's limit | §6 | `apps/api/src/modules/hosp/pos-bill.test.ts` |
+| P18 | **NC (no-charge)** with one of the company's reasons, by someone who may give it | §6 | `apps/api/src/modules/hosp/pos-bill.test.ts` |
+| P19 | **Round-off** to the rupee, shown on the bill | §6 | `apps/api/src/modules/hosp/pos-bill.test.ts` |
+| P20 | **Split bill** by item, by seat, equally, by amount | §6 | `packages/shared/src/hosp/pos.test.ts`, `apps/api/src/modules/hosp/pos-bill.test.ts` |
+| P21 | **Reprint** marked DUPLICATE and counted | §6 | `apps/api/src/modules/hosp/pos-bill.test.ts` |
+| P22 | **Bill cancel** with approval and reason (audit): money taken is voided, a credit note undoes the invoice, the table reopens | §6 | `apps/api/src/modules/hosp/pos-bill.test.ts` |
+| P23 | **Payments**: several modes on one bill; a mode that needs a reference refuses without one; never more than is due | §6 | `apps/api/src/modules/hosp/pos-bill.test.ts` |
+| P24 | **UPI** pay link on the bill | §6 | `packages/shared/src/hosp/pos.test.ts`, `apps/api/src/modules/hosp/pos-bill.test.ts` (a link and its text on the printed bill; a QR image is not drawn — no QR library is installed) |
+| P25 | **Room charge** against the room number | §6 | `apps/api/src/modules/hosp/pos-bill.test.ts` (recorded as a payment by the ROOM mode with the room as reference; posting to a guest folio and the guest's signature arrive with the hotel, Phase 17) |
+| P26 | **Company credit** → the invoice stays owed and shows in receivables | §6 | `apps/api/src/modules/hosp/pos-bill.test.ts` |
+| P27 | **Tips** recorded per steward | §6 | `apps/api/src/modules/hosp/pos-bill.test.ts`, `apps/api/src/modules/hosp/pos-day.test.ts` |
+| P28 | **Advance adjustments** against a bill | §6 | **not built** — the money core has no call to set an existing advance against a later invoice; needs that first |
+| P29 | **Stock**: a paid order's items take their recipes (and add-ons) from the outlet's location; a KOT cancelled before cooking takes nothing; a cooked-then-cancelled dish is written off; short stock never blocks a payment | §6 | `apps/api/src/modules/hosp/pos-order.test.ts`, `apps/api/src/modules/hosp/pos-bill.test.ts` |
+| P30 | **Shift close**: a cashier's X report — what they took by mode, the float, the drawer counted | §6 | `apps/api/src/modules/hosp/pos-day.test.ts` |
+| P31 | **Day close**: Z report (sales, tax, charges, discounts, voids, by mode, tips), cash by denomination, expected vs counted, blind count | §6 | `packages/shared/src/hosp/pos.test.ts`, `apps/api/src/modules/hosp/pos-day.test.ts` |
+| P32 | A closed day **can't be back-dated into**; reopening needs the owner and a reason | §6 | `apps/api/src/modules/hosp/pos-day.test.ts` |
+| P33 | **Offline order queue**: orders and lines carry a device key so a queue that retries makes each once | §6 | `apps/api/src/modules/hosp/pos-order.test.ts` (server side); the device-side queue is `apps/web/src/modules/pos/queue.test.ts` |
+| P34 | **Bill numbers from a block reserved per device**, each used once, never clashing with the server's | §6 | `apps/api/src/modules/hosp/pos-bill.test.ts` |
+| P35 | **Printing**: ESC/POS straight to network printers (IP:9100); an offline printer is retried, then FAILED, and the ticket stays on the display | §6 | `packages/shared/src/hosp/pos.test.ts`, `apps/api/src/modules/hosp/pos-day.test.ts` (against a local TCP socket standing in for a printer — no real thermal printer was used) |
+| P36 | **Site agent** printing for a branch away from the server: the agent pulls its jobs and reports back | §6 | `apps/api/src/modules/hosp/pos-day.test.ts` (the server side; the agent program itself is Phase 19) |
+| P37 | The **counter billing engine** works with no tables and no kitchen (a shop counter) | §6 | `apps/api/src/modules/hosp/pos-bill.test.ts` |
+| P38 | **Takeaway and delivery** charges (packaging, delivery); no service charge | §6 | `apps/api/src/modules/hosp/pos-bill.test.ts` |
+| P39 | The POS is limited to the **outlets of a person's branches** | §6 | `apps/api/src/modules/hosp/pos-order.test.ts` |
+| P40 | **The dinner-service story** through the screens | §6 | `e2e/phase15-pos.spec.ts` |

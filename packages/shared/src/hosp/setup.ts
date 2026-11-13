@@ -33,6 +33,8 @@ export const chargesSchema = z.object({
   roundTo: z.number().int().min(0).max(100).default(1),
   /** A tax code (money core) on the charges themselves, when the accountant says they are taxed. */
   chargeTaxCode: z.string().trim().max(20).nullish(),
+  /** The outlet's UPI id (name@bank): bills carry a pay link for it. */
+  upiId: z.string().trim().max(80).nullish(),
 });
 export type OutletCharges = z.infer<typeof chargesSchema>;
 
@@ -146,6 +148,8 @@ export const roleLimitSchema = z.object({
   maxPaise: paise.default(0),
   /** May mark a bill or an item no-charge. */
   nc: z.boolean().default(false),
+  /** The most a fired item may be worth for this role to void it alone (0 = always needs an approver). */
+  voidPaise: paise.default(0),
 });
 export const hospRulesSchema = z.object({
   discounts: z.array(discountTypeSchema).max(40).default([]),
