@@ -1,5 +1,17 @@
 # Changelog
 
+## Fix — background checks look at every row (13/11/2026)
+
+Some background checks read a fixed first batch of rows (500–2,000) in no particular order. Rows they had already handled stayed in that batch, so in a busy company anything past it was never checked. These now go through every row, a page at a time (`forEachPage` in `apps/api/src/lib/paging.ts`):
+
+- overdue tasks and tasks not yet accepted (Delegation)
+- late help slips, and decided slips waiting to close
+- help ticket escalations and the 24-hour auto-close
+- checklist reminders (runs are made up to 24 h ahead, so ones not due yet filled the batch)
+- Telegram "seen": it now pages through the person's unread notifications. Before, it read only the oldest 500 Telegram messages ever sent to them, so newer ones were never marked read.
+
+Marking checklist runs missed keeps its batch of 200. Each run it handles becomes MISSED and leaves the batch, so the rest are handled on the next run, five minutes later.
+
 ## Fix — leftover "arrives in phase N" notices replaced (09/11/2026)
 
 Five spots still showed a placeholder for features that were already built. Each now works:

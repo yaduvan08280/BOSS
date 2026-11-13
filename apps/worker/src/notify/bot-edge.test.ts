@@ -166,6 +166,37 @@ describe('seen without a Seen button', () => {
     expect((await db.notification.findUniqueOrThrow({ where: { id: appOnly.id } })).readAt).toBeNull();
     expect(await markSeen(db, scope(), 'stranger')).toBe(0);
   });
+
+  it('looks at every unread notification, a page at a time', async () => {
+    // App-only notifications stay unread (and in the set), so the ones seen on Telegram can sit on any page.
+    const make = async (sentOnTelegram: boolean) => {
+      const ev = await db.domainEvent.create({
+        data: { companyId, name: 'notify.test', entityType: 'user', entityId: driverId, payload: {} },
+      });
+      const n = await db.notification.create({
+        data: { companyId, userId: driverId, title: 'Paged', eventId: ev.id },
+      });
+      if (sentOnTelegram)
+        await db.outbox.create({
+          data: {
+            companyId,
+            eventId: ev.id,
+            channel: 'telegram',
+            userId: driverId,
+            to: driverChat(),
+            payload: {},
+            status: 'SENT',
+            sentAt: new Date(Date.now() - 1000),
+          },
+        });
+      return n.id;
+    };
+    for (let i = 0; i < 4; i++) await make(false);
+    const onTg: string[] = [];
+    for (let i = 0; i < 3; i++) onTg.push(await make(true));
+    expect(await markSeen(db, scope(), driverChat(), new Date(), 2)).toBe(3);
+    expect(await db.notification.count({ where: { id: { in: onTg }, readAt: { not: null } } })).toBe(3);
+  });
 });
 
 describe('proof reaches the verifier', () => {

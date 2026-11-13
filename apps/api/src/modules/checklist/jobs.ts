@@ -1,6 +1,7 @@
 import type { Db, Prisma } from '@mono/db';
 import { checklistMachine, frequencySchema, occurrences, transition } from '@mono/shared';
 import { emitEvent } from '../../lib/events';
+import { afterId, forEachPage } from '../../lib/paging';
 import { companyCalendar } from '../hr/calendar';
 import { checklistCovers } from '../hr/cover';
 import { moduleSettings } from '../work/settings';
@@ -103,6 +104,8 @@ export async function expireChecklists(db: Db, now = new Date()): Promise<number
   const late = await db.checklistRun.findMany({
     where: { status: 'OPEN', windowEndsAt: { lt: now }, master: { deletedAt: null } },
     include: { master: { select: { name: true } } },
+    // A batch size only: every run handled here turns MISSED and leaves the set, the rest come next run.
+    orderBy: { id: 'asc' },
     take: 200,
   });
   const tellOwner = new Map<string, boolean>();
@@ -146,45 +149,59 @@ export async function expireChecklists(db: Db, now = new Date()): Promise<number
 }
 
 /** One reminder per run, `remindBeforeMinutes` before it is due. */
-export async function remindChecklists(db: Db, now = new Date()): Promise<number> {
-  const open = await db.checklistRun.findMany({
-    where: { status: 'OPEN', remindedAt: null, windowEndsAt: { gt: now }, master: { deletedAt: null } },
-    include: { master: { select: { name: true } } },
-    take: 500,
-  });
+export async function remindChecklists(db: Db, now = new Date(), pageSize = 500): Promise<number> {
   let sent = 0;
   const settingsCache = new Map<string, number>();
-  for (const run of open) {
-    let before = settingsCache.get(run.companyId);
-    if (before === undefined) {
-      before = (await moduleSettings(db, run.companyId, 'checklist')).remindBeforeMinutes;
-      settingsCache.set(run.companyId, before);
-    }
-    if (run.plannedAt.getTime() - before * 60_000 > now.getTime()) continue;
-    await db.$transaction(async (tx) => {
-      const res = await tx.checklistRun.updateMany({
-        where: { id: run.id, remindedAt: null },
-        data: { remindedAt: now },
-      });
-      if (!res.count) return;
-      await emitEvent(
-        tx,
-        { companyId: run.companyId, actorId: null },
-        {
-          name: 'checklist.reminder',
-          entityType: 'checklist_run',
-          entityId: run.id,
-          payload: {
-            doerId: run.doerId,
-            checklist: run.master.name,
-            due: run.plannedAt.toISOString(),
-            progress: `${run.itemsDone}/${run.itemsTotal}`,
-            link: `/checklists?run=${run.id}`,
-          },
+  // Runs not yet due for their reminder (made up to 24 h ahead) stay in this set, so every one is looked at.
+  await forEachPage(
+    (after, take) =>
+      db.checklistRun.findMany({
+        where: {
+          status: 'OPEN',
+          remindedAt: null,
+          windowEndsAt: { gt: now },
+          master: { deletedAt: null },
+          ...afterId(after),
         },
-      );
-    });
-    sent++;
-  }
+        include: { master: { select: { name: true } } },
+        orderBy: { id: 'asc' },
+        take,
+      }),
+    async (open) => {
+      for (const run of open) {
+        let before = settingsCache.get(run.companyId);
+        if (before === undefined) {
+          before = (await moduleSettings(db, run.companyId, 'checklist')).remindBeforeMinutes;
+          settingsCache.set(run.companyId, before);
+        }
+        if (run.plannedAt.getTime() - before * 60_000 > now.getTime()) continue;
+        await db.$transaction(async (tx) => {
+          const res = await tx.checklistRun.updateMany({
+            where: { id: run.id, remindedAt: null },
+            data: { remindedAt: now },
+          });
+          if (!res.count) return;
+          await emitEvent(
+            tx,
+            { companyId: run.companyId, actorId: null },
+            {
+              name: 'checklist.reminder',
+              entityType: 'checklist_run',
+              entityId: run.id,
+              payload: {
+                doerId: run.doerId,
+                checklist: run.master.name,
+                due: run.plannedAt.toISOString(),
+                progress: `${run.itemsDone}/${run.itemsTotal}`,
+                link: `/checklists?run=${run.id}`,
+              },
+            },
+          );
+        });
+        sent++;
+      }
+    },
+    pageSize,
+  );
   return sent;
 }

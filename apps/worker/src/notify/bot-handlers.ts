@@ -6,6 +6,8 @@ import {
   boardOwners,
   captureEa,
   emitEvent,
+  afterId,
+  forEachPage,
   moduleSettings,
   redeemLinkCode,
   type Storage,
@@ -319,28 +321,54 @@ async function onReplyNote(
  * Telegram doesn't tell bots when a message is read. So anything the person does in the chat
  * (a button, a command, any message) counts as having seen everything we delivered there before it.
  */
-export async function markSeen(db: Db, scope: BotScope, chatId: string, now = new Date()): Promise<number> {
+export async function markSeen(
+  db: Db,
+  scope: BotScope,
+  chatId: string,
+  now = new Date(),
+  pageSize = 500,
+): Promise<number> {
   const me = await whoIs(db, scope, chatId);
   if (!me) return 0;
-  const sent = await db.outbox.findMany({
-    where: {
-      channel: 'telegram',
-      userId: me.id,
-      status: 'SENT',
-      eventId: { not: null },
-      sentAt: { lte: now },
+  // Every unread notification is looked at, a page at a time: those not delivered on Telegram stay unread (and
+  // in this set), so a fixed first batch would leave newer ones unread for good.
+  let read = 0;
+  await forEachPage(
+    (after, take) =>
+      db.notification.findMany({
+        where: {
+          companyId: me.companyId,
+          userId: me.id,
+          readAt: null,
+          eventId: { not: null },
+          ...afterId(after),
+        },
+        select: { id: true, eventId: true },
+        orderBy: { id: 'asc' },
+        take,
+      }),
+    async (unread) => {
+      const sent = await db.outbox.findMany({
+        where: {
+          channel: 'telegram',
+          userId: me.id,
+          status: 'SENT',
+          sentAt: { lte: now },
+          eventId: { in: [...new Set(unread.map((n) => n.eventId!))] },
+        },
+        select: { eventId: true },
+        distinct: ['eventId'],
+      });
+      if (!sent.length) return;
+      const seen = new Set(sent.map((x) => x.eventId));
+      const ids = unread.filter((n) => seen.has(n.eventId)).map((n) => n.id);
+      read += (
+        await db.notification.updateMany({ where: { id: { in: ids }, readAt: null }, data: { readAt: now } })
+      ).count;
     },
-    select: { eventId: true },
-    distinct: ['eventId'],
-    orderBy: { eventId: 'asc' },
-    take: 500,
-  });
-  if (!sent.length) return 0;
-  const res = await db.notification.updateMany({
-    where: { userId: me.id, readAt: null, eventId: { in: sent.map((x) => x.eventId!) } },
-    data: { readAt: now },
-  });
-  if (res.count)
+    pageSize,
+  );
+  if (read)
     await db.$transaction((tx) =>
       emitEvent(
         tx,
@@ -349,11 +377,11 @@ export async function markSeen(db: Db, scope: BotScope, chatId: string, now = ne
           name: 'notification.read',
           entityType: 'user',
           entityId: me.id,
-          payload: { count: res.count, via: 'telegram' },
+          payload: { count: read, via: 'telegram' },
         },
       ),
     );
-  return res.count;
+  return read;
 }
 
 export async function onCommand(
