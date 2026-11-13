@@ -1,7 +1,7 @@
 /** Server-side building blocks shared with the worker process. */
 export { emitEvent, recordChange, EventListener, EVENTS_CHANNEL, type EventSignal } from './lib/events';
 export { writeAudit, type ActorContext } from './lib/audit';
-export { bootstrapCompany, type BootstrapInput } from './modules/core/bootstrap';
+export { bootstrapCompany, ensureRoleDefaults, type BootstrapInput } from './modules/core/bootstrap';
 export { recoverLogin } from './modules/core/recover';
 export { hashPassword } from './lib/password';
 export { channelClients, readChannel, setChannelMeta, type ChannelClients } from './lib/channels/config';
@@ -65,4 +65,5 @@ export { reservationSweep } from './modules/hosp/res-jobs';
 export { hotelSweep } from './modules/hotel/reports';
 export { complianceSweep } from './modules/banquet/compliance';
 export { retryPushes } from './modules/connect/channel';
+export { flashSweep } from './modules/hreports/flash';
 export { connectNet } from './modules/connect/core';

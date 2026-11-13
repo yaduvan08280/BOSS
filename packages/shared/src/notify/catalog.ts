@@ -786,6 +786,15 @@ const ROWS: Row[] = [
     '{{guest}} {{hotel}} में विदेशी मेहमान हैं। चेक-इन के {{hours}} घंटे के भीतर फ़ॉर्म C भरना है और अभी नहीं भरा गया।',
   ],
   [
+    'hosp.flash',
+    'team',
+    ['owner'],
+    'Yesterday ({{day}}): {{sales}}',
+    'Sales {{sales}} · {{covers}} guests · {{perCover}} a guest. Rooms {{occupancy}} · ADR {{adr}} · RevPAR {{revPar}}. Food cost {{foodCost}} · drinks {{beverageCost}}. Cash: {{cash}}. Voids {{voids}} · discounts {{discounts}} · no-charge bills {{noCharge}}.',
+    'कल ({{day}}): {{sales}}',
+    'बिक्री {{sales}} · {{covers}} मेहमान · प्रति मेहमान {{perCover}}। कमरे {{occupancy}} · ADR {{adr}} · RevPAR {{revPar}}। खाने की लागत {{foodCost}} · पेय {{beverageCost}}। नकद: {{cash}}। वॉइड {{voids}} · छूट {{discounts}} · बिना शुल्क बिल {{noCharge}}।',
+  ],
+  [
     'reservation.requested',
     'team',
     ['branch_manager'],

@@ -26,6 +26,7 @@ import {
   reservationSweep,
   hotelSweep,
   retryPushes,
+  flashSweep,
   connectNet,
   complianceSweep,
   watchRenewals,
@@ -213,6 +214,9 @@ await boss.work(
     // Integrations: availability pushes the channel manager did not take are tried again.
     const pushes = await retryPushes(prisma, connectNet(env));
     if (pushes) log.info({ pushes }, 'Channel pushes sent again');
+    // Hospitality: yesterday's flash report to the owner, once, from 08:00.
+    const flashes = await flashSweep(prisma);
+    if (flashes) log.info({ flashes }, 'Flash reports sent');
     const crmCalls = await crmSweep(prisma);
     if (crmCalls) log.info({ crmCalls }, 'CRM calls made');
     if (

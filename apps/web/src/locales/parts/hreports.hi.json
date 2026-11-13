@@ -1,0 +1,52 @@
+{
+  "nav.hospReports": "हॉस्पिटैलिटी रिपोर्ट",
+  "navDesc.hospReports": "कल का फ्लैश, बिक्री, किचन का समय, वॉइड, टीम का हफ़्ता",
+  "hrep": {
+    "title": "हॉस्पिटैलिटी रिपोर्ट",
+    "subtitle": "कल एक नज़र में, क्या बिका, किचन कैसा चला, वॉइड और छूट, टीम का हफ़्ता",
+    "tab": {
+      "flash": "फ्लैश",
+      "sales": "बिक्री",
+      "kitchen": "किचन का समय",
+      "audit": "वॉइड और छूट",
+      "team": "टीम का हफ़्ता"
+    },
+    "day": "दिन",
+    "from": "से",
+    "to": "तक",
+    "groupBy": "समूह",
+    "by": {
+      "item": "आइटम",
+      "category": "श्रेणी",
+      "steward": "स्टीवर्ड",
+      "hour": "घंटा",
+      "outlet": "आउटलेट"
+    },
+    "nothing": "इन दिनों के लिए कुछ नहीं",
+    "nothingBody": "इस दिन न बिक्री हुई, न नाइट ऑडिट।",
+    "sales": "{{day}} की बिक्री",
+    "covers": "मेहमान",
+    "perCover": "प्रति मेहमान {{amount}}",
+    "foodCost": "खाने की लागत",
+    "drinkCost": "पेय {{pct}}",
+    "voidsDiscounts": "वॉइड + छूट",
+    "noCharge": "{{count}} बिना शुल्क बिल",
+    "outletLine": "{{covers}} मेहमान · प्रति मेहमान {{perCover}} · वॉइड {{voids}} · छूट {{discounts}}",
+    "cashOpen": "दिन बंद नहीं हुआ",
+    "cashOk": "नकद मिल गया",
+    "cashDiff": "नकद में {{amount}} का फ़र्क",
+    "roomsLine": "{{rooms}} में से {{sold}} कमरे · {{occ}}% · ADR {{adr}} · RevPAR {{revPar}}",
+    "total": "टैक्स से पहले कुल",
+    "kitchenLine": "{{tickets}} टिकट · औसत {{avg}} मिनट · सबसे धीमा {{slowest}} मिनट · {{late}} टिकट {{limit}} मिनट से ऊपर",
+    "voids": "वॉइड",
+    "discounts": "छूट और बिना शुल्क",
+    "kind": {
+      "DISCOUNT": "छूट",
+      "NO_CHARGE": "बिना शुल्क"
+    },
+    "stewards": "स्टीवर्ड",
+    "stewardLine": "{{orders}} ऑर्डर · {{covers}} मेहमान · {{voids}} वॉइड",
+    "housekeeping": "हाउसकीपिंग",
+    "hkLine": "{{given}} में से {{cleaned}} कमरे साफ़ · {{passed}} पास"
+  }
+}

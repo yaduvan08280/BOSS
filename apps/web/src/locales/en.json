@@ -4191,7 +4191,16 @@
       "sales_crm": "Sales CRM",
       "masters": "Masters",
       "system_master": "System Master (setup)",
-      "integrations": "Integrations, API and webhooks"
+      "integrations": "Integrations, API and webhooks",
+      "steward": "Steward / captain",
+      "cashier": "Cashier",
+      "kitchen": "Kitchen",
+      "bartender": "Bartender",
+      "front_office": "Front office",
+      "housekeeping": "Housekeeping",
+      "night_auditor": "Night auditor",
+      "store": "Store (hospitality)",
+      "general_manager": "General manager"
     }
   }
 }

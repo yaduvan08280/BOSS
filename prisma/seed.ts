@@ -6,7 +6,7 @@
  */
 import 'dotenv/config';
 import { createPrisma } from '@mono/db';
-import { bootstrapCompany, ensureNotifyDefaults } from '@mono/api/services';
+import { bootstrapCompany, ensureNotifyDefaults, ensureRoleDefaults } from '@mono/api/services';
 
 function required(name: string): string {
   const v = process.env[name]?.trim();
@@ -31,6 +31,10 @@ try {
     console.log(`Company "${company.name}" already exists.`);
   }
   for (const c of await prisma.company.findMany({ select: { id: true, name: true } })) {
+    // Modules added since the company was made: its built-in roles get their default rights (decision 115) —
+    // every company on this install, not only the first.
+    const roles = await prisma.$transaction((tx) => ensureRoleDefaults(tx, c.id));
+    if (roles) console.log(`${c.name}: ${roles} built-in roles given the rights of newer modules.`);
     const added = await prisma.$transaction((tx) => ensureNotifyDefaults(tx, c.id));
     if (added.rules || added.templates)
       console.log(`${c.name}: added ${added.rules} notification rules, ${added.templates} templates.`);

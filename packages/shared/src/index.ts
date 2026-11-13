@@ -68,6 +68,7 @@ export * from './branches/schemas';
 export * from './machines/bill';
 export * from './money/tax';
 export * from './money/bill';
+export * from './money/states';
 export * from './ims/units';
 export * from './ims/recipe';
 export * from './ims/pricing';

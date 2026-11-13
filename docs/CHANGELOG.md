@@ -1,5 +1,38 @@
 # Changelog
 
+## Phase 20 — Packs, hospitality reports, load test, drills, guides (13/11/2026)
+
+Plan: `docs/plans/hospitality-100-plan.md` §11, §12A; rows U37–U42 and F1–F7 in `docs/plans/coverage.md`.
+
+- **Packs** (Masters → Master Library → Packs): the set-up of a whole trade in one step. A pack is a file — roles,
+  tax codes to fill, lists, masters with rows, items, record types, processes, checklists, reports and the
+  trade's own words on screen. **Installing never changes what you already have; an upgrade adds only what is
+  new; taking a pack off keeps everything it made.** Your own company's set-up can be saved as a pack file and
+  installed in another company. The first pack is **Hotel & restaurant** (the module switched on, twelve roles,
+  five tax codes at 0 % for the accountant, opening and closing checklists).
+- **Hospitality → Reports**: yesterday's **flash** (sales, guests, spend per guest, occupancy, ADR, RevPAR, food
+  and drink cost %, cash counted against the system, voids, discounts, no-charge bills), **sales** by item,
+  category, steward, hour or outlet, **kitchen times** by station, the **void and discount audit**, and the
+  **team's week** (stewards, stations, housekeeping). The flash is also sent to the owner at 08:00.
+- **GSTR-1 working file** for a month (`/api/money/gstr1`, JSON or CSV): B2B, B2C by state, notes, HSN, documents.
+  It is for the accountant — it is not the portal's upload format and files nothing.
+- **Nine printable guides** (Support → User guides): steward, cashier, kitchen, bartender, front office,
+  housekeeping, night auditor, store, general manager.
+- **Load test and drills** (`docs/phase20-load-and-drills.md`): 30 POS devices + 10 front-desk + 50 back-office
+  people for three minutes — 720 orders, no failed request, POS p95 120 ms (gate 300 ms); the server killed in
+  the middle of service — 489 orders, none lost, none billed twice. Both scripts are in `deploy/loadtest/`.
+- Fixed on the way: at start-up **every** company's built-in roles now get the rights of modules added since
+  (before, only the first company's did).
+
+Not done, said plainly: the tests ran on the development machine with one API process, not the Docker build.
+**The 10× load run on several API copies was not run, and the architecture rows A2–A10 are mostly not built**
+(one API copy, no pooler, no sign-in cache, no leader worker, no monthly tables). The drills that need the
+building — internet pulled, server power pulled, a restore on a second machine, a real printer — are still to be
+done at the property. The hospitality lines are a report of their own, not yet part of the Weekly MIS score.
+Stock valuation per location and the variance report already existed (Inventory). No screen for GSTR-1 or for
+receivables by kind. Rows U31 (a booking engine for other trades) and U33 (billing by milestone) are not engines.
+Hindi strings need review.
+
 ## Phase 19 — Integrations (13/11/2026)
 
 Plan: `docs/plans/hospitality-100-plan.md` §10; rows X1–X20 in `docs/plans/coverage.md` (drafted from the plan,

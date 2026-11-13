@@ -4191,7 +4191,16 @@
       "sales_crm": "सेल्स CRM",
       "masters": "मास्टर",
       "system_master": "सिस्टम मास्टर (सेटअप)",
-      "integrations": "इंटीग्रेशन, API और वेबहुक"
+      "integrations": "इंटीग्रेशन, API और वेबहुक",
+      "steward": "स्टीवर्ड / कैप्टन",
+      "cashier": "कैशियर",
+      "kitchen": "किचन",
+      "bartender": "बारटेंडर",
+      "front_office": "फ्रंट ऑफिस",
+      "housekeeping": "हाउसकीपिंग",
+      "night_auditor": "नाइट ऑडिटर",
+      "store": "स्टोर (हॉस्पिटैलिटी)",
+      "general_manager": "जनरल मैनेजर"
     }
   }
 }

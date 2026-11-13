@@ -49,16 +49,16 @@ export const packSchema = z.object({
         permissions: z.array(z.string().max(60)).max(200),
       }),
     )
-    .max(40)
+    .max(200)
     .default([]),
   /** Tax codes the pack's items and bills use. A new one is made at 0 % for the accountant to set. */
   taxCodes: z
     .array(z.object({ code: z.string().regex(/^[A-Z0-9_-]{1,20}$/), name: z.string().min(1).max(60) }))
-    .max(40)
+    .max(200)
     .default([]),
   lists: z
     .array(z.object({ key: z.string().min(1).max(60), values: z.array(z.string().min(1).max(120)).max(200) }))
-    .max(60)
+    .max(400)
     .default([]),
   masters: z
     .array(
@@ -72,7 +72,7 @@ export const packSchema = z.object({
         rows: z.array(json).max(500).default([]),
       }),
     )
-    .max(60)
+    .max(400)
     .default([]),
   items: z
     .array(
@@ -100,7 +100,7 @@ export const packSchema = z.object({
         permissions: json.optional(),
       }),
     )
-    .max(60)
+    .max(400)
     .default([]),
   flows: z
     .array(
@@ -113,15 +113,15 @@ export const packSchema = z.object({
         publish: z.boolean().default(true),
       }),
     )
-    .max(60)
+    .max(400)
     .default([]),
   checklists: z
     .array(z.object({ key, name: z.string().min(2).max(120), input: json }))
-    .max(60)
+    .max(400)
     .default([]),
   reports: z
     .array(z.object({ key, name: z.string().min(1).max(80), definition: json }))
-    .max(60)
+    .max(400)
     .default([]),
 });
 export type Pack = z.infer<typeof packSchema>;

@@ -1,0 +1,52 @@
+{
+  "nav.hospReports": "Hospitality reports",
+  "navDesc.hospReports": "Yesterday's flash, sales, kitchen times, voids, the team's week",
+  "hrep": {
+    "title": "Hospitality reports",
+    "subtitle": "Yesterday at a glance, what sold, how the kitchen kept up, voids and discounts, the team's week",
+    "tab": {
+      "flash": "Flash",
+      "sales": "Sales",
+      "kitchen": "Kitchen times",
+      "audit": "Voids & discounts",
+      "team": "Team's week"
+    },
+    "day": "Day",
+    "from": "From",
+    "to": "To",
+    "groupBy": "Group by",
+    "by": {
+      "item": "Item",
+      "category": "Category",
+      "steward": "Steward",
+      "hour": "Hour",
+      "outlet": "Outlet"
+    },
+    "nothing": "Nothing for these days",
+    "nothingBody": "There was no sale and no night audit on this day.",
+    "sales": "Sales on {{day}}",
+    "covers": "Guests",
+    "perCover": "{{amount}} a guest",
+    "foodCost": "Food cost",
+    "drinkCost": "Drinks {{pct}}",
+    "voidsDiscounts": "Voids + discounts",
+    "noCharge": "{{count}} no-charge bills",
+    "outletLine": "{{covers}} guests · {{perCover}} a guest · voids {{voids}} · discounts {{discounts}}",
+    "cashOpen": "Day not closed",
+    "cashOk": "Cash matches",
+    "cashDiff": "Cash differs by {{amount}}",
+    "roomsLine": "{{sold}} of {{rooms}} rooms · {{occ}}% · ADR {{adr}} · RevPAR {{revPar}}",
+    "total": "Total before tax",
+    "kitchenLine": "{{tickets}} tickets · average {{avg}} min · slowest {{slowest}} min · {{late}} over {{limit}} min",
+    "voids": "Voids",
+    "discounts": "Discounts and no-charge",
+    "kind": {
+      "DISCOUNT": "Discount",
+      "NO_CHARGE": "No charge"
+    },
+    "stewards": "Stewards",
+    "stewardLine": "{{orders}} orders · {{covers}} guests · {{voids}} voids",
+    "housekeeping": "Housekeeping",
+    "hkLine": "{{cleaned}} of {{given}} rooms cleaned · {{passed}} passed"
+  }
+}

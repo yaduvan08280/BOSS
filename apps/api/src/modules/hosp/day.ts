@@ -18,7 +18,7 @@ import { dayAt, isApprover, isOwner, posOutlet, type PosOutlet } from './pos-cor
  */
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
-async function report(
+export async function dayReport(
   db: Db | Tx,
   outlet: PosOutlet,
   businessDay: string,
@@ -108,7 +108,7 @@ export async function zReport(db: Db, actor: Actor, outletId: string, businessDa
   const closed = await db.posDay.findUnique({
     where: { outletId_businessDay: { outletId, businessDay: d } },
   });
-  const r = await report(db, outlet, d);
+  const r = await dayReport(db, outlet, d);
   const canClose =
     outlet.rules.dayClose.closerIds.includes(actor.userId) || (await isApprover(db, actor, outlet.rules));
   // A blind count: whoever counts does not see the cash that is expected until the day is closed.
@@ -146,7 +146,7 @@ export async function closeDay(db: Db, actor: Actor, outletId: string, input: z.
     throw new AppError(400, 'VALIDATION_FAILED', "A day that hasn't begun can't be closed");
   const had = await db.posDay.findUnique({ where: { outletId_businessDay: { outletId, businessDay: d } } });
   if (had?.status === 'CLOSED') throw new AppError(409, 'CONFLICT', 'This day is already closed');
-  const r = await report(db, outlet, d);
+  const r = await dayReport(db, outlet, d);
   if (r.open)
     throw new AppError(409, 'CONFLICT', `${r.open} order(s) are still running: bill and settle them first`);
   if (r.unpaid) throw new AppError(409, 'CONFLICT', 'A bill of this day is still unpaid');
@@ -233,7 +233,7 @@ export async function shift(db: Db, actor: Actor, outletId: string) {
     where: { companyId: actor.companyId, outletId, userId: actor.userId, closedAt: null },
   });
   if (!open) return { open: null };
-  const x = await report(db, outlet, dayAt(outlet), { userId: actor.userId, since: open.openedAt });
+  const x = await dayReport(db, outlet, dayAt(outlet), { userId: actor.userId, since: open.openedAt });
   return {
     open: { id: open.id, openedAt: open.openedAt, float: Number(open.float) },
     x: { byMode: x.byMode, cash: x.cash, expectedInDrawer: x.cash + Number(open.float) },

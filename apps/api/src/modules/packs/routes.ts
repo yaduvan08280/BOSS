@@ -22,7 +22,7 @@ export async function packRoutes(app: FastifyInstance) {
   // A pack file from another company (or an older export of this one).
   r.post(
     '/api/packs/install',
-    { ...signedIn(), bodyLimit: 2_000_000, schema: { tags, body: z.record(z.string(), z.unknown()) } },
+    { ...signedIn(), bodyLimit: 8_000_000, schema: { tags, body: z.record(z.string(), z.unknown()) } },
     async (q) => installPack(db, actorOf(q), q.body),
   );
   r.post('/api/packs/export', { ...signedIn(), schema: { tags, body: exportSchema } }, async (q) =>
