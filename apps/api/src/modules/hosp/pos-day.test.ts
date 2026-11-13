@@ -110,7 +110,7 @@ describe('POS: shift and day close, printing (phase 15)', () => {
     const cl = await bill(s, late.id);
     await pay(s, cl.id, [{ modeId: r.modes.cash, amount: cl.total }]);
     // ₹60 + ₹6 + ₹3 = ₹69 more cash: ₹653 expected; ₹650 counted → ₹3 short.
-    const done = await ok<{ counted: number; difference: number; cash: number }>(
+    const done = await ok<{ counted: number; difference: number; cash: number; businessDay: string }>(
       closing(r.manager.api, { 500: 1, 100: 1, 50: 1 }),
     );
     expect(done).toMatchObject({ cash: 653_00, counted: 650_00, difference: -3_00 });
