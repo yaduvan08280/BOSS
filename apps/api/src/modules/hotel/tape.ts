@@ -1,7 +1,7 @@
 import type { Db, Stay, Tx } from '@mono/db';
 import { addDays, quoteStay, restriction, roomState, stayNights, type RoomHkStatus } from '@mono/shared';
 import { z } from 'zod';
-import { writeAudit } from '../../lib/audit';
+import { writeAudit, type ActorContext } from '../../lib/audit';
 import { AppError, notFound } from '../../lib/errors';
 import { ctxOf } from '../hosp/access';
 import type { Actor } from '../work/actor';
@@ -206,29 +206,42 @@ export async function changeDates(db: Db, actor: Actor, stayId: string, input: z
   try {
     return await db.$transaction(async (tx) => {
       await lockHotel(tx, hotel.branchId);
-      const have = await tx.roomNight.findMany({ where: { stayId }, orderBy: { day: 'asc' } });
-      const want = stayNights(arrive, depart);
-      const drop = have.filter((n) => !want.includes(n.day));
-      if (drop.some((n) => n.posted))
-        throw new AppError(409, 'CONFLICT', 'A night that was already charged cannot be given up');
-      const add = want.filter((d) => !have.some((n) => n.day === d));
-      await addNights(tx, hotel, stay, add, have[have.length - 1]?.roomId ?? null, want.length);
-      await tx.roomNight.deleteMany({ where: { id: { in: drop.map((n) => n.id) } } });
-      await tx.stay.update({ where: { id: stayId }, data: { arrive, depart } });
-      await writeAudit(tx, ctxOf(actor), {
-        action: 'hotel.dates_changed',
-        entityType: 'stay',
-        entityId: stayId,
-        before: { arrive: stay.arrive, depart: stay.depart },
-        after: { arrive, depart, added: add.length, dropped: drop.length },
-      });
-      return { id: stayId, arrive, depart, added: add.length, dropped: drop.length };
+      return changeDatesIn(tx, ctxOf(actor), hotel, stay, arrive, depart);
     });
   } catch (e) {
     if (isTaken(e))
       throw new AppError(409, 'CONFLICT', 'The room is taken by another booking on those nights');
     throw e;
   }
+}
+
+/** The change itself, in the caller's transaction (which holds the property's lock). */
+export async function changeDatesIn(
+  tx: Tx,
+  ctx: ActorContext,
+  hotel: Hotel,
+  stay: Stay,
+  arrive: string,
+  depart: string,
+) {
+  if (depart <= arrive) throw new AppError(400, 'VALIDATION_FAILED', 'The departure is after the arrival');
+  const have = await tx.roomNight.findMany({ where: { stayId: stay.id }, orderBy: { day: 'asc' } });
+  const want = stayNights(arrive, depart);
+  const drop = have.filter((n) => !want.includes(n.day));
+  if (drop.some((n) => n.posted))
+    throw new AppError(409, 'CONFLICT', 'A night that was already charged cannot be given up');
+  const add = want.filter((d) => !have.some((n) => n.day === d));
+  await addNights(tx, hotel, stay, add, have[have.length - 1]?.roomId ?? null, want.length);
+  await tx.roomNight.deleteMany({ where: { id: { in: drop.map((n) => n.id) } } });
+  await tx.stay.update({ where: { id: stay.id }, data: { arrive, depart } });
+  await writeAudit(tx, ctx, {
+    action: 'hotel.dates_changed',
+    entityType: 'stay',
+    entityId: stay.id,
+    before: { arrive: stay.arrive, depart: stay.depart },
+    after: { arrive, depart, added: add.length, dropped: drop.length },
+  });
+  return { id: stay.id, arrive, depart, added: add.length, dropped: drop.length };
 }
 
 /** New nights for a stay: checked against the days' restrictions and what is left, priced by the plan. */

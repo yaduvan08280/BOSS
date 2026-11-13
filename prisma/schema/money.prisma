@@ -120,6 +120,8 @@ model Bill {
   reference    String?
   note         String?
   /// What raised it: crm_order, crm_payment, purchase_order, document, api …
+  /// Phase 19: the e-invoice of a B2B invoice — { irn, ackNo, ackDt, qr, at, cancelledAt, reason }
+  einvoice     Json?
   sourceType   String?   @map("source_type")
   sourceId     String?   @map("source_id")
   createdById  String?   @map("created_by_id")
@@ -151,18 +153,22 @@ model BillAllocation {
 
 /// The books of one paper: balanced debit and credit lines against MONO heads.
 model Voucher {
-  id        String   @id @default(cuid(2))
-  companyId String   @map("company_id")
-  entityId  String?  @map("entity_id")
-  billId    String   @map("bill_id")
+  id         String    @id @default(cuid(2))
+  companyId  String    @map("company_id")
+  entityId   String?   @map("entity_id")
+  billId     String    @map("bill_id")
   /// YYYY-MM-DD
-  date      String
-  narration String
+  date       String
+  narration  String
   /// [{ head, partyId?, debit, credit }]
-  lines     Json
+  lines      Json
   /// The voucher that undoes another (a voided receipt).
-  reversal  Boolean  @default(false)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  reversal   Boolean   @default(false)
+  /// Phase 19: what the Tally agent did with it — null (to post), POSTED, FAILED.
+  tallyState String?   @map("tally_state")
+  tallyAt    DateTime? @map("tally_at") @db.Timestamptz(3)
+  tallyError String?   @map("tally_error")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
 
   @@index([companyId, date])
   @@index([billId])

@@ -129,6 +129,7 @@ export const BRANCH_FREE_MODELS: Record<string, string> = {
   ComplianceItem: "reached through its branch: the banquet and compliance services check the branch against the person's branches",
   TempPoint: "reached through its branch: the banquet and compliance services check the branch against the person's branches",
   TempReading: "reached through its branch: the banquet and compliance services check the branch against the person's branches",
+  AgentToken: "a site agent's key is managed by admins and used by the agent itself, never listed by branch reach",
   Reservation: "reached through its outlet: the reservation services check the outlet against the person's branches",
   WaitlistEntry: "reached through its outlet, like a reservation",
   PosOrder: "reached through its outlet: the POS services check the outlet against the person's branches",

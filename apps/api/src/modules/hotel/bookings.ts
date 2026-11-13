@@ -64,137 +64,152 @@ export async function tell(
   });
 }
 
+/**
+ * Make a booking in the caller's transaction (which must hold the property's lock afterwards — it is taken
+ * here). `from`: a channel that already sold it — it is never refused for restrictions or a full house.
+ */
+export async function bookStayIn(
+  tx: Tx,
+  ctx: ActorContext,
+  hotel: Hotel,
+  b: z.infer<typeof bookingInputSchema>,
+  from?: { channel: string; ref: string },
+) {
+  await lockHotel(tx, hotel.branchId);
+  const block = b.blockId
+    ? await tx.groupBlock.findFirst({
+        where: { id: b.blockId, companyId: ctx.companyId, branchId: hotel.branchId, status: 'HELD' },
+      })
+    : null;
+  if (b.blockId && !block) throw new AppError(409, 'CONFLICT', 'That group block is not being held');
+  if (block && (b.arrive < block.arrive || b.depart > block.depart))
+    throw new AppError(400, 'VALIDATION_FAILED', 'Those nights are outside the group’s block');
+  const p = await priceStay(
+    tx,
+    ctx.companyId,
+    { ...b, ratePlanId: block?.ratePlanId ?? b.ratePlanId },
+    { blockId: block?.id },
+  );
+  if (p.plan.branchId !== hotel.branchId || !p.plan.active) throw notFound('Rate plan');
+  if (block) {
+    const want = (block.rooms as { roomTypeId: string; count: number }[]).find(
+      (r) => r.roomTypeId === b.roomTypeId,
+    );
+    const got = await tx.stay.count({
+      where: { blockId: block.id, roomTypeId: b.roomTypeId, status: { in: ['BOOKED', 'CHECKED_IN'] } },
+    });
+    if (!want || got >= want.count)
+      throw new AppError(409, 'CONFLICT', 'Every room of that type in the block is taken');
+  }
+  // A block's own rooms are already held: only the restrictions of the open market don't apply to it.
+  // A booking a channel already sold is taken even when MONO would refuse it — and flagged when no room is left.
+  if (p.problem && !from && !(block && p.problem !== 'SOLD_OUT'))
+    throw new AppError(409, 'CONFLICT', PROBLEMS[p.problem], { problem: p.problem, day: p.soldOutOn });
+  if (b.roomId) {
+    const room = await tx.room.findFirst({
+      where: { id: b.roomId, companyId: ctx.companyId, typeId: b.roomTypeId, deletedAt: null },
+    });
+    if (!room) throw new AppError(400, 'VALIDATION_FAILED', 'That room is not of this type');
+  }
+  const companyPartyId = b.companyPartyId ?? (p.plan.kind === 'CORPORATE' ? p.plan.partyId : null);
+  const agentPartyId = b.agentPartyId ?? (p.plan.kind === 'AGENT' ? p.plan.partyId : null);
+  for (const id of [companyPartyId, agentPartyId])
+    if (id && !(await tx.party.count({ where: { id, companyId: ctx.companyId, deletedAt: null } })))
+      throw notFound('Party');
+  const guest = await guestFor(tx, ctx.companyId, b.guest);
+  const partyId = await guestParty(tx, guest);
+  const stay = await tx.stay.create({
+    data: {
+      companyId: ctx.companyId,
+      branchId: hotel.branchId,
+      number: formatNumber('BK', await nextCounter(tx, ctx.companyId, 'stay'), { pad: 5 }),
+      guestId: guest.id,
+      partyId,
+      companyPartyId,
+      agentPartyId,
+      commissionPct: agentPartyId ? p.plan.commissionPct : 0,
+      ratePlanId: p.plan.id,
+      meal: p.plan.meal,
+      roomTypeId: b.roomTypeId,
+      kind: block ? 'GROUP' : companyPartyId ? 'CORPORATE' : agentPartyId ? 'AGENT' : b.kind,
+      source: b.source,
+      channel: from?.channel ?? null,
+      channelRef: from?.ref ?? null,
+      overbooked: Boolean(from && p.problem === 'SOLD_OUT'),
+      blockId: block?.id ?? null,
+      arrive: b.arrive,
+      depart: b.depart,
+      adults: b.adults,
+      children: b.children,
+      note: b.note ?? null,
+      // A company that pays is billed the room; everything else stays with the guest.
+      routing: companyPartyId ? [{ kinds: ['ROOM', 'EARLY', 'LATE'], folio: 2 }] : undefined,
+      token: newToken(),
+      createdById: ctx.actorId,
+    },
+  });
+  await tx.roomNight.createMany({
+    data: p.nights.map((n) => ({
+      companyId: ctx.companyId,
+      branchId: hotel.branchId,
+      roomTypeId: b.roomTypeId,
+      roomId: b.roomId ?? null,
+      day: n.day,
+      stayId: stay.id,
+      rate: BigInt(n.rate),
+    })),
+  });
+  await tx.folio.create({
+    data: {
+      companyId: ctx.companyId,
+      branchId: hotel.branchId,
+      stayId: stay.id,
+      no: 1,
+      name: guest.name,
+      partyId,
+    },
+  });
+  if (companyPartyId) {
+    const company = await tx.party.findUniqueOrThrow({ where: { id: companyPartyId } });
+    await tx.folio.create({
+      data: {
+        companyId: ctx.companyId,
+        branchId: hotel.branchId,
+        stayId: stay.id,
+        no: 2,
+        name: company.name,
+        partyId: companyPartyId,
+      },
+    });
+  }
+  await writeAudit(tx, ctx, {
+    action: 'hotel.booked',
+    entityType: 'stay',
+    entityId: stay.id,
+    after: {
+      number: stay.number,
+      arrive: b.arrive,
+      depart: b.depart,
+      roomTypeId: b.roomTypeId,
+      total: p.total,
+    },
+  });
+  await tell(tx, ctx, 'hotel.booked', hotel, stay, {
+    roomType: p.type.name,
+    plan: p.plan.name,
+    amount: formatINR(BigInt(p.total)),
+  });
+  return { id: stay.id, number: stay.number, total: p.total, nights: p.nights, overbooked: stay.overbooked };
+}
+
 export async function createBooking(db: Db, actor: Actor, input: z.input<typeof bookingInputSchema>) {
   desk(actor);
   const b = bookingInputSchema.parse(input);
   const hotel = await hotelOf(db, actor, b.branchId);
   if (b.arrive < hotel.businessDate)
     throw new AppError(400, 'VALIDATION_FAILED', `The hotel's date is ${dmy(hotel.businessDate)}`);
-  const ctx = ctxOf(actor);
   try {
-    return await db.$transaction(async (tx) => {
-      await lockHotel(tx, hotel.branchId);
-      const block = b.blockId
-        ? await tx.groupBlock.findFirst({
-            where: { id: b.blockId, companyId: actor.companyId, branchId: hotel.branchId, status: 'HELD' },
-          })
-        : null;
-      if (b.blockId && !block) throw new AppError(409, 'CONFLICT', 'That group block is not being held');
-      if (block && (b.arrive < block.arrive || b.depart > block.depart))
-        throw new AppError(400, 'VALIDATION_FAILED', 'Those nights are outside the group’s block');
-      const p = await priceStay(
-        tx,
-        actor.companyId,
-        { ...b, ratePlanId: block?.ratePlanId ?? b.ratePlanId },
-        { blockId: block?.id },
-      );
-      if (p.plan.branchId !== hotel.branchId || !p.plan.active) throw notFound('Rate plan');
-      if (block) {
-        const want = (block.rooms as { roomTypeId: string; count: number }[]).find(
-          (r) => r.roomTypeId === b.roomTypeId,
-        );
-        const got = await tx.stay.count({
-          where: { blockId: block.id, roomTypeId: b.roomTypeId, status: { in: ['BOOKED', 'CHECKED_IN'] } },
-        });
-        if (!want || got >= want.count)
-          throw new AppError(409, 'CONFLICT', 'Every room of that type in the block is taken');
-      }
-      // A block's own rooms are already held: only the restrictions of the open market don't apply to it.
-      if (p.problem && !(block && p.problem !== 'SOLD_OUT'))
-        throw new AppError(409, 'CONFLICT', PROBLEMS[p.problem], { problem: p.problem, day: p.soldOutOn });
-      if (b.roomId) {
-        const room = await tx.room.findFirst({
-          where: { id: b.roomId, companyId: actor.companyId, typeId: b.roomTypeId, deletedAt: null },
-        });
-        if (!room) throw new AppError(400, 'VALIDATION_FAILED', 'That room is not of this type');
-      }
-      const companyPartyId = b.companyPartyId ?? (p.plan.kind === 'CORPORATE' ? p.plan.partyId : null);
-      const agentPartyId = b.agentPartyId ?? (p.plan.kind === 'AGENT' ? p.plan.partyId : null);
-      for (const id of [companyPartyId, agentPartyId])
-        if (id && !(await tx.party.count({ where: { id, companyId: actor.companyId, deletedAt: null } })))
-          throw notFound('Party');
-      const guest = await guestFor(tx, actor.companyId, b.guest);
-      const partyId = await guestParty(tx, guest);
-      const stay = await tx.stay.create({
-        data: {
-          companyId: actor.companyId,
-          branchId: hotel.branchId,
-          number: formatNumber('BK', await nextCounter(tx, actor.companyId, 'stay'), { pad: 5 }),
-          guestId: guest.id,
-          partyId,
-          companyPartyId,
-          agentPartyId,
-          commissionPct: agentPartyId ? p.plan.commissionPct : 0,
-          ratePlanId: p.plan.id,
-          meal: p.plan.meal,
-          roomTypeId: b.roomTypeId,
-          kind: block ? 'GROUP' : companyPartyId ? 'CORPORATE' : agentPartyId ? 'AGENT' : b.kind,
-          source: b.source,
-          blockId: block?.id ?? null,
-          arrive: b.arrive,
-          depart: b.depart,
-          adults: b.adults,
-          children: b.children,
-          note: b.note ?? null,
-          // A company that pays is billed the room; everything else stays with the guest.
-          routing: companyPartyId ? [{ kinds: ['ROOM', 'EARLY', 'LATE'], folio: 2 }] : undefined,
-          token: newToken(),
-          createdById: actor.userId,
-        },
-      });
-      await tx.roomNight.createMany({
-        data: p.nights.map((n) => ({
-          companyId: actor.companyId,
-          branchId: hotel.branchId,
-          roomTypeId: b.roomTypeId,
-          roomId: b.roomId ?? null,
-          day: n.day,
-          stayId: stay.id,
-          rate: BigInt(n.rate),
-        })),
-      });
-      await tx.folio.create({
-        data: {
-          companyId: actor.companyId,
-          branchId: hotel.branchId,
-          stayId: stay.id,
-          no: 1,
-          name: guest.name,
-          partyId,
-        },
-      });
-      if (companyPartyId) {
-        const company = await tx.party.findUniqueOrThrow({ where: { id: companyPartyId } });
-        await tx.folio.create({
-          data: {
-            companyId: actor.companyId,
-            branchId: hotel.branchId,
-            stayId: stay.id,
-            no: 2,
-            name: company.name,
-            partyId: companyPartyId,
-          },
-        });
-      }
-      await writeAudit(tx, ctx, {
-        action: 'hotel.booked',
-        entityType: 'stay',
-        entityId: stay.id,
-        after: {
-          number: stay.number,
-          arrive: b.arrive,
-          depart: b.depart,
-          roomTypeId: b.roomTypeId,
-          total: p.total,
-        },
-      });
-      await tell(tx, ctx, 'hotel.booked', hotel, stay, {
-        roomType: p.type.name,
-        plan: p.plan.name,
-        amount: formatINR(BigInt(p.total)),
-      });
-      return { id: stay.id, number: stay.number, total: p.total, nights: p.nights };
-    });
+    return await db.$transaction((tx) => bookStayIn(tx, ctxOf(actor), hotel, b));
   } catch (e) {
     if (isTaken(e)) throw new AppError(409, 'CONFLICT', 'That room is already taken on one of those nights');
     throw e;

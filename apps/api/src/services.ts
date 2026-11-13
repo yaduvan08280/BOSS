@@ -64,3 +64,5 @@ export { sendQueued as sendQueuedPrints } from './modules/hosp/print';
 export { reservationSweep } from './modules/hosp/res-jobs';
 export { hotelSweep } from './modules/hotel/reports';
 export { complianceSweep } from './modules/banquet/compliance';
+export { retryPushes } from './modules/connect/channel';
+export { connectNet } from './modules/connect/core';

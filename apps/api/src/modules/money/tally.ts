@@ -1,4 +1,4 @@
-import type { Db } from '@mono/db';
+import type { Db, Voucher } from '@mono/db';
 import type { VoucherLine } from '@mono/shared';
 import { writeAudit } from '../../lib/audit';
 import { AppError } from '../../lib/errors';
@@ -81,6 +81,14 @@ export async function tallyExport(
     },
     orderBy: [{ date: 'asc' }, { createdAt: 'asc' }],
   });
+  const { xml, unmapped } = await tallyXml(db, actor.companyId, vouchers);
+  if (unmapped.length)
+    throw new AppError(409, 'CONFLICT', 'Some heads have no Tally ledger yet', { heads: unmapped });
+  return { xml, count: vouchers.length };
+}
+
+/** These vouchers as one Tally import, and the heads among them that have no ledger yet (then there is no XML). */
+export async function tallyXml(db: Db, companyId: string, vouchers: Voucher[]) {
   const bills = new Map(
     (
       await db.bill.findMany({
@@ -90,7 +98,7 @@ export async function tallyExport(
     ).map((b) => [b.id, b]),
   );
   const ledger = new Map(
-    (await db.tallyMap.findMany({ where: { companyId: actor.companyId } })).map((m) => [m.head, m.ledger]),
+    (await db.tallyMap.findMany({ where: { companyId } })).map((m) => [m.head, m.ledger]),
   );
   const partyIds = new Set<string>();
   const unmapped = new Set<string>();
@@ -99,10 +107,7 @@ export async function tallyExport(
       if (PARTY_HEADS.has(l.head) && l.partyId) partyIds.add(l.partyId);
       else if (!ledger.has(l.head)) unmapped.add(l.head);
     }
-  if (unmapped.size)
-    throw new AppError(409, 'CONFLICT', 'Some heads have no Tally ledger yet', {
-      heads: [...unmapped].sort(),
-    });
+  if (unmapped.size) return { xml: '', unmapped: [...unmapped].sort() };
   const partyName = new Map(
     (await db.party.findMany({ where: { id: { in: [...partyIds] } }, select: { id: true, name: true } })).map(
       (p) => [p.id, p.name],
@@ -126,5 +131,5 @@ export async function tallyExport(
     })
     .join('');
   const xml = `<?xml version="1.0" encoding="UTF-8"?><ENVELOPE><HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER><BODY><IMPORTDATA><REQUESTDESC><REPORTNAME>Vouchers</REPORTNAME></REQUESTDESC><REQUESTDATA>${body}</REQUESTDATA></IMPORTDATA></BODY></ENVELOPE>`;
-  return { xml, count: vouchers.length };
+  return { xml, unmapped: [] as string[] };
 }

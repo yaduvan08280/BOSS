@@ -7,6 +7,8 @@ model HotelSettings {
   companyId    String   @map("company_id")
   branchId     String   @unique @map("branch_id")
   rules        Json
+  /// The property's public room-booking link (phase 19).
+  bookingToken String?  @unique @map("booking_token")
   /// The hotel's business date: it moves on only with the night audit.
   businessDate String   @map("business_date")
   updatedById  String?  @map("updated_by_id")
@@ -116,6 +118,10 @@ model Stay {
   /// [{ at, from, to, reason, byId }]
   moves          Json?
   cancelReason   String?   @map("cancel_reason")
+  /// Phase 19: the channel it came through and the channel's own reference; sold by a channel with no room left.
+  channel        String?
+  channelRef     String?   @map("channel_ref")
+  overbooked     Boolean   @default(false)
   /// The guest's own link (the voucher).
   token          String    @unique
   checkedInAt    DateTime? @map("checked_in_at") @db.Timestamptz(3)
@@ -125,6 +131,7 @@ model Stay {
   updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([companyId, number])
+  @@unique([companyId, channelRef])
   @@index([companyId, branchId, status])
   @@index([companyId, branchId, arrive])
   @@index([companyId, guestId])

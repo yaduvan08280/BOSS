@@ -15,7 +15,7 @@ import { writeAudit } from '../../lib/audit';
 import { AppError, notFound } from '../../lib/errors';
 import { ctxOf } from '../hosp/access';
 import type { Actor } from '../work/actor';
-import { admin, hotelFor, hotelOf, seer, supervisor, type Hotel } from './core';
+import { admin, hotelFor, hotelOf, newToken, seer, supervisor, type Hotel } from './core';
 
 /**
  * Phase 17 — rates and availability. A rate plan prices a night for each room type it sells; a day can carry
@@ -337,7 +337,16 @@ export async function saveRules(
     if (!(await db.taxRate.count({ where: { companyId: actor.companyId, code } })))
       throw new AppError(400, 'VALIDATION_FAILED', `There is no tax rate ${code} in Money set-up`);
   await db.$transaction(async (tx) => {
-    await tx.hotelSettings.update({ where: { branchId }, data: { rules: next, updatedById: actor.userId } });
+    const row = await tx.hotelSettings.findUniqueOrThrow({ where: { branchId } });
+    await tx.hotelSettings.update({
+      where: { branchId },
+      // The public booking page gets its link the first time it is switched on.
+      data: {
+        rules: next,
+        updatedById: actor.userId,
+        ...(next.online && !row.bookingToken ? { bookingToken: newToken() } : {}),
+      },
+    });
     await writeAudit(tx, ctxOf(actor), {
       action: 'hotel.rules_saved',
       entityType: 'branch',
@@ -351,5 +360,11 @@ export async function saveRules(
 export async function getRules(db: Db, actor: Actor, branchId: string) {
   seer(actor);
   const hotel = await hotelOf(db, actor, branchId);
-  return { rules: hotel.rules, businessDate: hotel.businessDate, name: hotel.name };
+  const row = await db.hotelSettings.findUnique({ where: { branchId }, select: { bookingToken: true } });
+  return {
+    rules: hotel.rules,
+    businessDate: hotel.businessDate,
+    name: hotel.name,
+    bookingToken: hotel.rules.online ? (row?.bookingToken ?? null) : null,
+  };
 }

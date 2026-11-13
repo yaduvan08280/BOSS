@@ -170,6 +170,8 @@ export const noShowCharge = (rule: RatePlanInput['noShow'], nights: NightPrice[]
 
 /** A property's rules. */
 export const hotelRulesSchema = z.object({
+  /** The public room-booking page of the property is open (phase 19). */
+  online: z.boolean().default(false),
   checkInMin: minute.default(14 * 60),
   checkOutMin: minute.default(11 * 60),
   /** Arriving or leaving within this many minutes of the time costs nothing. */

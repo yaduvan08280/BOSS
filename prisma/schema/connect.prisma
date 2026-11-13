@@ -1,0 +1,114 @@
+// Phase 19 — Integrations: connections to outside services, what was sent and received, payment links,
+// site agents, aggregator payouts.
+
+/// A connection to an outside service: a channel manager (per property), a payment gateway or an e-invoice GSP.
+model Connection {
+  id          String    @id @default(cuid(2))
+  companyId   String    @map("company_id")
+  /// CHANNEL | GATEWAY | EINVOICE
+  kind        String
+  /// The property a channel manager serves ("" = the whole company).
+  scope       String    @default("")
+  provider    String
+  baseUrl     String?   @map("base_url")
+  /// Keys and secrets, encrypted with APP_SECRET.
+  secret      String?
+  /// { rooms: [{ roomTypeId, code }], plans: [{ ratePlanId, code }], defaultPlanId }
+  meta        Json      @default("{}")
+  /// The address part of this connection's inbound webhook.
+  hookToken   String    @unique @map("hook_token")
+  active      Boolean   @default(true)
+  lastOkAt    DateTime? @map("last_ok_at") @db.Timestamptz(3)
+  lastError   String?   @map("last_error")
+  lastErrorAt DateTime? @map("last_error_at") @db.Timestamptz(3)
+  updatedById String?   @map("updated_by_id")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([companyId, kind, scope])
+  @@map("connections")
+}
+
+/// One thing sent to (or received from) an outside service, with how it went.
+model SyncLog {
+  id           String    @id @default(cuid(2))
+  companyId    String    @map("company_id")
+  connectionId String    @map("connection_id")
+  /// OUT | IN
+  direction    String
+  /// ari | booking | paylink | payment | einvoice | einvoice_cancel
+  what         String
+  ref          String?
+  /// PENDING (to be tried again) | OK | FAILED
+  status       String
+  tries        Int       @default(0)
+  payload      Json?
+  error        String?
+  nextTryAt    DateTime? @map("next_try_at") @db.Timestamptz(3)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  doneAt       DateTime? @map("done_at") @db.Timestamptz(3)
+
+  @@index([companyId, connectionId, createdAt])
+  @@index([status, nextTryAt])
+  @@map("sync_logs")
+}
+
+/// A payment link made at the gateway for a deposit, an advance or a bill.
+model PayLink {
+  id          String    @id @default(cuid(2))
+  companyId   String    @map("company_id")
+  /// RESERVATION_DEPOSIT | STAY_ADVANCE | BANQUET_ADVANCE | POS_CHECK
+  purpose     String
+  refId       String    @map("ref_id")
+  /// Our reference at the gateway (what its webhook names).
+  reference   String    @unique
+  amount      BigInt
+  gateway     String
+  providerId  String?   @map("provider_id")
+  url         String?
+  /// CREATED | PAID | CANCELLED
+  status      String    @default("CREATED")
+  paymentId   String?   @map("payment_id")
+  paidAt      DateTime? @map("paid_at") @db.Timestamptz(3)
+  /// The money paper made when it was paid.
+  billId      String?   @map("bill_id")
+  note        String?
+  createdById String?   @map("created_by_id")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([companyId, purpose, refId])
+  @@map("pay_links")
+}
+
+/// A site agent's key: the small program at a branch that prints on its printers and posts to its Tally.
+model AgentToken {
+  id          String    @id @default(cuid(2))
+  companyId   String    @map("company_id")
+  branchId    String    @map("branch_id")
+  name        String
+  prefix      String    @unique
+  hash        String
+  lastSeenAt  DateTime? @map("last_seen_at") @db.Timestamptz(3)
+  revokedAt   DateTime? @map("revoked_at") @db.Timestamptz(3)
+  createdById String?   @map("created_by_id")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([companyId, branchId])
+  @@map("agent_tokens")
+}
+
+/// An aggregator's payout file as it was imported, and what it came to.
+model PayoutImport {
+  id          String   @id @default(cuid(2))
+  companyId   String   @map("company_id")
+  aggregator  String
+  fileName    String?  @map("file_name")
+  /// { matched, unknown, unpaid, net, deductions }
+  summary     Json
+  rows        Json
+  createdById String?  @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([companyId, createdAt])
+  @@map("payout_imports")
+}

@@ -29,8 +29,9 @@ export function billLines(
     { cols: ['TOTAL', money(check.total)], bold: true },
     ...(outlet.charges.upiId
       ? [
+          { text: 'Scan to pay by UPI', align: 'center' } satisfies PrintLine,
           {
-            text: upiLink(outlet.charges.upiId, outlet.name, check.total, `Bill ${check.number}`),
+            qr: upiLink(outlet.charges.upiId, outlet.name, check.total, `Bill ${check.number}`),
           } satisfies PrintLine,
         ]
       : []),

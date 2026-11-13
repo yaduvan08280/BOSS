@@ -25,6 +25,8 @@ import {
   sendQueuedPrints,
   reservationSweep,
   hotelSweep,
+  retryPushes,
+  connectNet,
   complianceSweep,
   watchRenewals,
   settleAttendance,
@@ -208,6 +210,9 @@ await boss.work(
     // Compliance: licences and duties about to run out are told at each step, once.
     const licences = await complianceSweep(prisma);
     if (licences) log.info({ licences }, 'Compliance reminders');
+    // Integrations: availability pushes the channel manager did not take are tried again.
+    const pushes = await retryPushes(prisma, connectNet(env));
+    if (pushes) log.info({ pushes }, 'Channel pushes sent again');
     const crmCalls = await crmSweep(prisma);
     if (crmCalls) log.info({ crmCalls }, 'CRM calls made');
     if (

@@ -23,6 +23,10 @@ model PosOrder {
   /// The guest profile and the reservation this order was seated from (Phase 16).
   guestId       String?   @map("guest_id")
   reservationId String?   @map("reservation_id")
+  /// Phase 19: an order that came through an aggregator, its number there, and what its payout came to.
+  aggregator    String?
+  aggregatorRef String?   @map("aggregator_ref")
+  settlement    Json?
   note          String?
   /// Idempotency key from the device.
   clientId      String?   @map("client_id")
