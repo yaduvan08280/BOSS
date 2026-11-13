@@ -97,6 +97,9 @@ const StockCountsPage = page(() => import('@/modules/stock/CountsPage'), 'Counts
 const StockPricesPage = page(() => import('@/modules/stock/PricesPage'), 'PricesPage');
 const HospMenuPage = page(() => import('@/modules/hosp/MenuPage'), 'MenuPage');
 const HospitalitySetupTab = page(() => import('@/modules/hosp/SetupTab'), 'HospitalitySetupTab');
+const PosPage = page(() => import('@/modules/pos/PosPage'), 'PosPage');
+const KdsPage = page(() => import('@/modules/pos/KdsPage'), 'KdsPage');
+const PosDayPage = page(() => import('@/modules/pos/DayPage'), 'DayPage');
 const ReportsPage = page(() => import('@/modules/reports/ReportsPage'), 'ReportsPage');
 const ReportBuilderPage = page(() => import('@/modules/reports/ReportBuilderPage'), 'ReportBuilderPage');
 const RulesWizard = page(() => import('@/modules/hr/RulesWizard'), 'RulesWizard');
@@ -164,6 +167,9 @@ export const router = createBrowserRouter([
       { path: '/records/:typeId', element: <WithMe render={(me) => <RecordListPage me={me} />} /> },
       { path: '/reports', element: <ReportsPage /> },
       { path: '/outlets', element: <OutletsPage /> },
+      { path: '/hosp/pos', element: <WithMe render={(me) => <PosPage me={me} />} /> },
+      { path: '/hosp/kds', element: <KdsPage /> },
+      { path: '/hosp/day', element: <PosDayPage /> },
       { path: '/hosp/menu', element: <WithMe render={(me) => <HospMenuPage me={me} />} /> },
       { path: '/ims/locations', element: <WithMe render={(me) => <StockLocationsPage me={me} />} /> },
       { path: '/ims/transfers', element: <WithMe render={(me) => <StockTransfersPage me={me} />} /> },

@@ -1,5 +1,43 @@
 # Changelog
 
+## Phase 15 — POS, kitchen tickets and display, billing, payments, day close (13/11/2026)
+
+A restaurant can run a service on MONO. Plan: `docs/plans/hospitality-100-plan.md` §6; rows P1–P40 in
+`docs/plans/coverage.md`. Shown under Hospitality once the module is switched on.
+
+- **POS** (Hospitality → POS): the outlet's floor with every table's state (free, seated, ordered, billed, paid).
+  Tap a table to seat guests and take the order from the outlet's live menu — sizes, add-ons, a note for the kitchen,
+  a course, **hold** an item and fire it later. Takeaway, delivery, room service, staff meals and a plain **counter
+  sale** need no table.
+- **Kitchen tickets**: each station gets its own ticket, numbered through the business day, printed where the
+  station has a printer and always on the **kitchen display** (Hospitality → Kitchen display): timers that turn
+  amber and red, tap an item when it is ready, bump the ticket, recall it, "all day" counts, an expo view of every
+  station.
+- **Voids**: an item never sent to the kitchen is simply taken off; a fired one needs a reason, and above the
+  role's limit an approver who is not the asker. A dish already cooked is written off from the outlet's stock.
+  Table operations: move, merge, send items to another table, change the steward.
+- **Bills** are invoices in the money core: each item's tax and HSN, the outlet's **service charge the guest may
+  refuse**, packaging and delivery on takeaway / delivery, a discount (within the role's limit, or approved), a
+  no-charge bill with one of the company's reasons, round-off, a company's name for B2B, a UPI pay link, **split**
+  by item, by seat, equally or by amounts, reprints marked DUPLICATE, and cancellation with an approval — money
+  taken is voided, a credit note undoes the invoice, and the table is open again.
+- **Payments**: several modes on one bill; a mode that needs a reference refuses without one; a room charge against
+  the room number; company credit leaves the invoice owed (it shows in Money owed); tips per steward. When an order
+  is paid its items take their recipes and add-ons from the outlet's stock — short stock is noted, never blocking.
+- **Shift and day close** (Hospitality → Bills & day close): a cashier's X report, the day's Z report (sales, tax,
+  charges, discounts, voids, money by mode, tips), cash counted by note with a blind count. A closed day takes
+  nothing more; only the owner reopens it, with a reason.
+- **Printing**: tickets and bills are ESC/POS jobs sent straight to network printers (IP:9100) and retried; a
+  printer that stays offline fails the job and the ticket stays on the display. A branch away from the server pulls
+  its jobs through its site agent. **Bill numbers can be reserved per device**, and orders and lines carry a device
+  key, so a tablet that was offline sends what it kept without making anything twice.
+
+Not done here: advance adjustments against a bill (P28), a QR image for UPI (the pay link is there), posting a room
+charge to a guest folio and the guest's signature (the hotel, Phase 17), reservations on the floor (Phase 16), the
+site-agent program itself (Phase 19), full offline billing on the device (lines are queued; bills still need the
+server), continuous database archiving before the first live bill (plan §6 — a deployment step still to do). No
+real thermal printer was used: printing is tested against a local socket. Hindi strings need review.
+
 ## Phase 14 — Hospitality set-up and menu (13/11/2026)
 
 Everything a restaurant, bar or hotel sets up before the first order. Plan: `docs/plans/hospitality-100-plan.md`

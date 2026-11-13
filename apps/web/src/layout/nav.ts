@@ -1,6 +1,7 @@
 import {
   Bug,
   BadgeIndianRupee,
+  Store,
   ConciergeBell,
   UtensilsCrossed,
   Tags,
@@ -272,6 +273,33 @@ export const WORKSPACE_NAV: NavSection[] = [
   {
     key: 'hospitality',
     items: [
+      {
+        key: 'pos',
+        path: '/hosp/pos',
+        icon: Store,
+        phase: 0,
+        tag: 'systems',
+        permission: 'hosp.view',
+        needs: 'hospitality',
+      },
+      {
+        key: 'kds',
+        path: '/hosp/kds',
+        icon: ChefHat,
+        phase: 0,
+        tag: 'systems',
+        permission: 'hosp.view',
+        needs: 'hospitality',
+      },
+      {
+        key: 'posDay',
+        path: '/hosp/day',
+        icon: ReceiptText,
+        phase: 0,
+        tag: 'systems',
+        permission: 'hosp.view',
+        needs: 'hospitality',
+      },
       {
         key: 'hospMenu',
         path: '/hosp/menu',

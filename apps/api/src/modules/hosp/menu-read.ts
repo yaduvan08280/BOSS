@@ -88,7 +88,16 @@ export async function menuFor(db: Db, actor: Actor, outletId: string, at = new D
     for (const [id, n] of needs) if ((held.get(id) ?? 0) + 1e-9 < n) return names.get(id) ?? 'stock';
     return null;
   };
-  const defaultStation = routes.find((r) => r.category === '')?.stationId ?? null;
+  // Tickets with no route of their own go to the outlet's default route, else to its first station.
+  const defaultStation =
+    routes.find((r) => r.category === '')?.stationId ??
+    (
+      await db.station.findFirst({
+        where: { companyId: actor.companyId, outletId, deletedAt: null },
+        orderBy: { createdAt: 'asc' },
+      })
+    )?.id ??
+    null;
   const groupOf = new Map(groups.map((g) => [g.id, g]));
   const mine = items.filter((i) => !i.outletIds.length || i.outletIds.includes(outletId));
   const menuPrices = (id: string) =>
