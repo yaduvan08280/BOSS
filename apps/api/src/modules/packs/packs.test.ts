@@ -8,7 +8,26 @@ let ctx: Awaited<ReturnType<typeof makeApp>>;
 beforeAll(async () => {
   ctx = await makeApp();
 });
-afterAll(async () => ctx.app.close());
+// The checklists a pack makes are daily ones: left switched on they would be swept for ever in the test
+// database (and slow every test that sweeps). Only the packs' own are switched off, by name.
+afterAll(async () => {
+  await ctx.prisma.checklistMaster.updateMany({
+    where: {
+      active: true,
+      name: {
+        in: [
+          'Clinic opening',
+          'Restaurant opening',
+          'Restaurant closing',
+          'Front desk morning',
+          'Housekeeping morning',
+        ],
+      },
+    },
+    data: { active: false },
+  });
+  await ctx.app.close();
+});
 
 type Result = {
   version: number;
