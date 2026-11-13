@@ -1,5 +1,41 @@
 # Changelog
 
+## Phase 13 — Inventory v2: stock per location (13/11/2026)
+
+Stock is now kept where it is. Plan: `docs/plans/hospitality-100-plan.md` §4 and §3.6; rows I1–I30 and U23–U30 in
+`docs/plans/coverage.md`. Everything from phase 8 (bands, MAX review, OWS, audit) keeps working on the item's total;
+today's stock moved into the **main store** by migration.
+
+- **Stock by location** (Inventory → Stock by location): what each store, kitchen and bar holds, batch by batch;
+  an *Expiring* tab and a *Value* tab (weighted average or FIFO). **Stock entry**: in, out, or a move inside the
+  branch, typed in any of the item's units or by scanning a barcode.
+- **How an item is kept**: tracked by quantity, **batch + expiry** (first expired first out; an expired batch is
+  never issued), **serial** (each piece its own number, cost, weight and history) or **lot with attributes**; bought,
+  made, or a dish; other units with conversion (case → bottle → ml → peg), a second unit (pieces and grams), barcode.
+- **Transfers**: an outlet's indent to a kitchen or store (by its supply route, or any supplier), approved in full,
+  in part or with a substitute → dispatched → **in transit**, seen by both sides → received; short, damaged and
+  extra wait for an approver who is not the receiver. **Emergency** outlet-to-outlet transfers need a reason and a
+  yes from both sides (or one, by the rule). Between branches a **delivery challan** goes with the goods; between two
+  GSTINs a **tax invoice** from the sender and a **purchase bill** on the receiver. Transfer price: cost, cost + %, or
+  a price list.
+- **Recipes & production**: versioned recipes with yield % and wastage %, sub-recipes, live cost and food-cost %;
+  production orders take the raw material and make a batch with its expiry, real cost and yield variance.
+- **Goods receipts** against a purchase order or without one: quantity and rate differences, batch and expiry,
+  rejected quantity, the vendor's purchase bill, returns to the vendor. A purchase order says where it is delivered.
+- **Wastage register** with reasons; over a value limit it waits for approval. **Closing counts** per location, blind
+  if wanted, with the variance against what the recipes used, flagged over a set %.
+- **Prices**: price lists per kind of party, branch and date (the most specific wins) and a **rate board** for things
+  sold by weight. A counter sale takes its price from them, issues the stock (a dish through its recipe, a piece by
+  its number) and raises one invoice through the money core.
+- Par levels and a reorder list per location, a per-location register (bottles, open ml, pegs sold), a daily
+  expiry warning per branch, and notices for indents, dispatch and differences. A new party kind: **dealer**.
+- People see and touch only the locations of their own branches; the main store is head office's.
+
+Not done here: label printing (needs the site agent of Phase 19), vendors limited to entities and vendor price
+lists per branch, photos on the wastage screen, screens for supply routes, par levels, vendor returns, the counter
+sale, attributes, the register and the variance report (their API is tested). MAX review, OWS and the audit cycle
+still work on the company total, not per location. Hindi strings need review.
+
 ## Phase 12M — Money core (13/11/2026)
 
 One engine for every paper that carries money. Plan: `docs/plans/hospitality-100-plan.md` §3A; rows U11–U22 in

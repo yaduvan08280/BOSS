@@ -52,6 +52,16 @@ describe('inventory v2: the bar, valuation, price lists and the rate board (phas
       }),
     );
     expect(await at(ctx.prisma, whisky, k.store)).toBe(9000);
+    // ₹12,000 for 9 000 ml is 133.33 paise a ml: the stock's value and the peg's cost stay exact (₹80 for 60 ml).
+    expect(
+      (await ctx.prisma.stockBalance.findFirstOrThrow({ where: { itemId: whisky, locationId: k.store } }))
+        .value,
+    ).toBe(12_000_00n);
+    expect(
+      (await ok<{ name: string; cost: number }[]>(w.api.get('/api/ims/recipes'))).find(
+        (r) => r.name === 'Royal Oak 60 ml',
+      )!.cost,
+    ).toBe(80_00);
     // … indented to the bar by the case …
     const indent = await ok<{ id: string }>(
       farah.api.post('/api/ims/transfers', {

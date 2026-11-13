@@ -17,6 +17,7 @@ import { seedDemoCrm } from './seed-demo-crm';
 import { seedDemoRecords } from './seed-demo-records';
 import { seedDemoBranches } from './seed-demo-branches';
 import { seedDemoMoney } from './seed-demo-money';
+import { seedDemoStock } from './seed-demo-stock';
 
 const PASSWORD = process.env.SEED_DEMO_PASSWORD?.trim() || 'Demo1234';
 const DEPARTMENTS = [
@@ -247,6 +248,10 @@ try {
     );
   if (await seedDemoMoney(prisma, company.id))
     console.log('Added demo money set-up: GST rates, payment modes and two vendors.');
+  if (await seedDemoStock(prisma, company.id))
+    console.log(
+      'Added demo stock by location: a store and a bar, a whisky in ml with a peg recipe, a gold rate.',
+    );
 } finally {
   await prisma.$disconnect();
 }

@@ -34,6 +34,18 @@ export async function booksOf(db: Db | Tx, companyId: string): Promise<Books> {
     }),
     db.recipe.findMany({ where: { companyId, active: true } }),
   ]);
+  // What the company's stock of each item is really worth per unit (value ÷ quantity): exact where the rate per
+  // gram or ml is not a whole number of paise. Items with no stock use their rate.
+  const held = await db.stockBalance.groupBy({
+    by: ['itemId'],
+    where: { companyId, qty: { gt: 0 } },
+    _sum: { qty: true, value: true },
+  });
+  const average = new Map(
+    held
+      .filter((h) => Number(h._sum.qty) > 0 && Number(h._sum.value) > 0)
+      .map((h) => [h.itemId, Number(h._sum.value) / Number(h._sum.qty)]),
+  );
   return {
     items: new Map(
       items.map((i) => [
@@ -43,7 +55,7 @@ export async function booksOf(db: Db | Tx, companyId: string): Promise<Books> {
           unit: i.unit,
           units: (i.units as ItemUnit[] | null) ?? [],
           made: i.made as Made,
-          rate: Number(i.rate),
+          rate: average.get(i.id) ?? Number(i.rate),
         },
       ]),
     ),

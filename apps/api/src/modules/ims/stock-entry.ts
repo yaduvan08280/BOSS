@@ -167,6 +167,8 @@ export async function receiveIn(
       ...base,
       delta,
       rate: perStock === null ? null : BigInt(perStock),
+      // A case at ₹12,000 is 9 000 ml at 133.33 paise: the value is kept exact, not 9 000 × 133.
+      inValue: m.ratePaise === null || m.ratePaise === undefined ? null : Math.round(m.qty * m.ratePaise),
       batchId,
       qty2: m.qty2 ?? null,
       unit: m.unit ?? item.unit,

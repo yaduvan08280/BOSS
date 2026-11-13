@@ -66,6 +66,8 @@ export type MoveArgs = {
   unitQty?: number | null;
   /** The second unit's quantity (the weight of what moved), always positive. */
   qty2?: number | null;
+  /** The exact cost of what came in (minor units), when the rate per stock unit is not a whole number of paise. */
+  inValue?: number | null;
   /** Take an expired batch too (writing it off, sending it back). */
   allowExpired?: boolean;
 };
@@ -95,7 +97,14 @@ export async function applyMove(tx: Tx, ctx: ActorContext, a: MoveArgs, moveId?:
       opts,
     );
   } else if (a.delta > 0) {
-    await putIn(tx, item, { locationId, batchId: a.batchId }, a.delta, a.delta * Number(rate), a.qty2 ?? 0);
+    await putIn(
+      tx,
+      item,
+      { locationId, batchId: a.batchId },
+      a.delta,
+      a.inValue ?? a.delta * Number(rate),
+      a.qty2 ?? 0,
+    );
   } else if (a.delta < 0) {
     picks = await takeOut(tx, item, { locationId, batchId: a.batchId }, -a.delta, opts);
   }
@@ -112,7 +121,7 @@ export async function applyMove(tx: Tx, ctx: ActorContext, a: MoveArgs, moveId?:
       );
   }
   const moved = picks.reduce((n, p) => n + p.value, 0);
-  const value = a.delta > 0 ? Math.round(a.delta * Number(rate)) : picks.length ? moved : null;
+  const value = a.delta > 0 ? Math.round(a.inValue ?? a.delta * Number(rate)) : picks.length ? moved : null;
   const after = await tx.item.findUniqueOrThrow({ where: { id: item.id } });
   const stock = Number(after.stock);
   const band = bandOf(stock, n(after.maxQty), n(after.minQty));

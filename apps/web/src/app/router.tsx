@@ -88,6 +88,13 @@ const PartiesPage = page(() => import('@/modules/money/PartiesPage'), 'PartiesPa
 const OwedPage = page(() => import('@/modules/money/OwedPage'), 'OwedPage');
 const DayClosePage = page(() => import('@/modules/money/DayClosePage'), 'DayClosePage');
 const MoneySetupPage = page(() => import('@/modules/money/SetupPage'), 'MoneySetupPage');
+const StockLocationsPage = page(() => import('@/modules/stock/LocationsPage'), 'LocationsPage');
+const StockTransfersPage = page(() => import('@/modules/stock/TransfersPage'), 'TransfersPage');
+const StockKitchenPage = page(() => import('@/modules/stock/KitchenPage'), 'KitchenPage');
+const StockReceiptsPage = page(() => import('@/modules/stock/ReceiptsPage'), 'ReceiptsPage');
+const StockWastagePage = page(() => import('@/modules/stock/WastagePage'), 'WastagePage');
+const StockCountsPage = page(() => import('@/modules/stock/CountsPage'), 'CountsPage');
+const StockPricesPage = page(() => import('@/modules/stock/PricesPage'), 'PricesPage');
 const ReportsPage = page(() => import('@/modules/reports/ReportsPage'), 'ReportsPage');
 const ReportBuilderPage = page(() => import('@/modules/reports/ReportBuilderPage'), 'ReportBuilderPage');
 const RulesWizard = page(() => import('@/modules/hr/RulesWizard'), 'RulesWizard');
@@ -155,6 +162,13 @@ export const router = createBrowserRouter([
       { path: '/records/:typeId', element: <WithMe render={(me) => <RecordListPage me={me} />} /> },
       { path: '/reports', element: <ReportsPage /> },
       { path: '/outlets', element: <OutletsPage /> },
+      { path: '/ims/locations', element: <WithMe render={(me) => <StockLocationsPage me={me} />} /> },
+      { path: '/ims/transfers', element: <WithMe render={(me) => <StockTransfersPage me={me} />} /> },
+      { path: '/ims/kitchen', element: <WithMe render={(me) => <StockKitchenPage me={me} />} /> },
+      { path: '/ims/receipts', element: <WithMe render={(me) => <StockReceiptsPage me={me} />} /> },
+      { path: '/ims/wastage', element: <WithMe render={(me) => <StockWastagePage me={me} />} /> },
+      { path: '/ims/counts', element: <WithMe render={(me) => <StockCountsPage me={me} />} /> },
+      { path: '/ims/prices', element: <WithMe render={(me) => <StockPricesPage me={me} />} /> },
       { path: '/money/bills', element: <WithMe render={(me) => <BillsPage me={me} />} /> },
       { path: '/money/parties', element: <WithMe render={(me) => <PartiesPage me={me} />} /> },
       { path: '/money/owed', element: <OwedPage /> },

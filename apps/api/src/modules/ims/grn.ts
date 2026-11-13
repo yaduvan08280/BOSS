@@ -176,7 +176,7 @@ export async function createGrn(db: Db, actor: Actor, input: z.input<typeof grnS
           serials: typed.serials,
           qty2: typed.qty2,
           // receiveIn takes the rate per typed unit.
-          ratePaise: line.rate * factor,
+          ratePaise: typed.ratePaise ?? line.rate * factor,
           note: `${number}${po ? ` on ${po.number}` : ''}`,
           locationId: place.id,
           refType: 'goods_receipt',
