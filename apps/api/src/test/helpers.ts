@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto';
 import type { LightMyRequestResponse } from 'fastify';
 import { createPrisma } from '@mono/db';
 import { buildApp } from '../app';
@@ -32,11 +33,15 @@ export async function makeCompany(
   over: Partial<{ mobile: string; email: string; name: string }> = {},
 ) {
   seq += 1;
-  const n = `${Date.now() % 1_000_000}`.padStart(6, '0') + String(seq).padStart(3, '0');
+  // Nine random digits: the test database is kept between runs, and a name made from the clock alone comes
+  // round again (and two test files can start in the same millisecond) — which hands a test someone else's company.
+  const n =
+    String(randomInt(0, 1_000_000)).padStart(6, '0') +
+    String((seq + randomInt(0, 1000)) % 1000).padStart(3, '0');
   const mobile = over.mobile ?? `9${n.slice(-9)}`;
   const email = over.email ?? `owner${n}@example.com`;
   const { company, owner } = await bootstrapCompany(app.prisma, {
-    companyName: over.name ?? `Test Co ${n}`,
+    companyName: over.name ?? `Test Co ${n} ${randomInt(0, 1_000_000_000).toString(36)}`,
     ownerName: 'Test Owner',
     ownerMobile: mobile,
     ownerEmail: email,
