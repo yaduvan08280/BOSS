@@ -23,6 +23,7 @@ export const MODULES = [
   'franchise',
   // Phase 12M: parties, tax rates, bills, receipts and payments, day close, vouchers.
   'money',
+  'hosp',
 ] as const;
 export type ModuleKey = (typeof MODULES)[number];
 
@@ -48,6 +49,7 @@ const work: ModuleKey[] = [
   'ims',
   'crm',
   'search',
+  'hosp',
 ];
 
 /** People who run a team build and change their own reports; everyone may open the ones shared with them. */
@@ -66,7 +68,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<BuiltInRole, PermissionKey[]> = {
  * Modules added after companies were already running. A built-in role that holds nothing of such a module yet
  * (nobody has set it in the Roles matrix) is given the defaults above when the server starts.
  */
-export const LATER_MODULES: ModuleKey[] = ['records', 'reports', 'franchise', 'money'];
+export const LATER_MODULES: ModuleKey[] = ['records', 'reports', 'franchise', 'money', 'hosp'];
 
 export function hasPermission(granted: readonly string[], needed: PermissionKey): boolean {
   if (granted.includes('*') || granted.includes(needed)) return true;

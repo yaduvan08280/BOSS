@@ -1,0 +1,236 @@
+// Phase 14 — Hospitality set-up and menu: outlets with stations, floors and tables, room types and rooms,
+// printers and ticket routing, the company's hospitality rules, and the menu.
+
+/// Whether the company uses hospitality, and its rules (discount types and limits, no-charge reasons, day close).
+model HospSettings {
+  id          String   @id @default(cuid(2))
+  companyId   String   @unique @map("company_id")
+  enabled     Boolean  @default(false)
+  rules       Json
+  updatedById String?  @map("updated_by_id")
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("hosp_settings")
+}
+
+/// A place that sells: a restaurant, bar, café, room service, banquet, pool bar, or a plain counter.
+model Outlet {
+  id            String    @id @default(cuid(2))
+  companyId     String    @map("company_id")
+  branchId      String    @map("branch_id")
+  name          String
+  kind          String    @default("RESTAURANT")
+  /// Where its stock is taken from ("" = the main store).
+  locationId    String    @default("") @map("location_id")
+  priceListId   String?   @map("price_list_id")
+  openMin       Int       @default(0) @map("open_min")
+  closeMin      Int       @default(1440) @map("close_min")
+  /// { serviceChargePct, packagingPaise, deliveryPaise, roundTo, chargeTaxCode }
+  charges       Json
+  billPrinterId String?   @map("bill_printer_id")
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([companyId, branchId])
+  @@map("outlets")
+}
+
+/// A kitchen station of an outlet: where tickets are made (kitchen, tandoor, bar, dessert).
+model Station {
+  id        String    @id @default(cuid(2))
+  companyId String    @map("company_id")
+  outletId  String    @map("outlet_id")
+  name      String
+  kind      String    @default("KITCHEN")
+  printerId String?   @map("printer_id")
+  display   Boolean   @default(true)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([companyId, outletId])
+  @@map("stations")
+}
+
+model Printer {
+  id         String    @id @default(cuid(2))
+  companyId  String    @map("company_id")
+  branchId   String?   @map("branch_id")
+  name       String
+  /// KOT | BILL
+  kind       String    @default("KOT")
+  /// NETWORK (ip:port) | AGENT (the branch's site agent)
+  connection String    @default("NETWORK")
+  address    String?
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([companyId])
+  @@map("printers")
+}
+
+/// Which station a menu category's tickets go to at an outlet (category "" = everything else).
+model KotRoute {
+  id        String @id @default(cuid(2))
+  companyId String @map("company_id")
+  outletId  String @map("outlet_id")
+  category  String @default("")
+  stationId String @map("station_id")
+
+  @@unique([outletId, category])
+  @@map("kot_routes")
+}
+
+model Floor {
+  id        String    @id @default(cuid(2))
+  companyId String    @map("company_id")
+  outletId  String    @map("outlet_id")
+  name      String
+  sort      Int       @default(0)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([companyId, outletId])
+  @@map("floors")
+}
+
+model DiningTable {
+  id         String    @id @default(cuid(2))
+  companyId  String    @map("company_id")
+  outletId   String    @map("outlet_id")
+  floorId    String    @map("floor_id")
+  name       String
+  seats      Int       @default(4)
+  shape      String    @default("SQUARE")
+  x          Int       @default(0)
+  y          Int       @default(0)
+  section    String?
+  combinable Boolean   @default(false)
+  stewardIds String[]  @default([]) @map("steward_ids")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([companyId, outletId])
+  @@index([floorId])
+  @@map("dining_tables")
+}
+
+model RoomType {
+  id           String    @id @default(cuid(2))
+  companyId    String    @map("company_id")
+  branchId     String    @map("branch_id")
+  name         String
+  code         String
+  occupancy    Int       @default(2)
+  maxOccupancy Int       @default(3) @map("max_occupancy")
+  beds         String?
+  amenities    String[]  @default([])
+  photoIds     String[]  @default([]) @map("photo_ids")
+  /// Declared tariff for a night, minor units.
+  tariff       BigInt?
+  taxCode      String?   @map("tax_code")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([companyId, branchId])
+  @@map("room_types")
+}
+
+model Room {
+  id         String    @id @default(cuid(2))
+  companyId  String    @map("company_id")
+  branchId   String    @map("branch_id")
+  typeId     String    @map("type_id")
+  number     String
+  floor      String?
+  features   String[]  @default([])
+  connectsTo String[]  @default([]) @map("connects_to")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([companyId, branchId])
+  @@index([typeId])
+  @@map("rooms")
+}
+
+model MenuCategory {
+  id        String    @id @default(cuid(2))
+  companyId String    @map("company_id")
+  name      String
+  nameHi    String?   @map("name_hi")
+  sort      Int       @default(0)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([companyId])
+  @@map("menu_categories")
+}
+
+model MenuItem {
+  id               String    @id @default(cuid(2))
+  companyId        String    @map("company_id")
+  categoryId       String    @map("category_id")
+  name             String
+  nameHi           String?   @map("name_hi")
+  code             String?
+  /// The stock item it sells (a dish with a recipe, or a stocked item).
+  itemId           String?   @map("item_id")
+  /// VEG | NONVEG | EGG
+  diet             String    @default("VEG")
+  allergens        String[]  @default([])
+  spice            Int       @default(0)
+  photoId          String?   @map("photo_id")
+  hsn              String?
+  taxCode          String?   @map("tax_code")
+  price            BigInt
+  /// [{ key, name, price, itemId, factor }]
+  variants         Json?
+  modifierGroupIds String[]  @default([]) @map("modifier_group_ids")
+  /// [{ menuItemId, qty }]
+  combo            Json?
+  /// [{ fromMin, toMin, days }]
+  windows          Json?
+  outletIds        String[]  @default([]) @map("outlet_ids")
+  active           Boolean   @default(true)
+  /// 86: switched off by a person (with why), until switched on again.
+  off              Boolean   @default(false)
+  offReason        String?   @map("off_reason")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([companyId, categoryId])
+  @@map("menu_items")
+}
+
+model ModifierGroup {
+  id        String    @id @default(cuid(2))
+  companyId String    @map("company_id")
+  name      String
+  min       Int       @default(0)
+  max       Int       @default(1)
+  /// [{ key, name, price, itemId, qty, unit }]
+  options   Json
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([companyId])
+  @@map("modifier_groups")
+}
+
+/// A price that differs at an outlet and / or in a time band.
+model MenuPrice {
+  id         String  @id @default(cuid(2))
+  companyId  String  @map("company_id")
+  menuItemId String  @map("menu_item_id")
+  variantKey String  @default("") @map("variant_key")
+  outletId   String? @map("outlet_id")
+  label      String?
+  /// { fromMin, toMin, days } — null = all day
+  window     Json?
+  price      BigInt
+
+  @@index([companyId, menuItemId])
+  @@map("menu_prices")
+}

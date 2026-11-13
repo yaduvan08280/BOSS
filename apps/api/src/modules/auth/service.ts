@@ -204,6 +204,14 @@ export async function getMe(db: Db, userId: string, appName: string): Promise<Me
       logoUrl: look.logoFileId ? `/api/files/${look.logoFileId}` : null,
       defaultLang: look.defaultLang,
       staffMayPickAccent: look.staffMayPickAccent,
+      // Phase 14: the hospitality menu is shown only to companies that switched it on.
+      hospitality:
+        (
+          await db.hospSettings.findUnique({
+            where: { companyId: user.companyId },
+            select: { enabled: true },
+          })
+        )?.enabled ?? false,
     },
     counters: {
       pendingWork: (await pendingCounts(db, user.companyId, user.id)).total,

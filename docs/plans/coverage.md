@@ -165,3 +165,24 @@ Through the screens (`e2e/phase12m-money.spec.ts`, 380 and 1440): a tax rate and
 | U30 | A **scanned barcode issues the right batch**; a wholesale list gives a dealer a different price than a walk-in | §4 (added 12/11) | `apps/api/src/modules/ims/stock-stories.test.ts` |
 
 Through the screens (`e2e/phase13-stock.spec.ts`, 380 and 1440): a case is received into a store and read as bottles, the item's settings open, a transfer is asked, dispatched, seen on the road and received, a peg recipe is saved with its cost and food-cost %, breakage is recorded, a blind count is submitted, a rate is set on the board (I1–I3, I7, I8, I10, I21, I24, I25, U28). Screens exist but are not browser-tested for: goods receipts, production, price lists, expiry and value tabs, approving a transfer in part, receiving with differences, approving waste and counts. API only (no screen): supply routes, par levels and the reorder list, vendor returns, the counter sale and price check, category attributes, the location register, the variance report, piece history, valuation method and the other stock rules.
+
+## Phase 14 — Hospitality set-up and menu (16 rows; drafted from the plan §5 on 13/11/2026, not yet reviewed by GGM)
+
+| # | Row | Plan | Test |
+|---|---|---|---|
+| S1 | Hospitality is **switched on per company** by an admin; its menu section is shown only then | §5 | `apps/api/src/modules/hosp/hosp.test.ts` |
+| S2 | **Outlets** (restaurant, bar, café, room service, banquet, pool bar, counter): branch, stock location of that branch, price list, timings, charges; people see only their branches' outlets | §5 | `apps/api/src/modules/hosp/hosp.test.ts` |
+| S3 | **Kitchen stations** per outlet (kitchen, tandoor, bar, dessert …) | §5 | `apps/api/src/modules/hosp/hosp.test.ts` |
+| S4 | **Floors & tables**: tables with seats, shape, section, combinable, stewards; many at once on a grid; dragged to their place | §5 | `apps/api/src/modules/hosp/hosp.test.ts` (drag is saved through the move call) |
+| S5 | **Room types**: occupancy, beds, amenities, photos, the declared tariff | §5 | `apps/api/src/modules/hosp/hosp.test.ts` (photos are ids only; no upload test) |
+| S6 | **Rooms**: number, floor, type, features, **connecting rooms** known to both sides; a range at once | §5 | `apps/api/src/modules/hosp/hosp.test.ts` |
+| S7 | **Taxes & charges**: tax codes are the accountant's (none built in); a voluntary service charge %, packaging, delivery, round-off per outlet | §5 | `apps/api/src/modules/hosp/hosp.test.ts` (charges stored and validated; removing the service charge from a bill and the room-tariff slab are used in phases 15 and 17 — the slab rule itself is U15) |
+| S8 | **Printers & stations**: KOT routing category → station → printer / display; a bill printer per outlet | §5 | `apps/api/src/modules/hosp/hosp.test.ts` |
+| S9 | **Payment modes**: wallet, room charge, company credit, complimentary beside cash / UPI / card; which need a reference | §5 | `apps/api/src/modules/hosp/hosp.test.ts` |
+| S10 | **Discounts & approvals**: discount types (%, ₹, item, bill), limits per role, approvers above the limit, no-charge reasons | §5 | `packages/shared/src/hosp/hosp.test.ts`, `apps/api/src/modules/hosp/hosp.test.ts` |
+| S11 | **Day-close rules**: business-day cut-off, who closes, cash denominations, blind cash count | §5 | `packages/shared/src/hosp/hosp.test.ts`, `apps/api/src/modules/hosp/hosp.test.ts` |
+| S12 | **Menu items** in categories, linked to a stock item and its recipe; veg / non-veg / egg, allergens, spice, Hindi name, HSN / SAC and tax code | §5 | `apps/api/src/modules/hosp/menu.test.ts` (photos are ids only) |
+| S13 | **Variants** (half / full), **modifiers and add-ons** with a stock effect, **combos** | §5 | `apps/api/src/modules/hosp/menu.test.ts` |
+| S14 | **Price per outlet and per time band** (happy hour) and **availability windows** (breakfast) | §5 | `packages/shared/src/hosp/hosp.test.ts`, `apps/api/src/modules/hosp/menu.test.ts` |
+| S15 | **86 / out of stock**: by hand with a reason, and by itself when the outlet's stock can't make one (per variant) | §5 | `apps/api/src/modules/hosp/menu.test.ts` |
+| S16 | **The set-up story**: an outlet with 3 stations, a floor of 20 tables, 40 rooms of 4 types, a menu of 120 items with variants and modifiers, charges | §5 | `packages/shared/src/hosp/hosp.test.ts`, `apps/api/src/modules/hosp/menu.test.ts` (through the calls the screens make; the browser test covers a smaller set-up) |

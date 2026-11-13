@@ -72,3 +72,5 @@ export * from './ims/units';
 export * from './ims/recipe';
 export * from './ims/pricing';
 export * from './machines/stock';
+export * from './hosp/setup';
+export * from './hosp/menu';

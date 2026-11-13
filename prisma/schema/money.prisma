@@ -68,8 +68,10 @@ model PaymentMode {
   companyId String    @map("company_id")
   branchId  String?   @map("branch_id")
   name      String
-  /// CASH | UPI | CARD | BANK | CREDIT
+  /// CASH | UPI | CARD | BANK | CREDIT | WALLET | ROOM | COMPANY | COMPLIMENTARY
   kind      String
+  /// A reference must be typed when money is taken this way (UTR, slip no., room no.).
+  needsRef  Boolean   @default(false) @map("needs_ref")
   active    Boolean   @default(true)
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)

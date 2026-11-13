@@ -9,12 +9,24 @@ import { can, type Actor } from '../work/actor';
  * credit — and the day close: for each mode, what the papers of the day say should be there against what was
  * counted. The difference is kept, never corrected silently.
  */
-export const MODE_KINDS = ['CASH', 'UPI', 'CARD', 'BANK', 'CREDIT'] as const;
+export const MODE_KINDS = [
+  'CASH',
+  'UPI',
+  'CARD',
+  'BANK',
+  'CREDIT',
+  'WALLET',
+  'ROOM',
+  'COMPANY',
+  'COMPLIMENTARY',
+] as const;
 export const modeSchema = z.object({
   name: z.string().trim().min(1).max(40),
   kind: z.enum(MODE_KINDS),
   branchId: z.string().max(40).nullish(),
   active: z.boolean().default(true),
+  /** A reference must be typed when money is taken this way (UTR, slip number, room number). */
+  needsRef: z.boolean().default(false),
 });
 
 const needAdmin = (a: Actor) => {
@@ -40,7 +52,13 @@ export async function saveMode(db: Db, actor: Actor, input: z.infer<typeof modeS
     !(await db.branch.count({ where: { id: input.branchId, companyId: actor.companyId } }))
   )
     throw notFound('Branch');
-  const data = { name: input.name, kind: input.kind, branchId: input.branchId ?? null, active: input.active };
+  const data = {
+    name: input.name,
+    kind: input.kind,
+    branchId: input.branchId ?? null,
+    active: input.active,
+    needsRef: input.needsRef ?? false,
+  };
   if (id) {
     const res = await db.paymentMode.updateMany({ where: { id, companyId: actor.companyId }, data });
     if (!res.count) throw notFound('Payment mode');

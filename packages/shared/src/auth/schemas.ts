@@ -63,6 +63,7 @@ export const meSchema = z.object({
     logoUrl: z.string().nullable(),
     defaultLang: z.enum(LANGUAGES),
     staffMayPickAccent: z.boolean(),
+    hospitality: z.boolean().default(false),
   }),
   counters: z.object({ pendingWork: z.number().int(), unreadNotifications: z.number().int() }),
 });
