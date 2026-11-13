@@ -363,7 +363,7 @@ async function allocate(tx: Tx, money: Bill, named?: { billId: string; amount: n
 }
 
 /** One amount set against one paper (negative takes it back): the paper's `settled` and status follow. */
-async function settle(tx: Tx, bill: Bill, paymentId: string, amount: number) {
+export async function settle(tx: Tx, bill: Bill, paymentId: string, amount: number) {
   const settled = bill.settled + BigInt(amount);
   const to = transition(billMachine, {
     from: bill.status as 'ISSUED',

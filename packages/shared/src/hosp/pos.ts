@@ -53,10 +53,16 @@ export const addItemsSchema = z.object({
 });
 export type OrderItemInput = z.infer<typeof orderItemSchema>;
 
-export type TableState = 'FREE' | 'SEATED' | 'ORDERED' | 'BILLED' | 'PAID';
-/** A table's colour on the floor, from its running order: nothing fired = seated; fired = ordered; billed; paid. */
-export function tableState(order: { status: string; fired: number } | null | undefined): TableState {
-  if (!order) return 'FREE';
+export type TableState = 'FREE' | 'RESERVED' | 'SEATED' | 'ORDERED' | 'BILLED' | 'PAID';
+/**
+ * A table's colour on the floor, from its running order: nothing fired = seated; fired = ordered; billed; paid.
+ * With no order, a booking due soon makes it reserved.
+ */
+export function tableState(
+  order: { status: string; fired: number } | null | undefined,
+  reserved = false,
+): TableState {
+  if (!order) return reserved ? 'RESERVED' : 'FREE';
   if (order.status === 'PAID') return 'PAID';
   if (order.status === 'BILLED') return 'BILLED';
   return order.fired > 0 ? 'ORDERED' : 'SEATED';

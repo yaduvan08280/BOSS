@@ -77,3 +77,5 @@ export * from './hosp/menu';
 export * from './hosp/pos';
 export * from './hosp/escpos';
 export * from './machines/pos';
+export * from './hosp/reservations';
+export * from './machines/reservation';

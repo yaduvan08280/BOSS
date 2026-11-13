@@ -23,6 +23,7 @@ import {
   applyBranchMoves,
   carryOverCrm,
   sendQueuedPrints,
+  reservationSweep,
   watchRenewals,
   settleAttendance,
   watchAbsences,
@@ -220,6 +221,9 @@ await boss.work(
     await remindChecklists(prisma);
     // POS: kitchen tickets and bills that have not reached their network printer yet are tried again.
     await sendQueuedPrints(prisma);
+    // Reservations: reminders, no-shows once the hold time has passed, requests nobody confirmed.
+    const bookings = await reservationSweep(prisma);
+    if (bookings.reminded || bookings.noShows || bookings.lapsed) log.info({ bookings }, 'Reservations');
     await expireChecklists(prisma);
     const briefs = await eaJobs(prisma);
     const mis = await sendWeeklyMis(prisma);

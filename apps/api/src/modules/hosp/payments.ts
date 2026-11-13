@@ -15,9 +15,11 @@ import { emitEvent } from '../../lib/events';
 import { applyMove } from '../ims/moves';
 import { booksOf } from '../ims/recipes';
 import { createBillIn, voidBill } from '../money/bills';
+import { releaseCredit } from '../money/credit';
 import type { Actor } from '../work/actor';
 import { ctxOf, need } from './access';
 import { checkView, creditOf, type Payment } from './checks-read';
+import { finishForOrder } from './res-finish';
 import { isApprover, live, loadOrder, needOpenDay, type LoadedOrder, type PosOutlet } from './pos-core';
 
 /**
@@ -90,7 +92,7 @@ async function consumeOrder(tx: Tx, actor: Actor, outlet: PosOutlet, order: Load
 }
 
 /** After a check changes: the order is paid when every live item is on a paid check. */
-async function settleOrder(tx: Tx, actor: Actor, outlet: PosOutlet, orderId: string) {
+export async function settleOrder(tx: Tx, actor: Actor, outlet: PosOutlet, orderId: string) {
   const order = await tx.posOrder.findUniqueOrThrow({
     where: { id: orderId },
     include: { items: { orderBy: { createdAt: 'asc' } } },
@@ -112,6 +114,7 @@ async function settleOrder(tx: Tx, actor: Actor, outlet: PosOutlet, orderId: str
       data: { status: 'SERVED' },
     });
     await consumeOrder(tx, actor, outlet, order);
+    if (order.reservationId) await finishForOrder(tx, ctxOf(actor), order.reservationId);
     await emitEvent(tx, ctxOf(actor), {
       name: 'pos.order_paid',
       entityType: 'pos_order',
@@ -354,6 +357,17 @@ export async function cancelCheck(
 /** Money taken on a bill that is being cancelled is voided in the money core (which puts back what it settled). */
 export async function refund(db: Db, actor: Actor, payments: unknown) {
   const accounts = { ...actor, permissions: [...actor.permissions, 'money.edit'] } as Actor;
-  for (const p of (payments as Payment[] | null) ?? [])
-    if (p.receiptId) await voidBill(db, accounts, p.receiptId, 'Bill cancelled');
+  for (const p of (payments as Payment[] | null) ?? []) {
+    // A deposit that was used on the bill is not money to hand back here: it is the guest's unused advance again.
+    if (p.advanceId && p.billId) {
+      const { advanceId, billId } = p;
+      await db.$transaction(async (tx) => {
+        await releaseCredit(tx, actor.companyId, advanceId, billId);
+        await tx.reservation.updateMany({
+          where: { companyId: actor.companyId, depositBillId: advanceId, depositState: 'USED' },
+          data: { depositState: 'PAID' },
+        });
+      });
+    } else if (p.receiptId) await voidBill(db, accounts, p.receiptId, 'Bill cancelled');
+  }
 }

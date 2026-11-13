@@ -28,6 +28,10 @@ model Outlet {
   /// { serviceChargePct, packagingPaise, deliveryPaise, roundTo, chargeTaxCode }
   charges       Json
   billPrinterId String?   @map("bill_printer_id")
+  /// Booking rules (Phase 16); absent = the defaults.
+  booking       Json?
+  /// The outlet's public booking link.
+  bookingToken  String?   @unique @map("booking_token")
   active        Boolean   @default(true)
   createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)

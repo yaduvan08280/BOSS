@@ -79,6 +79,9 @@ export type Payment = {
   receiptId: string | null;
   byId: string;
   at: string;
+  /** An advance (a table deposit) set against the bill, and the bill it was set against. */
+  advanceId?: string;
+  billId?: string;
 };
 /** What was put on a company's account rather than paid: it stays owed in the money core. */
 export const creditOf = (payments: unknown) =>

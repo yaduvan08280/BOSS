@@ -1,5 +1,5 @@
 import type { Db } from '@mono/db';
-import { tableState } from '@mono/shared';
+import { bookingSchema, slotLabel, tableState } from '@mono/shared';
 import type { Actor } from '../work/actor';
 import { need } from './access';
 import { dayAt, firedCount, live, loadOrder, posOutlet, type LoadedOrder } from './pos-core';
@@ -51,7 +51,10 @@ export async function getOrder(db: Db, actor: Actor, orderId: string) {
 export async function floorView(db: Db, actor: Actor, outletId: string) {
   need(actor, 'hosp.view', "You can't see hospitality");
   const outlet = await posOutlet(db, actor, outletId);
-  const [floors, tables, orders] = await Promise.all([
+  // A booking due soon keeps its table: the floor shows it as reserved from a while before (the outlet's rule).
+  const rules = bookingSchema.safeParse(outlet.booking ?? {});
+  const holdFrom = new Date(Date.now() + (rules.success ? rules.data.floorHoldMin : 30) * 60_000);
+  const [floors, tables, orders, booked] = await Promise.all([
     db.floor.findMany({
       where: { companyId: actor.companyId, outletId, deletedAt: null },
       orderBy: [{ sort: 'asc' }, { createdAt: 'asc' }],
@@ -65,7 +68,25 @@ export async function floorView(db: Db, actor: Actor, outletId: string) {
       include: { items: true },
       orderBy: { openedAt: 'asc' },
     }),
+    db.reservation.findMany({
+      where: {
+        companyId: actor.companyId,
+        outletId,
+        status: { in: ['REQUESTED', 'CONFIRMED', 'REMINDED', 'ARRIVED'] },
+        startAt: { lte: holdFrom },
+        endAt: { gt: new Date() },
+      },
+      orderBy: { startAt: 'asc' },
+    }),
   ]);
+  const guests = new Map(
+    (
+      await db.guest.findMany({
+        where: { id: { in: booked.map((b) => b.guestId) } },
+        select: { id: true, name: true },
+      })
+    ).map((g) => [g.id, g.name]),
+  );
   const brief = (o: LoadedOrder) => ({
     id: o.id,
     number: o.number,
@@ -88,6 +109,7 @@ export async function floorView(db: Db, actor: Actor, outletId: string) {
         .filter((t) => t.floorId === f.id)
         .map((t) => {
           const order = orders.find((o) => o.tableIds.includes(t.id)) ?? null;
+          const res = booked.find((b) => b.tableIds.includes(t.id)) ?? null;
           return {
             id: t.id,
             name: t.name,
@@ -95,8 +117,20 @@ export async function floorView(db: Db, actor: Actor, outletId: string) {
             shape: t.shape,
             x: t.x,
             y: t.y,
-            state: tableState(order ? { status: order.status, fired: firedCount(order) } : null),
+            state: tableState(
+              order ? { status: order.status, fired: firedCount(order) } : null,
+              Boolean(res),
+            ),
             order: order ? brief(order) : null,
+            reservation: res
+              ? {
+                  id: res.id,
+                  time: slotLabel(res.startMin),
+                  name: guests.get(res.guestId) ?? '',
+                  size: res.partySize,
+                  status: res.status,
+                }
+              : null,
           };
         }),
     })),

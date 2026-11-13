@@ -12,52 +12,52 @@ model ImsRules {
 }
 
 model Item {
-  id           String    @id @default(cuid(2))
-  companyId    String    @map("company_id")
-  code         String
-  name         String
-  unit         String    @default("pcs")
-  category     String?
-  location     String?
-  leadTimeDays Int       @default(7) @map("lead_time_days")
-  safetyFactor Decimal   @default(1.5) @map("safety_factor") @db.Decimal(5, 2)
+  id            String    @id @default(cuid(2))
+  companyId     String    @map("company_id")
+  code          String
+  name          String
+  unit          String    @default("pcs")
+  category      String?
+  location      String?
+  leadTimeDays  Int       @default(7) @map("lead_time_days")
+  safetyFactor  Decimal   @default(1.5) @map("safety_factor") @db.Decimal(5, 2)
   /// Worked out by the MAX review (or set by hand); null = not set yet.
-  maxQty       Decimal?  @map("max_qty") @db.Decimal(14, 3)
-  minQty       Decimal?  @map("min_qty") @db.Decimal(14, 3)
+  maxQty        Decimal?  @map("max_qty") @db.Decimal(14, 3)
+  minQty        Decimal?  @map("min_qty") @db.Decimal(14, 3)
   /// Paise per unit.
-  rate         BigInt    @default(0)
-  vendor       String?
+  rate          BigInt    @default(0)
+  vendor        String?
   /// Current stock: every applied move changes it in the same transaction.
-  stock        Decimal   @default(0) @db.Decimal(14, 3)
-  active       Boolean   @default(true)
-  lastMovedAt  DateTime? @map("last_moved_at") @db.Timestamptz(3)
-  lastReviewAt DateTime? @map("last_review_at") @db.Timestamptz(3)
+  stock         Decimal   @default(0) @db.Decimal(14, 3)
+  active        Boolean   @default(true)
+  lastMovedAt   DateTime? @map("last_moved_at") @db.Timestamptz(3)
+  lastReviewAt  DateTime? @map("last_review_at") @db.Timestamptz(3)
   /// The band after the last move (for "turned red / purple" alerts).
-  band         String    @default("none")
+  band          String    @default("none")
   /// Phase 13. QTY | BATCH (batch + expiry) | SERIAL (each piece its own number) | LOT (attributes).
-  tracking     String    @default("QTY")
+  tracking      String    @default("QTY")
   /// BUY (bought, stocked) | MAKE (produced, stocked) | DISH (never stocked: sold through its recipe).
-  made         String    @default("BUY")
+  made          String    @default("BUY")
   /// Other units of the item: [{ unit, factor }] — one of it = factor stock units.
-  units        Json?
-  purchaseUnit String?   @map("purchase_unit")
+  units         Json?
+  purchaseUnit  String?   @map("purchase_unit")
   /// A second unit kept beside the quantity (pieces and grams); `pricedBy` says which one is priced.
-  secondUnit   String?   @map("second_unit")
-  pricedBy     String    @default("unit") @map("priced_by")
-  barcode      String?
-  brand        String?
-  hsn          String?
+  secondUnit    String?   @map("second_unit")
+  pricedBy      String    @default("unit") @map("priced_by")
+  barcode       String?
+  brand         String?
+  hsn           String?
   /// A tax code from the money core's tax rates.
-  taxCode      String?   @map("tax_code")
+  taxCode       String?   @map("tax_code")
   /// Selling price in minor units (food cost % and counter sales when no price list holds the item).
-  sellPrice    BigInt?   @map("sell_price")
+  sellPrice     BigInt?   @map("sell_price")
   /// Priced from the rate board: the board's key and the factor (purity) applied to the weight.
-  rateKey      String?   @map("rate_key")
-  rateFactor   Decimal?  @map("rate_factor") @db.Decimal(8, 4)
-  shelfLifeDays Int?     @map("shelf_life_days")
-  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(3)
+  rateKey       String?   @map("rate_key")
+  rateFactor    Decimal?  @map("rate_factor") @db.Decimal(8, 4)
+  shelfLifeDays Int?      @map("shelf_life_days")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(3)
 
   moves     StockMove[]
   snapshots StockSnapshot[]

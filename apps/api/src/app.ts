@@ -40,6 +40,7 @@ import { imsRoutes } from './modules/ims/routes';
 import { stockRoutes } from './modules/ims/stock-routes';
 import { hospRoutes } from './modules/hosp/routes';
 import { posRoutes } from './modules/hosp/pos-routes';
+import { reservationRoutes } from './modules/hosp/res-routes';
 import { crmRoutes } from './modules/crm/routes';
 import { masterRoutes } from './modules/masters/routes';
 import { recordRoutes } from './modules/records/routes';
@@ -154,6 +155,7 @@ export async function buildApp(opts: BuildOptions) {
   await app.register(stockRoutes);
   await app.register(hospRoutes);
   await app.register(posRoutes);
+  await app.register(reservationRoutes, { env: opts.env });
   await app.register(crmRoutes);
   await app.register(masterRoutes);
   await app.register(recordRoutes);

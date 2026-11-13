@@ -1,0 +1,101 @@
+// Phase 16 — Table reservations, the waitlist and guest profiles.
+
+/// A guest: one per mobile number in a company, shared by the restaurants and (Phase 17) the hotel.
+model Guest {
+  id          String    @id @default(cuid(2))
+  companyId   String    @map("company_id")
+  /// E.164
+  mobile      String
+  name        String
+  email       String?
+  /// YYYY-MM-DD (year 0000 when not given)
+  birthday    String?
+  anniversary String?
+  allergies   String?
+  preferences String?
+  notes       String?
+  tags        String[]  @default([])
+  /// The marketing consent as it stands: { marketing, source, at, byId, note }
+  consent     Json?
+  /// Every time it was given or taken back, oldest first.
+  consentLog  Json?     @map("consent_log")
+  /// The guest's party in the money core (made when a paper first needs one).
+  partyId     String?   @map("party_id")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@unique([companyId, mobile])
+  @@index([companyId, name])
+  @@map("guests")
+}
+
+/// A table booking at an outlet.
+model Reservation {
+  id            String    @id @default(cuid(2))
+  companyId     String    @map("company_id")
+  branchId      String    @map("branch_id")
+  outletId      String    @map("outlet_id")
+  number        Int
+  guestId       String    @map("guest_id")
+  /// The outlet's local day and the minutes from its midnight (past 1440 = after midnight).
+  day           String
+  startMin      Int       @map("start_min")
+  durationMin   Int       @map("duration_min")
+  startAt       DateTime  @map("start_at") @db.Timestamptz(3)
+  endAt         DateTime  @map("end_at") @db.Timestamptz(3)
+  partySize     Int       @map("party_size")
+  tableIds      String[]  @default([]) @map("table_ids")
+  status        String    @default("REQUESTED")
+  source        String    @default("PHONE")
+  occasion      String?
+  requests      String?
+  note          String?
+  /// What must be paid to hold the table (0 = nothing), the ADVANCE paper once paid, and what became of it:
+  /// DUE | PAID | USED | KEPT | REFUNDED
+  depositDue    BigInt    @default(0) @map("deposit_due")
+  depositBillId String?   @map("deposit_bill_id")
+  depositState  String?   @map("deposit_state")
+  orderId       String?   @map("order_id")
+  /// The guest's own link to see or cancel the booking.
+  token         String    @unique
+  remindedAt    DateTime? @map("reminded_at") @db.Timestamptz(3)
+  arrivedAt     DateTime? @map("arrived_at") @db.Timestamptz(3)
+  seatedAt      DateTime? @map("seated_at") @db.Timestamptz(3)
+  finishedAt    DateTime? @map("finished_at") @db.Timestamptz(3)
+  cancelledAt   DateTime? @map("cancelled_at") @db.Timestamptz(3)
+  cancelReason  String?   @map("cancel_reason")
+  createdById   String?   @map("created_by_id")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([companyId, outletId, day])
+  @@index([companyId, status, startAt])
+  @@index([companyId, guestId])
+  @@map("reservations")
+}
+
+/// A party waiting for a table.
+model WaitlistEntry {
+  id          String    @id @default(cuid(2))
+  companyId   String    @map("company_id")
+  branchId    String    @map("branch_id")
+  outletId    String    @map("outlet_id")
+  guestId     String?   @map("guest_id")
+  name        String
+  mobile      String?
+  partySize   Int       @map("party_size")
+  /// The wait quoted when they were added, minutes.
+  quotedMin   Int?      @map("quoted_min")
+  status      String    @default("WAITING")
+  note        String?
+  orderId     String?   @map("order_id")
+  calledAt    DateTime? @map("called_at") @db.Timestamptz(3)
+  seatedAt    DateTime? @map("seated_at") @db.Timestamptz(3)
+  leftAt      DateTime? @map("left_at") @db.Timestamptz(3)
+  createdById String?   @map("created_by_id")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([companyId, outletId, status])
+  @@map("waitlist_entries")
+}
