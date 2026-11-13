@@ -45,7 +45,7 @@ export function useSearch(q: string, me: Me) {
   return useMemo<SearchHit[]>(() => {
     if (!needle) return [];
     const screens: SearchHit[] = ALL_ITEMS.filter(
-      (i) => i.key !== 'uiKit' && navAllowed(i, me.user.permissions) && (i.tag !== 'setup' || admin),
+      (i) => i.key !== 'uiKit' && navAllowed(i, me.user.permissions, me.company) && (i.tag !== 'setup' || admin),
     )
       .filter((i) =>
         [
@@ -84,5 +84,5 @@ export function useSearch(q: string, me: Me) {
       to: admin ? `/system/users?dept=${d.id}` : '/',
     }));
     return [...screens, ...people, ...departments];
-  }, [needle, debounced, remote.data, admin, me.user.permissions, t]);
+  }, [needle, debounced, remote.data, admin, me.user.permissions, me.company, t]);
 }

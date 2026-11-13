@@ -1,6 +1,8 @@
 import {
   Bug,
   BadgeIndianRupee,
+  ConciergeBell,
+  UtensilsCrossed,
   Tags,
   Trash2,
   PackageCheck,
@@ -76,6 +78,8 @@ export type NavItem = {
     | 'setup';
   /** Shown only to people with this permission. */
   permission?: PermissionKey;
+  /** Shown only when the company has switched this module on. */
+  needs?: 'hospitality';
 };
 
 export type NavSection = { key: string; items: NavItem[] };
@@ -266,6 +270,20 @@ export const WORKSPACE_NAV: NavSection[] = [
     ],
   },
   {
+    key: 'hospitality',
+    items: [
+      {
+        key: 'hospMenu',
+        path: '/hosp/menu',
+        icon: UtensilsCrossed,
+        phase: 0,
+        tag: 'systems',
+        permission: 'hosp.view',
+        needs: 'hospitality',
+      },
+    ],
+  },
+  {
     key: 'masters',
     items: [
       { key: 'myMasters', path: '/masters', icon: Boxes, phase: 0, tag: 'masters' },
@@ -295,6 +313,7 @@ export const SYSTEM_NAV: NavSection[] = [
       { key: 'groupBranches', path: '/system/branches', icon: GitFork, phase: 0, tag: 'setup' },
       { key: 'integration', path: '/system/integration', icon: Plug, phase: 0, tag: 'messaging' },
       { key: 'inventorySetup', path: '/system/inventory', icon: Package, phase: 0, tag: 'setup' },
+      { key: 'hospitalitySetup', path: '/system/hospitality', icon: ConciergeBell, phase: 0, tag: 'setup' },
       { key: 'crmSetup', path: '/system/crm', icon: ClipboardCheck, phase: 0, tag: 'setup' },
       { key: 'apiKeys', path: '/system/api-keys', icon: KeyRound, phase: 0, tag: 'setup' },
       { key: 'hrRules', path: '/system/hr-rules', icon: UserCog, phase: 0, tag: 'setup' },
@@ -316,5 +335,10 @@ export function findNavItem(pathname: string): NavItem | undefined {
 }
 
 /** Screens behind a permission (Payroll) are left out of menus, Home and search for everyone else. */
-export const navAllowed = (item: NavItem, permissions: readonly string[]) =>
-  !item.permission || hasPermission(permissions, item.permission);
+export const navAllowed = (
+  item: NavItem,
+  permissions: readonly string[],
+  company?: { hospitality?: boolean },
+) =>
+  (!item.permission || hasPermission(permissions, item.permission)) &&
+  (!item.needs || company?.[item.needs] === true);

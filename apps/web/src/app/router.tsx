@@ -95,6 +95,8 @@ const StockReceiptsPage = page(() => import('@/modules/stock/ReceiptsPage'), 'Re
 const StockWastagePage = page(() => import('@/modules/stock/WastagePage'), 'WastagePage');
 const StockCountsPage = page(() => import('@/modules/stock/CountsPage'), 'CountsPage');
 const StockPricesPage = page(() => import('@/modules/stock/PricesPage'), 'PricesPage');
+const HospMenuPage = page(() => import('@/modules/hosp/MenuPage'), 'MenuPage');
+const HospitalitySetupTab = page(() => import('@/modules/hosp/SetupTab'), 'HospitalitySetupTab');
 const ReportsPage = page(() => import('@/modules/reports/ReportsPage'), 'ReportsPage');
 const ReportBuilderPage = page(() => import('@/modules/reports/ReportBuilderPage'), 'ReportBuilderPage');
 const RulesWizard = page(() => import('@/modules/hr/RulesWizard'), 'RulesWizard');
@@ -162,6 +164,7 @@ export const router = createBrowserRouter([
       { path: '/records/:typeId', element: <WithMe render={(me) => <RecordListPage me={me} />} /> },
       { path: '/reports', element: <ReportsPage /> },
       { path: '/outlets', element: <OutletsPage /> },
+      { path: '/hosp/menu', element: <WithMe render={(me) => <HospMenuPage me={me} />} /> },
       { path: '/ims/locations', element: <WithMe render={(me) => <StockLocationsPage me={me} />} /> },
       { path: '/ims/transfers', element: <WithMe render={(me) => <StockTransfersPage me={me} />} /> },
       { path: '/ims/kitchen', element: <WithMe render={(me) => <StockKitchenPage me={me} />} /> },
@@ -208,6 +211,7 @@ export const router = createBrowserRouter([
               { path: 'business-details', element: <BusinessDetailsPage /> },
               { path: 'hr-rules', element: <RulesWizard /> },
               { path: 'inventory', element: <InventorySetup /> },
+              { path: 'hospitality', element: <HospitalitySetupTab /> },
               { path: 'crm', element: <CrmFieldsTab /> },
               { path: 'engine', element: <EnginePage /> },
               { path: 'api-keys', element: <ApiKeysTab /> },

@@ -53,7 +53,7 @@ export function Sidebar({ me, sections, collapsed = false, onToggle, onNavigate,
             )}
             <ul className="space-y-0.5">
               {section.items
-                .filter((i) => navAllowed(i, me.user.permissions))
+                .filter((i) => navAllowed(i, me.user.permissions, me.company))
                 .map((item) => (
                   <li key={item.key}>
                     <NavLink

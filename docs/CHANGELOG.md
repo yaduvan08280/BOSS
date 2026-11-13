@@ -1,5 +1,33 @@
 # Changelog
 
+## Phase 14 — Hospitality set-up and menu (13/11/2026)
+
+Everything a restaurant, bar or hotel sets up before the first order. Plan: `docs/plans/hospitality-100-plan.md`
+§5; rows S1–S16 in `docs/plans/coverage.md`. Hospitality is **off** until a company switches it on
+(System Master → Hospitality); companies that don't use it see nothing new.
+
+- **Outlets** (restaurant, bar, café, room service, banquet, pool bar, counter): the branch, the location stock is
+  taken from, opening hours, a **voluntary service charge %**, packaging and delivery charges, round-off, a bill
+  printer, and the outlet's **kitchen stations**.
+- **Floors & tables**: a floor plan per outlet — add tables one by one or many at once, drag them to their place,
+  seats, shape, section, joinable tables.
+- **Rooms**: room types (guests, beds, amenities, the declared tariff) and rooms by number, a range at once,
+  connecting rooms known to both sides.
+- **Printers & stations**: network or site-agent printers, and which station each menu category's tickets go to.
+- **Discounts, day close & payments**: discount types, what each role may give by itself (anything above waits for
+  an approver), no-charge reasons, the business day's cut-off, the notes counted, a blind cash count; payment modes
+  for wallet, room charge, company credit and complimentary, and which need a reference.
+- **Menu** (Hospitality → Menu): categories, items linked to a stock item and its recipe, veg / non-veg / egg,
+  spice, allergens, Hindi names, HSN and tax code, **variants** (half / full), add-on groups with a stock effect,
+  combos, prices per outlet and time band, availability windows, and **86**: switched off by hand with a reason, or
+  by itself when the outlet's stock can't make one. A whole menu can be pasted in (all or nothing, problems by line).
+- New rights `hosp.view / create / edit / approve / admin`; an outlet manager limited to a branch sees and changes
+  only that branch's outlets and rooms.
+
+Not done here: screens for modifier groups, combos, time-band prices and availability windows (their API is
+tested), photos for rooms and dishes, the POS itself (Phase 15). Tax codes are the ones the accountant typed in
+Money set-up; none is built in. Hindi strings need review.
+
 ## Phase 13 — Inventory v2: stock per location (13/11/2026)
 
 Stock is now kept where it is. Plan: `docs/plans/hospitality-100-plan.md` §4 and §3.6; rows I1–I30 and U23–U30 in

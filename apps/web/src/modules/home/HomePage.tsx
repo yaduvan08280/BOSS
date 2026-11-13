@@ -85,13 +85,13 @@ export function HomePage({ me }: { me: Me }) {
       (i) =>
         i.key !== 'home' &&
         i.key !== 'uiKit' &&
-        navAllowed(i, me.user.permissions) &&
+        navAllowed(i, me.user.permissions, me.company) &&
         (i.tag !== 'setup' && i.tag !== 'messaging' ? true : admin),
     );
     const inChip = visible.filter((i) => (chip === 'all' ? i.tag !== 'setup' : i.tag === chip));
     const rank = (i: NavItem) => (favourites.includes(i.key) ? 0 : 1);
     return [...inChip].sort((a, b) => rank(a) - rank(b));
-  }, [chip, favourites, admin, me.user.permissions]);
+  }, [chip, favourites, admin, me.user.permissions, me.company]);
 
   return (
     <div className="mx-auto max-w-4xl">
