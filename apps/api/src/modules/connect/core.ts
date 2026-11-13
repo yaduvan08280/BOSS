@@ -11,7 +11,14 @@ import { assertPublicUrl } from '../platform/safe-url';
  */
 export type Fetch = (url: string, init?: RequestInit) => Promise<Response>;
 /** `secret`: APP_SECRET. `fetch`: the network (tests pass their own). `production`: https only, public addresses only. `baseUrl`: where MONO itself is reached. */
-export type Net = { secret: string; fetch?: Fetch; production?: boolean; baseUrl?: string };
+export type Net = {
+  secret: string;
+  fetch?: Fetch;
+  production?: boolean;
+  baseUrl?: string;
+  /** Private addresses may be called (never in production): a provider's test server on the same network. */
+  allowPrivate?: boolean;
+};
 export type Opened = Connection & { keys: Record<string, string> };
 export type ConnMeta = {
   rooms?: { roomTypeId: string; code: string }[];
@@ -73,7 +80,8 @@ export async function callOut(db: Db, net: Net, conn: Connection, c: Call) {
   let json: unknown = null;
   let error: string | null = null;
   try {
-    if (!net.fetch) await assertPublicUrl(c.url, { production: net.production ?? false });
+    if (!net.fetch)
+      await assertPublicUrl(c.url, { production: net.production ?? false, allowPrivate: net.allowPrivate });
     const headers: Record<string, string> = { accept: 'application/json', ...(c.headers ?? {}) };
     if (c.basic)
       headers.authorization = `Basic ${Buffer.from(`${c.basic[0]}:${c.basic[1]}`).toString('base64')}`;
@@ -155,8 +163,14 @@ export const logIn = (
   });
 
 /** The network as the running server sees it. */
-export const connectNet = (env: { APP_SECRET: string; NODE_ENV: string; BASE_URL: string }): Net => ({
+export const connectNet = (env: {
+  APP_SECRET: string;
+  NODE_ENV: string;
+  BASE_URL: string;
+  WEBHOOK_ALLOW_PRIVATE?: boolean;
+}): Net => ({
   secret: env.APP_SECRET,
   production: env.NODE_ENV === 'production',
   baseUrl: env.BASE_URL,
+  allowPrivate: Boolean(env.WEBHOOK_ALLOW_PRIVATE) && env.NODE_ENV !== 'production',
 });

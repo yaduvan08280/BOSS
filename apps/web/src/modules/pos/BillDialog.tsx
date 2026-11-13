@@ -1,3 +1,4 @@
+import { PayLinkButton } from '@/modules/connect/PayLinkButton';
 import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -176,6 +177,7 @@ export function BillDialog({
               {t('pos.payUpi', { amount: rupees(made.due) })}
             </a>
           )}
+          {made.status === 'OPEN' && <PayLinkButton purpose="POS_CHECK" refId={made.id} />}
           {made.status === 'OPEN' && (
             <div className="space-y-2">
               {pays.map((p, i) => (

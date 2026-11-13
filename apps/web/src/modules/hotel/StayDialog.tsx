@@ -1,3 +1,4 @@
+import { PayLinkButton } from '@/modules/connect/PayLinkButton';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StatusChip } from '@/components/status-chip';
@@ -199,6 +200,13 @@ export function StayDialog({
             >
               {t('hotel.takeAdvance')}
             </Button>
+            <div className="sm:col-span-4">
+              <PayLinkButton
+                purpose="STAY_ADVANCE"
+                refId={id}
+                amount={Number(f.amount) > 0 ? Math.round(Number(f.amount) * 100) : undefined}
+              />
+            </div>
           </div>
         )}
         {pane === 'move' && (

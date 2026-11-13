@@ -1,3 +1,4 @@
+import { AggregatorTag } from '@/modules/connect/AggregatorTag';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -153,6 +154,11 @@ export function OrderPanel({
         <ErrorState onRetry={() => void order.refetch()} />
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+          {(o.aggregator || (open && ['TAKEAWAY', 'DELIVERY'].includes(o.type))) && (
+            <div className="lg:col-span-2">
+              <AggregatorTag order={o} canTag={open} />
+            </div>
+          )}
           {open && (
             <section className="min-w-0">
               <div className="-mx-1 mb-2 flex gap-1 overflow-x-auto px-1" role="tablist">

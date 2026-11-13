@@ -5,6 +5,15 @@ import { can, type Actor } from '../work/actor';
 import { dueOf } from './bills';
 
 /** Reading bills: one shape for lists, the drawer and the public API. */
+type Einv = { irn: string; ackNo: string | null; at: string; cancelledAt?: string | null };
+/** The e-invoice on a bill, and whether its 24 hours for cancelling are still running. */
+const einvoiceOut = (json: unknown) => {
+  const e = (json ?? null) as Einv | null;
+  return e
+    ? { ...e, canCancel: !e.cancelledAt && Date.now() - new Date(e.at).getTime() < 24 * 3_600_000 }
+    : null;
+};
+
 export const billOut = (b: Bill) => ({
   id: b.id,
   type: b.type as BillType,
@@ -34,6 +43,7 @@ export const billOut = (b: Bill) => ({
   reference: b.reference,
   note: b.note,
   source: b.sourceType ? { type: b.sourceType, id: b.sourceId } : null,
+  einvoice: einvoiceOut(b.einvoice),
   createdAt: b.createdAt,
 });
 
@@ -66,7 +76,7 @@ export async function getBill(db: Db, actor: Actor, id: string) {
   const [party, allocations, voucher] = await Promise.all([
     db.party.findUnique({
       where: { id: bill.partyId },
-      select: { id: true, name: true, code: true, state: true },
+      select: { id: true, name: true, code: true, state: true, taxId: true },
     }),
     db.billAllocation.findMany({ where: { OR: [{ billId: id }, { paymentId: id }] } }),
     db.voucher.findMany({ where: { billId: id }, orderBy: { createdAt: 'asc' } }),

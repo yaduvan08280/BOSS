@@ -1,3 +1,4 @@
+import { PayLinkButton } from '@/modules/connect/PayLinkButton';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
@@ -72,6 +73,7 @@ export function ReservationCard({ r, canHost, onEdit }: { r: Res; canHost: boole
               {t('res.deposit.take', { amount: rupees(r.deposit!.amount) })}
             </Button>
           )}
+          {due && live && <PayLinkButton purpose="RESERVATION_DEPOSIT" refId={r.id} />}
           {r.status === 'REQUESTED' && !due && (
             <Button size="sm" variant="primary" onClick={() => act.mutate({ action: 'confirm' })}>
               {t('res.confirm')}

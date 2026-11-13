@@ -1,3 +1,4 @@
+import { PayLinkButton } from '@/modules/connect/PayLinkButton';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StatusChip } from '@/components/status-chip';
@@ -147,6 +148,13 @@ export function EventDialog({
             >
               {t('hotel.takeAdvance')}
             </Button>
+            <div className="sm:col-span-3">
+              <PayLinkButton
+                purpose="BANQUET_ADVANCE"
+                refId={e.id}
+                amount={Number(f.amount) > 0 ? Math.round(Number(f.amount) * 100) : undefined}
+              />
+            </div>
           </div>
         )}
         {canSell && e.status === 'QUOTED' && (

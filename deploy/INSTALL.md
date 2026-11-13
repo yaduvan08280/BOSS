@@ -136,6 +136,27 @@ Everything below is in **System Master → Integration**. Secrets are stored enc
 
 **Check it end to end**: **Notification rules → Send test** → pick yourself. You should get it in the app (bell), on Telegram and by email within seconds.
 
+## 7A. Printers and Tally at a branch (the site agent)
+
+A branch whose printers or Tally are not on the server's own network runs a small program on one of its
+computers. It only calls MONO; nothing has to be opened on the branch's router.
+
+1. Install Node.js 22 on that computer.
+2. Copy `deploy/site-agent/agent.mjs` to it.
+3. In MONO: System Master → Integration → Connections → Site agents & Tally → choose the branch, type a name,
+   **Make a key**. Copy the key now — it is shown once.
+4. Start it (Windows PowerShell shown; on Linux use `export`):
+
+```bash
+$env:MONO_URL="https://mono.example.com"; $env:MONO_AGENT_KEY="agt_..."; $env:TALLY_URL="http://localhost:9000"; node agent.mjs
+```
+
+Leave `TALLY_URL` out where there is no Tally. In MONO set each of that branch's printers to "Site agent" with
+its address (`192.168.1.50:9100`, or a device such as `/dev/usb/lp0`). In Tally, switch on the XML server on
+port 9000 and map every head to a ledger in Money set-up first. The Connections screen shows the agent as
+Online within a few seconds. This program has been tested with stand-ins only — try one bill and one voucher
+before relying on it.
+
 ## 8. Updating to a new version
 
 ```bash

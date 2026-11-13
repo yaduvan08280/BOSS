@@ -47,6 +47,8 @@ const BranchesTab = page(() => import('@/modules/system/branches/BranchesTab'), 
 const OrgChartTab = page(() => import('@/modules/system/orgchart/OrgChartTab'), 'OrgChartTab');
 const RolesTab = page(() => import('@/modules/system/roles/RolesTab'), 'RolesTab');
 const SystemMasterLayout = page(() => import('@/modules/system/SystemMasterPage'), 'SystemMasterLayout');
+const ConnectTab = page(() => import('@/modules/connect/ConnectTab'), 'ConnectTab');
+const PublicRoomsPage = page(() => import('@/modules/connect/PublicRoomsPage'), 'PublicRoomsPage');
 const DriveTab = page(() => import('@/modules/system/integration/DriveTab'), 'DriveTab');
 const SupportPage = page(() => import('@/modules/support/SupportPage'), 'SupportPage');
 const GuidePage = page(() => import('@/modules/support/SupportPage'), 'GuidePage');
@@ -157,6 +159,14 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={null}>
         <PublicManagePage />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/rooms/:token',
+    element: (
+      <Suspense fallback={null}>
+        <PublicRoomsPage />
       </Suspense>
     ),
   },
@@ -292,6 +302,7 @@ export const router = createBrowserRouter([
                   { path: 'reminders', element: <RemindersTab /> },
                   { path: 'ai', element: <AiTab /> },
                   { path: 'drive', element: <DriveTab /> },
+                  { path: 'connections', element: <WithMe render={(me) => <ConnectTab me={me} />} /> },
                 ],
               },
               ...placeholderRoutes.filter((r) => r.path.startsWith('/system')),

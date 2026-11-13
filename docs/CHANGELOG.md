@@ -1,5 +1,45 @@
 # Changelog
 
+## Phase 19 — Integrations (13/11/2026)
+
+Plan: `docs/plans/hospitality-100-plan.md` §10; rows X1–X20 in `docs/plans/coverage.md` (drafted from the plan,
+not yet reviewed by GGM). Set up in System Master → Integration → **Connections**.
+
+**Read this first: every outside service was tested against a stand-in written for the test. Nothing here has
+been tried against a live Razorpay / Cashfree account, a channel manager, a GSP, a real Zomato / Swiggy file or
+Tally.** Expect small fixes on the first live connection of each.
+
+- **Channel manager** (per property): its address and token, which room type is which room there, and the plan
+  whose rates are sent. "Send the next 30 days" pushes rooms left, price and restrictions; a push that fails is
+  sent again by itself (five tries). Bookings, changes and cancellations from the travel sites come in on a
+  webhook (or "Ask for new bookings"); the same booking twice is one booking. **A booking a site sold when no
+  room is left is still taken and flagged** for a person to solve.
+- **Your own booking page for rooms**: a switch per property gives a public link; guests see what is free with
+  its price and book without signing in.
+- **Payment links** (Razorpay or Cashfree): "Send a payment link" on a table deposit, a stay's advance, a
+  banquet's advance and a restaurant bill. When the gateway says a link is paid — and its signature is right —
+  MONO records the money once, exactly as a person at the desk would, and confirms the table booking.
+- **UPI QR on the printed bill**: the bill prints a QR code for its amount (where the outlet has a UPI ID).
+- **Zomato / Swiggy**: a takeaway or delivery order is marked with its number there and billed to the partner.
+  The payout file (CSV) is checked first, then recorded: a receipt for what was paid, a credit note for what the
+  partner kept, and a list of what does not match.
+- **GST e-invoice**: "Get e-invoice (IRN)" on an issued B2B bill sends it to your provider and keeps the IRN,
+  acknowledgement and QR; it can be cancelled for 24 hours.
+- **Site agent** (`deploy/site-agent/agent.mjs`, one file, Node 22): on a branch's computer it prints that
+  branch's tickets and bills (network or USB printer) and posts vouchers to Tally, reporting what Tally said.
+  Its key is made in Connections and shown once.
+- **Health**: one screen says what is not working — a failed connection, oversold bookings, a payment that came
+  in but was not recorded, an agent that has gone quiet, vouchers Tally refused.
+
+Not built, or not proved through the screens: the channel-manager and e-invoice adapters use MONO's own simple
+contract — **a real provider needs a small mapping, and no channel manager has certified it**; refunds through
+the gateway; a QR image on screen; direct order push from the aggregators; e-way bills; card machines; an
+installer for the site agent. The commission credit note and the SAC used for charges on an e-invoice need the
+accountant's yes. Browser-tested (380 and 1440): saving the gateway, the booking page and a guest's booking, the
+channel manager's push and a booking in, a site agent's key, a payout file, an e-invoice. API-tested only: a
+paid link, retries, channel changes / cancellations / overbooking, the agent printing and posting to Tally,
+cancelling an e-invoice, marking an order on the POS screen. Hindi strings need review.
+
 ## Phase 18 — Banquets and events, bar, compliance (13/11/2026)
 
 Plan: `docs/plans/hospitality-100-plan.md` §9; rows B1–B20 in `docs/plans/coverage.md` (drafted from the plan, not

@@ -57,6 +57,8 @@ export type Order = {
   covers: number;
   total: number;
   roomNo: string | null;
+  aggregator?: string | null;
+  aggregatorRef?: string | null;
   items: OrderItem[];
 };
 export type LiveItem = {

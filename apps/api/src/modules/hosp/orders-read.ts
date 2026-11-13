@@ -18,6 +18,8 @@ export const orderView = (o: LoadedOrder) => ({
   guestName: o.guestName,
   partyId: o.partyId,
   roomNo: o.roomNo,
+  aggregator: o.aggregator,
+  aggregatorRef: o.aggregatorRef,
   note: o.note,
   split: o.split,
   openedAt: o.openedAt,

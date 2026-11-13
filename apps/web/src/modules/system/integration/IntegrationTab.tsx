@@ -13,6 +13,7 @@ const SUBTABS = [
   { key: 'reminders', path: '/system/integration/reminders' },
   { key: 'ai', path: '/system/integration/ai' },
   { key: 'drive', path: '/system/integration/drive' },
+  { key: 'connections', path: '/system/integration/connections' },
 ];
 
 /** System Master → Integration (CLAUDE.md §7.2). */

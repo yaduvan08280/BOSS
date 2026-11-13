@@ -56,9 +56,16 @@ export type Bill = {
   modeId: string | null;
   reference: string | null;
   note: string | null;
+  einvoice?: {
+    irn: string;
+    ackNo: string | null;
+    at: string;
+    cancelledAt?: string | null;
+    canCancel?: boolean;
+  } | null;
 };
 export type BillDetail = Bill & {
-  party: { id: string; name: string; code: string; state: string | null } | null;
+  party: { id: string; name: string; code: string; state: string | null; taxId?: string | null } | null;
   allocations: { billId: string; paymentId: string; amount: number }[];
 };
 export type Totals = {

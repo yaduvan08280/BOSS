@@ -1,3 +1,4 @@
+import { EinvoiceButton } from '@/modules/connect/EinvoiceButton';
 import { FileText } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -217,6 +218,7 @@ function BillDrawer({
                     {t('money.creditNote')}
                   </Button>
                 )}
+              {canEdit && <EinvoiceButton bill={b} />}
               {b.due > 0 && canMake && (
                 <Button
                   variant="primary"
@@ -269,6 +271,12 @@ function BillDrawer({
             </dl>
             {b.reference && (
               <p className="text-xs text-muted-foreground">{t('money.referenceIs', { ref: b.reference })}</p>
+            )}
+            {b.einvoice && (
+              <p className="text-xs break-all text-muted-foreground" data-testid="irn">
+                {b.einvoice.cancelledAt ? t('connect.irnCancelled') : t('connect.irn')}: {b.einvoice.irn}
+                {b.einvoice.ackNo ? ` · ${t('connect.ack')} ${b.einvoice.ackNo}` : ''}
+              </p>
             )}
           </div>
         )}
