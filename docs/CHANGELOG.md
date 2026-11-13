@@ -1,5 +1,34 @@
 # Changelog
 
+## Phase 21 — Packs for nine other industries (13/11/2026)
+
+Plan: `docs/plans/hospitality-100-plan.md` §11A; rows K1–K45 in `docs/plans/coverage.md` (drafted from the plan,
+not yet reviewed by GGM).
+
+- **Nine packs** beside Hotel & restaurant, in Masters → Master Library → Packs: **Pharmacy, Gold & gems, Retail
+  shop, Wholesale & distribution, Manufacturing, Construction, Real estate, Logistics & transport, Mining.** Each
+  is set-up only — roles, tax codes for the accountant to fill, items, masters, record types, processes,
+  registers and reports — and each has a short printable guide (Support → User guides, 22–30).
+- **Each trade's working day is tested** in its own empty company: set up from the pack, buy and receive, sell
+  and bill, the thing special to the trade (first-expired-first-out and the Schedule H register; a piece sold at
+  the day's gold rate with making charges; a members' price; dealer credit; a batch made from its bill of
+  material; running bills; one booking per flat; consignments and trips; the royalty-pass register), and the
+  owner's view (a report, what is owed, the Weekly MIS). All ten packs also install together in one company.
+- **What the packs found is fixed in the core**, not worked around: a counter sale takes **charges and a
+  discount**; a **credit sale is due after the party's credit days**; a party can be a **member**; a record
+  status can **free what the record held as unique** (a cancelled booking frees its flat).
+- Packs can carry **item attributes, price lists and bills of material**.
+- `npm run seed:demo -- --packs=pharmacy,retail` (or `SEED_DEMO_PACKS=`) installs packs into the demo company.
+
+Not done, said plainly: the days are **API tests** — only the Mining pack is also driven through the screens.
+**No booking of a resource by time and no milestone-billing engine** were built: a vehicle can be on two
+consignments the same day, and demands and running bills are invoices a person raises. Old gold is not netted on
+the same bill; retention, TDS and cess are not worked out; a pack cannot make branches (mines, sites); no
+weighbridge reading; no government filing special to a trade. The packs' items and master rows are their demo
+data — there are no demo transactions. **Manufacturing was not checked with GGM staff.** The "frees" switch on a
+record status is set by a pack or the API; the record-type builder screen has no tick-box for it yet. Hindi
+strings need review.
+
 ## Phase 20 — Packs, hospitality reports, load test, drills, guides (13/11/2026)
 
 Plan: `docs/plans/hospitality-100-plan.md` §11, §12A; rows U37–U42 and F1–F7 in `docs/plans/coverage.md`.

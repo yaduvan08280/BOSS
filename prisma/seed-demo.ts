@@ -5,8 +5,8 @@
  */
 import 'dotenv/config';
 import { createPrisma, formatNumber, nextCounter } from '@mono/db';
-import { bootstrapCompany, hashPassword } from '@mono/api/services';
-import { gstinCheckDigit, hhmmToMinutes } from '@mono/shared';
+import { bootstrapCompany, hashPassword, installLibraryPack } from '@mono/api/services';
+import { gstinCheckDigit, hhmmToMinutes, PACK_LIBRARY } from '@mono/shared';
 import { seedDemoWork } from './seed-demo-work';
 import { seedDemoEngine } from './seed-demo-engine';
 import { seedDemoFms } from './seed-demo-fms';
@@ -268,6 +268,31 @@ try {
     console.log(
       'Demo banquets and compliance: 2 halls, 2 packages, bar rules, 4 licences and duties, 2 temperature points.',
     );
+  // Industry packs, when asked for:  SEED_DEMO_PACKS=pharmacy,retail npm run seed:demo   (or --packs=pharmacy,retail)
+  // Each brings its own demo data (master rows, items) and changes nothing that is already there.
+  const asked = (
+    process.argv.find((a) => a.startsWith('--packs='))?.slice(8) ??
+    process.env.SEED_DEMO_PACKS ??
+    ''
+  )
+    .split(',')
+    .map((k) => k.trim())
+    .filter(Boolean);
+  if (asked.length) {
+    const boss = await prisma.user.findFirstOrThrow({
+      where: { companyId: company.id, deletedAt: null, role: { key: 'OWNER' } },
+      select: { id: true },
+    });
+    const actor = { companyId: company.id, userId: boss.id, permissions: ['*'] };
+    for (const key of asked) {
+      if (!PACK_LIBRARY.some((p) => p.key === key)) {
+        console.log(`No pack called "${key}". Packs: ${PACK_LIBRARY.map((p) => p.key).join(', ')}.`);
+        continue;
+      }
+      const r = await installLibraryPack(prisma, actor, key);
+      console.log(`Pack ${r.name}: ${r.made.length} things added, ${r.kept.length} already there.`);
+    }
+  }
 } finally {
   await prisma.$disconnect();
 }

@@ -4200,7 +4200,16 @@
       "housekeeping": "हाउसकीपिंग",
       "night_auditor": "नाइट ऑडिटर",
       "store": "स्टोर (हॉस्पिटैलिटी)",
-      "general_manager": "जनरल मैनेजर"
+      "general_manager": "जनरल मैनेजर",
+      "pharmacy": "फार्मेसी",
+      "gold_and_gems": "सोना और रत्न",
+      "retail": "रिटेल दुकान",
+      "wholesale": "थोक और वितरण",
+      "manufacturing": "मैन्युफैक्चरिंग",
+      "construction": "कंस्ट्रक्शन",
+      "real_estate": "रियल एस्टेट",
+      "logistics": "लॉजिस्टिक्स और परिवहन",
+      "mining": "खनन"
     }
   }
 }

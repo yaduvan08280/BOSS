@@ -4200,7 +4200,16 @@
       "housekeeping": "Housekeeping",
       "night_auditor": "Night auditor",
       "store": "Store (hospitality)",
-      "general_manager": "General manager"
+      "general_manager": "General manager",
+      "pharmacy": "Pharmacy",
+      "gold_and_gems": "Gold & gems",
+      "retail": "Retail shop",
+      "wholesale": "Wholesale & distribution",
+      "manufacturing": "Manufacturing",
+      "construction": "Construction",
+      "real_estate": "Real estate",
+      "logistics": "Logistics & transport",
+      "mining": "Mining"
     }
   }
 }

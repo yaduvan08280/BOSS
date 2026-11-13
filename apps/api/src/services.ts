@@ -66,4 +66,5 @@ export { hotelSweep } from './modules/hotel/reports';
 export { complianceSweep } from './modules/banquet/compliance';
 export { retryPushes } from './modules/connect/channel';
 export { flashSweep } from './modules/hreports/flash';
+export { installLibraryPack } from './modules/packs/install';
 export { connectNet } from './modules/connect/core';

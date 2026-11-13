@@ -26,6 +26,15 @@ open it on GitHub (or in any Markdown viewer) and press **Ctrl+P** to print or s
 | 19 | [Night auditor](19-night-auditor.md) | Night auditor |
 | 20 | [Store (hospitality)](20-store.md) | Store (hospitality) |
 | 21 | [General manager](21-general-manager.md) | General manager |
+| 22 | [Pharmacy](22-pharmacy.md) | Owner and staff of that trade |
+| 23 | [Gold & gems](23-gold-and-gems.md) | Owner and staff of that trade |
+| 24 | [Retail shop](24-retail.md) | Owner and staff of that trade |
+| 25 | [Wholesale & distribution](25-wholesale.md) | Owner and staff of that trade |
+| 26 | [Manufacturing](26-manufacturing.md) | Owner and staff of that trade |
+| 27 | [Construction](27-construction.md) | Owner and staff of that trade |
+| 28 | [Real estate](28-real-estate.md) | Owner and staff of that trade |
+| 29 | [Logistics & transport](29-logistics.md) | Owner and staff of that trade |
+| 30 | [Mining](30-mining.md) | Owner and staff of that trade |
 
 Dates are always shown as DD/MM/YYYY and times as 24-hour HH:mm. Every list has a search box: type any word to
 filter it. On a phone, the bottom bar has Home · My work · **+ Capture** · Alerts · Menu.
