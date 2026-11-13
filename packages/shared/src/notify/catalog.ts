@@ -735,10 +735,10 @@ const ROWS: Row[] = [
     'compliance.expiring',
     'team',
     ['branch_manager', 'owner'],
-    '{{name}} {{state}}',
-    '{{name}} {{number}} at {{place}} {{state}} ({{on}}). Renew it and record the new date.',
     '{{name}} — {{on}}',
-    '{{place}} का {{name}} {{number}} {{on}} को समाप्त होता है। नवीनीकरण करें और नई तारीख़ दर्ज करें।',
+    '{{name}} {{number}} at {{place}} is due on {{on}} ({{days}} days left). Renew it and record the new date.',
+    '{{name}} — {{on}}',
+    '{{place}} का {{name}} {{number}} {{on}} को समाप्त होता है ({{days}} दिन बाकी)। नवीनीकरण करें और नई तारीख़ दर्ज करें।',
   ],
   [
     'compliance.out_of_range',

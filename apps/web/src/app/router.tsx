@@ -107,6 +107,9 @@ const HotelAuditPage = page(() => import('@/modules/hotel/AuditPage'), 'AuditPag
 const HotelRatesPage = page(() => import('@/modules/hotel/RatesPage'), 'RatesPage');
 const StayVoucherPage = page(() => import('@/modules/hotel/PublicPages'), 'StayVoucherPage');
 const RoomRequestPage = page(() => import('@/modules/hotel/PublicPages'), 'RoomRequestPage');
+const BanquetsPage = page(() => import('@/modules/banquet/BanquetsPage'), 'BanquetsPage');
+const BarPage = page(() => import('@/modules/banquet/BarPage'), 'BarPage');
+const CompliancePage = page(() => import('@/modules/banquet/CompliancePage'), 'CompliancePage');
 const BookPage = page(() => import('@/modules/reservations/BookPage'), 'BookPage');
 const GuestsPage = page(() => import('@/modules/reservations/GuestsPage'), 'GuestsPage');
 const PublicBookPage = page(() => import('@/modules/reservations/PublicBookPage'), 'PublicBookPage');
@@ -220,6 +223,9 @@ export const router = createBrowserRouter([
       { path: '/hotel/housekeeping', element: <WithMe render={(me) => <HousekeepingPage me={me} />} /> },
       { path: '/hotel/audit', element: <WithMe render={(me) => <HotelAuditPage me={me} />} /> },
       { path: '/hotel/rates', element: <WithMe render={(me) => <HotelRatesPage me={me} />} /> },
+      { path: '/hosp/banquets', element: <WithMe render={(me) => <BanquetsPage me={me} />} /> },
+      { path: '/hosp/bar', element: <WithMe render={(me) => <BarPage me={me} />} /> },
+      { path: '/hosp/compliance', element: <WithMe render={(me) => <CompliancePage me={me} />} /> },
       { path: '/hosp/reservations', element: <WithMe render={(me) => <BookPage me={me} />} /> },
       { path: '/hosp/guests', element: <WithMe render={(me) => <GuestsPage me={me} />} /> },
       { path: '/hosp/menu', element: <WithMe render={(me) => <HospMenuPage me={me} />} /> },

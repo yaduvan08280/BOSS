@@ -18,6 +18,7 @@ import { seedDemoRecords } from './seed-demo-records';
 import { seedDemoBranches } from './seed-demo-branches';
 import { seedDemoMoney } from './seed-demo-money';
 import { seedDemoHosp } from './seed-demo-hosp';
+import { seedDemoBanquet } from './seed-demo-banquet';
 import { seedDemoHotel } from './seed-demo-hotel';
 import { seedDemoReservations } from './seed-demo-reservations';
 import { seedDemoStock } from './seed-demo-stock';
@@ -263,6 +264,10 @@ try {
     );
   if (await seedDemoHotel(prisma, company.id))
     console.log('Demo hotel: two rate plans and two bookings (one arriving today) on the demo rooms.');
+  if (await seedDemoBanquet(prisma, company.id))
+    console.log(
+      'Demo banquets and compliance: 2 halls, 2 packages, bar rules, 4 licences and duties, 2 temperature points.',
+    );
 } finally {
   await prisma.$disconnect();
 }

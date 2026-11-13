@@ -61,6 +61,8 @@ import {
   BedDouble,
   CalendarDays,
   Moon,
+  PartyPopper,
+  Wine,
 } from 'lucide-react';
 import { hasPermission, type PermissionKey } from '@mono/shared';
 
@@ -353,6 +355,33 @@ export const WORKSPACE_NAV: NavSection[] = [
         key: 'hotelRates',
         path: '/hotel/rates',
         icon: Tags,
+        phase: 0,
+        tag: 'systems',
+        permission: 'hosp.view',
+        needs: 'hospitality',
+      },
+      {
+        key: 'banquets',
+        path: '/hosp/banquets',
+        icon: PartyPopper,
+        phase: 0,
+        tag: 'systems',
+        permission: 'hosp.view',
+        needs: 'hospitality',
+      },
+      {
+        key: 'barRegister',
+        path: '/hosp/bar',
+        icon: Wine,
+        phase: 0,
+        tag: 'systems',
+        permission: 'hosp.view',
+        needs: 'hospitality',
+      },
+      {
+        key: 'compliance',
+        path: '/hosp/compliance',
+        icon: ShieldCheck,
         phase: 0,
         tag: 'systems',
         permission: 'hosp.view',

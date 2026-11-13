@@ -1,5 +1,36 @@
 # Changelog
 
+## Phase 18 — Banquets and events, bar, compliance (13/11/2026)
+
+Plan: `docs/plans/hospitality-100-plan.md` §9; rows B1–B20 in `docs/plans/coverage.md` (drafted from the plan, not
+yet reviewed by GGM). Under Hospitality once the module is on.
+
+- **Banquets** (Hospitality → Banquets): halls with their capacities and rent, menu packages sold per plate, and
+  events from the enquiry to the paid bill. A quotation is plates × guaranteed guests + hall rent + extras, with
+  tax. The rule's advance (25 % by default) must be in before a booking is confirmed, and **a hall is never
+  confirmed for two events at the same time**. A confirmed event has its **BEO** (notes for kitchen, service and
+  housekeeping, sent with a version number — a change makes a new version), the **indent** (what the menu needs
+  from its recipes × guaranteed guests, against the kitchen's stock), and the event-day checklist. When the event
+  is held the food leaves the stock, the **final bill is made for the guests who came — never fewer than
+  guaranteed** — and the advance is set against it; the balance is paid (a company may take it on credit) and
+  feedback is recorded. A lost enquiry returns its advance; a cancelled booking returns it in time or keeps it.
+- **Bar register** (Hospitality → Bar register): for each liquor brand at each stock location, the day's opening,
+  received, sold, breakage and closing in bottles and ml, with the branch's licence; a file in the state's layout
+  (Rajasthan first). **Dry days** take liquor off the live menu for that day, so the POS refuses it; food still
+  sells.
+- **Compliance** (Hospitality → Compliance): licences and certificates with the day they run out, reminders at
+  60 / 30 / 7 days, on the day and once run out; things done again and again (pest control) move their next day
+  on when marked done; **temperature logs** with limits — a reading outside them needs what was done about it and
+  tells the managers at once.
+
+Not built, or not proved through the screens: the excise file's layout is my reading of the usual brand-wise
+register and **must be checked against the department's form before it is filed**; other states' formats; a
+printed BEO or quotation (PDF); raising the indent as a stock transfer by itself (the list is shown); a hall
+calendar screen (the API gives it; clashes are refused when confirming); menu items of a package and hall
+capacities by setting are typed through the API; uploading the licence's file from the screen. Browser-tested:
+one event from enquiry to closed, one licence, one temperature reading, the register of one brand and a dry day.
+Hindi strings need review.
+
 ## Phase 17 — Hotel / property management (13/11/2026)
 
 A hotel can run its rooms on MONO. Plan: `docs/plans/hospitality-100-plan.md` §8; rows H1–H50 in
