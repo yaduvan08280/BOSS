@@ -26,6 +26,9 @@ export const PACK_KINDS = [
   'report',
   'tax',
   'list',
+  'attr',
+  'price',
+  'recipe',
 ] as const;
 export type PackKind = (typeof PACK_KINDS)[number];
 
@@ -86,6 +89,45 @@ export const packSchema = z.object({
       }),
     )
     .max(500)
+    .default([]),
+  /** What a category's batches and pieces carry (purity, grade, size …). */
+  attributes: z
+    .array(z.object({ category: z.string().trim().min(1).max(60), defs: z.array(json).min(1).max(30) }))
+    .max(60)
+    .default([]),
+  /** Price lists by kind of party (dealer, member …); items are named by their code. */
+  priceLists: z
+    .array(
+      z.object({
+        key,
+        name: z.string().trim().min(2).max(80),
+        partyKind: z.string().trim().max(20).nullish(),
+        lines: z
+          .array(z.object({ code: z.string().min(1).max(40), price: z.number().int().min(0).max(1e13) }))
+          .max(2000),
+      }),
+    )
+    .max(40)
+    .default([]),
+  /** Bills of material: what one lot of a made item takes (items by code). */
+  recipes: z
+    .array(
+      z.object({
+        code: z.string().min(1).max(40),
+        outputQty: z.number().positive().max(1e9).default(1),
+        lines: z
+          .array(
+            z.object({
+              code: z.string().min(1).max(40),
+              qty: z.number().positive().max(1e9),
+              unit: z.string().max(12).nullish(),
+            }),
+          )
+          .min(1)
+          .max(200),
+      }),
+    )
+    .max(200)
     .default([]),
   recordTypes: z
     .array(

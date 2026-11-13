@@ -1,5 +1,5 @@
 import type { Db } from '@mono/db';
-import { factorOf } from '@mono/shared';
+import { addDays, billChargeSchema, factorOf } from '@mono/shared';
 import { z } from 'zod';
 import { writeAudit } from '../../lib/audit';
 import { AppError, notFound } from '../../lib/errors';
@@ -37,6 +37,10 @@ export const sellSchema = z.object({
     )
     .min(1)
     .max(200),
+  /** Added after the items: making charges, packing, freight … taxed when given a tax code (phase 21). */
+  charges: z.array(billChargeSchema).max(10).default([]),
+  /** Taken off the whole bill before tax (a scheme, a round figure agreed at the counter). */
+  discount: z.number().int().min(0).max(1e13).default(0),
   /** Money taken now: a receipt against this invoice. */
   paid: z.number().int().min(0).max(1e13).optional(),
   modeId: z.string().nullish(),
@@ -107,9 +111,11 @@ export async function sell(db: Db, actor: Actor, input: z.input<typeof sellSchem
           rate: x.rate,
           ...(x.item.taxCode ? { taxCode: x.item.taxCode } : {}),
         })),
-        charges: [],
-        discount: 0,
+        charges: s.charges,
+        discount: s.discount,
         taxInclusive: false,
+        // A party on credit has until its credit days to pay (it is not overdue the day it buys).
+        dueOn: party.creditDays > 0 ? addDays(date, party.creditDays) : null,
         note: s.note ?? null,
       },
       { issue: true, source: { type: 'counter_sale', id: place.id || 'main' } },

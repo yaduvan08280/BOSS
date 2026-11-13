@@ -21,6 +21,7 @@ const PARTY_KINDS = [
   'agent',
   'franchise',
   'transporter',
+  'member',
 ] as const;
 
 /** Everyone the company deals with, in one list: customers, vendors, guests, agents … */

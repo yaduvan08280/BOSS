@@ -24,6 +24,7 @@ import { saveTaxRate } from '../money/taxes';
 import { createType } from '../records/types';
 import { saveReport } from '../reports/service';
 import { can, type Actor } from '../work/actor';
+import { installStock } from './install-stock';
 
 /**
  * Phase 20 — installing a pack. Each thing the pack names is made once: what the company already has (by its
@@ -200,6 +201,8 @@ export async function installPack(db: Db, actor: Actor, input: unknown): Promise
         return item.id;
       },
     );
+
+  await installStock(db, actor, pack, one);
 
   // Processes are made empty first so record types can point at them; their steps are saved once every id is known.
   const newFlows: string[] = [];

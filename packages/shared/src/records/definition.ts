@@ -26,6 +26,11 @@ export const recordStatusSchema = z
     label: z.string().trim().min(1).max(40),
     kind: z.enum(STATUS_TONES),
     final: z.boolean().optional(),
+    /**
+     * A final status that means "this did not happen" (cancelled, lapsed): what the record held as unique — a
+     * booked flat, a pass number — is free for another record again (phase 21). Other final statuses keep it.
+     */
+    frees: z.boolean().optional(),
   })
   .describe('A status a record can stand in');
 export type RecordStatus = z.infer<typeof recordStatusSchema>;

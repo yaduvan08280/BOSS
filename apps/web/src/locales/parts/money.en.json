@@ -119,6 +119,7 @@
       "agent": "Agent",
       "franchise": "Franchise",
       "transporter": "Transporter",
+      "member": "Member",
       "dealer": "Dealer"
     },
     "owed": {

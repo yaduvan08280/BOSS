@@ -11,6 +11,7 @@ import {
 import { AppError, notFound } from '../../lib/errors';
 import { recordChange } from '../../lib/events';
 import { releaseForm, type FormScope } from '../forms';
+import { uniqueStage } from '../forms/unique';
 import { attachUploads, type Actor } from '../work/actor';
 import { ctxOf, loadType, mustBeActive, type LoadedType } from './access';
 import { checkRecord, commitRecord, fileIdsOf, refuseIfInvalid, type Lines, type RecordInput } from './form';
@@ -251,6 +252,14 @@ export async function changeStatus(
         },
       },
     });
+    // A status that frees (a cancelled booking): the record's unique values can be used by another record.
+    const landed = t.def.statuses.find((x) => x.key === res.to);
+    if (landed?.final && landed.frees)
+      await uniqueStage.release?.(tx, {
+        companyId: actor.companyId,
+        owner: { kind: 'recordType', id: t.id },
+        recordId: id,
+      });
     await recordChange(tx, ctxOf(actor), {
       event: 'record.status_changed',
       entityType: 'record',

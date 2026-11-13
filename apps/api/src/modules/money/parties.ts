@@ -18,6 +18,8 @@ export const PARTY_KINDS = [
   'agent',
   'franchise',
   'transporter',
+  // Phase 21: a shop's member — a price list may be for members only.
+  'member',
 ] as const;
 export const partySchema = z.object({
   name: z.string().trim().min(2, 'Enter the name').max(160),
