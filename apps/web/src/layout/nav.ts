@@ -57,6 +57,7 @@ import {
   Users,
   Workflow,
   Scale,
+  CalendarClock,
 } from 'lucide-react';
 import { hasPermission, type PermissionKey } from '@mono/shared';
 
@@ -286,6 +287,24 @@ export const WORKSPACE_NAV: NavSection[] = [
         key: 'kds',
         path: '/hosp/kds',
         icon: ChefHat,
+        phase: 0,
+        tag: 'systems',
+        permission: 'hosp.view',
+        needs: 'hospitality',
+      },
+      {
+        key: 'reservations',
+        path: '/hosp/reservations',
+        icon: CalendarClock,
+        phase: 0,
+        tag: 'systems',
+        permission: 'hosp.view',
+        needs: 'hospitality',
+      },
+      {
+        key: 'guests',
+        path: '/hosp/guests',
+        icon: Contact,
         phase: 0,
         tag: 'systems',
         permission: 'hosp.view',

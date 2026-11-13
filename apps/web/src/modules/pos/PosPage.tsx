@@ -19,6 +19,7 @@ import { drain, loadQueue, newKey, saveQueue } from './queue';
 /** The colour of a table by its state: never colour alone — the state is written on it. */
 const STATE: Record<TableState, string> = {
   FREE: 'bg-card',
+  RESERVED: 'bg-status-neutral-bg text-status-neutral-fg',
   SEATED: 'bg-status-info-bg text-status-info-fg',
   ORDERED: 'bg-status-warn-bg text-status-warn-fg',
   BILLED: 'bg-status-over-bg text-status-over-fg',
@@ -134,6 +135,15 @@ export function PosPage({ me }: { me: Me }) {
                       <span className="font-semibold">{tb.name}</span>
                       <span className="text-xs">{t(`pos.state.${tb.state}`)}</span>
                       {tb.order && <span className="tabular text-xs">{rupees(tb.order.total)}</span>}
+                      {!tb.order && tb.reservation && (
+                        <span className="text-xs">
+                          {t('pos.reservedFor', {
+                            time: tb.reservation.time,
+                            name: tb.reservation.name,
+                            size: tb.reservation.size,
+                          })}
+                        </span>
+                      )}
                     </button>
                   </li>
                 ))}

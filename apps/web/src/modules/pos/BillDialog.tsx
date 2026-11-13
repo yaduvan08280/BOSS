@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { useHosp } from '@/modules/hosp/api';
 import { useModes } from '@/modules/money/api';
 import { rupees } from '@/modules/stock/api';
-import { post, useChecks, usePosMutation, type Check, type Order } from './api';
+import { post, useAdvance, useChecks, usePosMutation, type Check, type Order } from './api';
 
 /** Bill an order (service charge, discount, no-charge, split in equal parts) and take the money, by one mode or several. */
 export function BillDialog({
@@ -58,6 +58,11 @@ export function BillDialog({
         ...(Number(tip) > 0 ? { tip: { amount: Math.round(Number(tip) * 100) } } : {}),
       }),
     (c) => (c.status === 'PAID' ? t('pos.paid') : t('pos.partPaid', { due: rupees(c.due) })),
+  );
+  const advance = useAdvance(order.id);
+  const applyDeposit = usePosMutation(
+    () => post<Check>(`/api/pos/checks/${made!.id}/advance`),
+    t('pos.depositUsed'),
   );
   const reprint = usePosMutation(() => post(`/api/pos/checks/${made!.id}/reprint`), t('pos.reprinted'));
   const set = (i: number, patch: Partial<(typeof pays)[number]>) =>
@@ -156,6 +161,15 @@ export function BillDialog({
             <p className="text-sm text-muted-foreground">
               {t('pos.parts', { parts: made.parts.map((p) => rupees(p)).join(' + ') })}
             </p>
+          )}
+          {made.status === 'OPEN' && advance.data?.advance && (
+            <Button
+              size="sm"
+              disabled={applyDeposit.isPending}
+              onClick={() => applyDeposit.mutate(undefined, { onSuccess: () => void advance.refetch() })}
+            >
+              {t('pos.useDeposit', { amount: rupees(Math.min(advance.data.advance.left, made.due)) })}
+            </Button>
           )}
           {made.upi && made.status === 'OPEN' && (
             <a className="block truncate text-sm text-primary underline" href={made.upi}>

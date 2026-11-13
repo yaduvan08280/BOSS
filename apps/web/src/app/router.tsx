@@ -100,6 +100,10 @@ const HospitalitySetupTab = page(() => import('@/modules/hosp/SetupTab'), 'Hospi
 const PosPage = page(() => import('@/modules/pos/PosPage'), 'PosPage');
 const KdsPage = page(() => import('@/modules/pos/KdsPage'), 'KdsPage');
 const PosDayPage = page(() => import('@/modules/pos/DayPage'), 'DayPage');
+const BookPage = page(() => import('@/modules/reservations/BookPage'), 'BookPage');
+const GuestsPage = page(() => import('@/modules/reservations/GuestsPage'), 'GuestsPage');
+const PublicBookPage = page(() => import('@/modules/reservations/PublicBookPage'), 'PublicBookPage');
+const PublicManagePage = page(() => import('@/modules/reservations/PublicBookPage'), 'PublicManagePage');
 const ReportsPage = page(() => import('@/modules/reports/ReportsPage'), 'ReportsPage');
 const ReportBuilderPage = page(() => import('@/modules/reports/ReportBuilderPage'), 'ReportBuilderPage');
 const RulesWizard = page(() => import('@/modules/hr/RulesWizard'), 'RulesWizard');
@@ -117,6 +121,23 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={null}>
         <PublicFormPage />
+      </Suspense>
+    ),
+  },
+  // Public table booking (phase 16): an outlet's page and the guest's own link — no sign-in.
+  {
+    path: '/book/manage/:token',
+    element: (
+      <Suspense fallback={null}>
+        <PublicManagePage />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/book/:token',
+    element: (
+      <Suspense fallback={null}>
+        <PublicBookPage />
       </Suspense>
     ),
   },
@@ -170,6 +191,8 @@ export const router = createBrowserRouter([
       { path: '/hosp/pos', element: <WithMe render={(me) => <PosPage me={me} />} /> },
       { path: '/hosp/kds', element: <KdsPage /> },
       { path: '/hosp/day', element: <PosDayPage /> },
+      { path: '/hosp/reservations', element: <WithMe render={(me) => <BookPage me={me} />} /> },
+      { path: '/hosp/guests', element: <WithMe render={(me) => <GuestsPage me={me} />} /> },
       { path: '/hosp/menu', element: <WithMe render={(me) => <HospMenuPage me={me} />} /> },
       { path: '/ims/locations', element: <WithMe render={(me) => <StockLocationsPage me={me} />} /> },
       { path: '/ims/transfers', element: <WithMe render={(me) => <StockTransfersPage me={me} />} /> },

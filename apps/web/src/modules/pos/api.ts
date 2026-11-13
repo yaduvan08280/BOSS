@@ -4,7 +4,7 @@ import { api, ApiError } from '@/lib/api';
 
 /** Phase 15 — the POS screens: types, queries (polled, so every device sees the floor and tickets live) and mutations. */
 const KEY = ['pos'];
-export type TableState = 'FREE' | 'SEATED' | 'ORDERED' | 'BILLED' | 'PAID';
+export type TableState = 'FREE' | 'RESERVED' | 'SEATED' | 'ORDERED' | 'BILLED' | 'PAID';
 export type OrderBrief = {
   id: string;
   number: number;
@@ -29,6 +29,7 @@ export type FloorView = {
       shape: string;
       state: TableState;
       order: OrderBrief | null;
+      reservation: { id: string; time: string; name: string; size: number } | null;
     }[];
   }[];
   others: OrderBrief[];
@@ -168,6 +169,14 @@ export const useApprovals = (outletId: string) =>
     `/api/pos/outlets/${outletId}/approvals`,
     Boolean(outletId),
     10_000,
+  );
+/** What is left of a table deposit that can go against this order's bill (null = none). */
+export const useAdvance = (orderId: string) =>
+  usePoll<{ advance: { left: number } | null }>(
+    ['advance', orderId],
+    `/api/pos/orders/${orderId}/advance`,
+    Boolean(orderId),
+    false,
   );
 export const useDay = (outletId: string) =>
   usePoll<ZReport>(['day', outletId], `/api/pos/outlets/${outletId}/day`, Boolean(outletId), false);

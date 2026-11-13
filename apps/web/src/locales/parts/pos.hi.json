@@ -31,7 +31,8 @@
       "SEATED": "बैठे हैं",
       "ORDERED": "ऑर्डर दिया",
       "BILLED": "बिल बना",
-      "PAID": "भुगतान हुआ"
+      "PAID": "भुगतान हुआ",
+      "RESERVED": "रिज़र्व"
     },
     "type": {
       "DINE_IN": "डाइन-इन",
@@ -171,6 +172,9 @@
       "wasCounted": "गिना {{counted}} · अंतर {{diff}}",
       "bills": "बिल",
       "noBills": "आज अभी कोई बिल नहीं।"
-    }
+    },
+    "reservedFor": "{{time}} · {{name}} ({{size}})",
+    "useDeposit": "डिपॉज़िट लगाएँ {{amount}}",
+    "depositUsed": "डिपॉज़िट लगाया गया"
   }
 }

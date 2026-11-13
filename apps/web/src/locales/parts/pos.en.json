@@ -31,7 +31,8 @@
       "SEATED": "Seated",
       "ORDERED": "Ordered",
       "BILLED": "Billed",
-      "PAID": "Paid"
+      "PAID": "Paid",
+      "RESERVED": "Reserved"
     },
     "type": {
       "DINE_IN": "Dine-in",
@@ -171,6 +172,9 @@
       "wasCounted": "Counted {{counted}} · difference {{diff}}",
       "bills": "Bills",
       "noBills": "No bills yet today."
-    }
+    },
+    "reservedFor": "{{time}} · {{name}} ({{size}})",
+    "useDeposit": "Use the deposit {{amount}}",
+    "depositUsed": "Deposit used"
   }
 }

@@ -1,5 +1,43 @@
 # Changelog
 
+## Phase 16 — Table reservations, waitlist, guests (13/11/2026)
+
+A restaurant takes bookings on MONO. Plan: `docs/plans/hospitality-100-plan.md` §7; rows R1–R20 in
+`docs/plans/coverage.md` (drafted from the plan, not yet reviewed by GGM). Under Hospitality once the module is on.
+
+- **Reservations** (Hospitality → Reservations): the day's book at an outlet — time, guest, party, table, status,
+  deposit — with the next step on each card (confirm, arrived, seat, no-show, change, cancel). A new booking shows
+  the free times for the day and party size and takes the **best-fit table** (the smallest that seats the party,
+  or joinable tables put together) unless a host chooses one. **A table can never be booked twice** for any part
+  of the same time, even when two people book at the same moment.
+- **Booking rules** per outlet: slot length, how long a party stays by its size, the days ahead, the hold time, the
+  reminder, free cancellation, the deposit (from a party size, per guest), what happens to a no-show's deposit.
+- **Public booking page**: each outlet has a link (`/book/<code>`) that shows free times and takes a booking with a
+  small sum instead of a captcha; bookings confirm by themselves or wait for a host, by the rule. The guest gets
+  their own link to see or cancel the booking. Confirmation, reminder, cancellation and "your table is ready"
+  messages go by the company's notification rules (WhatsApp / email templates are in the defaults).
+- **Deposits**: a large party's booking waits until its deposit is recorded — an ADVANCE paper in the guest's
+  name. At the table, **Use the deposit** on the bill sets it against the invoice and the rest is paid as usual.
+  Cancelled in time, it is owed back (any host returns it); too late or a no-show, it is kept by the rule (an
+  approver may still return it). **No payment gateway is connected** (plan decision 3 is open): money is taken by a
+  person and recorded, not by a pay link.
+- **Seating** opens the POS order on the booked table with the covers, name, occasion, requests and allergies;
+  the booking finishes when that order is paid. The POS floor shows a table with a booking due soon as
+  **Reserved**, with the name and time. The clock marks no-shows after the hold time and lapses requests nobody
+  confirmed.
+- **Waitlist**: a walk-in is quoted a wait (from running tables, bookings about to start and parties already
+  waiting), told when the table is ready, and seated from the list.
+- **Guests** (Hospitality → Guests): one profile per mobile for every outlet — allergies, preferences, birthday /
+  anniversary, notes, tags — with visits, spend, favourite dishes and no-shows read from their orders and
+  bookings, and **marketing consent recorded with when, how and by whom** (taking it back is recorded too).
+- Money core: an advance can now be set against a bill later (`applyCredit` / `releaseCredit`).
+
+Not built, or not proved through the screens: a payment link for deposits; changing a booking, no-show / bring
+back, returning a deposit, the reminder and the reserved table are tested through the API only; guests cannot
+change (only cancel) a booking from their link; availability does not look at walk-in orders still at a table
+(the floor's Reserved state warns the steward instead); the waitlist seats on one chosen table. Hindi strings need
+review.
+
 ## Phase 15 — POS, kitchen tickets and display, billing, payments, day close (13/11/2026)
 
 A restaurant can run a service on MONO. Plan: `docs/plans/hospitality-100-plan.md` §6; rows P1–P40 in

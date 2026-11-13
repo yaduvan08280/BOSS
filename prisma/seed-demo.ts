@@ -18,6 +18,7 @@ import { seedDemoRecords } from './seed-demo-records';
 import { seedDemoBranches } from './seed-demo-branches';
 import { seedDemoMoney } from './seed-demo-money';
 import { seedDemoHosp } from './seed-demo-hosp';
+import { seedDemoReservations } from './seed-demo-reservations';
 import { seedDemoStock } from './seed-demo-stock';
 
 const PASSWORD = process.env.SEED_DEMO_PASSWORD?.trim() || 'Demo1234';
@@ -255,6 +256,10 @@ try {
     );
   if (await seedDemoHosp(prisma, company.id))
     console.log('Added demo hospitality: a restaurant with 3 stations and 12 tables, 6 rooms, a small menu.');
+  if (await seedDemoReservations(prisma, company.id))
+    console.log(
+      'Demo reservations: the public booking page, 4 guests, 3 bookings for tomorrow, 1 party waiting',
+    );
 } finally {
   await prisma.$disconnect();
 }
