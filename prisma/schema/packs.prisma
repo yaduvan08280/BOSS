@@ -1,0 +1,23 @@
+// Phase 20 — industry packs: what was installed in a company, at which version, and what it made there.
+
+/// A pack installed in a company. Removing it keeps everything it made; only the pack's words and its place in
+/// the list go.
+model PackInstall {
+  id            String    @id @default(cuid(2))
+  companyId     String    @map("company_id")
+  key           String
+  name          String
+  version       Int
+  industry      String
+  /// [{ kind, key, id, adopted? }] — what the pack made, or took over because it was already there.
+  made          Json
+  /// The trade's own words: { "<i18n key>": { en, hi? } }
+  words         Json
+  installedById String?   @map("installed_by_id")
+  installedAt   DateTime  @default(now()) @map("installed_at") @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  removedAt     DateTime? @map("removed_at") @db.Timestamptz(3)
+
+  @@unique([companyId, key])
+  @@map("pack_installs")
+}

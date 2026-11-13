@@ -8,6 +8,7 @@ import { StatusChip } from '@/components/status-chip';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { mastersApi, useLibrary, useMastersMutation } from './api';
+import { PacksCard } from './PacksCard';
 
 /** Masters → Master Library (§8): ready masters by industry; pick one and it is yours, fields and all. */
 export function LibraryPage({ me }: { me: Me }) {
@@ -26,6 +27,7 @@ export function LibraryPage({ me }: { me: Me }) {
   return (
     <div className="space-y-5">
       <PageHeader title={t('nav.masterLibrary')} subtitle={t('masters.lib.subtitle')} />
+      <PacksCard canAdmin={hasPermission(me.user.permissions, 'core.admin')} />
       <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t('masters.lib.industry')}>
         {['all', ...INDUSTRIES].map((k) => (
           <button

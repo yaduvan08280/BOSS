@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import type { Language, LoginInput, Me, ThemeMode } from '@mono/shared';
 import { toast } from 'sonner';
 import { api, ApiError, refreshSession } from '@/lib/api';
-import { setLanguage } from '@/lib/i18n';
+import { applyWords, setLanguage } from '@/lib/i18n';
 import { applyTheme } from '@/lib/theme';
 
 export const ME_KEY = ['me'] as const;
@@ -22,6 +22,7 @@ export function useApplyUserPrefs(me: Me | undefined) {
   useEffect(() => {
     if (!me) return;
     applyTheme(me.company.theme, me.user.themeMode);
+    applyWords(me.company.words ?? {});
     void setLanguage(me.user.lang);
     document.title = me.company.appName;
     if (me.user.themeMode !== 'system') return;

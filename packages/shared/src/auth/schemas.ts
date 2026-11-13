@@ -64,6 +64,8 @@ export const meSchema = z.object({
     defaultLang: z.enum(LANGUAGES),
     staffMayPickAccent: z.boolean(),
     hospitality: z.boolean().default(false),
+    /** Phase 20: the words of the company's packs — an i18n key → what to show instead. */
+    words: z.record(z.string(), z.object({ en: z.string(), hi: z.string().optional() })).default({}),
   }),
   counters: z.object({ pendingWork: z.number().int(), unreadNotifications: z.number().int() }),
 });

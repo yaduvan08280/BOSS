@@ -84,3 +84,4 @@ export * from './machines/hotel';
 export * from './hosp/banquet';
 export * from './machines/banquet';
 export * from './connect';
+export * from './packs';

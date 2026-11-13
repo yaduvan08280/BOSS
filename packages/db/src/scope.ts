@@ -51,6 +51,7 @@ export const COMPANY_SCOPED_MODELS = new Set([
   'PayLink',
   'AgentToken',
   'PayoutImport',
+  'PackInstall',
   'BranchRule',
   'Hall',
   'BanquetPackage',

@@ -1,0 +1,21 @@
+{
+  "packs": {
+    "title": "Packs — a whole trade set up in one step",
+    "subtitle": "A pack adds roles, masters, record types, processes, checklists and reports. It never changes what you already have, and taking it off keeps everything it made.",
+    "install": "Install",
+    "upgrade": "Upgrade",
+    "have": "Installed · v{{version}}",
+    "newer": "v{{version}} is ready",
+    "installed": "{{name}} installed: {{made}} added, {{kept}} already there",
+    "things": "{{count}} things",
+    "remove": "Take off",
+    "removeNamed": "Take off {{name}}",
+    "removeAsk": "Take off {{name}}? Everything it made stays; only its words on screen go.",
+    "removed": "Pack taken off — what it made is still here",
+    "saveAs": "Save this company's set-up as a pack called",
+    "save": "Save as a file",
+    "saved": "Pack file saved",
+    "fromFile": "Install from a file",
+    "badFile": "That is not a pack file"
+  }
+}

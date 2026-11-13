@@ -43,6 +43,7 @@ import { posRoutes } from './modules/hosp/pos-routes';
 import { reservationRoutes } from './modules/hosp/res-routes';
 import { banquetRoutes } from './modules/banquet/routes';
 import { connectRoutes } from './modules/connect/routes';
+import { packRoutes } from './modules/packs/routes';
 import { hotelRoutes } from './modules/hotel/routes';
 import { crmRoutes } from './modules/crm/routes';
 import { masterRoutes } from './modules/masters/routes';
@@ -164,6 +165,7 @@ export async function buildApp(opts: BuildOptions) {
   await app.register(hotelRoutes);
   await app.register(banquetRoutes);
   await app.register(connectRoutes, { env: opts.env, fetch: opts.fetch });
+  await app.register(packRoutes);
   await app.register(crmRoutes);
   await app.register(masterRoutes);
   await app.register(recordRoutes);

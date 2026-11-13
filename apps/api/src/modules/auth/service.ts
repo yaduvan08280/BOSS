@@ -1,3 +1,4 @@
+import { packWords } from '../packs/manage';
 import type { Db } from '@mono/db';
 import type { Me } from '@mono/shared';
 import { readAppearance } from '../org/company.routes';
@@ -212,6 +213,7 @@ export async function getMe(db: Db, userId: string, appName: string): Promise<Me
             select: { enabled: true },
           })
         )?.enabled ?? false,
+      words: await packWords(db, user.companyId),
     },
     counters: {
       pendingWork: (await pendingCounts(db, user.companyId, user.id)).total,
