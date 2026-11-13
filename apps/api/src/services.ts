@@ -63,3 +63,4 @@ export { carryOverCrm } from './modules/money/mirror';
 export { sendQueued as sendQueuedPrints } from './modules/hosp/print';
 export { reservationSweep } from './modules/hosp/res-jobs';
 export { hotelSweep } from './modules/hotel/reports';
+export { complianceSweep } from './modules/banquet/compliance';

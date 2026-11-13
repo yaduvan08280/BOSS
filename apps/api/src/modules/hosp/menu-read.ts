@@ -7,6 +7,9 @@ import {
   type ModifierGroupInput,
   type TimeWindow,
   type Variant,
+  branchRulesSchema,
+  dryDayOn,
+  isLiquor,
 } from '@mono/shared';
 import { booksOf } from '../ims/recipes';
 import type { Actor } from '../work/actor';
@@ -98,6 +101,34 @@ export async function menuFor(db: Db, actor: Actor, outletId: string, at = new D
       })
     )?.id ??
     null;
+  // A dry day (phase 18): liquor is off the menu at this branch for that calendar day.
+  const ruleRow = await db.branchRule.findUnique({ where: { branchId: outlet.branchId } });
+  const bar = branchRulesSchema.safeParse(ruleRow?.rules ?? {});
+  const dry = bar.success ? dryDayOn(bar.data.bar, today) : null;
+  // Every stock item's category: a peg sold through its recipe is liquor because its ingredient is.
+  const stockCategory = dry
+    ? new Map(
+        (
+          await db.item.findMany({
+            where: { companyId: actor.companyId, deletedAt: null },
+            select: { id: true, category: true },
+          })
+        ).map((x) => [x.id, x.category]),
+      )
+    : new Map<string, string | null>();
+  const madeOf = (itemId: string): string[] => {
+    try {
+      return books.items.get(itemId)?.made === 'DISH' ? [...explode(books, itemId, 1).keys()] : [itemId];
+    } catch {
+      return [itemId];
+    }
+  };
+  const liquor = (category: string, itemId: string | null) =>
+    Boolean(dry && bar.success) &&
+    (isLiquor(bar.data!.bar, category) ||
+      (itemId ? [itemId, ...madeOf(itemId)] : []).some((id) =>
+        isLiquor(bar.data!.bar, stockCategory.get(id)),
+      ));
   const groupOf = new Map(groups.map((g) => [g.id, g]));
   const mine = items.filter((i) => !i.outletIds.length || i.outletIds.includes(outletId));
   const menuPrices = (id: string) =>
@@ -148,7 +179,8 @@ export async function menuFor(db: Db, actor: Actor, outletId: string, at = new D
                   ? variants[0]!.short
                   : null
                 : shortOf(i.itemId, 1);
-            const out = i.off ? ('off' as const) : short ? ('stock' as const) : null;
+            const dryOff = liquor(c.name, i.itemId);
+            const out = i.off || dryOff ? ('off' as const) : short ? ('stock' as const) : null;
             return {
               id: i.id,
               name: i.name,
@@ -165,7 +197,7 @@ export async function menuFor(db: Db, actor: Actor, outletId: string, at = new D
               label: base.label,
               available: availableAt((i.windows as TimeWindow[] | null) ?? [], now.minuteOfDay, now.weekday),
               out,
-              outReason: i.off ? i.offReason : short,
+              outReason: dryOff ? `Dry day — ${dry!.reason}` : i.off ? i.offReason : short,
               variants: variants.map((v) => ({ ...v, out: Boolean(v.short) })),
               combo,
               modifierGroups: i.modifierGroupIds

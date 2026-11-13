@@ -46,6 +46,13 @@ export const COMPANY_SCOPED_MODELS = new Set([
   'MenuItem',
   'ModifierGroup',
   'MenuPrice',
+  'BranchRule',
+  'Hall',
+  'BanquetPackage',
+  'BanquetEvent',
+  'ComplianceItem',
+  'TempPoint',
+  'TempReading',
   'HotelSettings',
   'RatePlan',
   'RoomDay',
@@ -173,6 +180,10 @@ export const COMPANY_SCOPED_MODELS = new Set([
 
 /** Models with `deletedAt` (soft delete). Kept in sync with the schema by `scope.test.ts`. */
 export const SOFT_DELETE_MODELS = new Set([
+  'Hall',
+  'BanquetPackage',
+  'ComplianceItem',
+  'TempPoint',
   'RatePlan',
   'Guest',
   'Party',

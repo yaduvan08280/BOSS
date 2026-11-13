@@ -1,0 +1,152 @@
+// Phase 18 — Banquets and events, the bar's rules (excise, dry days), and compliance.
+
+/// A branch's own rules for banquets and the bar: { banquet: {...}, bar: {...} }.
+model BranchRule {
+  id          String   @id @default(cuid(2))
+  companyId   String   @map("company_id")
+  branchId    String   @unique @map("branch_id")
+  rules       Json
+  updatedById String?  @map("updated_by_id")
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([companyId])
+  @@map("branch_rules")
+}
+
+model Hall {
+  id          String    @id @default(cuid(2))
+  companyId   String    @map("company_id")
+  branchId    String    @map("branch_id")
+  name        String
+  /// [{ style, guests }]
+  capacities  Json
+  rent        BigInt    @default(0)
+  rentTaxCode String?   @map("rent_tax_code")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([companyId, branchId])
+  @@map("halls")
+}
+
+/// A menu sold per plate.
+model BanquetPackage {
+  id            String    @id @default(cuid(2))
+  companyId     String    @map("company_id")
+  name          String
+  pricePerPlate BigInt    @map("price_per_plate")
+  taxCode       String?   @map("tax_code")
+  /// [{ itemId, name, perCover }]
+  items         Json
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([companyId])
+  @@map("banquet_packages")
+}
+
+/// An event from enquiry to closed.
+model BanquetEvent {
+  id               String    @id @default(cuid(2))
+  companyId        String    @map("company_id")
+  branchId         String    @map("branch_id")
+  number           String
+  guestId          String    @map("guest_id")
+  /// Who pays: the guest's party, or a company.
+  partyId          String    @map("party_id")
+  occasion         String
+  day              String
+  startMin         Int       @map("start_min")
+  endMin           Int       @map("end_min")
+  startAt          DateTime  @map("start_at") @db.Timestamptz(3)
+  endAt            DateTime  @map("end_at") @db.Timestamptz(3)
+  hallIds          String[]  @map("hall_ids")
+  style            String?
+  expectedCovers   Int       @map("expected_covers")
+  guaranteedCovers Int?      @map("guaranteed_covers")
+  actualCovers     Int?      @map("actual_covers")
+  /// ENQUIRY | QUOTED | CONFIRMED | COMPLETED | CLOSED | LOST | CANCELLED
+  status           String    @default("ENQUIRY")
+  /// The quotation as it stands, and how many times it was made.
+  quote            Json?
+  quoteVersion     Int       @default(0) @map("quote_version")
+  /// The banquet event order: notes for the kitchen, service and housekeeping; its version and when it last went out.
+  beo              Json?
+  beoVersion       Int       @default(0) @map("beo_version")
+  beoSentAt        DateTime? @map("beo_sent_at") @db.Timestamptz(3)
+  /// What the menu needs for the guaranteed covers: [{ itemId, name, unit, need, have, short }]
+  indent           Json?
+  /// [{ text, dept, done, byId, at }]
+  checklist        Json?
+  /// Where the food's stock is taken from ("" = the main store).
+  locationId       String    @default("") @map("location_id")
+  billId           String?   @map("bill_id")
+  /// { rating, comments, at }
+  feedback         Json?
+  note             String?
+  closeReason      String?   @map("close_reason")
+  createdById      String?   @map("created_by_id")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([companyId, number])
+  @@index([companyId, branchId, day])
+  @@index([companyId, status])
+  @@map("banquet_events")
+}
+
+/// A licence, certificate or recurring duty with the day it runs out or is next due.
+model ComplianceItem {
+  id         String    @id @default(cuid(2))
+  companyId  String    @map("company_id")
+  branchId   String    @map("branch_id")
+  kind       String
+  name       String
+  number     String?
+  authority  String?
+  issuedOn   String?   @map("issued_on")
+  expiresOn  String    @map("expires_on")
+  everyDays  Int?      @map("every_days")
+  remindDays Int[]     @default([60, 30, 7]) @map("remind_days")
+  fileId     String?   @map("file_id")
+  note       String?
+  /// [{ on, byId, note, next }] — each time it was renewed or done.
+  history    Json?
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([companyId, branchId, expiresOn])
+  @@map("compliance_items")
+}
+
+/// A place whose temperature is logged (HACCP): a chiller, a freezer, the hot-holding counter.
+model TempPoint {
+  id        String    @id @default(cuid(2))
+  companyId String    @map("company_id")
+  branchId  String    @map("branch_id")
+  name      String
+  unit      String    @default("°C")
+  min       Decimal?  @db.Decimal(6, 2)
+  max       Decimal?  @db.Decimal(6, 2)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([companyId, branchId])
+  @@map("temp_points")
+}
+
+model TempReading {
+  id        String   @id @default(cuid(2))
+  companyId String   @map("company_id")
+  branchId  String   @map("branch_id")
+  pointId   String   @map("point_id")
+  value     Decimal  @db.Decimal(6, 2)
+  ok        Boolean
+  action    String?
+  byId      String?  @map("by_id")
+  at        DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([companyId, pointId, at])
+  @@map("temp_readings")
+}

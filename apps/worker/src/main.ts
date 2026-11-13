@@ -25,6 +25,7 @@ import {
   sendQueuedPrints,
   reservationSweep,
   hotelSweep,
+  complianceSweep,
   watchRenewals,
   settleAttendance,
   watchAbsences,
@@ -204,6 +205,9 @@ await boss.work(
     // Hotels: group blocks past their release date, Form C reminders, rooms whose maintenance ticket closed.
     const hotels = await hotelSweep(prisma);
     if (hotels.released || hotels.formC || hotels.rooms) log.info({ hotels }, 'Hotel sweep');
+    // Compliance: licences and duties about to run out are told at each step, once.
+    const licences = await complianceSweep(prisma);
+    if (licences) log.info({ licences }, 'Compliance reminders');
     const crmCalls = await crmSweep(prisma);
     if (crmCalls) log.info({ crmCalls }, 'CRM calls made');
     if (
