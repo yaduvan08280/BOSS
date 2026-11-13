@@ -6,6 +6,7 @@ import { part, signIn } from './client.mjs';
 import * as org from './org.mjs';
 import * as work from './work.mjs';
 import * as kitchen from './kitchen.mjs';
+import * as hosp from './hosp.mjs';
 
 const arg = (name, fallback) =>
   process.argv.find((a) => a.startsWith(`--${name}=`))?.slice(name.length + 3) ?? fallback;
@@ -36,7 +37,7 @@ const ctx = {
 };
 const report = [];
 // Parts that only look things up when they are already there — later parts need their ids.
-const ALWAYS = ['structure', 'people', 'money', 'items'];
+const ALWAYS = ['structure', 'people', 'money', 'items', 'outlets'];
 const PARTS = [
   ['company', 'Company profile', org.company],
   ['structure', 'Branches, locations, departments, shifts', org.structure],
@@ -49,6 +50,9 @@ const PARTS = [
   ['money', 'Taxes, payment modes, hospitality pack', kitchen.money],
   ['items', 'Kitchen and bar items with recipes', kitchen.items],
   ['stock', 'Opening stock, purchase, transfers, wastage', kitchen.stock],
+  ['outlets', 'Outlets, tables and the menu', hosp.setup],
+  ['service', 'An evening of service on the POS', hosp.service],
+  ['bookings', 'Table reservations, waitlist and guests', hosp.reservations],
 ];
 for (const [key, name, fn] of PARTS) {
   if (only && !only.split(',').includes(key) && !ALWAYS.includes(key)) continue;

@@ -78,8 +78,43 @@ export const DISHES = [
   ['D-GNT', 'Jaipur gin & tonic', [['LIQ-GIN', 60], ['BEV-TON', 1], ['VEG-LEM', 0.01]]],
   ['D-OLD', 'Smoked old fashioned', [['LIQ-WHB', 60], ['BEV-SYR', 0.01]]],
   ['D-MRG', 'Classic margarita', [['LIQ-TEQ', 60], ['VEG-LEM', 0.03], ['BEV-SYR', 0.015]]],
+  ['D-P-WHB', 'Blended Scotch (30 ml)', [['LIQ-WHB', 30]]],
+  ['D-P-WHS', 'Single malt (30 ml)', [['LIQ-WHS', 30]]],
+  ['D-P-VOD', 'Vodka (30 ml)', [['LIQ-VOD', 30]]],
+  ['D-P-GIN', 'Gin (30 ml)', [['LIQ-GIN', 30]]],
+  ['D-P-WIN', 'Red wine (glass)', [['LIQ-WIN', 150]]],
+  ['D-P-BER', 'Beer (pint)', [['LIQ-BER', 1]]],
   ['D-LIT', 'Long Island iced tea', [['LIQ-VOD', 15], ['LIQ-GIN', 15], ['LIQ-RUM', 15], ['LIQ-TEQ', 15], ['BEV-COK', 0.5]]],
 ];
 
 // What each outlet's kitchen starts with, as a share of the central store's opening stock.
 export const OUTLET_SHARE = { 'Skylounge kitchen': 0.3, 'Vaishali kitchen': 0.22, 'Suites pantry': 0.1 };
+
+// The menu: category → [name, dish code, ₹, veg / nonveg / egg, tax code]
+export const MENU = {
+  'Small plates': [
+    ['Paneer tikka', 'D-PTK', 445, 'VEG'], ['Dahi ke kebab', 'D-DKB', 395, 'VEG'], ['Tandoori mushroom', 'D-MSH', 425, 'VEG'],
+    ['Loaded nachos', 'D-NAC', 365, 'VEG'], ['Amritsari fish', 'D-FSH', 545, 'NONVEG'], ['Butter garlic prawns', 'D-PRW', 695, 'NONVEG'],
+  ],
+  'Tandoor & grills': [
+    ['Murgh malai tikka', 'D-CTK', 525, 'NONVEG'], ['Mutton seekh kebab', 'D-SKB', 595, 'NONVEG'], ['Tandoori paneer pizza', 'D-PIZ', 495, 'VEG'],
+  ],
+  Mains: [
+    ['Dal Tora', 'D-DAL', 395, 'VEG'], ['Paneer butter masala', 'D-PBM', 465, 'VEG'], ['Laal maas', 'D-LAL', 725, 'NONVEG'],
+    ['Butter chicken', 'D-BCH', 565, 'NONVEG'], ['Jodhpuri kabuli biryani', 'D-BIR', 445, 'VEG'],
+    ['Butter naan', 'D-NAN', 85, 'VEG'], ['Tandoori roti', 'D-ROT', 55, 'VEG'],
+  ],
+  Desserts: [['Gulab jamun with rabri', 'D-GJM', 265, 'VEG']],
+  'Mocktails & coffee': [['Virgin mojito', 'D-MOJ', 285, 'VEG'], ['Cold coffee', 'D-COF', 245, 'VEG']],
+  Cocktails: [
+    ['Tora cosmopolitan', 'D-CSM', 595, 'VEG', 'LIQUOR'], ['Jaipur gin & tonic', 'D-GNT', 545, 'VEG', 'LIQUOR'],
+    ['Smoked old fashioned', 'D-OLD', 645, 'VEG', 'LIQUOR'], ['Classic margarita', 'D-MRG', 595, 'VEG', 'LIQUOR'],
+    ['Long Island iced tea', 'D-LIT', 745, 'VEG', 'LIQUOR'],
+  ],
+  'Spirits, beer & wine': [
+    ['Blended Scotch (30 ml)', 'D-P-WHB', 345, 'VEG', 'LIQUOR'], ['Single malt (30 ml)', 'D-P-WHS', 695, 'VEG', 'LIQUOR'],
+    ['Vodka (30 ml)', 'D-P-VOD', 295, 'VEG', 'LIQUOR'], ['Gin (30 ml)', 'D-P-GIN', 325, 'VEG', 'LIQUOR'],
+    ['Red wine (glass)', 'D-P-WIN', 495, 'VEG', 'LIQUOR'], ['Beer (pint)', 'D-P-BER', 295, 'VEG', 'LIQUOR'],
+  ],
+};
+export const BAR_CATEGORIES = ['Mocktails & coffee', 'Cocktails', 'Spirits, beer & wine'];

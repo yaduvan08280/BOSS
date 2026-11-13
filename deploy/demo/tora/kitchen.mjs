@@ -101,7 +101,7 @@ export async function stock(ctx) {
   });
   await api.post(`/api/ims/po/${po2.id}/send`, {});
 
-  // The C-Scheme outlet asks the central kitchen for stock; it is dispatched and received.
+  // The Murlipura outlet asks the central kitchen for stock; it is dispatched and received.
   const vikram = await ctx.as('vikram');
   const ask = await vikram.post('/api/ims/transfers', {
     toLocationId: L['Skylounge kitchen'],

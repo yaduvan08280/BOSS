@@ -1,11 +1,13 @@
 // Who and where: every name here is made up for the demonstration (no real staff list was found).
 
+// The Murlipura venue is real (address from its public listing). The others are examples of how further
+// branches, a base kitchen and a hotel would sit in MONO — rename or remove them to match the real plan.
 export const BRANCHES = [
-  { key: 'ho', name: 'Tora Hospitality — Head Office', code: 'HO', type: 'OFFICE', city: 'Jaipur', address: 'C-Scheme, Jaipur' },
-  { key: 'sky', name: 'Tora Skylounge — C-Scheme', code: 'SKY', type: 'OUTLET', city: 'Jaipur', address: 'Rooftop, Ashok Marg, C-Scheme, Jaipur', lat: 26.9124, lng: 75.7873 },
-  { key: 'vsn', name: 'Tora Skylounge — Vaishali Nagar', code: 'VSN', type: 'OUTLET', city: 'Jaipur', address: 'Rooftop, Amrapali Marg, Vaishali Nagar, Jaipur', lat: 26.9118, lng: 75.7433 },
-  { key: 'ck', name: 'Tora Central Kitchen — Sitapura', code: 'CK', type: 'KITCHEN', city: 'Jaipur', address: 'Sitapura Industrial Area, Jaipur', lat: 26.7781, lng: 75.8467 },
-  { key: 'sty', name: 'Tora Suites — Amer Road', code: 'STY', type: 'HOTEL', city: 'Jaipur', address: 'Amer Road, Jaipur', lat: 26.9577, lng: 75.8443 },
+  { key: 'ho', name: 'Tora Hospitality — Office', code: 'HO', type: 'OFFICE', city: 'Jaipur', address: 'Janak Square, Kedia Palace Road, Murlipura, Jaipur 302039' },
+  { key: 'sky', name: 'Tora Skylounge — Murlipura (Janak Square)', code: 'SKY', type: 'OUTLET', city: 'Jaipur', address: '3rd & 4th Floor, Janak Square, Plot 21 & 22, Kedia Palace Road, Pravasi Nagar, Murlipura, Jaipur 302039' },
+  { key: 'vsn', name: 'Tora Skylounge — Vaishali Nagar (planned)', code: 'VSN', type: 'OUTLET', city: 'Jaipur', address: 'Vaishali Nagar, Jaipur (example of a second outlet)' },
+  { key: 'ck', name: 'Tora Base Kitchen & Store (planned)', code: 'CK', type: 'KITCHEN', city: 'Jaipur', address: 'Vishwakarma Industrial Area, Jaipur (example)' },
+  { key: 'sty', name: 'Tora Suites & Banquets (planned)', code: 'STY', type: 'HOTEL', city: 'Jaipur', address: 'Kedia Palace Road, Jaipur (example of a hotel with a banquet hall)' },
 ];
 
 export const LOCATIONS = [
