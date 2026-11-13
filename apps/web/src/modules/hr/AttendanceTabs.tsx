@@ -1,3 +1,4 @@
+import { Who } from '@/components/brand';
 import { AlertTriangle, Check, Loader2, Upload, Users, X } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -32,7 +33,9 @@ export function TeamTab({ tz, today }: { tz: string; today: string }) {
           {q.data.rows.map((r) => (
             <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
               <div className="min-w-0">
-                <div className="font-medium">{r.name}</div>
+                <div className="font-medium">
+                  <Who name={r.name} />
+                </div>
                 <div className="text-xs text-muted-foreground">
                   {[r.code, r.department].filter(Boolean).join(' · ')}
                 </div>

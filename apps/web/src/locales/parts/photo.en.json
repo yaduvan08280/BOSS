@@ -1,0 +1,8 @@
+{
+  "photo": {
+    "add": "Add photo",
+    "change": "Change photo",
+    "remove": "Remove",
+    "saved": "Photo saved"
+  }
+}

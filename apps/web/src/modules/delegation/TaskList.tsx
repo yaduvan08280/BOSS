@@ -249,7 +249,7 @@ export function TaskList({
               className="cursor-pointer rounded-card border bg-card p-3.5"
             >
               <div className="flex items-start gap-3">
-                <Avatar name={names.get(task.doerId) ?? '?'} className="size-9" />
+                <Avatar id={task.doerId} name={names.get(task.doerId) ?? '?'} className="size-9" />
                 <div className="min-w-0 flex-1">
                   <div className="text-xs text-muted-foreground">
                     <span className="font-mono">#{task.number}</span> · {names.get(task.doerId)} ·{' '}
@@ -303,7 +303,7 @@ export function TaskList({
                   </td>
                   <td className="px-3 py-3">
                     <div className="flex items-center gap-2">
-                      <Avatar name={names.get(task.doerId) ?? '?'} className="size-8" />
+                      <Avatar id={task.doerId} name={names.get(task.doerId) ?? '?'} className="size-8" />
                       <div>
                         <div className="font-medium">
                           <span className="font-mono text-xs text-muted-foreground">#{task.number}</span>{' '}

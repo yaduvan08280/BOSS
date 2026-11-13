@@ -1,5 +1,11 @@
 # Changelog
 
+## 13/11/2026 — Fixes from the owner's review
+
+- **Tab bars that ran off the screen**: System Master's tabs and every work-screen tab strip now show an arrow at the edge while there is more that way, scroll with the mouse wheel, and bring the current tab into view (`components/scroll-row.tsx`).
+- **Business Engine flowchart**: lines are horizontal and vertical only, each with its own place on the box and its own track between rows, so none merge; an arrowhead and a moving dot show the direction; lines that go back are amber and dashed (`modules/system/engine/route.ts`, tested).
+- **Photos of people**: a photo can be added, changed or removed in the person sheet (admins) and on Profile (yourself) — `PUT /api/org/users/:id/photo`; it is made small on the device first. Avatars look the photo up themselves, and names in the task, checklist, process, attendance, cover and history lists carry the photo.
+
 ## Phase 21 — Packs for nine other industries (13/11/2026)
 
 Plan: `docs/plans/hospitality-100-plan.md` §11A; rows K1–K45 in `docs/plans/coverage.md` (drafted from the plan,

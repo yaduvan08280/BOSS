@@ -1,4 +1,5 @@
 import { Handshake, Loader2, UserCheck } from 'lucide-react';
+import { Who } from '@/components/brand';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatDateTime, formatLocalDate, localDate, type Me } from '@mono/shared';
@@ -66,7 +67,9 @@ function Away({ a, date, tz }: { a: CoverBoard['away'][number]; date: string; tz
     <li className="space-y-3 rounded-card border bg-card p-4 text-sm">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <div className="font-semibold">{a.person.name}</div>
+          <div className="font-semibold">
+            <Who id={a.person.id} name={a.person.name} />
+          </div>
           <div className="text-muted-foreground">{a.person.department ?? ''}</div>
         </div>
         <StatusChip tone={a.reason === 'leave' ? 'info' : 'bad'}>

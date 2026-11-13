@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { changePasswordSchema, type ChangePasswordInput, type Me } from '@mono/shared';
-import { Avatar } from '@/components/brand';
+import { PhotoPicker } from '@/components/photo-picker';
 import { PageHeader } from '@/components/page';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -91,12 +91,10 @@ export function AccountPage({ me }: { me: Me }) {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card>
           <CardContent className="pt-5">
-            <div className="mb-3 flex items-center gap-3">
-              <Avatar name={me.user.name} url={me.user.avatarUrl} className="size-12 text-sm" />
-              <div className="min-w-0">
-                <div className="truncate font-semibold">{me.user.name}</div>
-                <div className="text-sm text-muted-foreground">{me.company.name}</div>
-              </div>
+            <div className="mb-3">
+              <div className="truncate font-semibold">{me.user.name}</div>
+              <div className="mb-3 text-sm text-muted-foreground">{me.company.name}</div>
+              <PhotoPicker personId={me.user.id} name={me.user.name} url={me.user.avatarUrl} />
             </div>
             <Row label={t('account.code')} value={me.user.code} />
             <Row label={t('account.role')} value={me.user.roleName} />

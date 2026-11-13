@@ -1,4 +1,5 @@
 import { CheckCircle2, ClipboardList, Gauge, ShieldCheck, Timer } from 'lucide-react';
+import { ScrollRow } from '@/components/scroll-row';
 import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import type { Me } from '@mono/shared';
@@ -75,7 +76,7 @@ export function DelegationPage({ me }: { me: Me }) {
           icon={Gauge}
         />
       </div>
-      <nav className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
+      <ScrollRow watch={tab}>
         <div className="flex w-max gap-1 border-b">
           {TABS.map((k) => (
             <button
@@ -95,7 +96,7 @@ export function DelegationPage({ me }: { me: Me }) {
             </button>
           ))}
         </div>
-      </nav>
+      </ScrollRow>
       {tab === 'add' && (
         <AddTask people={people} tz={tz} meId={me.user.id} onCreated={() => set({ tab: 'pending' })} />
       )}

@@ -1,5 +1,7 @@
 {
   "common": {
+    "scrollLeft": "Show earlier options",
+    "scrollRight": "Show more options",
     "loading": "Loading…",
     "retry": "Try again",
     "cancel": "Cancel",
@@ -1772,6 +1774,8 @@
       "status": "Status",
       "auto": "Automatic",
       "finished": "Finished",
+      "next": "Goes on to",
+      "back": "Goes back",
       "deadend": "Dead end / escalation",
       "off": "Switched off"
     },

@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { Who } from '@/components/brand';
 import { Clock, Download, Plus, Workflow } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -174,7 +175,7 @@ export function LiveFmsPage({ me }: { me: Me }) {
                         )}
                       </div>
                       <div className="text-sm">
-                        {s?.doerId ? names.get(s.doerId) : '—'}
+                        {s?.doerId ? <Who id={s.doerId} name={names.get(s.doerId)} /> : '—'}
                         {s?.coveredById && ` (${t('hr.covering')})`}
                       </div>
                       <div

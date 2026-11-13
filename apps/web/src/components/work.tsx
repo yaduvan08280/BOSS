@@ -1,4 +1,6 @@
+import { Who } from '@/components/brand';
 import type { ReactNode } from 'react';
+import { ScrollRow } from '@/components/scroll-row';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Badge } from '@/components/ui/form';
@@ -20,12 +22,13 @@ export function TabStrip<T extends string>({
   counts?: Partial<Record<T, number>>;
 }) {
   return (
-    <nav className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
+    <ScrollRow watch={active}>
       <div className="flex w-max gap-1 border-b">
         {tabs.map((k) => (
           <button
             key={k}
             onClick={() => onChange(k)}
+            data-current={active === k}
             className={cn(
               '-mb-px flex h-11 items-center gap-2 whitespace-nowrap border-b-2 px-3 text-sm font-medium',
               active === k
@@ -38,7 +41,7 @@ export function TabStrip<T extends string>({
           </button>
         ))}
       </div>
-    </nav>
+    </ScrollRow>
   );
 }
 
@@ -70,7 +73,7 @@ export function Timeline<E extends TimelineEvent>({
           <div className="text-xs text-muted-foreground">
             <span className="tabular">{formatShortDateTime(e.createdAt, tz)}</span>
             {' · '}
-            {e.actorId ? (names.get(e.actorId) ?? '?') : 'MONO'}
+            {e.actorId ? <Who id={e.actorId} name={names.get(e.actorId) ?? '?'} /> : 'MONO'}
           </div>
           <div className="font-medium">{describe(e)}</div>
           {e.note && <p className="mt-0.5 whitespace-pre-wrap text-muted-foreground">{e.note}</p>}

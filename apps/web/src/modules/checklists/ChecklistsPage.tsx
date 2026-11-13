@@ -1,4 +1,6 @@
 import { ClipboardCheck, History, Pencil, Trash2 } from 'lucide-react';
+import { Who } from '@/components/brand';
+import { ScrollRow } from '@/components/scroll-row';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
@@ -97,7 +99,7 @@ function RunList({
                 <div className="min-w-0">
                   <div className="truncate font-medium">{r.master.name}</div>
                   <div className="text-xs text-muted-foreground">
-                    {names.get(r.doerId)}
+                    <Who id={r.doerId} name={names.get(r.doerId)} />
                     {r.coveredById && ` (${t('hr.covering')})`} · {formatShortDateTime(r.plannedAt, tz)}
                   </div>
                 </div>
@@ -133,7 +135,7 @@ function RunList({
                     </div>
                   </td>
                   <td className="px-3 text-xs">
-                    {names.get(r.doerId)}
+                    <Who id={r.doerId} name={names.get(r.doerId)} />
                     {r.coveredById && ` (${t('hr.covering')})`}
                   </td>
                   <td className="tabular px-3 text-xs">{formatShortDateTime(r.plannedAt, tz)}</td>
@@ -280,7 +282,7 @@ export function ChecklistsPage({ me }: { me: Me }) {
   return (
     <div className="space-y-5">
       <PageHeader title={t('nav.checklists')} subtitle={t('navDesc.checklists')} />
-      <nav className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
+      <ScrollRow watch={tab}>
         <div className="flex w-max gap-1 border-b">
           {tabs.map((k) => (
             <button
@@ -297,7 +299,7 @@ export function ChecklistsPage({ me }: { me: Me }) {
             </button>
           ))}
         </div>
-      </nav>
+      </ScrollRow>
       {(tab === 'mine' || tab === 'all') && (
         <RunList
           key={tab}
