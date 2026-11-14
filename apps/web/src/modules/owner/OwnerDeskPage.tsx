@@ -8,6 +8,7 @@ import { ExceptionsTab, LeagueTab } from './BranchTabs';
 import { LetterTab, PulseTab, WhatIfTab } from './ExtraTabs';
 import { CashFlowTab, VendorsTab } from './MoneyTabs';
 import { MorningTab } from './MorningTab';
+import { SpotTab } from './SpotTab';
 import { BusFactorTab, DelayTab, LeaksTab, PromisesTab } from './PeopleTabs';
 
 const TABS = [
@@ -22,6 +23,7 @@ const TABS = [
   'vendors',
   'cash',
   'pulse',
+  'spot',
   'whatif',
 ] as const;
 const SPANNED = ['exceptions', 'leaks', 'promises', 'delay', 'league', 'pulse'];
@@ -68,6 +70,7 @@ export function OwnerDeskPage() {
       {tab === 'cash' && <CashFlowTab />}
       {tab === 'letter' && <LetterTab />}
       {tab === 'whatif' && <WhatIfTab />}
+      {tab === 'spot' && <SpotTab />}
       {tab === 'pulse' && <PulseTab span={span} />}
     </div>
   );

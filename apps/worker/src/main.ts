@@ -28,6 +28,7 @@ import {
   retryPushes,
   flashSweep,
   letterSweep,
+  spotSweep,
   connectNet,
   complianceSweep,
   watchRenewals,
@@ -221,6 +222,9 @@ await boss.work(
     // The owner's weekly letter: Monday from 08:00, once.
     const letters = await letterSweep(prisma);
     if (letters) log.info({ letters }, 'Owner letters sent');
+    // Surprise checks: ask the day's checks at random times; those not answered in time are missed.
+    const spots = await spotSweep(prisma);
+    if (spots.asked || spots.missed) log.info({ spots }, 'Surprise checks');
     const crmCalls = await crmSweep(prisma);
     if (crmCalls) log.info({ crmCalls }, 'CRM calls made');
     if (

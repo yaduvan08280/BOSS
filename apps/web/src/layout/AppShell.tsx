@@ -17,6 +17,7 @@ import { BottomTabs } from './BottomTabs';
 import { CaptureSheet } from './CaptureSheet';
 import { findNavItem, SYSTEM_NAV, WORKSPACE_NAV } from './nav';
 import { Sidebar } from './Sidebar';
+import { SpotCheckCard } from './SpotCheckCard';
 import { TopBar, WorkspaceSwitch } from './TopBar';
 
 const COLLAPSE_KEY = 'mono.menuCollapsed';
@@ -109,6 +110,7 @@ export function AppShell({ me }: { me: Me }) {
           ) : (
             <Suspense fallback={<PageSkeleton />}>
               <InstallBanner appName={me.company.appName} />
+              <SpotCheckCard />
               <Outlet />
             </Suspense>
           )}

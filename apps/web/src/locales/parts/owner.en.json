@@ -16,7 +16,8 @@
       "cash": "Cash flow",
       "letter": "Weekly letter",
       "whatif": "What if",
-      "pulse": "Pulse"
+      "pulse": "Pulse",
+      "spot": "Surprise checks"
     },
     "col": {
       "branch": "Branch",
@@ -261,6 +262,28 @@
       "stewardsHint": "Only ratings where the guest typed a bill number; lowest first.",
       "latest": "What guests wrote",
       "none": "No words yet."
+    },
+    "s": {
+      "rule": "Surprise checks",
+      "ruleHint": "At a moment nobody knows, MONO picks an item somebody ticked on a checklist today and asks them to show it again with a photo taken now. The checklist's verifier says whether it holds. A check not answered in time counts as missed.",
+      "perDay": "Checks a day",
+      "off": "Off",
+      "minutes": "Time to answer",
+      "askNow": "Ask one now",
+      "asked": "A check has been asked.",
+      "nothing": "Nothing ticked today is left to ask about.",
+      "people": "By person, last 30 days",
+      "peopleHint": "Whoever failed or missed the most comes first.",
+      "none": "No checks have been asked yet.",
+      "askedCol": "Asked",
+      "latest": "Latest checks",
+      "status": {
+        "ASKED": "Waiting",
+        "ANSWERED": "To judge",
+        "OK": "OK",
+        "NOT_OK": "Not OK",
+        "MISSED": "Missed"
+      }
     }
   },
   "pulse": {

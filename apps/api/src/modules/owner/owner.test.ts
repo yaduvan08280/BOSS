@@ -266,6 +266,80 @@ describe("the owner's desk", () => {
     expect(task.description).toContain('Waited 40 minutes');
     expect((await s.get('/api/owner/pulse')).status).toBe(403);
   }, 90_000);
+
+  it('a surprise check: a ticked item must be shown again with a new photo, and somebody else judges it', async () => {
+    const w = await world(ctx.app);
+    const asha = await w.person('Asha Doer');
+    const vik = await w.person('Vik Verifier', 'HOD');
+    await ok(
+      w.api.post('/api/checklists/masters', {
+        name: 'Closing checklist',
+        items: [{ key: 'i1', text: 'Gas valves closed' }],
+        frequency: { type: 'daily' },
+        dueTime: '23:00',
+        windowHours: 4,
+        doerIds: [asha.id],
+        verifierId: vik.id,
+        skipHolidays: false,
+        startDate: today(),
+      }),
+    );
+    const run = (await ok<{ runs: { id: string }[] }>(asha.api.get('/api/checklists/runs?scope=mine')))
+      .runs[0]!;
+    const item = (await ctx.prisma.checklistRunItem.findFirstOrThrow({ where: { runId: run.id } })).id;
+    const photo = (when: Date) =>
+      ctx.prisma.attachment
+        .create({
+          data: {
+            companyId: w.companyId,
+            entityType: 'upload',
+            entityId: asha.id,
+            path: `t/${Math.random()}.jpg`,
+            originalName: 'p.jpg',
+            mime: 'image/jpeg',
+            size: 1,
+            uploadedById: asha.id,
+            createdAt: when,
+          },
+        })
+        .then((a) => a.id);
+    const old = await photo(new Date(Date.now() - 3_600_000));
+    // Nothing ticked yet: nothing to ask about.
+    expect((await w.api.post('/api/owner/spot-checks/ask')).body).toEqual({ asked: false });
+    await ok(asha.api.post(`/api/checklists/runs/${run.id}/items`, { itemId: item, done: true }));
+    expect((await w.api.post('/api/owner/spot-checks/ask')).body).toEqual({ asked: true });
+    // One check per run a day.
+    expect((await w.api.post('/api/owner/spot-checks/ask')).body).toEqual({ asked: false });
+
+    type Mine = { answer: { id: string; text: string }[]; judge: { id: string; doer: string }[] };
+    const mine = await ok<Mine>(asha.api.get('/api/spot-checks/mine'));
+    expect(mine.answer).toHaveLength(1);
+    expect(mine.answer[0]!.text).toBe('Gas valves closed');
+    const id = mine.answer[0]!.id;
+    // A photo from before the question is refused; one taken now is taken.
+    expect(
+      (await asha.api.post(`/api/spot-checks/${id}/answer`, { attachmentId: old })).body.error.message,
+    ).toContain('new photo');
+    await ok(asha.api.post(`/api/spot-checks/${id}/answer`, { attachmentId: await photo(new Date()) }));
+    // She cannot judge it herself; the verifier can, and "not OK" needs a word.
+    expect((await asha.api.post(`/api/spot-checks/${id}/decide`, { ok: true })).status).toBe(403);
+    expect((await ok<Mine>(vik.api.get('/api/spot-checks/mine'))).judge[0]).toMatchObject({
+      id,
+      doer: 'Asha Doer',
+    });
+    expect((await vik.api.post(`/api/spot-checks/${id}/decide`, { ok: false })).status).toBe(400);
+    await ok(vik.api.post(`/api/spot-checks/${id}/decide`, { ok: false, note: 'Valve two was open' }));
+    const desk = await ok<{
+      people: { name: string; asked: number; notOk: number }[];
+      latest: { status: string; note: string | null }[];
+    }>(w.api.get('/api/owner/spot-checks'));
+    expect(desk.people[0]).toMatchObject({ name: 'Asha Doer', asked: 1, notOk: 1 });
+    expect(desk.latest[0]).toMatchObject({ status: 'NOT_OK', note: 'Valve two was open' });
+    await ctx.prisma.checklistMaster.updateMany({
+      where: { companyId: w.companyId },
+      data: { active: false },
+    });
+  }, 90_000);
 });
 
 /** The owner's session cookie, for a raw request with extra headers. */

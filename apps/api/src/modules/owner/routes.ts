@@ -13,6 +13,14 @@ import { letterFor } from './letter';
 import { copyChecklists, whatIfBase } from './whatif';
 import { promises } from './promises';
 import { pulse, pulsePage, ratePulse } from './pulse';
+import {
+  answerSpotCheck,
+  askSpotCheck,
+  decideSpotCheck,
+  mySpotChecks,
+  saveSpotRules,
+  spotChecks,
+} from './spot';
 import { vendors } from './vendors';
 
 /** The owner's desk: reports that look across branches, people and companies. Owner and admins only. */
@@ -150,6 +158,49 @@ export async function ownerRoutes(app: FastifyInstance, opts: { secret: string }
       },
     },
     async (q) => (q.body.website ? { ok: true } : ratePulse(db, opts.secret, q.params.token, q.body)),
+  );
+  // Surprise checks: the rule and the results for the owner; the asking and judging for whoever it concerns.
+  r.get('/api/owner/spot-checks', { ...signedIn(), schema: { tags } }, async (q) =>
+    spotChecks(db, actorOf(q)),
+  );
+  r.put(
+    '/api/owner/spot-checks',
+    {
+      ...signedIn(),
+      schema: {
+        tags,
+        body: z.object({ perDay: z.number().min(0).max(20), minutes: z.number().min(5).max(120) }),
+      },
+    },
+    async (q) => saveSpotRules(db, actorOf(q), q.body),
+  );
+  r.post('/api/owner/spot-checks/ask', { ...signedIn(), schema: { tags } }, async (q) => {
+    await spotChecks(db, actorOf(q)); // the same right as the page
+    return { asked: Boolean(await askSpotCheck(db, q.auth!.companyId)) };
+  });
+  r.get('/api/spot-checks/mine', { ...signedIn(), schema: { tags } }, async (q) =>
+    mySpotChecks(db, actorOf(q)),
+  );
+  const idParam = z.object({ id: z.string().max(40) });
+  r.post(
+    '/api/spot-checks/:id/answer',
+    {
+      ...signedIn(),
+      schema: { tags, params: idParam, body: z.object({ attachmentId: z.string().max(40) }) },
+    },
+    async (q) => answerSpotCheck(db, actorOf(q), q.params.id, q.body.attachmentId),
+  );
+  r.post(
+    '/api/spot-checks/:id/decide',
+    {
+      ...signedIn(),
+      schema: {
+        tags,
+        params: idParam,
+        body: z.object({ ok: z.boolean(), note: z.string().max(500).nullish() }),
+      },
+    },
+    async (q) => decideSpotCheck(db, actorOf(q), q.params.id, q.body),
   );
   r.get('/api/owner/bus-factor', { ...signedIn(), schema: { tags } }, async (q) => busFactor(db, actorOf(q)));
   r.get('/api/owner/vendors', { ...signedIn(), schema: { tags } }, async (q) => vendors(db, actorOf(q)));

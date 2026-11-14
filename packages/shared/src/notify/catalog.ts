@@ -205,6 +205,15 @@ const ROWS: Row[] = [
     '{{verifier}} ने {{checklist}} जाँच ली।',
   ],
   [
+    'checklist.spot_check',
+    'team',
+    ['doer'],
+    'Show it now: {{item}}',
+    'A surprise check on {{checklist}}: take a photo of "{{item}}" in MONO within {{minutes}} minutes.',
+    'अभी दिखाएँ: {{item}}',
+    '{{checklist}} की अचानक जाँच: {{minutes}} मिनट के अंदर MONO में "{{item}}" की फ़ोटो लें।',
+  ],
+  [
     'checklist.rejected',
     'team',
     ['doer'],

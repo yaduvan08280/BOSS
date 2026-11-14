@@ -304,7 +304,7 @@ In-app notification is always created. Quiet hours per user (default 21:00–07:
 
 ### 7.3 Default events (seed rules for each)
 delegation: assigned, accepted, declined, date_moved, follow_up, passed_on, note, done, verified, rejected, overdue, reopened ·
-checklist: assigned, reminder, completed, missed, verified, rejected · slip: submitted, returned, forwarded, decided ·
+checklist: assigned, reminder, completed, missed, verified, rejected, spot_check · slip: submitted, returned, forwarded, decided ·
 ticket: raised, replied, resolved, reopened, escalated, closed · ea: captured, daily_brief, weekly_plan ·
 fms: step_assigned, step_due_soon, step_late, record_started, record_closed, approval_needed ·
 hr: punch_flagged, missed_punch, leave_requested, leave_decided, buddy_requested, buddy_answered, absent_no_cover, morning_cover_report ·

@@ -54,6 +54,7 @@ export const COMPANY_SCOPED_MODELS = new Set([
   'PackInstall',
   'OwnerLink',
   'PulseRating',
+  'SpotCheck',
   'BranchRule',
   'Hall',
   'BanquetPackage',

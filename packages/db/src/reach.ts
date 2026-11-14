@@ -103,6 +103,7 @@ export const BRANCH_CHILD_MODELS: Record<
 export const BRANCH_FREE_MODELS: Record<string, string> = {
   User: 'people are named across branches (a task given by head office); the Users screen filters by itself',
   PulseRating: "guests' ratings are read only through the owner's desk and the outlet's manager",
+  SpotCheck: 'asked of one person and decided by one person; listed through its own service',
   Holiday: 'the calendar is read by everyone',
   WeeklyOff: 'the calendar is read by everyone',
   Location: 'set-up data, listed through the branch',

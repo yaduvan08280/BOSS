@@ -1,0 +1,11 @@
+{
+  "spot": {
+    "showNow": "Surprise check — show this now, before {{time}}",
+    "takePhoto": "Take a photo",
+    "sent": "Photo sent",
+    "judge": "Surprise check — is {{name}}'s photo right?",
+    "whatWrong": "What was wrong?",
+    "ok": "OK",
+    "notOk": "Not OK"
+  }
+}

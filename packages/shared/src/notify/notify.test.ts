@@ -13,7 +13,7 @@ describe('catalog', () => {
     // §7.3, plus phase 4: delegation.accept_late, slip.late, slip.closed, mis.weekly; phase 5: fms.step_stuck, fms.customer_update; phase 8: ims.ows_ready; phase 13: ims.transfer_asked / dispatched / differences, ims.expiry_soon.
     const expected = {
       delegation: 13,
-      checklist: 6,
+      checklist: 7,
       slip: 6,
       ticket: 6,
       ea: 3,
