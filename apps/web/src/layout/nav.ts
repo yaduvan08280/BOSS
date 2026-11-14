@@ -1,4 +1,5 @@
 import {
+  Telescope,
   Bug,
   BadgeIndianRupee,
   Store,
@@ -98,6 +99,7 @@ export const WORKSPACE_NAV: NavSection[] = [
     items: [
       { key: 'home', path: '/', icon: House, phase: 0, tag: 'workspace' },
       { key: 'myWorkspace', path: '/workspace', icon: Inbox, phase: 0, tag: 'workspace' },
+      { key: 'ownerDesk', path: '/owner', icon: Telescope, phase: 0, tag: 'workspace', permission: 'core.admin' },
       { key: 'support', path: '/support', icon: LifeBuoy, phase: 0, tag: 'workspace' },
     ],
   },

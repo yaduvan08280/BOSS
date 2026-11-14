@@ -173,7 +173,8 @@
     "engineDesigner": "Business Engine",
     "payroll": "Payroll",
     "crmPlan": "Plan & setup",
-    "errors": "Errors"
+    "errors": "Errors",
+    "ownerDesk": "Owner's desk"
   },
   "navDesc": {
     "home": "Search anything, or pick where to start",
@@ -223,7 +224,8 @@
     "engineDesigner": "How each module flows, and the switches that change it",
     "payroll": "Gross pay from attendance, pay rules and leave a year",
     "crmPlan": "The year plan and the 15-page CRM setup",
-    "errors": "What went wrong, where and how often"
+    "errors": "What went wrong, where and how often",
+    "ownerDesk": "Exceptions, leaks, promises and money — across branches and companies"
   },
   "home": {
     "heading": "What do you want to do, {{name}}?",

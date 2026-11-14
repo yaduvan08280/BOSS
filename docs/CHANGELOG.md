@@ -1,5 +1,9 @@
 # Changelog
 
+## 14/11/2026 — Owner's desk (first nine pages)
+
+A new menu item for the Owner and Admins, under Workspace: **Morning** (every linked company side by side), **Exceptions** (only what broke its normal range), **Leaks** (unexplained rupees by person), **Promises** (kept vs broken), **Cost of delay** (late steps in rupees), **Branch league**, **Only one knows** (bus-factor map), **Vendors** (scorecard and cheaper alternatives) and **Cash flow** (60-day calendar). All read data already in MONO; nothing new needs to be entered except the normal ranges and each process's value per day.
+
 ## 14/11/2026 — PDFs print ₹ and Hindi; a review sheet for the Hindi strings
 
 - Every server PDF (muster, MIS, reports, documents, step timeline) now prints the rupee sign and Hindi names correctly, with proper conjuncts and matras.

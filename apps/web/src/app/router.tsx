@@ -85,6 +85,7 @@ const TypeEditorPage = page(() => import('@/modules/records/TypeEditorPage'), 'T
 const RecordListPage = page(() => import('@/modules/records/RecordListPage'), 'RecordListPage');
 const ListsPage = page(() => import('@/modules/lists/ListsPage'), 'ListsPage');
 const OutletsPage = page(() => import('@/modules/branches/OutletsPage'), 'OutletsPage');
+const OwnerDeskPage = page(() => import('@/modules/owner/OwnerDeskPage'), 'OwnerDeskPage');
 const BillsPage = page(() => import('@/modules/money/BillsPage'), 'BillsPage');
 const PartiesPage = page(() => import('@/modules/money/PartiesPage'), 'PartiesPage');
 const OwedPage = page(() => import('@/modules/money/OwedPage'), 'OwedPage');
@@ -226,6 +227,7 @@ export const router = createBrowserRouter([
       { path: '/records/:typeId', element: <WithMe render={(me) => <RecordListPage me={me} />} /> },
       { path: '/reports', element: <ReportsPage /> },
       { path: '/outlets', element: <OutletsPage /> },
+      { path: '/owner', element: <OwnerDeskPage /> },
       { path: '/hosp/pos', element: <WithMe render={(me) => <PosPage me={me} />} /> },
       { path: '/hosp/kds', element: <KdsPage /> },
       { path: '/hosp/day', element: <PosDayPage /> },
