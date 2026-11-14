@@ -3,6 +3,7 @@ import {
   addDays,
   ASK_VIEWS,
   askPlanSchema,
+  askViewsFor,
   checkAskPlan,
   daysInMonth,
   financialYear,
@@ -18,7 +19,7 @@ import { listReports, runSaved } from '../reports/service';
 import { can, type Actor } from '../work/actor';
 import { runAi } from './llm';
 import * as ANSWER from './prompts/answer.v1';
-import * as ASK from './prompts/ask.v2';
+import * as ASK from './prompts/ask.v3';
 import { companyContext } from './prompts/context';
 
 /** A date word or YYYY-MM-DD → the instant it starts, in the company's time zone. */
@@ -120,7 +121,9 @@ function condition(
 export function planSql(plan: AskPlan, companyId: string, tz: string, onlyPersonId: string | null) {
   const view = ASK_VIEWS[plan.view] as AskView;
   const where: Prisma.Sql[] = [Prisma.sql`company_id = ${companyId}`];
-  if (onlyPersonId && plan.view !== 'people') where.push(Prisma.sql`person_id = ${onlyPersonId}`);
+  // Someone's own rows (tasks, attendance) are theirs; business views (stock, sales) are read by the right.
+  const personal = plan.view !== 'people' && view.personal !== false;
+  if (onlyPersonId && personal) where.push(Prisma.sql`person_id = ${onlyPersonId}`);
   // Inside the asker's branches (phase 12): group-wide rows, their branches' rows, and their own work.
   const reach = currentReach();
   if (reach && plan.view !== 'people') {
@@ -133,7 +136,9 @@ export function planSql(plan: AskPlan, companyId: string, tz: string, onlyPerson
       where.push(
         reach.strict
           ? Prisma.sql`(${groupWide} OR ${inBranches})`
-          : Prisma.sql`(${groupWide} OR ${inBranches} OR person_id = ${reach.userId})`,
+          : personal
+            ? Prisma.sql`(${groupWide} OR ${inBranches} OR person_id = ${reach.userId})`
+            : Prisma.sql`(${groupWide} OR ${inBranches})`,
       );
     } else if (reach.exceptBranchIds?.length) {
       where.push(Prisma.sql`(branch_id IS NULL OR branch_id NOT IN (${Prisma.join(reach.exceptBranchIds)}))`);
@@ -209,9 +214,10 @@ export async function askQuestion(db: Db, actor: Actor, appSecret: string, quest
   const caller = { companyId: actor.companyId, userId: actor.userId, appSecret };
   const ctx = await companyContext(db, actor.companyId);
   const offered = await offeredReports(db, actor);
+  const views = askViewsFor(actor.permissions);
   const { data: plan } = await runAi(db, caller, 'ask', ASK.id, (llm) =>
     llm.json({
-      system: ASK.system(ctx, offered),
+      system: ASK.system(ctx, offered, views),
       messages: [{ role: 'user', content: ASK.user(question) }],
       schema: askPlanSchema,
       effort: 'low',
@@ -249,6 +255,12 @@ export async function askQuestion(db: Db, actor: Actor, appSecret: string, quest
       report: { id: plan.report, name, link: `/reports/${plan.report}` },
     };
   }
+  if (!views.includes(plan.view))
+    return {
+      answer: `You can't see ${(ASK_VIEWS[plan.view] as AskView).label.toLowerCase()} — ask your admin for access.`,
+      plan,
+      ...empty,
+    };
   const problems = checkAskPlan(plan);
   if (problems.length)
     return {

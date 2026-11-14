@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { hasPermission, type PermissionKey } from '../permissions';
 
 /**
  * "Ask" (CLAUDE.md §13): the AI never writes SQL. It picks one of these read-only views and fills in a
@@ -11,6 +12,13 @@ export type AskView = {
   columns: Record<string, { type: AskColumnType; about: string }>;
   /** Shown when the question doesn't say which columns. */
   defaults: string[];
+  /** Who may read it: people with this right (else everyone who may ask). */
+  right?: PermissionKey;
+  /**
+   * The rows are someone's own (a task, a checklist run, an attendance day): people without `ai.admin` see only
+   * theirs. Business data (stock, sales, bookings) has no owner: the right above decides instead.
+   */
+  personal?: boolean;
 };
 
 export const ASK_VIEWS = {
@@ -116,9 +124,164 @@ export const ASK_VIEWS = {
     },
     defaults: ['code', 'name', 'designation', 'department'],
   },
+  stock: {
+    label: 'Stock',
+    about:
+      "What is in stock now, per item and place (store, kitchen, bar, cold room). Quantities are in each item's own unit (kg, litre, ml, pc, bottle); value in rupees.",
+    columns: {
+      code: { type: 'text', about: 'item code' },
+      item: { type: 'text', about: 'item name' },
+      category: { type: 'text', about: 'item category, e.g. Vegetables, Dairy, Liquor, Beer' },
+      unit: { type: 'text', about: 'the unit qty is in' },
+      location: {
+        type: 'text',
+        about: 'where it is, e.g. "Murlipura kitchen store", "Central cold room", "Main store"',
+      },
+      location_kind: {
+        type: 'text',
+        about: 'KITCHEN, BAR, COLD_ROOM or STORE (a place named "… kitchen …" counts as KITCHEN)',
+      },
+      branch: { type: 'text', about: 'branch of the place' },
+      qty: { type: 'number', about: 'quantity there now' },
+      value: { type: 'number', about: 'value of that stock in rupees' },
+      rate: { type: 'number', about: 'rupees per unit' },
+      min_qty: { type: 'number', about: "the item's minimum (whole company)" },
+      max_qty: { type: 'number', about: "the item's MAX (whole company)" },
+      band: { type: 'text', about: 'red, yellow, green, purple (over MAX) or none — for the whole company' },
+      vendor: { type: 'text', about: 'usual vendor' },
+    },
+    defaults: ['item', 'location', 'qty', 'unit', 'value'],
+    right: 'ims.view',
+    personal: false,
+  },
+  stock_moves: {
+    label: 'Stock movements',
+    about: 'Every receipt, issue, transfer and adjustment of stock (wastage, recipe use by sales, counts).',
+    columns: {
+      at: { type: 'date', about: 'when' },
+      code: { type: 'text', about: 'item code' },
+      item: { type: 'text', about: 'item name' },
+      category: { type: 'text', about: 'item category' },
+      unit: { type: 'text', about: 'the unit qty is in' },
+      type: { type: 'text', about: 'IN, OUT, TRANSFER or ADJUST' },
+      reason: { type: 'text', about: 'DAMAGED, EXPIRED, LOST, FOUND, COUNT or empty' },
+      source: {
+        type: 'text',
+        about: 'what made it: wastage, recipe (sold), grn (goods receipt), transfer, count…',
+      },
+      qty: { type: 'number', about: 'quantity moved' },
+      value: { type: 'number', about: 'value in rupees' },
+      location: { type: 'text', about: 'the place it left (or came into)' },
+      to_location: { type: 'text', about: 'where a transfer went' },
+      by_person: { type: 'text', about: 'who entered it' },
+      status: { type: 'text', about: 'APPLIED, PENDING or REJECTED' },
+    },
+    defaults: ['at', 'item', 'type', 'qty', 'unit', 'location'],
+    right: 'ims.view',
+    personal: false,
+  },
+  sales_items: {
+    label: 'Items sold',
+    about:
+      'Every dish and drink ordered on the POS, by business day and outlet (amounts before tax, in rupees).',
+    columns: {
+      business_day: {
+        type: 'date',
+        about: 'the business day (a bill after midnight belongs to the evening before)',
+      },
+      outlet: { type: 'text', about: 'outlet, e.g. "Rooftop – 4th floor"' },
+      order_number: { type: 'number', about: 'order number of that day' },
+      order_type: { type: 'text', about: 'DINE_IN, TAKEAWAY, DELIVERY, ROOM_SERVICE…' },
+      item: { type: 'text', about: 'dish or drink' },
+      variant: { type: 'text', about: 'variant, e.g. Half, Full, 60 ml' },
+      category: { type: 'text', about: 'menu category' },
+      qty: { type: 'number', about: 'how many' },
+      amount: { type: 'number', about: 'price × qty in rupees, before tax' },
+      status: { type: 'text', about: 'HELD, FIRED, READY, SERVED or VOID' },
+      is_void: { type: 'bool', about: 'taken off the order' },
+      void_reason: { type: 'text', about: 'why it was taken off' },
+      no_charge: { type: 'bool', about: 'given free' },
+      steward: { type: 'text', about: 'steward of the order' },
+      ordered_at: { type: 'date', about: 'when it was ordered' },
+    },
+    defaults: ['business_day', 'outlet', 'item', 'qty', 'amount'],
+    right: 'hosp.view',
+    personal: false,
+  },
+  bills: {
+    label: 'Restaurant bills',
+    about: 'POS bills: total, guests, discount, how they were paid.',
+    columns: {
+      business_day: { type: 'date', about: 'the business day' },
+      outlet: { type: 'text', about: 'outlet' },
+      bill_number: { type: 'text', about: 'bill number' },
+      total: { type: 'number', about: 'bill total in rupees, with tax' },
+      service_charge: { type: 'number', about: 'service charge in rupees' },
+      status: { type: 'text', about: 'OPEN, PAID or CANCELLED' },
+      guests: { type: 'number', about: 'covers at the table' },
+      order_type: { type: 'text', about: 'DINE_IN, TAKEAWAY, DELIVERY, ROOM_SERVICE…' },
+      has_discount: { type: 'bool', about: 'a discount was given' },
+      discount_reason: { type: 'text', about: 'why' },
+      no_charge_reason: { type: 'text', about: 'why the bill was free' },
+      paid_by: { type: 'text', about: 'payment modes, e.g. "Cash", "UPI (PhonePe / GPay)"' },
+      steward: { type: 'text', about: 'steward' },
+      paid_at: { type: 'date', about: 'when it was paid' },
+    },
+    defaults: ['business_day', 'outlet', 'bill_number', 'total', 'paid_by'],
+    right: 'hosp.view',
+    personal: false,
+  },
+  attendance: {
+    label: 'Attendance days',
+    about: "Each person's settled day: present, late, half day, absent, on leave, holiday or weekly off.",
+    columns: {
+      date: { type: 'date', about: 'the day' },
+      person: { type: 'text', about: 'who' },
+      department: { type: 'text', about: 'department' },
+      status: { type: 'text', about: 'PRESENT, LATE, HALF_DAY, ABSENT, ON_LEAVE, HOLIDAY or WEEKLY_OFF' },
+      in_at: { type: 'date', about: 'first punch in' },
+      out_at: { type: 'date', about: 'last punch out' },
+      worked_hours: { type: 'number', about: 'hours worked' },
+      late_minutes: { type: 'number', about: 'minutes late' },
+      overtime_hours: { type: 'number', about: 'overtime hours' },
+      missed_out: { type: 'bool', about: 'forgot to punch out' },
+    },
+    defaults: ['date', 'person', 'status', 'in_at', 'out_at'],
+    right: 'hr.view',
+  },
+  reservations: {
+    label: 'Table bookings',
+    about: 'Table reservations at the outlets.',
+    columns: {
+      start_at: { type: 'date', about: 'booked for' },
+      outlet: { type: 'text', about: 'outlet' },
+      guest: { type: 'text', about: 'guest name' },
+      party_size: { type: 'number', about: 'number of guests' },
+      status: {
+        type: 'text',
+        about: 'REQUESTED, CONFIRMED, REMINDED, ARRIVED, SEATED, FINISHED, CANCELLED or NO_SHOW',
+      },
+      source: { type: 'text', about: 'PHONE, WALK_IN or ONLINE' },
+      occasion: { type: 'text', about: 'birthday, anniversary…' },
+      deposit: { type: 'text', about: 'DUE, PAID, USED, KEPT, REFUND_DUE, REFUNDED or empty' },
+      created_at: { type: 'date', about: 'when it was booked' },
+    },
+    defaults: ['start_at', 'outlet', 'guest', 'party_size', 'status'],
+    right: 'hosp.view',
+    personal: false,
+  },
 } as const satisfies Record<string, AskView>;
+
 export type AskViewKey = keyof typeof ASK_VIEWS;
 export const ASK_VIEW_KEYS = Object.keys(ASK_VIEWS) as AskViewKey[];
+
+/** The views this person may ask about (their rights), for the planner and the check. */
+export function askViewsFor(permissions: readonly string[]): AskViewKey[] {
+  return ASK_VIEW_KEYS.filter((k) => {
+    const r = (ASK_VIEWS[k] as AskView).right;
+    return !r || hasPermission(permissions, r as PermissionKey);
+  });
+}
 
 export const ASK_OPS = [
   'eq',

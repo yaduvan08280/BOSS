@@ -1,5 +1,16 @@
 # Changelog
 
+## 14/11/2026 — Ask answers stock, sales, bills, attendance and bookings
+
+- **Ask (Home search) reads six more views**: stock now by item and place, stock movements (receipts, issues,
+  wastage, recipe use), items sold on the POS, restaurant bills, attendance days and table bookings — e.g. "what
+  in kitchen stock has the most quantity", "which dish sold the most on the rooftop", "who was absent most this
+  month", "how much paneer is left and where".
+- They are offered only to people with the module's right (stock `ims.view`, sales / bills / bookings
+  `hosp.view`, attendance `hr.view`); stock and sales are not limited to "your own rows" like tasks are, and a plan
+  naming a view the person may not read is refused. Branch reach still applies.
+- Prompt `ask@3`: places are matched by name ("kitchen", "bar"); quantities keep their unit.
+
 ## 14/11/2026 — Recommended access; the weekly letter written by AI; your own Whisper for voice
 
 - **Roles → Recommended access**: shows what would change, then applies it. Staff see their own branch and their daily work; stock, sales, money and hospitality screens go to the people who work in them; Members move to the role of their department's work. The menu now hides every screen a role cannot use. Check the result with "See as this person" in the org chart.

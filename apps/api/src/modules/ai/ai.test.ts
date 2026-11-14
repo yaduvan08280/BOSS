@@ -296,6 +296,66 @@ describe('AI layer', () => {
     expect((await other.api.post('/api/ai/ask', { question: 'late?' })).body.rows).toEqual([]);
   });
 
+  it('answers stock questions from the business views — by the stock right, not only your own rows', async () => {
+    const { api, company } = await ownerClient(ctx.app);
+    for (const [code, name, unit, openingQty] of [
+      ['DAI-PAN', 'Paneer', 'kg', 12],
+      ['DRY-RIC', 'Basmati rice', 'kg', 40],
+    ] as const)
+      expect(
+        (await api.post('/api/ims/items', { code, name, unit, category: 'Kitchen', openingQty })).status,
+      ).toBe(200);
+    const plan: AskPlan = {
+      answerable: true,
+      why: '',
+      view: 'stock',
+      columns: ['item', 'qty', 'unit', 'location'],
+      filters: [],
+      groupBy: null,
+      aggregate: null,
+      orderBy: { column: 'qty', dir: 'desc' },
+      limit: 1,
+      report: null,
+    };
+    let asked = script(company.id, [plan, 'Basmati rice: 40 kg.']);
+    const top = (await api.post('/api/ai/ask', { question: 'what in stock has the most quantity?' })).body;
+    expect(top.rows).toEqual([
+      {
+        item: 'Basmati rice',
+        qty: 40,
+        unit: 'kg',
+        location: 'Main store',
+        link: expect.stringMatching(/^\/ims\/stock\?item=/),
+      },
+    ]);
+    expect(asked[0]!.system).toContain('stock — What is in stock now');
+
+    // A member with the stock right (and ai.view) sees the company's stock, not just "their own rows".
+    const ravi = await person(api, 'Ravi Kumar', true);
+    const raviApi = await signedIn(ctx.app, ravi.mobile, ravi.tempPassword!);
+    await raviApi.post('/api/auth/change-password', {
+      currentPassword: ravi.tempPassword,
+      newPassword: 'Ravi12345',
+    });
+    const member = await ctx.prisma.role.findFirstOrThrow({
+      where: { companyId: company.id, key: 'MEMBER' },
+    });
+    await ctx.prisma.role.update({
+      where: { id: member.id },
+      data: { permissions: ['ai.view', 'ims.view'] },
+    });
+    script(company.id, [plan, 'Basmati rice.']);
+    expect((await raviApi.post('/api/ai/ask', { question: 'most stock?' })).body.rows).toHaveLength(1);
+
+    // Without it, the stock views are not offered, and a plan that names them is refused.
+    await ctx.prisma.role.update({ where: { id: member.id }, data: { permissions: ['ai.view'] } });
+    asked = script(company.id, [plan]);
+    const refused = (await raviApi.post('/api/ai/ask', { question: 'most stock?' })).body;
+    expect(refused.rows).toEqual([]);
+    expect(refused.answer).toMatch(/can't see stock/);
+    expect(asked[0]!.system).not.toContain('stock — What is in stock now');
+  });
+
   it('keeps business details, remembers facts, and builds the ChatGPT prompt from data', async () => {
     const { api, company } = await ownerClient(ctx.app);
     const saved = (await api.put('/api/ai/business-details', { text: 'We make quartz slabs in Kishangarh.' }))
