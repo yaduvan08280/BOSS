@@ -26,6 +26,7 @@ export * from './machines/ticket';
 export * from './machines/ea';
 export * from './engine/graph';
 export * from './engine/modules';
+export * from './engine/processes';
 export * from './defaults';
 export * from './work/calendar';
 export * from './work/recurrence';

@@ -12,15 +12,15 @@ import {
   type ReactFlowInstance,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Cog, Play } from 'lucide-react';
+import { ArrowUpRight, Cog, Play } from 'lucide-react';
 import { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { EngineModule, FlowGraph, FlowNodeKind } from '@mono/shared';
+import type { FlowGraph, FlowNodeKind } from '@mono/shared';
 import { cn } from '@/lib/utils';
 import { nodeLabel } from './fields';
 import { routeOrthogonal, type Pt } from './route';
 
-type Data = { label: string; kind: FlowNodeKind; off: boolean; roles: string };
+type Data = { label: string; kind: FlowNodeKind; off: boolean; roles: string; open?: () => void };
 const SIZE: Record<FlowNodeKind, [number, number]> = {
   start: [130, 38],
   action: [164, 48],
@@ -28,6 +28,7 @@ const SIZE: Record<FlowNodeKind, [number, number]> = {
   status: [184, 42],
   finished: [184, 42],
   deadend: [184, 42],
+  link: [190, 52],
 };
 const STYLE: Record<FlowNodeKind, string> = {
   start: 'rounded-pill bg-foreground text-background font-semibold',
@@ -36,13 +37,17 @@ const STYLE: Record<FlowNodeKind, string> = {
   status: 'rounded-pill bg-status-info-bg text-status-info-fg font-semibold',
   finished: 'rounded-pill bg-status-ok-bg text-status-ok-fg font-semibold',
   deadend: 'rounded-pill bg-status-bad-bg text-status-bad-fg font-semibold',
+  link: 'rounded-control border-2 border-dashed border-primary/70 bg-card text-foreground font-medium hover:bg-muted',
 };
 
 function FlowNode({ data }: NodeProps<Node<Data>>) {
   const { t } = useTranslation();
   const [w, h] = SIZE[data.kind];
+  const Tag = data.open ? 'button' : 'div';
   return (
-    <div
+    <Tag
+      type={data.open ? 'button' : undefined}
+      onClick={data.open}
       style={{ width: w, height: h + (data.kind === 'action' ? 10 : 0) }}
       className={cn(
         'flex flex-col items-center justify-center px-2.5 py-1 text-center text-[13px] leading-tight shadow-sm',
@@ -55,6 +60,7 @@ function FlowNode({ data }: NodeProps<Node<Data>>) {
         {data.kind === 'auto' && <Cog className="size-3" />}
         {data.kind === 'start' && <Play className="size-3" />}
         {data.label}
+        {data.kind === 'link' && <ArrowUpRight className="size-3.5 shrink-0" />}
       </span>
       {data.roles && <span className="mt-0.5 text-[11px] font-normal opacity-70">{data.roles}</span>}
       {data.off && (
@@ -63,7 +69,7 @@ function FlowNode({ data }: NodeProps<Node<Data>>) {
         </span>
       )}
       <Handle type="source" position={Position.Bottom} className="!size-px !border-0 !opacity-0" />
-    </div>
+    </Tag>
   );
 }
 const nodeTypes = { flow: FlowNode };
@@ -111,7 +117,11 @@ function RouteEdge({ data }: EdgeProps<Edge<Route>>) {
         strokeWidth={1.75}
         strokeDasharray={data.off ? '4 4' : data.back ? '7 4' : undefined}
       />
-      <path d="M0,0 L-10,-5 L-10,5 Z" fill={colour} transform={`translate(${end.x},${end.y}) rotate(${angle})`} />
+      <path
+        d="M0,0 L-10,-5 L-10,5 Z"
+        fill={colour}
+        transform={`translate(${end.x},${end.y}) rotate(${angle})`}
+      />
       {!data.off && (
         <circle r={3} fill={colour} className="motion-reduce:hidden">
           <animateMotion dur={`${Math.max(2, pts.length * 0.8)}s`} repeatCount="indefinite" path={d} />
@@ -124,13 +134,17 @@ const edgeTypes = { route: RouteEdge };
 
 /** The state machine as a top-to-bottom chart, laid out by dagre; switched-off steps fade out. */
 export function FlowChart({
-  module,
+  process,
   graph,
   className,
+  onOpen,
 }: {
-  module: EngineModule;
+  /** A process key (PROCESSES), or 'map' for the system map. */
+  process: string;
   graph: FlowGraph;
   className?: string;
+  /** A box that leads into another process opens it. */
+  onOpen?: (process: string) => void;
 }) {
   const { t } = useTranslation();
   const box = useRef<HTMLDivElement>(null);
@@ -145,7 +159,7 @@ export function FlowChart({
     const roleText = (roles: string[]) =>
       roles
         .filter((r) => r !== 'admin' && r !== 'system' && r !== 'any')
-        .map((r) => t(`engine.role.${r}`))
+        .map((r) => t([`engine.role.${r}`, `flows.role.${r}`]))
         .join(' · ');
     const placed = routeOrthogonal(
       graph.nodes.map((n) => {
@@ -162,10 +176,16 @@ export function FlowChart({
         type: 'flow',
         position: { x: b.x, y: b.y },
         data: {
-          label: nodeLabel(t, module, n.kind, n.key),
+          label: nodeLabel(t, process, n.kind, n.key),
           kind: n.kind,
           off: n.off,
-          roles: n.kind === 'action' ? roleText(n.roles) : '',
+          roles:
+            n.kind === 'action'
+              ? roleText(n.roles)
+              : n.kind === 'link' && process !== 'map' && n.target
+                ? t(`flows.p.${n.target}`)
+                : '',
+          open: n.kind === 'link' && n.target && onOpen ? () => onOpen(n.target!) : undefined,
         },
       };
     });
@@ -182,18 +202,19 @@ export function FlowChart({
       };
     });
     return { nodes, edges, width: placed.width };
-  }, [graph, module, t]);
-  // Readable first: fit the width (never below 75 %), start at the top, and let the wheel/swipe scroll down.
+  }, [graph, process, t, onOpen]);
+  // Readable first: fit the width (never below 60 %), start at the top, and let the wheel/swipe scroll down.
   const start = (rf: ReactFlowInstance<Node<Data>, Edge<Route>>) => {
     const w = box.current?.clientWidth ?? 600;
-    const zoom = Math.min(1, Math.max(0.8, (w - 16) / width));
+    // The system map is wide: let it shrink further so every box is on screen.
+    const zoom = Math.min(1, Math.max(process === 'map' ? 0.45 : 0.6, (w - 16) / width));
     void rf.setViewport({ x: Math.max(8, (w - width * zoom) / 2), y: 8, zoom });
   };
 
   return (
     <div ref={box} className={cn('h-[460px] w-full lg:h-[620px]', className)}>
       <ReactFlow
-        key={module}
+        key={process}
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
@@ -231,13 +252,14 @@ export function FlowLegend() {
     ['auto', STYLE.auto],
     ['finished', STYLE.finished],
     ['deadend', STYLE.deadend],
+    ['link', STYLE.link],
   ];
   return (
     <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-[11px] text-muted-foreground">
       {items.map(([k, cls]) => (
         <span key={k} className="flex items-center gap-1.5">
           <span className={cn('inline-block h-3 w-5', cls)} />
-          {t(`engine.legend.${k}`)}
+          {k === 'link' ? t('flows.legendLink') : t(`engine.legend.${k}`)}
         </span>
       ))}
       <span className="flex items-center gap-1.5">

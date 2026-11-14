@@ -11,7 +11,7 @@ import { delegationMachine, STATUS_KEEPING_ACTIONS } from '../machines/delegatio
 import { eaMachine } from '../machines/ea';
 import { slipEntryStatus, slipMachine } from '../machines/slip';
 import { TICKET_KEEP, ticketMachine } from '../machines/ticket';
-import { machineGraph, type FlowGraph } from './graph';
+import { machineGraph, type FlowGraph, type ProcessLink } from './graph';
 
 /** The five Business Engine modules, in the order the flow designer lists them. */
 export const ENGINE_MODULES = ['checklist', 'delegation', 'slip', 'ticket', 'ea'] as const;
@@ -27,7 +27,11 @@ export const ENGINE_ROLES: Record<EngineModule, string[]> = {
 };
 
 /** Each module's flow chart under a company's settings (defaults when none are saved). */
-export function engineGraph(module: EngineModule, settings?: unknown): FlowGraph {
+export function engineGraph(
+  module: EngineModule,
+  settings?: unknown,
+  links: readonly ProcessLink[] = [],
+): FlowGraph {
   switch (module) {
     case 'delegation': {
       const s = { ...MODULE_DEFAULTS.delegation, ...(settings as Partial<DelegationSettings>) };
@@ -35,6 +39,7 @@ export function engineGraph(module: EngineModule, settings?: unknown): FlowGraph
         delegationMachine,
         { doerMustAccept: s.doerMustAccept, allowReopen: s.allowReopen, needsVerify: s.eaVerifies },
         {
+          links,
           start: { key: 'assign', to: s.doerMustAccept ? 'AWAITING_ACCEPTANCE' : 'OPEN' },
           keep: STATUS_KEEPING_ACTIONS,
           finished: ['DONE'],
@@ -48,6 +53,7 @@ export function engineGraph(module: EngineModule, settings?: unknown): FlowGraph
         checklistMachine,
         { verifierStep: s.verifierStep, hasVerifier: true, allItemsDone: true },
         {
+          links,
           start: { key: 'sweep', to: 'OPEN' },
           keep: ['tick'],
           finished: ['DONE'],
@@ -59,6 +65,7 @@ export function engineGraph(module: EngineModule, settings?: unknown): FlowGraph
       const s = { ...MODULE_DEFAULTS.slip, ...(settings as Partial<SlipSettings>) };
       const ctx = { receiverScreens: s.receiverScreens, approverStep: s.approverStep };
       return machineGraph(slipMachine, ctx, {
+        links,
         start: { key: 'raise', to: slipEntryStatus(ctx) },
         finished: ['CLOSED'],
         deadEnds: ['REJECTED', 'WITHDRAWN'],
@@ -70,6 +77,7 @@ export function engineGraph(module: EngineModule, settings?: unknown): FlowGraph
         ticketMachine,
         { autoClose: s.closeBy === 'auto24h' },
         {
+          links,
           start: { key: 'raise', to: 'OPEN' },
           keep: TICKET_KEEP,
           finished: ['CLOSED'],
@@ -90,7 +98,7 @@ export function engineGraph(module: EngineModule, settings?: unknown): FlowGraph
           waitingRoom: true,
           missedDayToSomeday: s.missedDayToSomeday,
         },
-        { start: { key: 'capture', to: 'CAPTURED' }, finished: ['DONE', 'CLOSED'] },
+        { links, start: { key: 'capture', to: 'CAPTURED' }, finished: ['DONE', 'CLOSED'] },
       );
     }
   }

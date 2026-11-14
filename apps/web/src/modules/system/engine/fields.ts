@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import type { EngineModule } from '@mono/shared';
+import { isEngineProcess, type EngineModule } from '@mono/shared';
 
 /** What the "Set up your flow" panel shows for each module: 1) who, 1B) times and rules, 2) steps on/off. */
 export type SettingField =
@@ -126,16 +126,21 @@ export function optionLabel(t: TFunction, f: Extract<SettingField, { kind: 'sele
   }
 }
 
-/** Status / action names in the chart, from each module's own words. */
-export function nodeLabel(t: TFunction, module: EngineModule, kind: string, key: string) {
-  if (kind === 'start' || kind === 'action' || kind === 'auto') return t(`engine.act.${key}`);
+/** Status / action names in the chart: an engine module's own words, else the shared process words (`flows.*`). */
+export function nodeLabel(t: TFunction, process: string, kind: string, key: string) {
+  if (process === 'map') return t(`flows.p.${key}`);
+  if (kind === 'link') return t(`flows.link.${key}`);
+  const engine = isEngineProcess(process);
+  if (kind === 'start' || kind === 'action' || kind === 'auto')
+    return engine ? t(`engine.act.${key}`) : t([`flows.act.${key}`, `engine.act.${key}`]);
   if (key === 'ESCALATED') return t('engine.escalated');
+  if (!engine) return t(`flows.st.${key}`);
   const ns = {
     delegation: 'task.status',
     checklist: 'chk.status',
     slip: 'slip.status',
     ticket: 'ticket.status',
     ea: 'ea.stage',
-  }[module];
+  }[process];
   return t(`${ns}.${key}`);
 }

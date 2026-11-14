@@ -1,5 +1,18 @@
 # Changelog
 
+## 14/11/2026 — Business Engine draws every process
+
+- **System Master → Business Engine now shows a flowchart for every process in MONO**, by area: HR (leave, Buddy,
+  cover), Sales CRM (year plan, lead, call, order), Stock (purchase order, transfer, production, adjustment,
+  closing count, audit), Money (bills), Restaurant (table booking, waitlist, POS order, dish, kitchen ticket, bill),
+  Hotel (booking / stay, room status, room cleaning) and Banquets — next to the five Business Engine modules.
+- **How things connect**: dashed boxes show where a process hands over to another ("Opens the POS order", "Room
+  charge on the guest's folio", "Repair help ticket" …); tap one to open that process. Each process lists what it
+  leads to, what leads into it, who does which step, and a button to its screen.
+- **System map**: every process on one chart with an arrow for each hand-over, plus a list by area.
+- **Your processes (FMS)**: the company's own processes drawn step by step, with a link to edit them.
+- The charts are drawn from the same rules the app runs, so they always match what really happens.
+
 ## 14/11/2026 — Scroll buttons on every wide table
 
 - **Anything wider than the screen now has ◀ ▶ buttons** — tables (Users, reports, registers…), boards, rows of
