@@ -30,6 +30,8 @@ export { completeStep, startRecord } from './modules/fms/engine';
 export { aiFollowUpText } from './modules/ai/followup';
 export { sendDailySummaries } from './modules/ai/summary';
 export { setTestLlm } from './modules/ai/llm';
+export { askQuestion } from './modules/ai/ask';
+export { setTestStt, transcribeFor } from './modules/ai/voice';
 export { settleAttendance, settleDay } from './modules/hr/attendance';
 export { hrPerson } from './modules/hr/people';
 export { runCovers } from './modules/hr/cover';

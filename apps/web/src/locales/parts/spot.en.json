@@ -6,6 +6,7 @@
     "judge": "Surprise check — is {{name}}'s photo right?",
     "whatWrong": "What was wrong?",
     "ok": "OK",
-    "notOk": "Not OK"
+    "notOk": "Not OK",
+    "failed": "That did not work. Please try again."
   }
 }

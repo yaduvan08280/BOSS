@@ -5,17 +5,15 @@ import { z } from 'zod';
 import { aiConfigInputSchema, aiFlowDraftSchema, localDate, zonedToUtc } from '@mono/shared';
 import type { Env } from '../../env';
 import { AppError } from '../../lib/errors';
-import { decryptJson } from '../../lib/secrets';
 import { actorOf } from '../delegation/routes';
 import { can } from '../work/actor';
 import { askQuestion } from './ask';
 import { chatGptPrompt, readBusinessDetails, refreshBusinessDetails, saveBusinessDetails } from './business';
 import { aiStatus, aiUsageReport, readAiConfig, saveAiConfig, testAiConfig } from './config';
 import { createFromDraft, draftFlow, draftMaster, editFlowWithAi, rememberFacts, suggestKpis } from './flows';
-import type { AiSecrets } from './llm';
 import { deleteMaster, listMasters, masterDefSchema, saveMaster } from './masters';
-import { transcribeAudio } from './providers';
 import { draftRecordType } from './records';
+import { transcribeFor } from './voice';
 
 const idParam = z.object({ id: z.string() });
 /** AI calls cost money: a person gets a sensible number per minute. */
@@ -188,37 +186,22 @@ export async function aiRoutes(app: FastifyInstance, opts: { env: Env }) {
           throw new AppError(400, 'BAD_REQUEST', 'That is not a recording');
         const audio = await file.toBuffer();
         const lang = (q.query as { lang?: string }).lang === 'hi' ? 'hi' : 'en';
-        const cfg = await app.prisma.aiConfig.findUnique({ where: { companyId: q.auth!.companyId } });
-        const secrets = decryptJson<AiSecrets>(cfg?.secret, secret) ?? {};
-        const provider = cfg?.sttProvider;
-        const key = secrets.sttKey || (cfg?.provider === provider ? secrets.apiKey : undefined);
-        if (!cfg || (provider !== 'openai' && provider !== 'gemini') || !key)
-          throw new AppError(
-            409,
-            'AI_NOT_CONNECTED',
-            'Speech to text is not set up; the browser does it instead',
-          );
-        const started = Date.now();
-        const text = await transcribeAudio(
-          {
-            provider,
-            apiKey: key,
-            model: cfg.sttModel,
-            baseUrl: provider === cfg.provider ? cfg.baseUrl : null,
-          },
+        const text = await transcribeFor(
+          app.prisma,
+          { companyId: q.auth!.companyId, userId: q.auth!.userId },
+          secret,
           audio,
           file.mimetype,
           lang,
-        );
-        await app.prisma.aiUsage.create({
-          data: {
-            companyId: q.auth!.companyId,
-            userId: q.auth!.userId,
-            feature: 'transcribe',
-            provider,
-            model: cfg.sttModel || (provider === 'openai' ? 'whisper-1' : 'gemini-2.5-flash'),
-            ms: Date.now() - started,
-          },
+        ).catch((err) => {
+          // The screen falls back to the browser's own speech recognition on this answer.
+          if (err instanceof AppError && err.code === 'AI_NOT_CONNECTED')
+            throw new AppError(
+              409,
+              'AI_NOT_CONNECTED',
+              'Speech to text is not set up; the browser does it instead',
+            );
+          throw err;
         });
         return { text };
       },

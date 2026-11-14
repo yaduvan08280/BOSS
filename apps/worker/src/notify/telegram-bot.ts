@@ -10,6 +10,7 @@ import {
   onAction,
   onProof,
   onText,
+  onVoice,
   type BotReply,
   type BotScope,
 } from './bot-handlers';
@@ -19,12 +20,13 @@ const COMMANDS = [
   { command: 'today', description: 'Due today, and anything late' },
   { command: 'done', description: 'Mark a task done (lists your tasks)' },
   { command: 'move', description: 'Move a date: /move 12 05/11/2026 18:00 reason' },
+  { command: 'ask', description: 'Ask about your data (or send a voice message)' },
   { command: 'help', description: 'What the bot can do' },
 ];
 const CAPTURE_COMMANDS = [
   ...COMMANDS.slice(0, 4),
   { command: 'capture', description: 'Note something on the EA board' },
-  COMMANDS[4]!,
+  ...COMMANDS.slice(4),
 ];
 
 /**
@@ -135,6 +137,21 @@ export class BotManager {
       await ctx.reply(text);
     });
 
+    // A voice message is a spoken question; the answer comes back as text.
+    bot.on(['message:voice', 'message:audio'], async (ctx) => {
+      const clip = ctx.message.voice ?? ctx.message.audio!;
+      await ctx.replyWithChatAction('typing').catch(() => undefined);
+      const text = await onVoice(db, scope, chat(ctx.chat.id), env.APP_SECRET, {
+        seconds: clip.duration,
+        fetch: async () => {
+          const file = await ctx.api.getFile(clip.file_id);
+          const res = await fetch(`https://api.telegram.org/file/bot${token}/${file.file_path}`);
+          return { data: Buffer.from(await res.arrayBuffer()), mime: clip.mime_type ?? 'audio/ogg' };
+        },
+      });
+      await ctx.reply(text);
+    });
+
     bot.on('message:text', async (ctx) =>
       send(
         ctx,
@@ -145,6 +162,7 @@ export class BotManager {
           ctx.message.text,
           app,
           ctx.message.reply_to_message?.message_id,
+          env.APP_SECRET,
         ),
       ),
     );

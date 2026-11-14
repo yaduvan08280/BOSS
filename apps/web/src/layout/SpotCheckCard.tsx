@@ -62,7 +62,7 @@ function Answer({ check }: { check: Check }) {
       toast.success(t('spot.sent'));
       done();
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : t('common.error')),
+    onError: (e) => toast.error(e instanceof Error ? e.message : t('spot.failed')),
   });
   return (
     <div
@@ -105,7 +105,7 @@ function Judge({ check }: { check: Check }) {
       toast.success(t('org.saved'));
       done();
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : t('common.error')),
+    onError: (e) => toast.error(e instanceof Error ? e.message : t('spot.failed')),
   });
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-card border bg-card p-3.5">

@@ -1,5 +1,15 @@
 # Changelog
 
+## 14/11/2026 — Owner's desk, second batch; questions on Telegram
+
+- **Shadow mode**: the Owner opens a person in the org chart and looks at MONO as they see it (read-only, with a banner).
+- **Weekly letter** (owner's desk, and to the owner on Monday): three things better, three worse, one decision waiting. Built from the figures by fixed rules — not written by the AI.
+- **What if**: sliders for price, footfall, cost and staff against the last 90 days. Fixed costs (rent …) are not counted.
+- **Copy the best**: the leading branch's checklists that other branches lack, copied in one tap for the manager to assign.
+- **Pulse**: a public rating link per outlet (make a QR from it); 1–2 stars become the manager's task. No QR image is drawn on screen.
+- **Surprise checks**: a ticked checklist item is asked for again with a photo taken now; the verifier judges it; results by person.
+- **Telegram**: `/ask <question>`, or send the question as a voice message (needs Whisper or Gemini chosen for speech in AI settings).
+
 ## 14/11/2026 — Owner's desk (first nine pages)
 
 A new menu item for the Owner and Admins, under Workspace: **Morning** (every linked company side by side), **Exceptions** (only what broke its normal range), **Leaks** (unexplained rupees by person), **Promises** (kept vs broken), **Cost of delay** (late steps in rupees), **Branch league**, **Only one knows** (bus-factor map), **Vendors** (scorecard and cheaper alternatives) and **Cash flow** (60-day calendar). All read data already in MONO; nothing new needs to be entered except the normal ranges and each process's value per day.
