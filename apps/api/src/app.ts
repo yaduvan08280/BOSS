@@ -20,6 +20,7 @@ import { departmentRoutes } from './modules/org/departments.routes';
 import { roleRoutes } from './modules/org/roles.routes';
 import { setupRoutes } from './modules/org/setup.routes';
 import { userPhotoRoutes } from './modules/org/users.photo';
+import { ownerRoutes } from './modules/owner/routes';
 import { userRoutes } from './modules/org/users.routes';
 import { systemRoutes } from './modules/system/routes';
 import { channelRoutes } from './modules/notify/channels.routes';
@@ -143,6 +144,7 @@ export async function buildApp(opts: BuildOptions) {
   await app.register(departmentRoutes);
   await app.register(userRoutes);
   await app.register(userPhotoRoutes);
+  await app.register(ownerRoutes);
   await app.register(roleRoutes);
   await app.register(systemRoutes);
   await app.register(channelRoutes, { env });
