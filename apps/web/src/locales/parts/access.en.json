@@ -1,0 +1,23 @@
+{
+  "access": {
+    "title": "Recommended access",
+    "body": "Let MONO set what each role sees: staff see their own branch and their daily work; stock, sales, money and hospitality screens go to the people who work in them. You see every change before it is saved.",
+    "open": "Show what would change",
+    "apply": "Apply",
+    "applied": "Access set. Check it with \"See as this person\" in the org chart.",
+    "failed": "Could not work this out. Try again.",
+    "nothing": "Every role already has the recommended access. Nothing to change.",
+    "intro": "Nothing is saved until you press Apply. Afterwards you can still change any role by hand, and look at MONO as any person from the org chart.",
+    "roles": "Roles",
+    "newRole": "new role",
+    "people_one": "{{count}} person",
+    "people_other": "{{count}} people",
+    "sees": "Sees",
+    "was": "was: {{was}}",
+    "loses": "No longer sees",
+    "gains": "Now sees",
+    "moves_one": "{{count}} person changes role",
+    "moves_other": "{{count}} people change role",
+    "movesHint": "A Member whose department says what they do gets the role of that work, so they keep the screens of their job."
+  }
+}

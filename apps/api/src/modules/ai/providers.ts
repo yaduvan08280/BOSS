@@ -334,7 +334,7 @@ export async function transcribeAudio(
     try {
       res = await fetch(`${base}/audio/transcriptions`, {
         method: 'POST',
-        headers: { authorization: `Bearer ${s.apiKey}` },
+        headers: s.apiKey ? { authorization: `Bearer ${s.apiKey}` } : {},
         body: form,
         signal: AbortSignal.timeout(120_000),
       });

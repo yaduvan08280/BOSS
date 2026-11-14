@@ -124,7 +124,9 @@ export async function ownerRoutes(app: FastifyInstance, opts: { secret: string }
     },
     async (q) => saveDelayValue(db, actorOf(q), q.body),
   );
-  r.get('/api/owner/letter', { ...signedIn(), schema: { tags } }, async (q) => letterFor(db, actorOf(q)));
+  r.get('/api/owner/letter', { ...signedIn(), schema: { tags } }, async (q) =>
+    letterFor(db, actorOf(q), opts.secret),
+  );
   r.get('/api/owner/what-if', { ...signedIn(), schema: { tags } }, async (q) => whatIfBase(db, actorOf(q)));
   r.post(
     '/api/owner/copy-checklists',

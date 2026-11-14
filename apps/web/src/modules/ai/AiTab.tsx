@@ -45,6 +45,7 @@ function AiForm({ saved }: { saved: AiConfigView | null }) {
     sttProvider: saved?.sttProvider ?? 'browser',
     sttModel: saved?.sttModel ?? '',
     sttKey: '',
+    sttBaseUrl: saved?.sttBaseUrl ?? '',
     dailySummary: saved?.dailySummary ?? true,
   });
   const set = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
@@ -62,6 +63,7 @@ function AiForm({ saved }: { saved: AiConfigView | null }) {
         sttProvider: f.sttProvider as AiConfigInput['sttProvider'],
         sttModel: f.sttModel || null,
         sttKey: f.sttKey || undefined,
+        sttBaseUrl: f.sttBaseUrl || null,
         dailySummary: f.dailySummary,
       };
       return aiApi.saveConfig(body);
@@ -189,10 +191,19 @@ function AiForm({ saved }: { saved: AiConfigView | null }) {
                 <Input
                   value={f.sttModel}
                   onChange={(e) => set({ sttModel: e.target.value })}
-                  placeholder={f.sttProvider === 'openai' ? 'whisper-1' : 'gemini-2.5-flash'}
+                  placeholder={f.sttProvider === 'gemini' ? 'gemini-2.5-flash' : 'whisper-1'}
                 />
               </Field>
-              {f.sttProvider !== f.provider && (
+              {f.sttProvider === 'whisper' && (
+                <Field label={t('ai.set.sttBaseUrl')} hint={t('ai.set.sttBaseUrlHint')}>
+                  <Input
+                    value={f.sttBaseUrl}
+                    onChange={(e) => set({ sttBaseUrl: e.target.value })}
+                    placeholder="http://whisper:8000/v1"
+                  />
+                </Field>
+              )}
+              {f.sttProvider !== f.provider && f.sttProvider !== 'whisper' && (
                 <Field
                   label={t('ai.set.sttKey')}
                   hint={saved?.hasSttKey ? t('notify.secretSaved') : t('notify.secretOnce')}

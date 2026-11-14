@@ -8,6 +8,7 @@ import { Badge, Checkbox, Select } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { del, patch, post, useOrgMutation, useRoles, type Role } from '../api';
+import { RecommendedAccess } from './RecommendedAccess';
 import { RoleReach } from './RoleReach';
 
 const PROCESS_ROLES = ['coordinator', 'problemSolver', 'verifier'];
@@ -104,6 +105,7 @@ export function RolesTab() {
             </Button>
           </form>
         </Card>
+        <RecommendedAccess />
         <Card className="p-4">
           <div className="text-sm font-semibold">{t('org.roles.processTitle')}</div>
           <p className="mt-1 text-xs text-muted-foreground">{t('org.roles.processBody')}</p>

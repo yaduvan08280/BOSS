@@ -1,7 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { makeApp, ownerClient } from '../../test/helpers';
 import { add, bill, ok, open, pay, restaurant } from '../hosp/pos-kit';
+import { setTestLlm } from '../ai/llm';
 import { world } from '../records/testkit';
+import { letterFacts, writtenLetter } from './letter-ai';
 
 let ctx: Awaited<ReturnType<typeof makeApp>>;
 beforeAll(async () => {
@@ -171,6 +173,50 @@ describe("the owner's desk", () => {
     const r = await restaurant(ctx.prisma, w);
     const letter = await ok<{ week: { from: string; to: string } }>(w.api.get('/api/owner/letter'));
     expect(letter.week.from < letter.week.to).toBe(true);
+    // A quiet week has nothing to write about, so the AI is not asked.
+    expect((letter as { written?: string | null }).written).toBeNull();
+    // With figures, the company's AI writes the letter once and it is kept for the week.
+    const facts = {
+      company: 'Rooftop',
+      week: letter.week,
+      better: [{ key: 'sales', before: '₹1.00 L', now: '₹1.40 L' }],
+      worse: [{ key: 'missed', before: '2', now: '9' }],
+      decision: { kind: 'leave', text: '', since: letter.week.to },
+    };
+    expect(letterFacts(facts)).toContain('Better: Sales ₹1.00 L → ₹1.40 L.');
+    expect(letterFacts(facts, 'hi')).toContain('बिक्री');
+    const asked: string[] = [];
+    setTestLlm((id) =>
+      id === w.companyId
+        ? ({
+            provider: 'deepseek',
+            model: 'test',
+            complete: async (req: { system: string; messages: { content: string }[] }) => {
+              asked.push(`${req.system}\n${req.messages.at(-1)!.content}`);
+              return {
+                text: 'Sales rose by forty percent, but nine checklists were missed against two the week before.',
+                usage: { inputTokens: 1, outputTokens: 1 },
+              };
+            },
+          } as never)
+        : null,
+    );
+    const written = await writtenLetter(ctx.prisma, w.companyId, 'secret', facts, 'en');
+    expect(written).toContain('nine checklists were missed');
+    expect(asked[0]).toContain('Checklists missed 2 → 9');
+    expect(await writtenLetter(ctx.prisma, w.companyId, 'secret', facts, 'en')).toBe(written);
+    expect(asked).toHaveLength(1);
+    setTestLlm(null);
+    // No AI: no letter in words, and the figures stand on their own.
+    expect(
+      await writtenLetter(
+        ctx.prisma,
+        w.companyId,
+        'secret',
+        { ...facts, week: { from: '2026-01-05', to: '2026-01-11' } },
+        'en',
+      ),
+    ).toBeNull();
     const base = await ok<{ weekdays: unknown[] }>(w.api.get('/api/owner/what-if'));
     expect(base.weekdays).toHaveLength(7);
 

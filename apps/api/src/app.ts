@@ -17,6 +17,7 @@ import { healthRoutes } from './modules/health/routes';
 import { fileRoutes } from './modules/files/routes';
 import { companyRoutes } from './modules/org/company.routes';
 import { departmentRoutes } from './modules/org/departments.routes';
+import { recommendedRoleRoutes } from './modules/org/roles.recommended';
 import { roleRoutes } from './modules/org/roles.routes';
 import { setupRoutes } from './modules/org/setup.routes';
 import { userPhotoRoutes } from './modules/org/users.photo';
@@ -146,6 +147,7 @@ export async function buildApp(opts: BuildOptions) {
   await app.register(userPhotoRoutes);
   await app.register(ownerRoutes, { secret: env.APP_SECRET });
   await app.register(roleRoutes);
+  await app.register(recommendedRoleRoutes);
   await app.register(systemRoutes);
   await app.register(channelRoutes, { env });
   await app.register(templateRoutes, { env });

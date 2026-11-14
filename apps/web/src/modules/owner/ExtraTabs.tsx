@@ -21,6 +21,8 @@ type Letter = {
   better: Line[];
   worse: Line[];
   decision: { kind: string; text: string; since: string | null; link: string } | null;
+  /** The letter in words, when the company's AI wrote it. */
+  written?: string | null;
 };
 
 /** Last week against the week before, on one page. */
@@ -59,6 +61,12 @@ export function LetterTab() {
         </div>
         <h2 className="text-xl font-semibold">{t('owner.w.title', { company: l.company })}</h2>
       </header>
+      {l.written && (
+        <section className="space-y-1 border-l-2 border-primary pl-4">
+          <p className="text-[15px] leading-relaxed whitespace-pre-line">{l.written}</p>
+          <p className="text-xs text-muted-foreground">{t('owner.w.byAi')}</p>
+        </section>
+      )}
       <section>
         <h3 className="mb-2 text-sm font-semibold text-status-ok-fg">{t('owner.w.better')}</h3>
         {list(l.better, true)}

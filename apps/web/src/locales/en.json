@@ -2415,7 +2415,8 @@
     "stt": {
       "browser": "The browser (free; best in Chrome)",
       "openai": "OpenAI Whisper (Hindi and English)",
-      "gemini": "Google Gemini"
+      "gemini": "Google Gemini",
+      "whisper": "Your own Whisper server (free; Hindi and English; nothing leaves your server)"
     },
     "set": {
       "provider": "1. Which AI",
@@ -2438,6 +2439,8 @@
       "sttHint": "Used by every Dictate / Speak button. The browser works without a key but needs Chrome.",
       "sttModel": "Speech model",
       "sttKey": "Speech API key",
+      "sttBaseUrl": "Whisper server address",
+      "sttBaseUrlHint": "Any server that speaks OpenAI's /audio/transcriptions, such as a Whisper container on the MONO machine. No key is needed.",
       "dailySummary": "Daily summary to the owner at 08:45",
       "dailySummaryHint": "A short Telegram message: what was done yesterday, what is late, what is due today.",
       "test": "Test",

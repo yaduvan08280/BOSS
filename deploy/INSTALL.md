@@ -136,6 +136,32 @@ Everything below is in **System Master → Integration**. Secrets are stored enc
 
 **Check it end to end**: **Notification rules → Send test** → pick yourself. You should get it in the app (bell), on Telegram and by email within seconds.
 
+## 7B. Voice questions on Telegram (speech to text)
+
+A voice message to the bot is a spoken question. MONO must turn it into text first, and **DeepSeek cannot do
+that** (it has no speech service). Choose one in System Master → Integration → AI → "Who turns speech into text":
+
+- **Your own Whisper server** — free, Hindi and English, nothing leaves the machine. MONO only needs a server
+  that answers OpenAI's `POST /v1/audio/transcriptions`. One way is the `speaches` container (formerly
+  faster-whisper-server) next to MONO; add this to `deploy/docker-compose.yml` under `services:` and run
+  `docker compose up -d whisper`:
+
+  ```yaml
+    whisper:
+      image: ghcr.io/speaches-ai/speaches:latest-cpu
+      restart: unless-stopped
+      volumes:
+        - /srv/mono/whisper:/home/ubuntu/.cache/huggingface/hub
+  ```
+
+  Then set the address to `http://whisper:8000/v1` and the speech model to the one the container serves
+  (for example `Systran/faster-whisper-small`). **This container was not tried while MONO was built** (the
+  build machine could not download speech models) — MONO's side is tested against a server that speaks the same
+  API. The first question is slow while the model downloads. The i7-12700 handles the `small` model comfortably.
+- **Google Gemini** or **OpenAI Whisper** — paste that service's key in the same place.
+
+Until one is chosen the bot answers a voice message with "type: /ask your question"; `/ask` works with DeepSeek.
+
 ## 7A. Printers and Tally at a branch (the site agent)
 
 A branch whose printers or Tally are not on the server's own network runs a small program on one of its

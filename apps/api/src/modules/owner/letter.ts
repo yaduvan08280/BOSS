@@ -6,8 +6,10 @@ import type { Actor } from '../work/actor';
 import { branchNumbers } from './branches';
 import { needOwner, spanOf } from './core';
 import { leaks } from './leaks';
+import { letterFacts, writtenLetter } from './letter-ai';
 import { promises } from './promises';
 
+const dmy = (d: string) => d.split('-').reverse().join('/');
 type Line = { key: string; now: string; before: string; change: number };
 
 /**
@@ -107,23 +109,16 @@ export async function ownerLetter(db: Db, companyId: string, ownerId: string | n
   return { company: name, week, better, worse, decision, numbers: { now: a, before: b } };
 }
 
-export async function letterFor(db: Db, actor: Actor) {
+export async function letterFor(db: Db, actor: Actor, appSecret: string) {
   needOwner(actor);
-  return ownerLetter(db, actor.companyId, actor.userId);
+  const l = await ownerLetter(db, actor.companyId, actor.userId);
+  const me = await db.user.findFirst({ where: { id: actor.userId }, select: { lang: true } });
+  const lang = me?.lang === 'hi' ? 'hi' : 'en';
+  return { ...l, written: await writtenLetter(db, actor.companyId, appSecret, l, lang) };
 }
 
-const WORDS: Record<string, string> = {
-  sales: 'Sales',
-  attendance: 'Attendance',
-  kept: 'Promises kept',
-  lateWork: 'Late work',
-  missed: 'Checklists missed',
-  leaks: 'Unexplained money',
-};
-const dmy = (d: string) => d.split('-').reverse().join('/');
-
-/** The letter goes to the owner once a week, on Monday from 08:00 company time. */
-export async function letterSweep(db: Db, now = new Date(), onlyCompanyId?: string) {
+/** The letter goes to the owner once a week, on Monday from 08:00 company time — in words when AI is connected. */
+export async function letterSweep(db: Db, appSecret: string, now = new Date(), onlyCompanyId?: string) {
   const companies = await db.company.findMany({
     where: { deletedAt: null, ...(onlyCompanyId ? { id: onlyCompanyId } : {}) },
     select: { id: true, timezone: true },
@@ -141,8 +136,13 @@ export async function letterSweep(db: Db, now = new Date(), onlyCompanyId?: stri
     if (!(await claimMark(db, c.id, `owner.letter:${today}`))) continue;
     const l = await ownerLetter(db, c.id, null, now);
     if (!l.better.length && !l.worse.length && !l.decision) continue;
-    const list = (rows: Line[]) =>
-      rows.map((r) => `${WORDS[r.key] ?? r.key} ${r.before} → ${r.now}`).join('; ') || '—';
+    const owner = await db.user.findFirst({
+      where: { companyId: c.id, deletedAt: null, status: 'ACTIVE', role: { key: 'OWNER' } },
+      orderBy: { createdAt: 'asc' },
+      select: { lang: true },
+    });
+    const lang = owner?.lang === 'hi' ? 'hi' : 'en';
+    const text = (await writtenLetter(db, c.id, appSecret, l, lang)) ?? letterFacts(l, lang);
     await db.$transaction((tx) =>
       emitEvent(
         tx,
@@ -151,13 +151,7 @@ export async function letterSweep(db: Db, now = new Date(), onlyCompanyId?: stri
           name: 'report.owner_letter',
           entityType: 'company',
           entityId: c.id,
-          payload: {
-            week: `${dmy(l.week.from)} – ${dmy(l.week.to)}`,
-            better: list(l.better),
-            worse: list(l.worse),
-            decision: l.decision ? `${l.decision.kind}: ${l.decision.text || 'waiting'}` : '—',
-            link: '/owner?tab=letter',
-          },
+          payload: { week: `${dmy(l.week.from)} – ${dmy(l.week.to)}`, text, link: '/owner?tab=letter' },
         },
       ),
     );

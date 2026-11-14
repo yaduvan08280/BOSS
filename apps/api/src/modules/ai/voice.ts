@@ -26,12 +26,21 @@ export async function transcribeFor(
   const cfg = await db.aiConfig.findUnique({ where: { companyId: who.companyId } });
   const secrets = decryptJson<AiSecrets>(cfg?.secret, appSecret) ?? {};
   const provider = cfg?.sttProvider;
+  // The company's own Whisper server needs no key; the others do.
+  const own = provider === 'whisper' && Boolean(cfg?.sttBaseUrl);
   const key = secrets.sttKey || (cfg?.provider === provider ? secrets.apiKey : undefined);
-  if (!cfg || (provider !== 'openai' && provider !== 'gemini') || !key)
+  if (!cfg || !(own || ((provider === 'openai' || provider === 'gemini') && key)))
     throw new AppError(409, 'AI_NOT_CONNECTED', 'Speech to text is not set up');
   const started = Date.now();
   const text = await transcribeAudio(
-    { provider, apiKey: key, model: cfg.sttModel, baseUrl: provider === cfg.provider ? cfg.baseUrl : null },
+    own
+      ? { provider: 'openai', apiKey: key ?? '', model: cfg.sttModel || 'whisper-1', baseUrl: cfg.sttBaseUrl }
+      : {
+          provider: provider as 'openai' | 'gemini',
+          apiKey: key!,
+          model: cfg.sttModel,
+          baseUrl: provider === cfg.provider ? cfg.baseUrl : null,
+        },
     audio,
     mime,
     lang,
@@ -41,8 +50,8 @@ export async function transcribeFor(
       companyId: who.companyId,
       userId: who.userId,
       feature: 'transcribe',
-      provider,
-      model: cfg.sttModel || (provider === 'openai' ? 'whisper-1' : 'gemini-2.5-flash'),
+      provider: provider!,
+      model: cfg.sttModel || (provider === 'gemini' ? 'gemini-2.5-flash' : 'whisper-1'),
       ms: Date.now() - started,
     },
   });

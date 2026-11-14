@@ -55,7 +55,7 @@ export async function voiceReply(
     );
   } catch (err) {
     if (codeOf(err) === 'AI_NOT_CONNECTED')
-      return 'Voice questions need speech to text (OpenAI Whisper or Gemini) chosen in System Master → Integration → AI. Until then, type: /ask your question';
+      return 'Voice questions need speech to text (your own Whisper server, OpenAI Whisper or Gemini) chosen in System Master → Integration → AI. Until then, type: /ask your question';
     return 'I could not hear that. Try again, or type: /ask your question';
   }
   if (heard.trim().length < 3)

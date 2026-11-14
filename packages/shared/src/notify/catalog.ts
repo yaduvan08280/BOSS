@@ -808,9 +808,9 @@ const ROWS: Row[] = [
     'team',
     ['owner'],
     'Your week ({{week}})',
-    'Better: {{better}}. Worse: {{worse}}. Waiting on you: {{decision}}.',
+    '{{text}}',
     'आपका हफ़्ता ({{week}})',
-    'बेहतर: {{better}}। ख़राब: {{worse}}। आपके फ़ैसले का इंतज़ार: {{decision}}।',
+    '{{text}}',
   ],
   [
     'reservation.requested',

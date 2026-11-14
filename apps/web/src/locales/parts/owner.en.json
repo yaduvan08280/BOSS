@@ -205,7 +205,7 @@
       "noDecision": "Nothing is waiting on you.",
       "since": "since {{day}}",
       "open": "Open",
-      "foot": "Each line compares last week with the week before. The same letter goes to the owner every Monday morning.",
+      "foot": "Each line compares last week with the week before. The same letter goes to the owner every Monday morning — in words when AI is connected, else as these figures.",
       "line": {
         "sales": "Sales",
         "attendance": "Attendance",
@@ -218,7 +218,8 @@
         "slip": "Help slip {{text}}",
         "leave": "A leave request is waiting for a decision",
         "stock": "{{text}} stock adjustments are waiting for approval"
-      }
+      },
+      "byAi": "Written by your AI from the figures below — check any number against them."
     },
     "i": {
       "title": "Change one thing",

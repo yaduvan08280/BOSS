@@ -1,5 +1,11 @@
 # Changelog
 
+## 14/11/2026 — Recommended access; the weekly letter written by AI; your own Whisper for voice
+
+- **Roles → Recommended access**: shows what would change, then applies it. Staff see their own branch and their daily work; stock, sales, money and hospitality screens go to the people who work in them; Members move to the role of their department's work. The menu now hides every screen a role cannot use. Check the result with "See as this person" in the org chart.
+- **Weekly letter**: written in words by the company's AI (DeepSeek works) from the week's figures, with the figures shown beneath. Without AI the figures are sent as before.
+- **Voice on Telegram**: a new speech choice, "Your own Whisper server" (free, no key). DeepSeek cannot turn speech into text, so pick this, Gemini or OpenAI. See INSTALL.md §7B.
+
 ## 14/11/2026 — Sweep of every screen: fixes
 
 - **Roles → "How far this role sees"**: own work, their branches, their legal entity or the whole company. Until now this could only be set through the API, so every role saw every branch. Existing roles are unchanged (whole company) — set staff roles to "Their branches".

@@ -220,7 +220,7 @@ await boss.work(
     const flashes = await flashSweep(prisma);
     if (flashes) log.info({ flashes }, 'Flash reports sent');
     // The owner's weekly letter: Monday from 08:00, once.
-    const letters = await letterSweep(prisma);
+    const letters = await letterSweep(prisma, env.APP_SECRET);
     if (letters) log.info({ letters }, 'Owner letters sent');
     // Surprise checks: ask the day's checks at random times; those not answered in time are missed.
     const spots = await spotSweep(prisma);
