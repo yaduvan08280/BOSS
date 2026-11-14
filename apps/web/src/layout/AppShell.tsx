@@ -118,14 +118,17 @@ export function AppShell({ me }: { me: Me }) {
         <CommandPalette me={me} />
       </div>
 
-      <button
-        onClick={() => setAssistant(true)}
-        className="fixed bottom-24 right-4 z-30 grid size-12 place-items-center rounded-full bg-ink text-ink-foreground shadow-xl transition-transform hover:scale-105 active:scale-95 lg:bottom-6 lg:right-6 lg:size-14"
-        aria-label={t('shell.assistant')}
-        title={t('shell.assistant')}
-      >
-        <Bot className="size-5 lg:size-6" />
-      </button>
+      {/* The chat page is the assistant itself: no floating button over its Send button. */}
+      {!pathname.startsWith('/ai/chat') && (
+        <button
+          onClick={() => setAssistant(true)}
+          className="fixed bottom-24 right-4 z-30 grid size-12 place-items-center rounded-full bg-ink text-ink-foreground shadow-xl transition-transform hover:scale-105 active:scale-95 lg:bottom-6 lg:right-6 lg:size-14"
+          aria-label={t('shell.assistant')}
+          title={t('shell.assistant')}
+        >
+          <Bot className="size-5 lg:size-6" />
+        </button>
+      )}
 
       <BottomTabs
         onCapture={() => setCapture(true)}

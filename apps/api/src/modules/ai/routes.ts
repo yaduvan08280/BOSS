@@ -8,6 +8,7 @@ import { AppError } from '../../lib/errors';
 import { actorOf } from '../delegation/routes';
 import { can } from '../work/actor';
 import { askQuestion } from './ask';
+import { deleteChat, getChat, listChats, sendMessage } from './chat';
 import { chatGptPrompt, readBusinessDetails, refreshBusinessDetails, saveBusinessDetails } from './business';
 import { aiStatus, aiUsageReport, readAiConfig, saveAiConfig, testAiConfig } from './config';
 import { createFromDraft, draftFlow, draftMaster, editFlowWithAi, rememberFacts, suggestKpis } from './flows';
@@ -171,6 +172,28 @@ export async function aiRoutes(app: FastifyInstance, opts: { env: Env }) {
       schema: { tags, body: z.object({ question: z.string().trim().min(3).max(500) }) },
     },
     async (q) => askQuestion(app.prisma, actorOf(q), secret, q.body.question),
+  );
+
+  // The AI chat: the owner's assistant over all of MONO's data; others within their rights and branches.
+  const chatId = z.object({ id: z.string().min(1).max(40) });
+  r.get('/api/ai/chats', { ...viewer(), schema: { tags } }, async (q) => listChats(app.prisma, actorOf(q)));
+  r.get('/api/ai/chats/:id', { ...viewer(), schema: { tags, params: chatId } }, async (q) =>
+    getChat(app.prisma, actorOf(q), q.params.id),
+  );
+  r.delete('/api/ai/chats/:id', { ...viewer(), schema: { tags, params: chatId } }, async (q) =>
+    deleteChat(app.prisma, actorOf(q), q.params.id),
+  );
+  r.post(
+    '/api/ai/chat',
+    {
+      ...viewer(),
+      config: perMinute(20),
+      schema: {
+        tags,
+        body: z.object({ chatId: z.string().max(40).nullish(), text: z.string().trim().min(1).max(2000) }),
+      },
+    },
+    async (q) => sendMessage(app.prisma, actorOf(q), secret, q.body),
   );
 
   // Dictate: a short recording → text, through the provider chosen for speech (Hindi or English).

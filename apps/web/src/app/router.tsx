@@ -86,6 +86,7 @@ const RecordListPage = page(() => import('@/modules/records/RecordListPage'), 'R
 const ListsPage = page(() => import('@/modules/lists/ListsPage'), 'ListsPage');
 const OutletsPage = page(() => import('@/modules/branches/OutletsPage'), 'OutletsPage');
 const OwnerDeskPage = page(() => import('@/modules/owner/OwnerDeskPage'), 'OwnerDeskPage');
+const ChatPage = page(() => import('@/modules/ai/ChatPage'), 'ChatPage');
 const PublicPulsePage = page(() => import('@/modules/owner/PublicPulsePage'), 'PublicPulsePage');
 const BillsPage = page(() => import('@/modules/money/BillsPage'), 'BillsPage');
 const PartiesPage = page(() => import('@/modules/money/PartiesPage'), 'PartiesPage');
@@ -237,6 +238,7 @@ export const router = createBrowserRouter([
       { path: '/reports', element: <ReportsPage /> },
       { path: '/outlets', element: <OutletsPage /> },
       { path: '/owner', element: <OwnerDeskPage /> },
+      { path: '/ai/chat', element: <WithMe render={(me) => <ChatPage me={me} />} /> },
       { path: '/hosp/pos', element: <WithMe render={(me) => <PosPage me={me} />} /> },
       { path: '/hosp/kds', element: <KdsPage /> },
       { path: '/hosp/day', element: <PosDayPage /> },

@@ -1,5 +1,21 @@
 # Changelog
 
+## 14/11/2026 — AI chat: ask anything in Hinglish, Hindi or English
+
+- **Workspace → AI chat** (and the floating assistant button): a conversation with MONO's AI that keeps the
+  thread ("isko pichhle din se compare karo"), answers in the language and script the person writes in, and works
+  in steps — it looks things up in read-only views (several per question), works sums out with MONO's own
+  calculator (totals, averages, growth, per-guest), then answers with the table behind it, how it worked it out,
+  suggestions and three follow-up questions. Chats are kept per person (`ai_chats`, `ai_chat_messages`).
+- **21 views** now cover the business: the earlier work views plus stock, stock moves, items sold, bills,
+  attendance, table bookings, **customers** (12-month sales, owed), **leads**, **money** (every paper, balance,
+  days overdue), **purchase orders**, **hotel stays**, **banquets**, **leave**, the **menu with recipe cost and
+  food cost %**, and **licences**.
+- **The owner reads everything; everyone else** only the views their rights allow, their own rows of personal data
+  (tasks, attendance, leave, leads) and their branches' business data.
+- Prompt `chat@1`. The model still never writes SQL (decision 60): every name is checked against the catalog and
+  every value bound; lookups run read-only with a 5-second limit.
+
 ## 14/11/2026 — Ask answers stock, sales, bills, attendance and bookings
 
 - **Ask (Home search) reads six more views**: stock now by item and place, stock movements (receipts, issues,

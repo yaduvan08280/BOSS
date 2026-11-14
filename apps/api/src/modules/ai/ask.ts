@@ -176,7 +176,7 @@ export function planSql(plan: AskPlan, companyId: string, tz: string, onlyPerson
 }
 
 /** Read only, and never longer than 5 seconds. */
-async function runReadOnly(db: Db, sql: Prisma.Sql) {
+export async function runReadOnly(db: Db, sql: Prisma.Sql) {
   return db.$transaction(async (tx) => {
     await tx.$executeRawUnsafe('SET TRANSACTION READ ONLY');
     await tx.$executeRawUnsafe("SET LOCAL statement_timeout = '5s'");
