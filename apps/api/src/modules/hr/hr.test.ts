@@ -123,7 +123,8 @@ describe('attendance', () => {
     const d = await ctx.prisma.attendanceDay.findUniqueOrThrow({
       where: { userId_date: { userId: asha.id, date: day } },
     });
-    expect(d).toMatchObject({ status: 'LATE', lateMin: 40, overtimeMin: 70 });
+    // 70 minutes past the shift's end, 40 of which made up for coming late: 30 minutes of overtime.
+    expect(d).toMatchObject({ status: 'LATE', lateMin: 40, overtimeMin: 30 });
 
     // A forgotten punch-out the day before: half day until the HOD approves the fix.
     const before = addDays(day, -1);

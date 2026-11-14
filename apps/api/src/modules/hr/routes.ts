@@ -6,6 +6,7 @@ import { actorOf } from '../delegation/routes';
 import { assignCover, coverBoard } from './absence';
 import { punch } from './attendance';
 import { musterMonth } from './muster';
+import { recalcMonth } from './recalc';
 import { musterFile, musterPdf } from './muster-export';
 import { balancesOf } from './balance';
 import { answerBuddy, askAnotherBuddy } from './buddy';
@@ -111,6 +112,12 @@ export async function hrRoutes(app: FastifyInstance, opts: { appName?: string } 
     departmentId: z.string().max(40).optional(),
     branchId: z.string().max(40).optional(),
   });
+  // After a rule changes: the month's settled days worked out again (HR; not a month whose pay is closed).
+  r.post(
+    '/api/hr/attendance/recalculate',
+    { ...view(), schema: { tags, body: z.object({ month: z.string().regex(/^\d{4}-\d{2}$/) }) } },
+    async (q) => recalcMonth(app.prisma, actorOf(q), q.body.month),
+  );
   r.get('/api/hr/attendance/muster', { ...view(), schema: { tags, querystring: musterQuery } }, async (q) =>
     musterMonth(app.prisma, actorOf(q), q.query),
   );

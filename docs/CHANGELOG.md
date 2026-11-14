@@ -1,5 +1,10 @@
 # Changelog
 
+## 14/11/2026 — Attendance: late is not also a half day; recalculate a month
+
+- **Rule corrected** for fixed shifts: someone 53 minutes late who stays to the end of an 8-hour shift is **Late**, not Half day — lateness has its own rule and is no longer counted against the hours a second time; the hours test is about leaving early. A day never asks for more hours than the shift has. Overtime counts only beyond the shift's own length (late and stayed late is time made up).
+- **Recalculate** (Attendance → Monthly report, HR only): works a month's recorded days out again with today's rules — needed for days settled before this change. Refused for a month whose pay is closed.
+
 ## 14/11/2026 — Who works where: branches on the people screens, transfers
 
 - **Org chart → Group by Branch**: one column per branch with its manager and its people by department, a warning column for people with no branch, and a branch filter. Drag a person onto another branch (or open the person → Transfer) to move them.
