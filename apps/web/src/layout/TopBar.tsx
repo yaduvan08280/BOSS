@@ -80,7 +80,7 @@ export function TopBar({ me, title, subtitle, inSystem, onOpenMenu, ...menu }: P
   const qc = useQueryClient();
   const showSwitch = canOpenSystemMaster(me.user.permissions);
   return (
-    <header className="sticky top-0 z-30 border-b bg-background/85 backdrop-blur-md">
+    <header data-top-bar className="sticky top-0 z-30 border-b bg-background/85 backdrop-blur-md">
       <div className="flex h-16 items-center gap-2 px-4 lg:gap-3 lg:px-8">
         <button
           onClick={onOpenMenu}

@@ -72,7 +72,7 @@ export function ScrollRow({
       onClick={() => step(side === 'left' ? -1 : 1)}
       aria-label={t(side === 'left' ? 'common.scrollLeft' : 'common.scrollRight')}
       className={cn(
-        'absolute top-0 bottom-0 z-10 hidden w-10 items-center text-foreground sm:flex',
+        'absolute top-0 bottom-0 z-10 flex w-10 items-center text-foreground',
         side === 'left'
           ? 'left-0 justify-start bg-gradient-to-r from-background from-55% to-transparent'
           : 'right-0 justify-end bg-gradient-to-l from-background from-55% to-transparent',
@@ -85,7 +85,7 @@ export function ScrollRow({
   );
 
   return (
-    <div className="relative max-w-full min-w-0">
+    <div data-no-arrows className="relative max-w-full min-w-0">
       {more.left && arrow('left')}
       <div
         ref={ref}

@@ -22,6 +22,7 @@ export function BottomTabs({
   return (
     <nav
       aria-label={t('shell.menu')}
+      data-bottom-bar
       className="fixed inset-x-0 bottom-0 z-30 border-t bg-card/95 pb-safe backdrop-blur-md lg:hidden"
     >
       <div className="flex h-16 items-stretch px-2">

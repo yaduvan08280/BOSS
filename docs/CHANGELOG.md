@@ -1,5 +1,12 @@
 # Changelog
 
+## 14/11/2026 — Scroll buttons on every wide table
+
+- **Anything wider than the screen now has ◀ ▶ buttons** — tables (Users, reports, registers…), boards, rows of
+  chips and cards, also inside dialogs. They sit in the middle of the part you can see, so a long table no longer
+  means scrolling to its bottom to find the scrollbar. Swiping and the scrollbar still work.
+- Tab strips show their arrows on phones too.
+
 ## 14/11/2026 — Tables and rooms are easy to find and change
 
 - **Rooms**: tap a room number to change its number, room type, floor, features and connecting rooms, or delete

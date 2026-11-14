@@ -85,7 +85,15 @@ export function Avatar({
 }
 
 /** A person's name with their small photo in front (looked up by `id`, else by name). */
-export function Who({ id, name, className }: { id?: string | null; name?: string | null; className?: string }) {
+export function Who({
+  id,
+  name,
+  className,
+}: {
+  id?: string | null;
+  name?: string | null;
+  className?: string;
+}) {
   if (!name) return <span className={className}>—</span>;
   return (
     <span className={cn('inline-flex max-w-full items-center gap-1.5 align-middle', className)}>

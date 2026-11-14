@@ -409,7 +409,7 @@ describe('AI layer', () => {
     expect(asked[0]!.system).toContain('the owner');
 
     // The next question continues the same chat, with the earlier turn in the history.
-    asked = script(company.id, [step({ answer: 'Paneer: 12 kg.' })]);
+    script(company.id, [step({ answer: 'Paneer: 12 kg.' })]);
     const next = (await api.post('/api/ai/chat', { chatId: r.chatId, text: 'aur paneer?' })).body;
     expect(next.chatId).toBe(r.chatId);
     const chat = (await api.get(`/api/ai/chats/${r.chatId}`)).body;

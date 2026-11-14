@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router';
 import { InstallBanner } from './InstallBanner';
 import { PageSkeleton } from '@/components/page';
+import { ScrollArrows } from '@/components/scroll-arrows';
 import { useTranslation } from 'react-i18next';
 import { canOpenSystemMaster, type Me } from '@mono/shared';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -116,11 +117,13 @@ export function AppShell({ me }: { me: Me }) {
           )}
         </main>
         <CommandPalette me={me} />
+        <ScrollArrows />
       </div>
 
       {/* The chat page is the assistant itself: no floating button over its Send button. */}
       {!pathname.startsWith('/ai/chat') && (
         <button
+          data-avoid-arrows
           onClick={() => setAssistant(true)}
           className="fixed bottom-24 right-4 z-30 grid size-12 place-items-center rounded-full bg-ink text-ink-foreground shadow-xl transition-transform hover:scale-105 active:scale-95 lg:bottom-6 lg:right-6 lg:size-14"
           aria-label={t('shell.assistant')}
