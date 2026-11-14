@@ -1,5 +1,11 @@
 # Changelog
 
+## 14/11/2026 — Transfers carry a choice about open work; a bar and a kitchen in one outlet
+
+- **Transfer dialog**: lists the person's open work (tasks, process steps, tickets, recurring checklists) and asks — keep it, hand it to someone who stays, or give it back to the branch manager.
+- **Stock by menu category**: an outlet can take a category's stock from another location of its branch (System Master → Hospitality → outlet). Drinks sold reduce the bar's stock; a drink is switched off when the bar is out even if the kitchen has it.
+- Fixed: saving an outlet no longer wipes its UPI id.
+
 ## 14/11/2026 — Attendance: late is not also a half day; recalculate a month
 
 - **Rule corrected** for fixed shifts: someone 53 minutes late who stays to the end of an 8-hour shift is **Late**, not Half day — lateness has its own rule and is no longer counted against the hours a second time; the hours test is about leaving early. A day never asks for more hours than the shift has. Overtime counts only beyond the shift's own length (late and stayed late is time made up).

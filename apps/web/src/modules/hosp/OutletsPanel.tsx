@@ -1,3 +1,4 @@
+import { StockRoutes } from './StockRoutes';
 import { Plus, Store, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -70,6 +71,7 @@ function OutletDialog({ outlet, onClose }: { outlet: Partial<Outlet>; onClose: (
     kind: outlet.kind ?? 'RESTAURANT',
     branchId: outlet.branchId ?? '',
     locationId: outlet.locationId ?? '',
+    stockRoutes: outlet.stockRoutes ?? [],
     open: hhmm(outlet.openMin ?? 0),
     close: hhmm(outlet.closeMin ?? 0),
     service: String(c?.serviceChargePct ?? 0),
@@ -85,10 +87,13 @@ function OutletDialog({ outlet, onClose }: { outlet: Partial<Outlet>; onClose: (
     kind: d.kind,
     branchId,
     locationId: d.locationId,
+    stockRoutes: d.stockRoutes,
     openMin: toMin(d.open),
     closeMin: toMin(d.close) || 24 * 60,
     billPrinterId: d.billPrinterId || null,
     charges: {
+      // What this form does not show (the UPI id …) is kept as it is.
+      ...c,
       serviceChargePct: Number(d.service) || 0,
       packagingPaise: Math.round(Number(d.packaging || 0) * 100),
       deliveryPaise: Math.round(Number(d.delivery || 0) * 100),
@@ -112,7 +117,7 @@ function OutletDialog({ outlet, onClose }: { outlet: Partial<Outlet>; onClose: (
     t('org.deleted'),
   );
   const drop = useHospMutation(() => send('DELETE', `/api/hosp/outlets/${outlet.id}`), t('org.deleted'));
-  const text = (k: keyof typeof d, label: string, hint?: string) => (
+  const text = (k: Exclude<keyof typeof d, 'stockRoutes'>, label: string, hint?: string) => (
     <Field label={label} hint={hint}>
       <Input inputMode="decimal" value={d[k]} onChange={(e) => setD({ ...d, [k]: e.target.value })} />
     </Field>
@@ -158,7 +163,10 @@ function OutletDialog({ outlet, onClose }: { outlet: Partial<Outlet>; onClose: (
           </Select>
         </Field>
         <Field label={t('hosp.outlet.branch')}>
-          <Select value={branchId} onChange={(e) => setD({ ...d, branchId: e.target.value, locationId: '' })}>
+          <Select
+            value={branchId}
+            onChange={(e) => setD({ ...d, branchId: e.target.value, locationId: '', stockRoutes: [] })}
+          >
             {(branches.data ?? []).map((b) => (
               <option key={b.id} value={b.id}>
                 {b.name}
@@ -181,6 +189,11 @@ function OutletDialog({ outlet, onClose }: { outlet: Partial<Outlet>; onClose: (
               ))}
           </Select>
         </Field>
+        <StockRoutes
+          places={(places.data?.places ?? []).filter((p) => p.branchId === branchId)}
+          value={d.stockRoutes}
+          onChange={(stockRoutes) => setD({ ...d, stockRoutes })}
+        />
         <Field label={t('hosp.outlet.opens')}>
           <TimeInput
             value={d.open}

@@ -6,6 +6,7 @@ import {
   transition,
   type ItemStatus,
   type KotStatus,
+  stockPlaceFor,
 } from '@mono/shared';
 import { z } from 'zod';
 import { writeAudit } from '../../lib/audit';
@@ -66,9 +67,10 @@ export async function applyVoid(
     } catch {
       needs = new Map();
     }
+    const place = stockPlaceFor(outlet, item.category);
     for (const [stockId, n] of needs) {
       const held = await tx.stockBalance.aggregate({
-        where: { itemId: stockId, locationId: outlet.locationId, qty: { gt: 0 } },
+        where: { itemId: stockId, locationId: place, qty: { gt: 0 } },
         _sum: { qty: true },
       });
       if (Number(held._sum.qty ?? 0) + 1e-9 < n) continue;
@@ -79,7 +81,7 @@ export async function applyVoid(
         reason: 'RETURNED_DISH',
         refType: 'wastage',
         refId: item.orderId,
-        locationId: outlet.locationId,
+        locationId: place,
         note: `Voided: ${item.name}`,
         allowExpired: true,
       });

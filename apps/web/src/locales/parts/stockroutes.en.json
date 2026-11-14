@@ -1,0 +1,8 @@
+{
+  "stockRoutes": {
+    "title": "Stock by menu category",
+    "hint": "Choose the bar for drinks so liquor is counted at the bar; everything else uses the outlet's location above.",
+    "same": "Same as the outlet",
+    "from": "Stock for {{category}} comes from"
+  }
+}

@@ -44,6 +44,11 @@ export const outletSchema = z.object({
   branchId: z.string().min(1),
   /** Where its stock is taken from (a location of the branch; "" = the main store). */
   locationId: z.string().default(''),
+  /** Menu categories whose stock is taken from another location of the branch (drinks from the bar). */
+  stockRoutes: z
+    .array(z.object({ category: z.string().trim().min(1).max(60), locationId: z.string().min(1) }))
+    .max(60)
+    .default([]),
   priceListId: z.string().nullish(),
   openMin: minute.default(0),
   closeMin: minute.default(24 * 60),
@@ -204,4 +209,17 @@ export const mayNc = (rules: HospRules, roleId: string) =>
 export function businessDay(localDate: string, minuteOfDay: number, cutoffMin: number): string {
   if (minuteOfDay >= cutoffMin) return localDate;
   return new Date(Date.parse(`${localDate}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
+}
+
+/** Where an outlet takes the stock for a menu category: its own route when it has one, else the outlet's location. */
+export function stockPlaceFor(
+  outlet: { locationId: string; stockRoutes?: unknown },
+  category: string | null | undefined,
+): string {
+  const routes = Array.isArray(outlet.stockRoutes)
+    ? (outlet.stockRoutes as { category?: string; locationId?: string }[])
+    : [];
+  const key = (category ?? '').trim().toLowerCase();
+  const hit = key ? routes.find((r) => (r.category ?? '').trim().toLowerCase() === key) : undefined;
+  return hit?.locationId ?? outlet.locationId;
 }

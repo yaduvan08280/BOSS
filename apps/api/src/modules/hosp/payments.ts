@@ -7,6 +7,7 @@ import {
   transition,
   type CheckStatus,
   type OrderStatus,
+  stockPlaceFor,
 } from '@mono/shared';
 import { z } from 'zod';
 import { writeAudit } from '../../lib/audit';
@@ -35,11 +36,11 @@ type Mod = { itemId?: string | null; qty?: number | null; name: string };
 async function consumeOrder(tx: Tx, actor: Actor, outlet: PosOutlet, order: LoadedOrder) {
   const books = await booksOf(tx, actor.companyId);
   const ctx = ctxOf(actor);
-  const heldAt = async (itemId: string) =>
+  const heldAt = async (itemId: string, locationId: string) =>
     Number(
       (
         await tx.stockBalance.aggregate({
-          where: { itemId, locationId: outlet.locationId, qty: { gt: 0 } },
+          where: { itemId, locationId, qty: { gt: 0 } },
           _sum: { qty: true },
         })
       )._sum.qty ?? 0,
@@ -65,9 +66,11 @@ async function consumeOrder(tx: Tx, actor: Actor, outlet: PosOutlet, order: Load
     for (const m of (i.modifiers as Mod[] | null) ?? [])
       if (m.itemId && m.qty) needs.set(m.itemId, (needs.get(m.itemId) ?? 0) + m.qty * Number(i.qty));
     const short: string[] = [];
+    // A category with a stock route of its own (drinks → the bar) takes from there.
+    const place = stockPlaceFor(outlet, i.category);
     for (const [itemId, n] of needs) {
       const qty = Math.round(n * 1000) / 1000;
-      if ((await heldAt(itemId)) + 1e-9 < qty) {
+      if ((await heldAt(itemId, place)) + 1e-9 < qty) {
         short.push(itemId);
         continue;
       }
@@ -76,7 +79,7 @@ async function consumeOrder(tx: Tx, actor: Actor, outlet: PosOutlet, order: Load
         type: 'OUT',
         delta: -qty,
         reason: 'RECIPE',
-        locationId: outlet.locationId,
+        locationId: place,
         refType: 'pos_order',
         refId: order.id,
         note: `Order ${order.number}`,
