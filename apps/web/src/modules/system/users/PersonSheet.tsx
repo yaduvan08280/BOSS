@@ -3,13 +3,14 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { USER_STATUS, type OrgDepartment, type OrgPerson } from '@mono/shared';
 import { PhotoPicker } from '@/components/photo-picker';
+import { BranchMoveDialog } from './BranchMoveDialog';
 import { Button } from '@/components/ui/button';
 import { DateInput } from '@/components/ui/date-input';
 import { Field, Select } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
-import { patch, useBranches, useOrgMutation, useShifts, type Designation, type Role } from '../api';
+import { patch, useOrgMutation, useShifts, useUsers, type Designation, type Role } from '../api';
 
 type Props = {
   person: OrgPerson;
@@ -47,7 +48,9 @@ export function PersonSheet({
 }: Props) {
   const { t } = useTranslation();
   const shifts = useShifts();
-  const branches = useBranches();
+  const [placing, setPlacing] = useState(false);
+  // The branch shown follows a transfer made from here at once.
+  const placed = useUsers().data?.find((p) => p.id === person.id) ?? person;
   const [form, setForm] = useState<Record<string, string>>(() => ({
     name: person.name,
     mobile: person.mobile ?? '',
@@ -92,7 +95,6 @@ export function PersonSheet({
       mainDepartmentId: nul(form.mainDepartmentId),
       designationId: nul(form.designationId),
       reportsToId: nul(form.reportsToId),
-      branchId: nul(form.branchId),
       shiftId: nul(form.shiftId),
       alsoWorksIn: also.filter((d) => d !== form.mainDepartmentId),
     };
@@ -132,7 +134,20 @@ export function PersonSheet({
               t('org.users.reportsTo'),
               people.filter((p) => p.id !== person.id && p.status === 'ACTIVE'),
             )}
-            {sel('branchId', t('org.users.branch'), branches.data ?? [])}
+            <Field label={t('org.place.branch')} className="sm:col-span-2">
+              <button
+                type="button"
+                aria-label={t('org.place.transfer')}
+                onClick={() => setPlacing(true)}
+                className="flex h-11 w-full items-center justify-between gap-2 rounded-control border bg-card px-3 text-left text-sm sm:h-10"
+              >
+                <span className="truncate">
+                  {placed.branchName ?? t('org.place.noBranch')}
+                  {(placed.alsoBranchIds?.length ?? 0) > 0 && ` +${placed.alsoBranchIds!.length}`}
+                </span>
+                <span className="shrink-0 text-xs font-medium text-muted-foreground">{t('org.place.transfer')}</span>
+              </button>
+            </Field>
             {sel(
               'shiftId',
               t('org.users.shift'),
@@ -222,6 +237,7 @@ export function PersonSheet({
           </Button>
         </div>
       </SheetContent>
+      {placing && <BranchMoveDialog people={[placed]} onClose={() => setPlacing(false)} />}
     </Sheet>
   );
 }

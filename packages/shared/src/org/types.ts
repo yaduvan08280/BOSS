@@ -19,6 +19,9 @@ export type OrgPerson = {
   reportsToId: string | null;
   reportsToName: string | null;
   branchId: string | null;
+  /** The home branch by name, and the other branches the person also works at (filled by the people list). */
+  branchName?: string | null;
+  alsoBranchIds?: string[];
   shiftId: string | null;
   alsoWorksIn: string[];
   hodOf: string[];

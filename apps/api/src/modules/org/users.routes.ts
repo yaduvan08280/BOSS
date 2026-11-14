@@ -13,6 +13,7 @@ import {
 import { AppError, forbidden, notFound } from '../../lib/errors';
 import { recordChange } from '../../lib/events';
 import { recordMove } from '../branches/history';
+import { placesOf } from '../branches/people';
 import { hashPassword } from '../../lib/password';
 import { inCompanyTx } from '../../lib/tx';
 import { assertGroupWide, assertMyPeople, myBranchFor } from './users.branch';
@@ -74,7 +75,8 @@ export async function userRoutes(app: FastifyInstance) {
 
   r.get('/api/org/users', { ...view, schema: { tags: ['org'] } }, async (request) => {
     const rows = await request.db.user.findMany({ include: personInclude, orderBy: { code: 'asc' } });
-    return rows.map((u) => toPerson(u, canHr(request)));
+    const place = await placesOf(app.prisma, request.auth!.companyId);
+    return rows.map((u) => place(toPerson(u, canHr(request))));
   });
 
   r.post(

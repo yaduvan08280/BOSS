@@ -83,7 +83,7 @@ export function UsersTable({
   );
   return (
     <div className="overflow-x-auto rounded-card border bg-card">
-      <table className="w-full min-w-[1100px] text-sm">
+      <table className="w-full min-w-[1240px] text-sm">
         <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
           <tr>
             <th className="w-10 px-3" />
@@ -93,6 +93,7 @@ export function UsersTable({
             {group === 'team'
               ? [
                   t('org.users.mainDept'),
+                  t('org.place.branch'),
                   t('org.users.role'),
                   t('org.users.reportsTo'),
                   t('org.users.status'),
@@ -131,6 +132,18 @@ export function UsersTable({
                   <td className="px-3">
                     {(p.mainDepartmentId && depts.get(p.mainDepartmentId)?.name) || (
                       <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="px-3">
+                    {p.branchName ? (
+                      <span className="whitespace-nowrap">
+                        {p.branchName}
+                        {(p.alsoBranchIds?.length ?? 0) > 0 && (
+                          <span className="ml-1 text-xs text-muted-foreground">+{p.alsoBranchIds!.length}</span>
+                        )}
+                      </span>
+                    ) : (
+                      <StatusChip tone="warn">{t('org.place.noBranch')}</StatusChip>
                     )}
                   </td>
                   <td className="px-3">{p.roleName}</td>
@@ -235,6 +248,9 @@ export function UserCards({
               {(p.mainDepartmentId && depts.get(p.mainDepartmentId)?.name) || t('org.users.notAssigned')}
             </span>
             {p.alsoWorksIn.length > 0 && <DeptChips ids={p.alsoWorksIn} depts={depts} />}
+            <span className="w-full truncate text-muted-foreground">
+              {p.branchName ?? t('org.place.noBranch')}
+            </span>
           </div>
           <div className="flex items-center gap-2 border-t pt-3 text-xs">
             <Switch

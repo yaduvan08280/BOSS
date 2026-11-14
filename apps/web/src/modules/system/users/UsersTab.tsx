@@ -1,4 +1,4 @@
-import { LayoutGrid, Plus, Rows3, Search, Send, UserPlus, Users, X } from 'lucide-react';
+import { LayoutGrid, Plus, Rows3, Search, Send, UserPlus, Users, X, Building2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +14,8 @@ import { useMe } from '@/modules/auth/session';
 import { del, post, useDepartments, useDesignations, useOrgMutation, useRoles, useUsers } from '../api';
 import { ShownCodes, type ShownCode } from '../integration/ShownCodes';
 import { AddPeopleDialog } from './AddPeopleDialog';
+import { BranchMoveDialog } from './BranchMoveDialog';
+import { BranchPick } from './BranchPick';
 import { PersonSheet } from './PersonSheet';
 import { TempPasswords, type TempPassword } from './TempPasswords';
 import { UserCards, UsersTable, type RowActions } from './UserRows';
@@ -42,6 +44,8 @@ export function UsersTab() {
   const [passwords, setPasswords] = useState<TempPassword[]>([]);
   const [codes, setCodes] = useState<ShownCode[]>([]);
   const [newDept, setNewDept] = useState<string | null>(null);
+  const [branch, setBranch] = useState('all');
+  const [placing, setPlacing] = useState<OrgPerson[] | null>(null);
   const canAdmin = hasPermission(me.user.permissions, 'org.admin');
   const canHr = hasPermission(me.user.permissions, 'hr.admin');
   const dept = params.get('dept') ?? 'all';
@@ -81,6 +85,7 @@ export function UsersTab() {
           : dept !== 'all' && p.mainDepartmentId !== dept && !p.alsoWorksIn.includes(dept)
       )
         return false;
+      if (branch === 'none' ? p.branchId : branch !== 'all' && p.branchId !== branch && !p.alsoBranchIds?.includes(branch)) return false;
       if (!needle) return true;
       const deptName = p.mainDepartmentId ? (deptMap.get(p.mainDepartmentId)?.name ?? '') : '';
       return [p.name, p.code, p.mobile ?? '', p.email ?? '', deptName]
@@ -88,7 +93,7 @@ export function UsersTab() {
         .toLowerCase()
         .includes(needle);
     });
-  }, [all, q, dept, deptMap]);
+  }, [all, q, dept, deptMap, branch]);
 
   if (users.isPending || depts.isPending) return <PageSkeleton />;
   if (users.isError || depts.isError) return <ErrorState onRetry={() => void users.refetch()} />;
@@ -188,6 +193,7 @@ export function UsersTab() {
               <option value="hr">{t('org.users.hrCols')}</option>
             </Select>
           )}
+          <BranchPick value={branch} onChange={setBranch} people={all} />
           <Button variant="primary" onClick={() => setAdding(true)} aria-label={t('org.users.add')}>
             <UserPlus /> <span className="hidden sm:inline">{t('org.users.add')}</span>
           </Button>
@@ -277,6 +283,9 @@ export function UsersTab() {
                 </option>
               ))}
             </Select>
+            <Button size="sm" onClick={() => setPlacing(all.filter((p) => selected.has(p.id)))}>
+              <Building2 /> {t('org.place.moveBulk')}
+            </Button>
             <Button size="sm" onClick={() => runBulk({ action: 'enableLogin', userIds: ids, enabled: true })}>
               {t('org.users.enableLogin')}
             </Button>
@@ -367,6 +376,9 @@ export function UsersTab() {
         danger
         onConfirm={() => resetting && confirmReset(resetting)}
       />
+      {placing && (
+        <BranchMoveDialog people={placing} onClose={() => (setPlacing(null), setSelected(new Set()))} />
+      )}
       <TempPasswords items={passwords} onClose={() => setPasswords([])} />
       <ShownCodes codes={codes} onClose={() => setCodes([])} />
     </div>

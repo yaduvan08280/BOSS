@@ -1,5 +1,11 @@
 # Changelog
 
+## 14/11/2026 — Who works where: branches on the people screens, transfers
+
+- **Org chart → Group by Branch**: one column per branch with its manager and its people by department, a warning column for people with no branch, and a branch filter. Drag a person onto another branch (or open the person → Transfer) to move them.
+- **Users**: a Branch column, a branch filter with head-counts, "Move to branch" for the ticked people, and the branch on every card. The person sheet opens the same transfer dialog.
+- **Transfer dialog**: home branch, the date it takes effect, the branches the person also works at, and their earlier branches. `POST /api/branches/people/move` moves several people at once (keeping their other branches); `GET /api/branches/people/:id` gives the history; the people list now carries `branchName` and `alsoBranchIds`.
+
 ## 14/11/2026 — Fixes found setting up a restaurant group (TORA SKYLOUNGE demo)
 
 Found while setting up a full rooftop-bar demo through the API and clicking through it at 390 and 1440 px

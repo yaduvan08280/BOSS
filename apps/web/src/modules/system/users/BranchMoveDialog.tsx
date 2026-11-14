@@ -1,0 +1,160 @@
+import { useQuery } from '@tanstack/react-query';
+import { ArrowRight, Building2 } from 'lucide-react';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { OrgPerson } from '@mono/shared';
+import { Button } from '@/components/ui/button';
+import { DateInput } from '@/components/ui/date-input';
+import { Dialog } from '@/components/ui/dialog';
+import { Field, Select } from '@/components/ui/form';
+import { api } from '@/lib/api';
+import { cn } from '@/lib/utils';
+import { post, put, useBranches, useOrgMutation } from '../api';
+
+type Places = {
+  homeBranchId: string | null;
+  alsoBranchIds: string[];
+  moves: { branchId: string | null; from: string | null; fromBranchId: string | null }[];
+};
+const formatDay = (day: string) => day.split('-').reverse().join('/');
+const today = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+
+/**
+ * Where a person works: the home branch (changing it is a transfer, from a day), the other branches they also
+ * work at, and their earlier moves. With several people it moves them all to one branch.
+ */
+export function BranchMoveDialog({
+  people,
+  toBranchId,
+  onClose,
+}: {
+  people: OrgPerson[];
+  /** The branch already chosen (a person dropped on a branch in the org chart). */
+  toBranchId?: string;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const branches = useBranches().data ?? [];
+  const one = people.length === 1 ? people[0]! : null;
+  const [home, setHome] = useState(toBranchId ?? one?.branchId ?? '');
+  const [also, setAlso] = useState<string[]>(one?.alsoBranchIds ?? []);
+  const [from, setFrom] = useState(today());
+  const places = useQuery({
+    queryKey: ['org', 'places', one?.id],
+    queryFn: () => api<Places>(`/api/branches/people/${one!.id}`),
+    enabled: !!one,
+  });
+  const name = (id: string | null) => branches.find((b) => b.id === id)?.name ?? t('org.place.none');
+  const save = useOrgMutation(
+    () =>
+      one
+        ? put(`/api/branches/people/${one.id}`, {
+            homeBranchId: home || null,
+            alsoBranchIds: also.filter((b) => b !== home),
+            ...(home !== (one.branchId ?? '') && from !== today() ? { from } : {}),
+          })
+        : post('/api/branches/people/move', {
+            userIds: people.map((p) => p.id),
+            homeBranchId: home || null,
+            ...(from !== today() ? { from } : {}),
+          }),
+    { success: one ? t('org.place.saved', { name: one.name }) : t('org.place.savedMany', { count: people.length }) },
+  );
+  const moving = one ? home !== (one.branchId ?? '') : true;
+
+  return (
+    <Dialog
+      open
+      onOpenChange={(o) => !o && onClose()}
+      title={one ? t('org.place.title', { name: one.name }) : t('org.place.titleMany', { count: people.length })}
+      description={t('org.place.hint')}
+      footer={
+        <>
+          <Button onClick={onClose}>{t('common.cancel')}</Button>
+          <Button
+            variant="primary"
+            disabled={save.isPending || (!one && !home)}
+            onClick={() => save.mutate(undefined, { onSuccess: onClose })}
+          >
+            {moving && home ? t('org.place.move', { to: name(home) }) : t('common.save')}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4 pb-2">
+        {one && (
+          <div className="flex items-center gap-2 rounded-control bg-muted px-3 py-2 text-sm">
+            <Building2 className="size-4 shrink-0 text-muted-foreground" />
+            <span className="font-medium">{name(one.branchId)}</span>
+            {moving && (
+              <>
+                <ArrowRight className="size-4 shrink-0 text-muted-foreground" />
+                <span className="font-semibold">{name(home || null)}</span>
+              </>
+            )}
+          </div>
+        )}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label={t('org.place.home')}>
+            <Select value={home} onChange={(e) => setHome(e.target.value)} aria-label={t('org.place.home')}>
+              <option value="">{t('org.place.none')}</option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          {moving && (
+            <Field label={t('org.place.from')}>
+              <DateInput value={from} onChange={setFrom} aria-label={t('org.place.from')} />
+            </Field>
+          )}
+        </div>
+        {one && branches.length > 1 && (
+          <Field label={t('org.place.also')}>
+            <div className="flex flex-wrap gap-1.5">
+              {branches
+                .filter((b) => b.id !== home)
+                .map((b) => {
+                  const on = also.includes(b.id);
+                  return (
+                    <button
+                      key={b.id}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => setAlso(on ? also.filter((x) => x !== b.id) : [...also, b.id])}
+                      className={cn(
+                        'min-h-9 rounded-pill border px-3 text-xs font-medium',
+                        on ? 'border-ink bg-ink text-ink-foreground' : 'bg-card text-muted-foreground',
+                      )}
+                    >
+                      {b.name}
+                    </button>
+                  );
+                })}
+            </div>
+          </Field>
+        )}
+        <p className="text-xs text-muted-foreground">{t('org.place.note')}</p>
+        {one && (places.data?.moves.length ?? 0) > 0 && (
+          <div>
+            <div className="mb-1.5 text-xs font-semibold text-muted-foreground">{t('org.place.history')}</div>
+            <ul className="space-y-1 text-sm">
+              {places.data!.moves.map((m, i) => (
+                <li key={i} className="flex justify-between gap-3 border-b py-1.5 last:border-0">
+                  <span>
+                    {name(m.fromBranchId)} → <span className="font-medium">{name(m.branchId)}</span>
+                  </span>
+                  <span className="tabular shrink-0 text-muted-foreground">
+                    {m.from ? formatDay(m.from) : t('org.place.always')}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </Dialog>
+  );
+}
