@@ -232,7 +232,9 @@ export const useHrCalendar = (from: string, to: string) =>
   });
 
 export const hrApi = {
-  saveRules: (rules: HrRules) => api('/api/hr/rules', { method: 'PUT', body: rules }),
+  /** `from`: the day the change starts (left out = today; recorded days stay as they are). */
+  saveRules: (rules: HrRules, from?: string) =>
+    api(`/api/hr/rules${from ? `?from=${from}` : ''}`, { method: 'PUT', body: rules }),
   punch: (body: object) =>
     api<{ date: string; day: { status: AttendanceStatus } }>('/api/hr/punch', { method: 'POST', body }),
   correction: (body: object) => api('/api/hr/corrections', { method: 'POST', body }),

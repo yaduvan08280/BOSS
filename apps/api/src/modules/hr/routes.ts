@@ -6,7 +6,7 @@ import { actorOf } from '../delegation/routes';
 import { assignCover, coverBoard } from './absence';
 import { punch } from './attendance';
 import { musterMonth } from './muster';
-import { recalcMonth } from './recalc';
+import { previewRules, recalcMonth } from './recalc';
 import { musterFile, musterPdf } from './muster-export';
 import { balancesOf } from './balance';
 import { answerBuddy, askAnotherBuddy } from './buddy';
@@ -51,8 +51,28 @@ export async function hrRoutes(app: FastifyInstance, opts: { appName?: string } 
   );
   r.put(
     '/api/hr/rules',
-    { ...admin(), schema: { tags, body: z.record(z.string(), z.unknown()) } },
-    async (q) => saveHrRules(app.prisma, actorOf(q), q.body),
+    {
+      ...admin(),
+      schema: {
+        tags,
+        body: z.record(z.string(), z.unknown()),
+        querystring: z.object({ from: date.optional() }),
+      },
+    },
+    async (q) => saveHrRules(app.prisma, actorOf(q), q.body, q.query.from),
+  );
+  // "This would change 14 days for 6 people": a rule change tried on the recorded days, nothing saved.
+  r.post(
+    '/api/hr/rules/preview',
+    {
+      ...admin(),
+      schema: {
+        tags,
+        body: z.record(z.string(), z.unknown()),
+        querystring: z.object({ from: date.optional() }),
+      },
+    },
+    async (q) => previewRules(app.prisma, actorOf(q), q.body, q.query.from),
   );
 
   r.get(

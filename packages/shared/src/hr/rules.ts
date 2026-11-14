@@ -104,6 +104,22 @@ export const hrRulesSchema = z.object({
     )
     .max(200)
     .default([]),
+  /**
+   * Attendance answers that held before a change: each entry applies to days up to and including `until`
+   * (and after the entry before it). Kept by MONO when a rule is changed "from a date", so days before that
+   * date are still worked out the way they were. Never typed by a person.
+   */
+  past: z
+    .array(
+      z.object({
+        until: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        late: z.record(z.string(), z.unknown()),
+        punches: z.record(z.string(), z.unknown()),
+        overrides: z.array(z.record(z.string(), z.unknown())).default([]),
+      }),
+    )
+    .max(60)
+    .default([]),
 });
 export type HrRules = z.infer<typeof hrRulesSchema>;
 export type LateRules = z.infer<typeof lateRulesSchema>;
@@ -144,5 +160,42 @@ export function rulesFor(
   return {
     late: Object.assign({}, rules.late, ...layers.map((o) => o?.late)),
     punches: Object.assign({}, rules.punches, ...layers.map((o) => o?.punches)),
+  };
+}
+
+/** The attendance part of the rules: what a "from a date" change keeps a copy of. */
+const attendanceOf = (r: HrRules) => ({ late: r.late, punches: r.punches, overrides: r.overrides });
+export const sameAttendance = (a: HrRules, b: HrRules) =>
+  JSON.stringify(attendanceOf(a)) === JSON.stringify(attendanceOf(b));
+
+/** The rules as they stood for one day: an earlier set of answers when the day is before a dated change. */
+export function rulesOn(rules: HrRules, date: string): HrRules {
+  const held = [...rules.past].sort((a, b) => a.until.localeCompare(b.until)).find((p) => p.until >= date);
+  if (!held) return rules;
+  const parsed = hrRulesSchema.safeParse({
+    ...rules,
+    late: held.late,
+    punches: held.punches,
+    overrides: held.overrides,
+    past: [],
+  });
+  return parsed.success ? parsed.data : rules;
+}
+
+/**
+ * The rules to store when `next` takes the place of `current` from `from` (YYYY-MM-DD): days before it keep the
+ * answers they had. An earlier dated change that starts on or after `from` is cut short at the day before.
+ */
+export function withChangeFrom(current: HrRules, next: HrRules, from: string): HrRules {
+  if (sameAttendance(current, next)) return { ...next, past: current.past };
+  const d = new Date(`${from}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - 1);
+  const until = d.toISOString().slice(0, 10);
+  const past = [...current.past].sort((a, b) => a.until.localeCompare(b.until));
+  const earlier = past.filter((p) => p.until < until);
+  const cut = past.find((p) => p.until >= until);
+  return {
+    ...next,
+    past: [...earlier, cut ? { ...cut, until } : { until, ...attendanceOf(current) }].slice(-60),
   };
 }

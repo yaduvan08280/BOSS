@@ -1,5 +1,10 @@
 # Changelog
 
+## 14/11/2026 — HR rule changes: from today, or from a date, with a preview
+
+- **Check & save** in HR Rules now asks when the change starts. *From today* keeps every recorded day exactly as it is (the old answers are remembered for those days, even if a month is recalculated later). *From a date* works the recorded days from that date out again.
+- **See what would change** tries the change without saving: "14 recorded days would change for 6 people", with examples, and names months that will not be touched because their pay is closed.
+
 ## 14/11/2026 — Transfers carry a choice about open work; a bar and a kitchen in one outlet
 
 - **Transfer dialog**: lists the person's open work (tasks, process steps, tickets, recurring checklists) and asks — keep it, hand it to someone who stays, or give it back to the branch manager.

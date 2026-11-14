@@ -66,7 +66,38 @@ describe('recalculating a month', () => {
       days: 1,
       changed: 0,
     });
+    // A policy change "from now on": grace becomes 60 minutes. The day already recorded keeps its Late mark,
+    // even when the month is recalculated — it is worked out with the rules it had.
+    const rules = (await w.api.get('/api/hr/rules')).body.rules;
+    const relaxed = { ...rules, late: { ...rules.late, graceMinutes: 60 } };
+    const kept = await w.api.put('/api/hr/rules', relaxed);
+    expect(kept.status).toBe(200);
+    expect(kept.body.recalculated).toBeNull();
+    expect(kept.body.rules.past).toHaveLength(1);
+    expect((await w.api.post('/api/hr/attendance/recalculate', { month })).body).toEqual({
+      days: 1,
+      changed: 0,
+    });
+    expect(
+      (await ctx.prisma.attendanceDay.findFirstOrThrow({ where: { userId: asha.id, date } })).status,
+    ).toBe('LATE');
+
+    // The same change from that day on: the preview says what it would do, saving does it.
+    const strict = { ...rules, late: { ...rules.late, graceMinutes: 30 } };
+    await w.api.put('/api/hr/rules', strict);
+    const preview = await w.api.post(`/api/hr/rules/preview?from=${date}`, relaxed);
+    expect(preview.body).toMatchObject({ days: 1, changed: 1, people: 1 });
+    expect(preview.body.examples[0]).toMatchObject({ name: 'Asha Late', from: 'LATE', to: 'PRESENT' });
+    expect(
+      (await ctx.prisma.attendanceDay.findFirstOrThrow({ where: { userId: asha.id, date } })).status,
+    ).toBe('LATE');
+    const dated = await w.api.put(`/api/hr/rules?from=${date}`, relaxed);
+    expect(dated.body.recalculated).toMatchObject({ days: 1, changed: 1 });
+    expect(
+      (await ctx.prisma.attendanceDay.findFirstOrThrow({ where: { userId: asha.id, date } })).status,
+    ).toBe('PRESENT');
+    expect((await asha.api.post('/api/hr/rules/preview', relaxed)).status).toBe(403);
     await ctx.prisma.payRun.create({ data: { companyId: w.companyId, month, lines: [], totalPaise: 0n } });
     expect((await w.api.post('/api/hr/attendance/recalculate', { month })).status).toBe(409);
-  }, 30_000);
+  }, 60_000);
 });
