@@ -5,12 +5,14 @@ import { TabStrip } from '@/components/work';
 import { Select } from '@/components/ui/form';
 import { useParamState } from '@/lib/work';
 import { ExceptionsTab, LeagueTab } from './BranchTabs';
+import { LetterTab, WhatIfTab } from './ExtraTabs';
 import { CashFlowTab, VendorsTab } from './MoneyTabs';
 import { MorningTab } from './MorningTab';
 import { BusFactorTab, DelayTab, LeaksTab, PromisesTab } from './PeopleTabs';
 
 const TABS = [
   'morning',
+  'letter',
   'exceptions',
   'leaks',
   'promises',
@@ -19,6 +21,7 @@ const TABS = [
   'bus',
   'vendors',
   'cash',
+  'whatif',
 ] as const;
 const SPANNED = ['exceptions', 'leaks', 'promises', 'delay', 'league'];
 const day = (back: number) =>
@@ -62,6 +65,8 @@ export function OwnerDeskPage() {
       {tab === 'bus' && <BusFactorTab />}
       {tab === 'vendors' && <VendorsTab />}
       {tab === 'cash' && <CashFlowTab />}
+      {tab === 'letter' && <LetterTab />}
+      {tab === 'whatif' && <WhatIfTab />}
     </div>
   );
 }

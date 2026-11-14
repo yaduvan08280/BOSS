@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { api } from '@/lib/api';
 import { useExceptions, useLeague, type Exceptions, type LeagueRow, type RangeKey, type Span } from './api';
 import { percent, rupees } from './format';
+import { CopyBest } from './ExtraTabs';
 import { DataList, Flagged, Section, type Column } from './parts';
 
 const KEYS: RangeKey[] = [
@@ -171,6 +172,7 @@ export function LeagueTab({ span }: { span: Span }) {
   return (
     <Section title={t('owner.l.title')} hint={t('owner.l.hint')}>
       <DataList columns={cols} rows={q.data.branches} rowKey={(r) => r.branchId} empty={t('owner.l.none')} />
+      <CopyBest branches={q.data.branches} />
     </Section>
   );
 }

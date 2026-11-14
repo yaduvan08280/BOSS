@@ -310,7 +310,7 @@ fms: step_assigned, step_due_soon, step_late, record_started, record_closed, app
 hr: punch_flagged, missed_punch, leave_requested, leave_decided, buddy_requested, buddy_answered, absent_no_cover, morning_cover_report ·
 ims: below_min, above_max, max_review_due, adjustment_approval, dead_stock, ows_ready, transfer_asked, transfer_dispatched, transfer_differences, expiry_soon ·
 crm: call_due, lead_assigned, lead_stuck, order_step_due, payment_due, customer_sleeping ·
-record: created (rule off until asked for), status_changed, note · report: scheduled ·
+record: created (rule off until asked for), status_changed, note · report: scheduled, owner_letter ·
 franchise: renewal_due, royalty_invoiced, audit_done ·
 reservation: requested, deposit_due, confirmed, reminder, cancelled, no_show, table_ready ·
 hotel: booked, cancelled, no_show, form_c_due ·

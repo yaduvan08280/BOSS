@@ -161,6 +161,52 @@ describe("the owner's desk", () => {
     expect((await asha.api.get('/api/auth/me', { 'x-mono-view-as': w.owner.id })).status).toBe(403);
     expect((await asha.api.post('/api/owner/view-as', { userId: w.owner.id })).status).toBe(403);
   }, 60_000);
+
+  it('the weekly letter, the what-if base and copying a branch’s checklists', async () => {
+    const w = await world(ctx.app);
+    const r = await restaurant(ctx.prisma, w);
+    const letter = await ok<{ week: { from: string; to: string } }>(w.api.get('/api/owner/letter'));
+    expect(letter.week.from < letter.week.to).toBe(true);
+    const base = await ok<{ weekdays: unknown[] }>(w.api.get('/api/owner/what-if'));
+    expect(base.weekdays).toHaveLength(7);
+
+    // The rooftop's checklist is made again for the garden, for the garden's manager.
+    await ok(
+      w.api.post('/api/checklists/masters', {
+        name: 'Opening checklist — Rooftop Jaipur',
+        branchId: r.g.b.rooftop.id,
+        items: [{ key: 'i1', text: 'Tables wiped' }],
+        frequency: { type: 'daily' },
+        dueTime: '16:00',
+        windowHours: 3,
+        doerIds: [r.steward.id],
+        skipHolidays: false,
+        startDate: today(),
+      }),
+    );
+    const copy = (to: string) =>
+      w.api.post('/api/owner/copy-checklists', { fromBranchId: r.g.b.rooftop.id, toBranchId: to });
+    // No manager at the garden yet: nothing is copied, and it says why.
+    expect((await copy(r.g.b.garden.id)).body).toMatchObject({ copied: 0, reason: 'manager' });
+    await ok(
+      w.api.put('/api/branches/managers', { branchId: r.g.b.garden.id, role: 'MANAGER', userIds: [r.manager.id] }),
+    );
+    expect((await copy(r.g.b.garden.id)).body).toMatchObject({ copied: 1 });
+    expect((await copy(r.g.b.garden.id)).body).toMatchObject({ copied: 0 });
+    const made = await ctx.prisma.checklistMaster.findFirstOrThrow({
+      where: { companyId: w.companyId, branchId: r.g.b.garden.id },
+    });
+    expect(made).toMatchObject({ name: 'Opening checklist — Garden Jaipur', doerIds: [r.manager.id] });
+    await ctx.prisma.checklistMaster.updateMany({ where: { companyId: w.companyId }, data: { active: false } });
+    expect(
+      (
+        await r.steward.api.post('/api/owner/copy-checklists', {
+          fromBranchId: r.g.b.rooftop.id,
+          toBranchId: r.g.b.garden.id,
+        })
+      ).status,
+    ).toBe(403);
+  }, 90_000);
 });
 
 /** The owner's session cookie, for a raw request with extra headers. */

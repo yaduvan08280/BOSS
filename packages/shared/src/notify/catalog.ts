@@ -795,6 +795,15 @@ const ROWS: Row[] = [
     'बिक्री {{sales}} · {{covers}} मेहमान · प्रति मेहमान {{perCover}}। कमरे {{occupancy}} · ADR {{adr}} · RevPAR {{revPar}}। खाने की लागत {{foodCost}} · पेय {{beverageCost}}। नकद: {{cash}}। वॉइड {{voids}} · छूट {{discounts}} · बिना शुल्क बिल {{noCharge}}।',
   ],
   [
+    'report.owner_letter',
+    'team',
+    ['owner'],
+    'Your week ({{week}})',
+    'Better: {{better}}. Worse: {{worse}}. Waiting on you: {{decision}}.',
+    'आपका हफ़्ता ({{week}})',
+    'बेहतर: {{better}}। ख़राब: {{worse}}। आपके फ़ैसले का इंतज़ार: {{decision}}।',
+  ],
+  [
     'reservation.requested',
     'team',
     ['branch_manager'],

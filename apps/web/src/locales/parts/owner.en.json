@@ -13,7 +13,9 @@
       "league": "Branch league",
       "bus": "Only one knows",
       "vendors": "Vendors",
-      "cash": "Cash flow"
+      "cash": "Cash flow",
+      "letter": "Weekly letter",
+      "whatif": "What if"
     },
     "col": {
       "branch": "Branch",
@@ -88,7 +90,15 @@
     "l": {
       "title": "Branches, best first",
       "hint": "The score is the average of the branch's rank on each number (1 is best).",
-      "none": "No branches yet."
+      "none": "No branches yet.",
+      "copyTitle": "Copy the best",
+      "copyHint": "Make one branch's active checklists again for another branch. They go to that branch's manager to hand out.",
+      "copyFrom": "Copy checklists from",
+      "copyTo": "To",
+      "copy": "Copy",
+      "copied_one": "{{count}} checklist copied",
+      "copied_other": "{{count}} checklists copied",
+      "needManager": "That branch has no manager yet — set one in Branches first."
     },
     "k": {
       "title": "By person",
@@ -181,6 +191,59 @@
         "out": "Out",
         "salary": "Out",
         "renewal": "Renewal"
+      }
+    },
+    "w": {
+      "week": "Week of {{from}} – {{to}}",
+      "title": "{{company}} — your week",
+      "better": "What got better",
+      "worse": "What got worse",
+      "decision": "The one decision waiting on you",
+      "nothing": "Nothing moved either way.",
+      "noDecision": "Nothing is waiting on you.",
+      "since": "since {{day}}",
+      "open": "Open",
+      "foot": "Each line compares last week with the week before. The same letter goes to the owner every Monday morning.",
+      "line": {
+        "sales": "Sales",
+        "attendance": "Attendance",
+        "kept": "Promises kept",
+        "lateWork": "Late work",
+        "missed": "Checklists missed",
+        "leaks": "Unexplained money"
+      },
+      "kind": {
+        "slip": "Help slip {{text}}",
+        "leave": "A leave request is waiting for a decision",
+        "stock": "{{text}} stock adjustments are waiting for approval"
+      }
+    },
+    "i": {
+      "title": "Change one thing",
+      "hint": "Against a typical month from {{from}} to {{to}}.",
+      "after": "Left after stock and salaries",
+      "vs": "{{amount}} against today",
+      "sales": "Sales a month",
+      "was": "now {{amount}}",
+      "cost": "Stock cost",
+      "costPct": "{{pct}}% of sales now",
+      "payroll": "Salaries",
+      "peopleN_one": "{{count}} person",
+      "peopleN_other": "{{count}} people",
+      "price": "Prices",
+      "lost": "Guests lost for each 1% rise",
+      "staff": "People added or removed",
+      "close": "Close on",
+      "noClose": "Stay open every day",
+      "foot": "A rough guide from your own last 90 days — not a forecast. Rent, power and other fixed costs are not in it.",
+      "day": {
+        "mon": "Monday",
+        "tue": "Tuesday",
+        "wed": "Wednesday",
+        "thu": "Thursday",
+        "fri": "Friday",
+        "sat": "Saturday",
+        "sun": "Sunday"
       }
     }
   }

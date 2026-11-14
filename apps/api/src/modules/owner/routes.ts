@@ -9,6 +9,8 @@ import { cashFlow } from './cashflow';
 import { costOfDelay, saveDelayValue } from './delay';
 import { linkCompany, morning, unlinkCompany } from './group';
 import { leaks } from './leaks';
+import { letterFor } from './letter';
+import { copyChecklists, whatIfBase } from './whatif';
 import { promises } from './promises';
 import { vendors } from './vendors';
 
@@ -110,6 +112,16 @@ export async function ownerRoutes(app: FastifyInstance) {
       },
     },
     async (q) => saveDelayValue(db, actorOf(q), q.body),
+  );
+  r.get('/api/owner/letter', { ...signedIn(), schema: { tags } }, async (q) => letterFor(db, actorOf(q)));
+  r.get('/api/owner/what-if', { ...signedIn(), schema: { tags } }, async (q) => whatIfBase(db, actorOf(q)));
+  r.post(
+    '/api/owner/copy-checklists',
+    {
+      ...signedIn(),
+      schema: { tags, body: z.object({ fromBranchId: z.string().max(40), toBranchId: z.string().max(40) }) },
+    },
+    async (q) => copyChecklists(db, actorOf(q), q.body),
   );
   r.get('/api/owner/bus-factor', { ...signedIn(), schema: { tags } }, async (q) => busFactor(db, actorOf(q)));
   r.get('/api/owner/vendors', { ...signedIn(), schema: { tags } }, async (q) => vendors(db, actorOf(q)));

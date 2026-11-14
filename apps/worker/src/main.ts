@@ -27,6 +27,7 @@ import {
   hotelSweep,
   retryPushes,
   flashSweep,
+  letterSweep,
   connectNet,
   complianceSweep,
   watchRenewals,
@@ -217,6 +218,9 @@ await boss.work(
     // Hospitality: yesterday's flash report to the owner, once, from 08:00.
     const flashes = await flashSweep(prisma);
     if (flashes) log.info({ flashes }, 'Flash reports sent');
+    // The owner's weekly letter: Monday from 08:00, once.
+    const letters = await letterSweep(prisma);
+    if (letters) log.info({ letters }, 'Owner letters sent');
     const crmCalls = await crmSweep(prisma);
     if (crmCalls) log.info({ crmCalls }, 'CRM calls made');
     if (

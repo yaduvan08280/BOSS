@@ -68,3 +68,4 @@ export { retryPushes } from './modules/connect/channel';
 export { flashSweep } from './modules/hreports/flash';
 export { installLibraryPack } from './modules/packs/install';
 export { connectNet } from './modules/connect/core';
+export { letterSweep } from './modules/owner/letter';
