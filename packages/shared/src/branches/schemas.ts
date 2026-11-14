@@ -175,6 +175,8 @@ export const personBranchesSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional(),
+  /** What happens to the person's open work when the home branch changes (left out = they keep it). */
+  work: z.object({ mode: z.enum(['keep', 'handover', 'manager']), toUserId: id.nullish() }).optional(),
 });
 
 export const departmentHeadSchema = z.object({ departmentId: id, branchId: id, userId: id.nullable() });

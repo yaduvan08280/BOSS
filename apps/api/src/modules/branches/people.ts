@@ -1,6 +1,7 @@
 import type { Db } from '@mono/db';
 import { AppError, notFound } from '../../lib/errors';
 import type { Actor } from '../work/actor';
+import { handOverWork, managerFor, openWorkOf, type WorkChoice } from './handover';
 import { setPersonBranches } from './structure';
 
 /**
@@ -29,7 +30,7 @@ export async function placesOf(db: Db, companyId: string) {
 export async function movePeople(
   db: Db,
   actor: Actor,
-  input: { userIds: string[]; homeBranchId: string | null; from?: string },
+  input: { userIds: string[]; homeBranchId: string | null; from?: string; work?: WorkChoice },
 ) {
   const ids = [...new Set(input.userIds)];
   const people = await db.user.findMany({
@@ -53,14 +54,63 @@ export async function movePeople(
   let moved = 0;
   for (const p of people) {
     if (p.branchId === input.homeBranchId && !input.from) continue;
-    await setPersonBranches(db, actor, p.id, {
+    await placePerson(db, actor, p.id, {
       homeBranchId: input.homeBranchId,
       alsoBranchIds: also.filter((a) => a.userId === p.id).map((a) => a.branchId),
       ...(input.from ? { from: input.from } : {}),
+      ...(input.work ? { work: input.work } : {}),
     });
     moved += 1;
   }
   return { moved, unchanged: people.length - moved };
+}
+
+/**
+ * Save where a person works; when the home branch changes, their open work stays with them, goes to a named
+ * person, or goes back to the manager of the branch they leave (else whom they report to).
+ */
+export async function placePerson(
+  db: Db,
+  actor: Actor,
+  userId: string,
+  input: { homeBranchId?: string | null; alsoBranchIds: string[]; from?: string; work?: WorkChoice },
+) {
+  const { work, ...place } = input;
+  const before = await db.user.findFirst({
+    where: { id: userId, companyId: actor.companyId, deletedAt: null },
+    select: { branchId: true, name: true },
+  });
+  if (!before) throw notFound('Person');
+  const moving = place.homeBranchId !== undefined && place.homeBranchId !== before.branchId;
+  // Decide who takes the work before anything is saved, so a transfer never half-happens.
+  let takerId: string | null = null;
+  if (moving && work && work.mode !== 'keep') {
+    takerId =
+      work.mode === 'handover'
+        ? (work.toUserId ?? null)
+        : ((await db.$transaction((tx) => managerFor(tx, actor.companyId, userId, before.branchId)))?.id ??
+          null);
+    if (!takerId)
+      throw new AppError(
+        400,
+        'BAD_REQUEST',
+        work.mode === 'handover'
+          ? 'Choose who takes the work'
+          : 'The branch has no manager to take the work back. Choose a person instead.',
+      );
+  }
+  const saved = await setPersonBranches(db, actor, userId, place);
+  if (!takerId) return { ...saved, handedOver: null };
+  const handedOver = await db.$transaction((tx) =>
+    handOverWork(
+      tx,
+      { companyId: actor.companyId, actorId: actor.userId },
+      userId,
+      takerId,
+      `${before.name} moved to another branch`,
+    ),
+  );
+  return { ...saved, handedOver };
 }
 
 /** A person's moves between branches, newest first, and the days they were lent elsewhere. */
@@ -70,6 +120,13 @@ export async function personPlaces(db: Db, actor: Actor, userId: string) {
     select: { id: true, branchId: true },
   });
   if (!person) throw notFound('Person');
+  const [openWork, manager] = await db.$transaction(
+    async (tx) =>
+      [
+        await openWorkOf(tx, actor.companyId, userId),
+        await managerFor(tx, actor.companyId, userId, person.branchId),
+      ] as const,
+  );
   const [stays, loans, also] = await Promise.all([
     db.branchStay.findMany({
       where: { companyId: actor.companyId, userId },
@@ -85,6 +142,8 @@ export async function personPlaces(db: Db, actor: Actor, userId: string) {
   ]);
   return {
     homeBranchId: person.branchId,
+    openWork,
+    manager,
     alsoBranchIds: also.map((a) => a.branchId).filter((b) => b !== person.branchId),
     // "0000-01-01" means "from the beginning" (the first branch of someone who had none).
     moves: stays.map((s) => ({ ...s, from: s.from.startsWith('0000') ? null : s.from })),

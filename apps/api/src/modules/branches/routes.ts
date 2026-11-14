@@ -18,7 +18,7 @@ import { actorOf } from '../delegation/routes';
 import { chainFor, deleteRoute, listRoutes, saveRoute } from './approvals';
 import { compareOutlets } from './compare';
 import { lendPerson } from './history';
-import { movePeople, personPlaces } from './people';
+import { movePeople, personPlaces, placePerson } from './people';
 import { closeBranch, closePreview, copyBranch } from './lifecycle';
 import { listRates, saveRate } from './money';
 import {
@@ -31,7 +31,6 @@ import {
   saveRegion,
   setDepartmentHead,
   setManagers,
-  setPersonBranches,
   structure,
 } from './structure';
 
@@ -104,7 +103,7 @@ export async function branchRoutes(app: FastifyInstance) {
   r.put(
     '/api/branches/people/:id',
     { ...groupWide(), schema: { tags, params: idParam, body: personBranchesSchema } },
-    async (q) => setPersonBranches(db, actorOf(q), q.params.id, q.body),
+    async (q) => placePerson(db, actorOf(q), q.params.id, q.body),
   );
   // A team moved together (or people with no branch given one), from a day.
   r.post(
@@ -119,6 +118,9 @@ export async function branchRoutes(app: FastifyInstance) {
           from: z
             .string()
             .regex(/^\d{4}-\d{2}-\d{2}$/)
+            .optional(),
+          work: z
+            .object({ mode: z.enum(['keep', 'handover', 'manager']), toUserId: z.string().max(40).nullish() })
             .optional(),
         }),
       },
