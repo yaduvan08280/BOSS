@@ -53,6 +53,7 @@ export const COMPANY_SCOPED_MODELS = new Set([
   'PayoutImport',
   'PackInstall',
   'OwnerLink',
+  'PulseRating',
   'BranchRule',
   'Hall',
   'BanquetPackage',

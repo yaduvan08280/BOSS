@@ -144,7 +144,7 @@ export async function buildApp(opts: BuildOptions) {
   await app.register(departmentRoutes);
   await app.register(userRoutes);
   await app.register(userPhotoRoutes);
-  await app.register(ownerRoutes);
+  await app.register(ownerRoutes, { secret: env.APP_SECRET });
   await app.register(roleRoutes);
   await app.register(systemRoutes);
   await app.register(channelRoutes, { env });

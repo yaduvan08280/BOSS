@@ -86,6 +86,7 @@ const RecordListPage = page(() => import('@/modules/records/RecordListPage'), 'R
 const ListsPage = page(() => import('@/modules/lists/ListsPage'), 'ListsPage');
 const OutletsPage = page(() => import('@/modules/branches/OutletsPage'), 'OutletsPage');
 const OwnerDeskPage = page(() => import('@/modules/owner/OwnerDeskPage'), 'OwnerDeskPage');
+const PublicPulsePage = page(() => import('@/modules/owner/PublicPulsePage'), 'PublicPulsePage');
 const BillsPage = page(() => import('@/modules/money/BillsPage'), 'BillsPage');
 const PartiesPage = page(() => import('@/modules/money/PartiesPage'), 'PartiesPage');
 const OwedPage = page(() => import('@/modules/money/OwedPage'), 'OwedPage');
@@ -169,6 +170,14 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={null}>
         <PublicRoomsPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/pulse/:token',
+    element: (
+      <Suspense fallback={null}>
+        <PublicPulsePage />
       </Suspense>
     ),
   },

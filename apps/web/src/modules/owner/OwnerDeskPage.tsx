@@ -5,7 +5,7 @@ import { TabStrip } from '@/components/work';
 import { Select } from '@/components/ui/form';
 import { useParamState } from '@/lib/work';
 import { ExceptionsTab, LeagueTab } from './BranchTabs';
-import { LetterTab, WhatIfTab } from './ExtraTabs';
+import { LetterTab, PulseTab, WhatIfTab } from './ExtraTabs';
 import { CashFlowTab, VendorsTab } from './MoneyTabs';
 import { MorningTab } from './MorningTab';
 import { BusFactorTab, DelayTab, LeaksTab, PromisesTab } from './PeopleTabs';
@@ -21,9 +21,10 @@ const TABS = [
   'bus',
   'vendors',
   'cash',
+  'pulse',
   'whatif',
 ] as const;
-const SPANNED = ['exceptions', 'leaks', 'promises', 'delay', 'league'];
+const SPANNED = ['exceptions', 'leaks', 'promises', 'delay', 'league', 'pulse'];
 const day = (back: number) =>
   new Date(Date.now() + 5.5 * 3_600_000 - back * 86_400_000).toISOString().slice(0, 10);
 
@@ -67,6 +68,7 @@ export function OwnerDeskPage() {
       {tab === 'cash' && <CashFlowTab />}
       {tab === 'letter' && <LetterTab />}
       {tab === 'whatif' && <WhatIfTab />}
+      {tab === 'pulse' && <PulseTab span={span} />}
     </div>
   );
 }

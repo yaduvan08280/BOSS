@@ -238,3 +238,101 @@ export function CopyBest({ branches }: { branches: LeagueRow[] }) {
     </Section>
   );
 }
+
+type PulseData = {
+  from: string;
+  count: number;
+  average: number | null;
+  low: number;
+  outlets: {
+    outletId: string;
+    outlet: string;
+    link: string;
+    count: number;
+    average: number | null;
+    low: number;
+  }[];
+  stewards: { userId: string; name: string; count: number; average: number; low: number }[];
+  latest: { id: string; stars: number; comment: string | null; outlet: string; at: string }[];
+};
+
+/** What guests said: the average by outlet and by steward, the latest words, and each outlet's link for its QR. */
+export function PulseTab({ span }: { span: { from?: string; to?: string } }) {
+  const { t } = useTranslation();
+  const q = useQuery({
+    queryKey: ['owner', 'pulse', span.from ?? ''],
+    queryFn: () => api<PulseData>(`/api/owner/pulse${span.from ? `?from=${span.from}` : ''}`),
+  });
+  if (q.isPending) return <PageSkeleton />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
+  const d = q.data;
+  const copy = (link: string) => {
+    void navigator.clipboard?.writeText(`${window.location.origin}${link}`);
+    toast.success(t('owner.u.copied'));
+  };
+  const stars = (n: number | null) => (n === null ? '—' : `${n} ★`);
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-3 gap-3">
+        <KpiTile hero label={t('owner.u.average')} value={stars(d.average)} />
+        <KpiTile label={t('owner.u.ratings')} value={d.count} />
+        <KpiTile label={t('owner.u.low')} value={d.low} tone={d.low ? 'bad' : undefined} />
+      </div>
+      <Section title={t('owner.u.outlets')} hint={t('owner.u.outletsHint')}>
+        <ul className="divide-y rounded-card border bg-card">
+          {d.outlets.map((o) => (
+            <li
+              key={o.outletId}
+              className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 text-sm"
+            >
+              <span className="min-w-0">
+                <span className="font-medium">{o.outlet}</span>
+                <span className="block text-xs text-muted-foreground">
+                  {stars(o.average)} · {t('owner.u.n', { count: o.count })}
+                </span>
+              </span>
+              <Button size="sm" onClick={() => copy(o.link)}>
+                {t('owner.u.copy')}
+              </Button>
+            </li>
+          ))}
+        </ul>
+      </Section>
+      {d.stewards.length > 0 && (
+        <Section title={t('owner.u.stewards')} hint={t('owner.u.stewardsHint')}>
+          <ul className="divide-y rounded-card border bg-card">
+            {d.stewards.map((s) => (
+              <li key={s.userId} className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
+                <span className="min-w-0 truncate">{s.name}</span>
+                <span className="tabular shrink-0">
+                  <strong>{stars(s.average)}</strong> · {t('owner.u.n', { count: s.count })}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+      <Section title={t('owner.u.latest')}>
+        {d.latest.length ? (
+          <ul className="space-y-2">
+            {d.latest.map((r) => (
+              <li key={r.id} className="rounded-card border bg-card p-3.5 text-sm">
+                <div className="mb-1 flex justify-between gap-2 text-xs text-muted-foreground">
+                  <span
+                    className={cn('font-semibold', r.stars <= 2 ? 'text-status-bad-fg' : 'text-foreground')}
+                  >
+                    {r.stars} ★
+                  </span>
+                  <span>{r.outlet}</span>
+                </div>
+                {r.comment}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="rounded-card border bg-card p-4 text-sm text-muted-foreground">{t('owner.u.none')}</p>
+        )}
+      </Section>
+    </div>
+  );
+}

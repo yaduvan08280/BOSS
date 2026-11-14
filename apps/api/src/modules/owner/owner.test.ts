@@ -189,7 +189,11 @@ describe("the owner's desk", () => {
     // No manager at the garden yet: nothing is copied, and it says why.
     expect((await copy(r.g.b.garden.id)).body).toMatchObject({ copied: 0, reason: 'manager' });
     await ok(
-      w.api.put('/api/branches/managers', { branchId: r.g.b.garden.id, role: 'MANAGER', userIds: [r.manager.id] }),
+      w.api.put('/api/branches/managers', {
+        branchId: r.g.b.garden.id,
+        role: 'MANAGER',
+        userIds: [r.manager.id],
+      }),
     );
     expect((await copy(r.g.b.garden.id)).body).toMatchObject({ copied: 1 });
     expect((await copy(r.g.b.garden.id)).body).toMatchObject({ copied: 0 });
@@ -197,7 +201,10 @@ describe("the owner's desk", () => {
       where: { companyId: w.companyId, branchId: r.g.b.garden.id },
     });
     expect(made).toMatchObject({ name: 'Opening checklist — Garden Jaipur', doerIds: [r.manager.id] });
-    await ctx.prisma.checklistMaster.updateMany({ where: { companyId: w.companyId }, data: { active: false } });
+    await ctx.prisma.checklistMaster.updateMany({
+      where: { companyId: w.companyId },
+      data: { active: false },
+    });
     expect(
       (
         await r.steward.api.post('/api/owner/copy-checklists', {
@@ -206,6 +213,58 @@ describe("the owner's desk", () => {
         })
       ).status,
     ).toBe(403);
+  }, 90_000);
+
+  it('the pulse: a guest rates from the table’s link; a low score becomes the manager’s task', async () => {
+    const w = await world(ctx.app);
+    const r = await restaurant(ctx.prisma, w);
+    await ok(
+      w.api.put('/api/branches/managers', {
+        branchId: r.g.b.rooftop.id,
+        role: 'MANAGER',
+        userIds: [r.manager.id],
+      }),
+    );
+    const s = r.steward.api;
+    const o = await open(s, r, 'T1');
+    await add(s, o.id, [{ menuItemId: r.m.dal }]);
+    const c = await bill(s, o.id);
+    type Pulse = {
+      count: number;
+      average: number | null;
+      low: number;
+      outlets: { outlet: string; link: string; count: number }[];
+      stewards: { name: string; average: number }[];
+    };
+    const before = await ok<Pulse>(w.api.get('/api/owner/pulse'));
+    const link = before.outlets.find((x) => x.outlet === 'Rooftop')!.link;
+    const url = `/api/public${link}`;
+    const guest = (method: 'GET' | 'POST', path: string, payload?: object) =>
+      ctx.app.inject({
+        method,
+        url: path,
+        headers: { origin: 'http://localhost:5173' },
+        ...(payload ? { payload } : {}),
+      });
+    expect((await guest('GET', url)).json()).toMatchObject({ outlet: 'Rooftop' });
+    expect((await guest('GET', '/api/public/pulse/nope.nope1234')).statusCode).toBe(404);
+    expect((await guest('POST', url, { stars: 5, comment: 'Lovely evening' })).statusCode).toBe(200);
+    expect(
+      (await guest('POST', url, { stars: 1, comment: 'Waited 40 minutes', billNo: c.number })).statusCode,
+    ).toBe(200);
+    // A robot that fills the hidden field is thanked and ignored.
+    expect((await guest('POST', url, { stars: 1, website: 'spam.example' })).statusCode).toBe(200);
+    expect((await guest('POST', url, { stars: 9 })).statusCode).toBe(400);
+
+    const after = await ok<Pulse>(w.api.get('/api/owner/pulse'));
+    expect(after).toMatchObject({ count: 2, average: 3, low: 1 });
+    expect(after.stewards[0]).toMatchObject({ name: 'Ravi Steward', average: 1 });
+    const task = await ctx.prisma.task.findFirstOrThrow({
+      where: { companyId: w.companyId, source: 'pulse' },
+    });
+    expect(task.doerId).toBe(r.manager.id);
+    expect(task.description).toContain('Waited 40 minutes');
+    expect((await s.get('/api/owner/pulse')).status).toBe(403);
   }, 90_000);
 });
 

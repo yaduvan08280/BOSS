@@ -15,7 +15,8 @@
       "vendors": "Vendors",
       "cash": "Cash flow",
       "letter": "Weekly letter",
-      "whatif": "What if"
+      "whatif": "What if",
+      "pulse": "Pulse"
     },
     "col": {
       "branch": "Branch",
@@ -245,6 +246,36 @@
         "sat": "Saturday",
         "sun": "Sunday"
       }
+    },
+    "u": {
+      "average": "Average",
+      "ratings": "Ratings",
+      "low": "1–2 stars",
+      "outlets": "By outlet",
+      "outletsHint": "Copy an outlet's link and make a QR from it for the tables and the bill. Guests need no app and no sign-in.",
+      "copy": "Copy the link",
+      "copied": "Link copied",
+      "n_one": "{{count}} rating",
+      "n_other": "{{count}} ratings",
+      "stewards": "By steward",
+      "stewardsHint": "Only ratings where the guest typed a bill number; lowest first.",
+      "latest": "What guests wrote",
+      "none": "No words yet."
     }
+  },
+  "pulse": {
+    "title": "How was {{outlet}}?",
+    "stars": "Your rating",
+    "nStars_one": "{{count}} star",
+    "nStars_other": "{{count}} stars",
+    "anything": "Anything you want to tell us? (optional)",
+    "whatWrong": "What went wrong?",
+    "bill": "Bill number (optional — it is printed on your bill)",
+    "send": "Send",
+    "thanks": "Thank you",
+    "thanksHigh": "We are glad you enjoyed {{outlet}}.",
+    "thanksLow": "We are sorry. The manager of {{outlet}} has been told and will look into it.",
+    "failed": "Could not send. Please try again.",
+    "gone": "This link is not in use."
   }
 }

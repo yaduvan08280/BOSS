@@ -12,10 +12,11 @@ import { leaks } from './leaks';
 import { letterFor } from './letter';
 import { copyChecklists, whatIfBase } from './whatif';
 import { promises } from './promises';
+import { pulse, pulsePage, ratePulse } from './pulse';
 import { vendors } from './vendors';
 
 /** The owner's desk: reports that look across branches, people and companies. Owner and admins only. */
-export async function ownerRoutes(app: FastifyInstance) {
+export async function ownerRoutes(app: FastifyInstance, opts: { secret: string }) {
   const r = app.withTypeProvider<ZodTypeProvider>();
   const db = app.prisma;
   const tags = ['owner'];
@@ -122,6 +123,33 @@ export async function ownerRoutes(app: FastifyInstance) {
       schema: { tags, body: z.object({ fromBranchId: z.string().max(40), toBranchId: z.string().max(40) }) },
     },
     async (q) => copyChecklists(db, actorOf(q), q.body),
+  );
+  r.get('/api/owner/pulse', { ...signedIn(), schema: { tags, querystring: span } }, async (q) =>
+    pulse(db, actorOf(q), opts.secret, q.query.from, q.query.to),
+  );
+  // The guest's page behind the QR: no sign-in; limited per address, with a hidden field robots fill in.
+  const tokenParam = z.object({ token: z.string().min(10).max(120) });
+  r.get(
+    '/api/public/pulse/:token',
+    { config: { rateLimit: { max: 60, timeWindow: '1 minute' } }, schema: { tags, params: tokenParam } },
+    async (q) => pulsePage(db, opts.secret, q.params.token),
+  );
+  r.post(
+    '/api/public/pulse/:token',
+    {
+      config: { rateLimit: { max: 6, timeWindow: '1 minute' } },
+      schema: {
+        tags,
+        params: tokenParam,
+        body: z.object({
+          stars: z.number().int().min(1).max(5),
+          comment: z.string().max(500).nullish(),
+          billNo: z.string().max(40).nullish(),
+          website: z.string().max(200).optional(),
+        }),
+      },
+    },
+    async (q) => (q.body.website ? { ok: true } : ratePulse(db, opts.secret, q.params.token, q.body)),
   );
   r.get('/api/owner/bus-factor', { ...signedIn(), schema: { tags } }, async (q) => busFactor(db, actorOf(q)));
   r.get('/api/owner/vendors', { ...signedIn(), schema: { tags } }, async (q) => vendors(db, actorOf(q)));
