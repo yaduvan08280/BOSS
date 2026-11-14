@@ -1,0 +1,33 @@
+{
+  "nav.aiChat": "AI चैट",
+  "navDesc.aiChat": "कंपनी के बारे में कुछ भी पूछें — हिंदी, अंग्रेज़ी या हिंग्लिश में",
+  "chat": {
+    "ownerSubtitle": "कंपनी के बारे में कुछ भी पूछें — बिक्री, स्टॉक, लोग, पैसा — हिंदी, अंग्रेज़ी या हिंग्लिश में",
+    "staffSubtitle": "अपने काम और अपनी शाखा के बारे में पूछें",
+    "hello": "आप क्या जानना चाहते हैं?",
+    "ownerHint": "मैं पूरा MONO पढ़ता हूँ: बिक्री, स्टॉक, हाज़िरी, ग्राहक, बिल, बुकिंग… और हिसाब लगाकर सुझाव भी देता हूँ।",
+    "staffHint": "मैं आपके काम, हाज़िरी, छुट्टी और आपकी शाखा का वह डेटा बता सकता हूँ जो आप देख सकते हैं।",
+    "example": {
+      "sales": "Kal ki sale kitni hui aur average bill kitna tha?",
+      "stock": "Kitchen me sabse zyada value ka maal kaunsa hai?",
+      "late": "Is mahine sabse zyada late kaun aaya?",
+      "owed": "Kaun customer sabse zyada paisa dena baaki hai?",
+      "foodCost": "किन डिश की फ़ूड कॉस्ट 40% से ज़्यादा है?",
+      "myTasks": "Mere pending tasks kaunse hain?",
+      "myAttendance": "Is mahine main kitni baar late aaya?",
+      "myLeave": "Meri leave ka status kya hai?"
+    },
+    "placeholder": "कुछ भी पूछें…",
+    "send": "भेजें",
+    "thinking": "डेटा देख रहा हूँ…",
+    "stillThinking": "अभी काम चल रहा है — {{secs}} सेकंड (बड़े सवाल में एक मिनट तक)",
+    "rows_one": "{{count}} पंक्ति",
+    "rows_other": "{{count}} पंक्तियाँ",
+    "howWorked_one": "मैंने कैसे निकाला ({{count}} कदम)",
+    "howWorked_other": "मैंने कैसे निकाला ({{count}} कदम)",
+    "newChat": "नई चैट",
+    "history": "पिछली चैट",
+    "delete": "चैट हटाएँ",
+    "openFull": "पूरी चैट खोलें"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "nav.aiChat": "AI chat",
+  "navDesc.aiChat": "Ask anything about the company — in English, Hindi or Hinglish",
+  "chat": {
+    "ownerSubtitle": "Ask anything about the company — sales, stock, people, money — in English, Hindi or Hinglish",
+    "staffSubtitle": "Ask about your own work and your branch, in English, Hindi or Hinglish",
+    "hello": "What would you like to know?",
+    "ownerHint": "I read all of MONO: sales, stock, attendance, customers, bills, bookings… and I can calculate and suggest.",
+    "staffHint": "I can tell you about your tasks, attendance, leave and your branch's data you may see.",
+    "example": {
+      "sales": "Kal ki sale kitni hui aur average bill kitna tha?",
+      "stock": "Kitchen me sabse zyada value ka maal kaunsa hai?",
+      "late": "Is mahine sabse zyada late kaun aaya?",
+      "owed": "Kaun customer sabse zyada paisa dena baaki hai?",
+      "foodCost": "Which dishes have food cost above 40%?",
+      "myTasks": "Mere pending tasks kaunse hain?",
+      "myAttendance": "Is mahine main kitni baar late aaya?",
+      "myLeave": "Meri leave ka status kya hai?"
+    },
+    "placeholder": "Ask anything…",
+    "send": "Send",
+    "thinking": "Looking at the data…",
+    "stillThinking": "Still working — {{secs}} s (big questions take up to a minute)",
+    "rows_one": "{{count}} row",
+    "rows_other": "{{count}} rows",
+    "howWorked_one": "How I worked it out ({{count}} step)",
+    "howWorked_other": "How I worked it out ({{count}} steps)",
+    "newChat": "New chat",
+    "history": "Earlier chats",
+    "delete": "Delete chat",
+    "openFull": "Open the full chat"
+  }
+}

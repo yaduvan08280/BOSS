@@ -1,5 +1,6 @@
 import {
   Telescope,
+  MessagesSquare,
   Bug,
   BadgeIndianRupee,
   Store,
@@ -106,6 +107,14 @@ export const WORKSPACE_NAV: NavSection[] = [
         phase: 0,
         tag: 'workspace',
         permission: 'core.admin',
+      },
+      {
+        key: 'aiChat',
+        path: '/ai/chat',
+        icon: MessagesSquare,
+        phase: 0,
+        tag: 'workspace',
+        permission: 'ai.view',
       },
       { key: 'support', path: '/support', icon: LifeBuoy, phase: 0, tag: 'workspace' },
     ],

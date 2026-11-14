@@ -47,7 +47,8 @@ const BASE = process.env.BASE ?? 'http://localhost:5173';
         await page.waitForTimeout(kind === 'wait' || kind === 'shot' ? 0 : 1200);
       } catch (e) { problems.push(`[${route}] step ${step} failed: ${String(e.message).split('\n')[0].slice(0, 160)}`); }
     }
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    // On a phone the browser widens the layout to fit something too wide, so compare with the screen too.
+    const overflow = await page.evaluate((w) => Math.max(document.documentElement.scrollWidth, window.innerWidth) - w, +w);
     if (overflow > 2) problems.push(`[${route}] horizontal overflow ${overflow}px`);
     const name = route.replace(/[^a-z0-9]+/gi, '_').replace(/^_|_$/g, '') || 'home';
     await page.screenshot({ path: `${outDir}/${name}.png`, fullPage: process.env.FULL === '1' });

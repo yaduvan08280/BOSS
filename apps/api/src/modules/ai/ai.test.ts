@@ -356,6 +356,106 @@ describe('AI layer', () => {
     expect(asked[0]!.system).not.toContain('stock — What is in stock now');
   });
 
+  it('chat: looks things up, calculates and answers in steps; keeps the conversation; staff see only their own', async () => {
+    const { api, company, owner } = await ownerClient(ctx.app);
+    for (const [code, name, openingQty] of [
+      ['DAI-PAN', 'Paneer', 12],
+      ['DRY-RIC', 'Basmati rice', 40],
+    ] as const)
+      await api.post('/api/ims/items', { code, name, unit: 'kg', category: 'Kitchen', openingQty });
+    const step = (s: object) => ({
+      action: 'answer',
+      purpose: '',
+      lookup: null,
+      calculate: null,
+      answer: null,
+      showLookup: null,
+      suggestions: [],
+      ...s,
+    });
+    const stockLookup = {
+      view: 'stock',
+      columns: ['item', 'qty', 'unit'],
+      filters: [],
+      groupBy: null,
+      aggregate: null,
+      orderBy: { column: 'qty', dir: 'desc' },
+      limit: 10,
+    };
+    let asked = script(company.id, [
+      step({ action: 'lookup', purpose: 'Stock dekh raha hoon', lookup: stockLookup }),
+      step({
+        action: 'calculate',
+        purpose: 'Total',
+        calculate: { expression: '40 + 12', label: 'kg in all' },
+      }),
+      step({
+        answer: '**Basmati rice** sabse zyada hai: 40 kg. Kul 52 kg.',
+        showLookup: 1,
+        suggestions: ['Paneer kitna bacha?'],
+      }),
+    ]);
+    const r = (await api.post('/api/ai/chat', { text: 'sabse zyada stock kis cheez ka hai?' })).body;
+    expect(r.message.content).toContain('Basmati rice');
+    expect(r.message.data.steps).toEqual([
+      { purpose: 'Stock dekh raha hoon', kind: 'lookup', view: 'stock', rows: 2 },
+      { purpose: 'Total', kind: 'calculate', result: 'kg in all = 52' },
+    ]);
+    expect(r.message.data.table.rows[0]).toMatchObject({ item: 'Basmati rice', qty: 40 });
+    expect(r.message.data.suggestions).toEqual(['Paneer kitna bacha?']);
+    // The model saw the rows of its lookup and the calculator's result.
+    expect(asked[1]!.user).toContain('Basmati rice');
+    expect(asked[2]!.user).toContain('= 52');
+    expect(asked[0]!.system).toContain('the owner');
+
+    // The next question continues the same chat, with the earlier turn in the history.
+    asked = script(company.id, [step({ answer: 'Paneer: 12 kg.' })]);
+    const next = (await api.post('/api/ai/chat', { chatId: r.chatId, text: 'aur paneer?' })).body;
+    expect(next.chatId).toBe(r.chatId);
+    const chat = (await api.get(`/api/ai/chats/${r.chatId}`)).body;
+    expect(chat.messages.map((m: { role: string }) => m.role)).toEqual([
+      'user',
+      'assistant',
+      'user',
+      'assistant',
+    ]);
+    expect((await api.get('/api/ai/chats')).body).toHaveLength(1);
+
+    // A member: only their own attendance, and no stock (not offered; a plan for it is refused to the model).
+    const ravi = await person(api, 'Ravi Kumar', true);
+    const raviApi = await signedIn(ctx.app, ravi.mobile, ravi.tempPassword!);
+    await raviApi.post('/api/auth/change-password', {
+      currentPassword: ravi.tempPassword,
+      newPassword: 'Ravi12345',
+    });
+    const member = await ctx.prisma.role.findFirstOrThrow({
+      where: { companyId: company.id, key: 'MEMBER' },
+    });
+    await ctx.prisma.role.update({ where: { id: member.id }, data: { permissions: ['ai.view', 'hr.view'] } });
+    for (const userId of [ravi.id, owner.id])
+      await ctx.prisma.attendanceDay.create({
+        data: { companyId: company.id, userId, date: '2026-10-05', status: 'LATE' },
+      });
+    asked = script(company.id, [
+      step({ action: 'lookup', purpose: 'stock', lookup: stockLookup }),
+      step({
+        action: 'lookup',
+        purpose: 'attendance',
+        lookup: { ...stockLookup, view: 'attendance', columns: ['person', 'status'], orderBy: null },
+      }),
+      step({ answer: 'Aap 05/10 ko late the.', showLookup: 2 }),
+    ]);
+    const mine = (await raviApi.post('/api/ai/chat', { text: 'main kab late aaya?' })).body;
+    expect(asked[0]!.system).not.toContain('stock — What is in stock now');
+    expect(asked[0]!.system).toContain('not the owner');
+    expect(asked[1]!.user).toMatch(/could not run: You may not read "stock"/);
+    expect(mine.message.data.table.rows).toEqual([
+      expect.objectContaining({ person: 'Ravi Kumar', status: 'LATE' }),
+    ]);
+    // Someone else's chat is not theirs to read.
+    expect((await raviApi.get(`/api/ai/chats/${r.chatId}`)).status).toBe(404);
+  });
+
   it('keeps business details, remembers facts, and builds the ChatGPT prompt from data', async () => {
     const { api, company } = await ownerClient(ctx.app);
     const saved = (await api.put('/api/ai/business-details', { text: 'We make quartz slabs in Kishangarh.' }))

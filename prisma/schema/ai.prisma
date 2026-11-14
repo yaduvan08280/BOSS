@@ -111,3 +111,35 @@ model MasterRow {
   @@index([companyId, masterId, label])
   @@map("master_rows")
 }
+
+/// The AI chat (14/11/2026): a person's conversations with the assistant. The owner's chat reads everything;
+/// anyone else's only what their rights and branches allow (their own rows for personal data).
+model AiChat {
+  id        String          @id @default(cuid(2))
+  companyId String          @map("company_id")
+  userId    String          @map("user_id")
+  title     String
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime?       @map("deleted_at") @db.Timestamptz(3)
+  messages  AiChatMessage[]
+
+  @@index([companyId, userId, updatedAt])
+  @@map("ai_chats")
+}
+
+/// One turn: the person's question or the assistant's answer (with the tables and steps behind it in `data`).
+model AiChatMessage {
+  id        String   @id @default(cuid(2))
+  companyId String   @map("company_id")
+  chatId    String   @map("chat_id")
+  chat      AiChat   @relation(fields: [chatId], references: [id])
+  /// user | assistant
+  role      String
+  content   String
+  data      Json?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([chatId, createdAt])
+  @@map("ai_chat_messages")
+}
