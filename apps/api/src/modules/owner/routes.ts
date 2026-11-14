@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
+import { AppError } from '../../lib/errors';
 import { actorOf } from '../delegation/routes';
 import { exceptions, league, RANGE_KEYS, saveRanges } from './branches';
 import { busFactor } from './busfactor';
@@ -42,6 +43,31 @@ export async function ownerRoutes(app: FastifyInstance) {
     '/api/owner/companies/:id',
     { ...signedIn(), schema: { tags, params: z.object({ id: z.string() }) } },
     async (q) => unlinkCompany(db, actorOf(q), q.params.id),
+  );
+  // Shadow mode starts here (and is written in the audit log); the looking itself is the `x-mono-view-as` header.
+  r.post(
+    '/api/owner/view-as',
+    { ...signedIn(), schema: { tags, body: z.object({ userId: z.string().max(40) }) } },
+    async (q) => {
+      if (q.auth!.roleKey !== 'OWNER')
+        throw new AppError(403, 'FORBIDDEN', 'Only an Owner can look as someone else');
+      const person = await db.user.findFirst({
+        where: { id: q.body.userId, companyId: q.auth!.companyId, deletedAt: null },
+        select: { id: true, name: true },
+      });
+      if (!person) throw new AppError(404, 'NOT_FOUND', 'Person not found');
+      await db.auditLog.create({
+        data: {
+          companyId: q.auth!.companyId,
+          actorId: q.auth!.userId,
+          action: 'owner.viewed_as',
+          entityType: 'user',
+          entityId: person.id,
+          after: { name: person.name },
+        },
+      });
+      return person;
+    },
   );
   r.get('/api/owner/exceptions', { ...signedIn(), schema: { tags, querystring: span } }, async (q) =>
     exceptions(db, actorOf(q), q.query.from, q.query.to),

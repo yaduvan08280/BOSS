@@ -9,6 +9,8 @@ import { ACCESS_COOKIE, verifyAccessToken } from '../lib/tokens';
 
 export type AuthContext = {
   userId: string;
+  /** Set while the owner looks at MONO as this person (read-only): the owner's own id. */
+  shadowOf?: string;
   companyId: string;
   sessionId: string;
   roleKey: string | null;
@@ -59,7 +61,7 @@ export default fp(async function authPlugin(app: FastifyInstance, opts: { secret
     if (!token) throw unauthenticated();
     const claims = await verifyAccessToken(token, opts.secret);
     if (!claims) throw unauthenticated('Your session expired');
-    const user = await app.prisma.user.findFirst({
+    let user = await app.prisma.user.findFirst({
       where: { id: claims.sub, companyId: claims.cid, deletedAt: null, status: 'ACTIVE', loginEnabled: true },
       select: {
         id: true,
@@ -80,12 +82,38 @@ export default fp(async function authPlugin(app: FastifyInstance, opts: { secret
     ) {
       throw new AppError(403, 'PASSWORD_CHANGE_REQUIRED', 'Choose a new password first');
     }
+    // Shadow mode: an Owner may look at MONO exactly as one of their people sees it — the person's own rights and
+    // reach — and only look: every request that would change something is refused.
+    const viewAs = request.headers['x-mono-view-as'];
+    let shadowOf: string | undefined;
+    if (typeof viewAs === 'string' && viewAs && viewAs !== user.id) {
+      if (user.role.key !== 'OWNER')
+        throw new AppError(403, 'FORBIDDEN', 'Only an Owner can look as someone else');
+      if (request.method !== 'GET')
+        throw new AppError(
+          403,
+          'FORBIDDEN',
+          'You are looking as someone else, and that view is read-only. Leave it to make changes.',
+        );
+      const target = await app.prisma.user.findFirst({
+        where: { id: viewAs, companyId: claims.cid, deletedAt: null },
+        select: {
+          id: true,
+          mustChangePassword: true,
+          role: { select: { key: true, permissions: true, reach: true } },
+        },
+      });
+      if (!target) throw new AppError(404, 'NOT_FOUND', 'Person not found');
+      shadowOf = user.id;
+      user = { ...target, mustChangePassword: false };
+    }
     request.auth = {
       userId: user.id,
       companyId: claims.cid,
       sessionId: claims.sid,
       roleKey: user.role.key,
       permissions: user.role.permissions,
+      ...(shadowOf ? { shadowOf } : {}),
     };
     request.db = forCompany(app.prisma, claims.cid);
     // From here on, everything this request reads is limited to the person's reach (phase 12). The top bar's

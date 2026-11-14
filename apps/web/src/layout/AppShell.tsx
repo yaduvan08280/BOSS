@@ -1,3 +1,4 @@
+import { ShadowBanner } from './ShadowBanner';
 import { Bot } from 'lucide-react';
 import { useState, Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router';
@@ -87,6 +88,7 @@ export function AppShell({ me }: { me: Me }) {
       </Sheet>
 
       <div className={cn('transition-[padding] duration-200', collapsed ? 'lg:pl-[76px]' : 'lg:pl-64')}>
+        <ShadowBanner />
         <TopBar
           me={me}
           title={title}

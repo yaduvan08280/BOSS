@@ -134,4 +134,42 @@ describe("the owner's desk", () => {
     await ok(one.api.del(`/api/owner/companies/${two.company.id}`));
     expect((await ok<Morning>(one.api.get('/api/owner/morning'))).companies).toHaveLength(1);
   }, 60_000);
+
+  it('shadow mode: the owner sees what a person sees, read-only; nobody else can', async () => {
+    const w = await world(ctx.app);
+    const asha = await w.person('Asha Seen');
+    const as = { 'x-mono-view-as': asha.id };
+    // Started through the desk (and audited), then every read answers as her.
+    expect((await w.api.post('/api/owner/view-as', { userId: asha.id })).body).toMatchObject({
+      name: 'Asha Seen',
+    });
+    const me = await w.api.get('/api/auth/me', as);
+    expect(me.body.user).toMatchObject({ id: asha.id, name: 'Asha Seen' });
+    // Her rights, not the owner's: the owner's desk is closed to her.
+    expect((await w.api.get('/api/owner/leaks', as)).status).toBe(403);
+    expect((await w.api.get('/api/tasks?scope=mine&tab=pending', as)).status).toBe(200);
+    // Looking never changes anything.
+    const r = await ctx.app.inject({
+      method: 'POST',
+      url: '/api/ea/items',
+      headers: { cookie: await ownerCookie(w), origin: 'http://localhost:5173', 'x-mono-view-as': asha.id },
+      payload: { text: 'Should not be saved' },
+    });
+    expect(r.statusCode).toBe(403);
+    expect(r.json().error.message).toContain('read-only');
+    // A member cannot look as the owner.
+    expect((await asha.api.get('/api/auth/me', { 'x-mono-view-as': w.owner.id })).status).toBe(403);
+    expect((await asha.api.post('/api/owner/view-as', { userId: w.owner.id })).status).toBe(403);
+  }, 60_000);
 });
+
+/** The owner's session cookie, for a raw request with extra headers. */
+async function ownerCookie(w: Awaited<ReturnType<typeof world>>) {
+  const res = await ctx.app.inject({
+    method: 'POST',
+    url: '/api/auth/login',
+    headers: { origin: 'http://localhost:5173' },
+    payload: { identifier: w.mobile, password: w.password },
+  });
+  return (res.cookies as { name: string; value: string }[]).map((c) => `${c.name}=${c.value}`).join('; ');
+}
