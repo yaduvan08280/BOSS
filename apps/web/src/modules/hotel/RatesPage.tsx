@@ -41,7 +41,7 @@ export function RatesPage({ me }: { me: Me }) {
       {plans.isPending ? (
         <PageSkeleton />
       ) : plans.isError ? (
-        <ErrorState onRetry={() => void plans.refetch()} />
+        <ErrorState onRetry={() => void plans.refetch()} error={plans.error} />
       ) : plans.data.length === 0 ? (
         <EmptyState icon={BedDouble} title={t('hotel.rates.none')} body={t('hotel.rates.noneBody')} />
       ) : (

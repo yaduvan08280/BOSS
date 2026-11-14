@@ -58,7 +58,7 @@ export function Branches() {
   });
 
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const all = q.data;
 
   const node = (b: Branch, depth: number): React.ReactNode => (

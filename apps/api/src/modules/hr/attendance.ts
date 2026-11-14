@@ -12,6 +12,8 @@ import {
   zonedToUtc,
   type DayKind,
   type DayResult,
+  rulesOn,
+  type HrRules,
 } from '@mono/shared';
 import { writeAudit } from '../../lib/audit';
 import { AppError } from '../../lib/errors';
@@ -57,10 +59,12 @@ export async function evaluateDay(
   p: HrPerson,
   date: string,
   now = new Date(),
+  /** Rules to try instead of the saved ones (the preview of a rule change). */
+  using?: HrRules,
 ): Promise<DayResult & { final: boolean }> {
   const [cal, rules, leave] = await Promise.all([
     companyCalendar(db, companyId, p.branchId),
-    hrRulesOf(db, companyId),
+    using ?? hrRulesOf(db, companyId),
     db.leaveRequest.findFirst({
       where: { companyId, userId: p.id, status: 'APPROVED', from: { lte: date }, to: { gte: date } },
       select: { half: true },
@@ -83,7 +87,8 @@ export async function evaluateDay(
     shift: p.shift,
     punches: punches.map((x) => ({ type: x.type as 'IN' | 'OUT', at: x.at })),
     tz: cal.tz,
-    rules: personRules(rules, p),
+    // A day before a dated rule change is worked out with the answers it had then.
+    rules: personRules(rulesOn(rules, date), p),
     pattern: p.pattern,
   });
   // A day is settled two hours after the shift ends (CLAUDE.md §9.2).

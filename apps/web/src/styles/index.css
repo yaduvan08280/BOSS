@@ -111,5 +111,16 @@
 .react-flow .react-flow__pane.draggable,
 .react-flow .react-flow__pane.draggable.dragging,
 .react-flow .react-flow__pane {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Ccircle cx='11' cy='11' r='8' fill='black' stroke='white' stroke-width='2'/%3E%3C/svg%3E") 11 11, grab;
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Ccircle cx='11' cy='11' r='8' fill='black' stroke='white' stroke-width='2'/%3E%3C/svg%3E")
+      11 11,
+    grab;
+}
+
+/* The chart's zoom buttons are big enough for a thumb on a phone. */
+@media (max-width: 767px) {
+  .react-flow__controls-button {
+    width: 36px;
+    height: 36px;
+  }
 }

@@ -22,7 +22,7 @@ export function LibraryPage({ me }: { me: Me }) {
     (r) => t('masters.lib.made', { name: r.name }),
   );
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const list = q.data.filter((m) => industry === 'all' || m.industries.includes(industry as never));
   return (
     <div className="space-y-5">

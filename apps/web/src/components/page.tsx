@@ -1,4 +1,5 @@
-import { CircleAlert, type LucideIcon } from 'lucide-react';
+import { ApiError } from '@/lib/api';
+import { CircleAlert, type LucideIcon, Lock } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
@@ -99,8 +100,14 @@ export function EmptyState({
   );
 }
 
-export function ErrorState({ onRetry }: { onRetry?: () => void }) {
+/**
+ * A screen that could not load. A refusal (403) says so in the server's own words and offers no "Try again" —
+ * trying again would be refused again; anything else is "Something went wrong" with a retry.
+ */
+export function ErrorState({ onRetry, error }: { onRetry?: () => void; error?: unknown }) {
   const { t } = useTranslation();
+  if (error instanceof ApiError && error.status === 403)
+    return <EmptyState icon={Lock} title={t('common.noAccess')} body={error.message} />;
   return (
     <EmptyState
       icon={CircleAlert}

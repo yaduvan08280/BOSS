@@ -72,7 +72,7 @@ export function BarPage({ me }: { me: Me }) {
       {reg.isPending ? (
         <PageSkeleton />
       ) : reg.isError ? (
-        <ErrorState onRetry={() => void reg.refetch()} />
+        <ErrorState onRetry={() => void reg.refetch()} error={reg.error} />
       ) : reg.data.rows.length === 0 ? (
         <EmptyState icon={Wine} title={t('bar.none')} body={t('bar.noneBody')} />
       ) : (

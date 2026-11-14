@@ -34,7 +34,7 @@ export function PrintersPanel() {
     t('org.saved'),
   );
   if (printers.isPending || outlets.isPending) return <PageSkeleton />;
-  if (printers.isError) return <ErrorState onRetry={() => void printers.refetch()} />;
+  if (printers.isError) return <ErrorState onRetry={() => void printers.refetch()} error={printers.error} />;
   const current = routes ?? Object.fromEntries((outlet?.routes ?? []).map((r) => [r.category, r.stationId]));
   const cats = ['', ...(menu.data?.categories ?? []).map((c) => c.name)];
   return (

@@ -63,7 +63,7 @@ export function PosPage({ me }: { me: Me }) {
     };
   }, []);
   if (outlets.isPending) return <PageSkeleton />;
-  if (outlets.isError) return <ErrorState onRetry={() => void outlets.refetch()} />;
+  if (outlets.isError) return <ErrorState onRetry={() => void outlets.refetch()} error={outlets.error} />;
   if (!outlets.data.length)
     return <EmptyState icon={UtensilsCrossed} title={t('pos.noOutlet')} body={t('pos.noOutletBody')} />;
   const pending = approvals.data ?? [];
@@ -113,7 +113,7 @@ export function PosPage({ me }: { me: Me }) {
       {floor.isPending ? (
         <PageSkeleton />
       ) : floor.isError ? (
-        <ErrorState onRetry={() => void floor.refetch()} />
+        <ErrorState onRetry={() => void floor.refetch()} error={floor.error} />
       ) : (
         <div className="space-y-5">
           {floor.data.floors.map((f) => (

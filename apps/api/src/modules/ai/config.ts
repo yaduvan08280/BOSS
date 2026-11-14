@@ -18,6 +18,7 @@ export async function readAiConfig(db: Db, companyId: string, appSecret: string)
     priceOut: cfg.priceOut === null ? null : Number(cfg.priceOut),
     sttProvider: cfg.sttProvider,
     sttModel: cfg.sttModel,
+    sttBaseUrl: cfg.sttBaseUrl,
     dailySummary: cfg.dailySummary,
     hasKey: Boolean(secrets.apiKey),
     keyEnd: secrets.apiKey ? secrets.apiKey.slice(-4) : null,
@@ -47,6 +48,7 @@ export async function saveAiConfig(db: Db, actor: Actor, input: AiConfigInput, a
       priceOut: input.priceOut ?? null,
       sttProvider: input.sttProvider,
       sttModel: input.sttModel || null,
+      sttBaseUrl: input.sttProvider === 'whisper' ? input.sttBaseUrl || null : null,
       dailySummary: input.dailySummary,
       secret: encryptJson(secrets, appSecret),
       updatedById: actor.userId,
@@ -118,7 +120,12 @@ export async function aiStatus(db: Db, companyId: string, appSecret: string) {
     connected,
     provider: cfg.provider,
     model: cfg.model,
-    stt: cfg.sttProvider !== 'browser' && sttKey ? cfg.sttProvider : 'browser',
+    stt:
+      cfg.sttProvider === 'whisper' && cfg.sttBaseUrl
+        ? 'whisper'
+        : cfg.sttProvider !== 'browser' && sttKey
+          ? cfg.sttProvider
+          : 'browser',
   };
 }
 

@@ -125,7 +125,7 @@ export function PayMonth({ today, tz }: { today: string; tz: string }) {
       {q.isPending ? (
         <PageSkeleton />
       ) : q.isError ? (
-        <ErrorState onRetry={() => void q.refetch()} />
+        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : (
         <>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">

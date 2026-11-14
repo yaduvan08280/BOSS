@@ -31,7 +31,7 @@ export function MenuPage({ me }: { me: Me }) {
     send('POST', `/api/hosp/menu/items/${a.id}/86`, { off: a.off }),
   );
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const items = q.data.items.filter(
     (i) => (!cat || i.categoryId === cat) && i.name.toLowerCase().includes(search.trim().toLowerCase()),
   );

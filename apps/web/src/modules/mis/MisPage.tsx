@@ -125,7 +125,7 @@ export function MisPage({ me }: { me: Me }) {
       {q.isPending ? (
         <PageSkeleton />
       ) : q.isError || !r ? (
-        <ErrorState onRetry={() => void q.refetch()} />
+        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : !r.rows.length ? (
         <EmptyState icon={ChartColumn} title={t('mis.empty')} />
       ) : phone ? (

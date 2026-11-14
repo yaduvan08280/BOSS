@@ -49,7 +49,7 @@ export function AuditPage({ me }: { me: Me }) {
       {audits.isPending ? (
         <PageSkeleton />
       ) : audits.isError || !d ? (
-        <ErrorState onRetry={() => void audits.refetch()} />
+        <ErrorState onRetry={() => void audits.refetch()} error={audits.error} />
       ) : !last ? (
         <EmptyState icon={Moon} title={t('hotel.audit.none')} body={t('hotel.audit.noneBody')} />
       ) : (

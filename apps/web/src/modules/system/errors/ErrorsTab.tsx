@@ -43,7 +43,7 @@ export function ErrorsTab() {
     () => t('errors.resolved'),
   );
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const rows = q.data.filter(
     (r) => !search.trim() || matchScore(search, `${r.message} ${r.path ?? ''} ${r.source}`) > 0,
   );

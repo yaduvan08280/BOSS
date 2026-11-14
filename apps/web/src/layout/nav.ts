@@ -1,4 +1,5 @@
 import {
+  Telescope,
   Bug,
   BadgeIndianRupee,
   Store,
@@ -87,7 +88,7 @@ export type NavItem = {
   /** Shown only to people with this permission. */
   permission?: PermissionKey;
   /** Shown only when the company has switched this module on. */
-  needs?: 'hospitality';
+  needs?: 'hospitality' | 'team';
 };
 
 export type NavSection = { key: string; items: NavItem[] };
@@ -98,6 +99,14 @@ export const WORKSPACE_NAV: NavSection[] = [
     items: [
       { key: 'home', path: '/', icon: House, phase: 0, tag: 'workspace' },
       { key: 'myWorkspace', path: '/workspace', icon: Inbox, phase: 0, tag: 'workspace' },
+      {
+        key: 'ownerDesk',
+        path: '/owner',
+        icon: Telescope,
+        phase: 0,
+        tag: 'workspace',
+        permission: 'core.admin',
+      },
       { key: 'support', path: '/support', icon: LifeBuoy, phase: 0, tag: 'workspace' },
     ],
   },
@@ -108,7 +117,7 @@ export const WORKSPACE_NAV: NavSection[] = [
       { key: 'checklists', path: '/checklists', icon: ListChecks, phase: 0, tag: 'businessEngine' },
       { key: 'helpSlips', path: '/help-slips', icon: NotebookPen, phase: 0, tag: 'businessEngine' },
       { key: 'helpTickets', path: '/help-tickets', icon: Ticket, phase: 0, tag: 'businessEngine' },
-      { key: 'ea', path: '/ea', icon: ClipboardList, phase: 0, tag: 'businessEngine' },
+      { key: 'ea', path: '/ea', icon: ClipboardList, phase: 0, tag: 'businessEngine', permission: 'ea.view' },
       { key: 'weeklyMis', path: '/mis', icon: ChartColumn, phase: 0, tag: 'businessEngine' },
     ],
   },
@@ -116,7 +125,7 @@ export const WORKSPACE_NAV: NavSection[] = [
     key: 'systems',
     items: [
       { key: 'myFmsSteps', path: '/fms/my-steps', icon: Route, phase: 0, tag: 'systems' },
-      { key: 'liveFms', path: '/fms/live', icon: Workflow, phase: 0, tag: 'systems' },
+      { key: 'liveFms', path: '/fms/live', icon: Workflow, phase: 0, tag: 'systems', permission: 'fms.view' },
       { key: 'documents', path: '/documents', icon: FileText, phase: 0, tag: 'systems' },
       {
         key: 'reports',
@@ -134,7 +143,14 @@ export const WORKSPACE_NAV: NavSection[] = [
         tag: 'systems',
         permission: 'reports.view',
       },
-      { key: 'fmsBuilder', path: '/fms/builder', icon: GitBranch, phase: 0, tag: 'systems' },
+      {
+        key: 'fmsBuilder',
+        path: '/fms/builder',
+        icon: GitBranch,
+        phase: 0,
+        tag: 'systems',
+        permission: 'fms.edit',
+      },
     ],
   },
   {
@@ -142,7 +158,7 @@ export const WORKSPACE_NAV: NavSection[] = [
     items: [
       { key: 'attendance', path: '/hr/attendance', icon: CalendarCheck, phase: 0, tag: 'hr' },
       { key: 'leave', path: '/hr/leave', icon: CalendarOff, phase: 0, tag: 'hr' },
-      { key: 'coverBoard', path: '/hr/cover', icon: Handshake, phase: 0, tag: 'hr' },
+      { key: 'coverBoard', path: '/hr/cover', icon: Handshake, phase: 0, tag: 'hr', needs: 'team' },
       {
         key: 'payroll',
         path: '/hr/payroll',
@@ -156,10 +172,31 @@ export const WORKSPACE_NAV: NavSection[] = [
   {
     key: 'inventory',
     items: [
-      { key: 'stock', path: '/ims/stock', icon: Package, phase: 0, tag: 'inventory' },
-      { key: 'purchase', path: '/ims/purchase', icon: ShoppingCart, phase: 0, tag: 'inventory' },
-      { key: 'maxReview', path: '/ims/max-review', icon: Scale, phase: 0, tag: 'inventory' },
-      { key: 'stockAudit', path: '/ims/audit', icon: ScanSearch, phase: 0, tag: 'inventory' },
+      { key: 'stock', path: '/ims/stock', icon: Package, phase: 0, tag: 'inventory', permission: 'ims.view' },
+      {
+        key: 'purchase',
+        path: '/ims/purchase',
+        icon: ShoppingCart,
+        phase: 0,
+        tag: 'inventory',
+        permission: 'ims.view',
+      },
+      {
+        key: 'maxReview',
+        path: '/ims/max-review',
+        icon: Scale,
+        phase: 0,
+        tag: 'inventory',
+        permission: 'ims.view',
+      },
+      {
+        key: 'stockAudit',
+        path: '/ims/audit',
+        icon: ScanSearch,
+        phase: 0,
+        tag: 'inventory',
+        permission: 'ims.view',
+      },
       {
         key: 'stockLocations',
         path: '/ims/locations',
@@ -221,15 +258,57 @@ export const WORKSPACE_NAV: NavSection[] = [
   {
     key: 'salesCrm',
     items: [
-      { key: 'crmDashboard', path: '/crm', icon: LayoutDashboard, phase: 0, tag: 'salesCrm' },
-      { key: 'crmPlan', path: '/crm/setup', icon: Target, phase: 0, tag: 'salesCrm' },
-      { key: 'customers', path: '/crm/customers', icon: Contact, phase: 0, tag: 'salesCrm' },
-      { key: 'scot', path: '/crm/scot', icon: Repeat, phase: 0, tag: 'salesCrm' },
-      { key: 'calls', path: '/crm/calls', icon: PhoneCall, phase: 0, tag: 'salesCrm' },
-      { key: 'crmOrders', path: '/crm/orders', icon: Truck, phase: 0, tag: 'salesCrm' },
-      { key: 'collections', path: '/crm/collections', icon: BadgeIndianRupee, phase: 0, tag: 'salesCrm' },
-      { key: 'nbd', path: '/crm/nbd', icon: Funnel, phase: 0, tag: 'salesCrm' },
-      { key: 'meca', path: '/crm/meca', icon: TrendingUp, phase: 0, tag: 'salesCrm' },
+      {
+        key: 'crmDashboard',
+        path: '/crm',
+        icon: LayoutDashboard,
+        phase: 0,
+        tag: 'salesCrm',
+        permission: 'crm.view',
+      },
+      {
+        key: 'crmPlan',
+        path: '/crm/setup',
+        icon: Target,
+        phase: 0,
+        tag: 'salesCrm',
+        permission: 'crm.approve',
+      },
+      {
+        key: 'customers',
+        path: '/crm/customers',
+        icon: Contact,
+        phase: 0,
+        tag: 'salesCrm',
+        permission: 'crm.view',
+      },
+      { key: 'scot', path: '/crm/scot', icon: Repeat, phase: 0, tag: 'salesCrm', permission: 'crm.view' },
+      {
+        key: 'calls',
+        path: '/crm/calls',
+        icon: PhoneCall,
+        phase: 0,
+        tag: 'salesCrm',
+        permission: 'crm.view',
+      },
+      {
+        key: 'crmOrders',
+        path: '/crm/orders',
+        icon: Truck,
+        phase: 0,
+        tag: 'salesCrm',
+        permission: 'crm.view',
+      },
+      {
+        key: 'collections',
+        path: '/crm/collections',
+        icon: BadgeIndianRupee,
+        phase: 0,
+        tag: 'salesCrm',
+        permission: 'crm.view',
+      },
+      { key: 'nbd', path: '/crm/nbd', icon: Funnel, phase: 0, tag: 'salesCrm', permission: 'crm.view' },
+      { key: 'meca', path: '/crm/meca', icon: TrendingUp, phase: 0, tag: 'salesCrm', permission: 'crm.view' },
     ],
   },
   {
@@ -349,7 +428,7 @@ export const WORKSPACE_NAV: NavSection[] = [
         icon: Moon,
         phase: 0,
         tag: 'systems',
-        permission: 'hosp.view',
+        permission: 'hosp.edit',
         needs: 'hospitality',
       },
       {
@@ -358,7 +437,7 @@ export const WORKSPACE_NAV: NavSection[] = [
         icon: Tags,
         phase: 0,
         tag: 'systems',
-        permission: 'hosp.view',
+        permission: 'hosp.admin',
         needs: 'hospitality',
       },
       {
@@ -394,7 +473,7 @@ export const WORKSPACE_NAV: NavSection[] = [
         icon: BarChart3,
         phase: 0,
         tag: 'systems',
-        permission: 'hosp.view',
+        permission: 'hosp.edit',
         needs: 'hospitality',
       },
       {
@@ -412,7 +491,7 @@ export const WORKSPACE_NAV: NavSection[] = [
         icon: UtensilsCrossed,
         phase: 0,
         tag: 'systems',
-        permission: 'hosp.view',
+        permission: 'hosp.edit',
         needs: 'hospitality',
       },
     ],
@@ -421,7 +500,14 @@ export const WORKSPACE_NAV: NavSection[] = [
     key: 'masters',
     items: [
       { key: 'myMasters', path: '/masters', icon: Boxes, phase: 0, tag: 'masters' },
-      { key: 'masterLibrary', path: '/masters/library', icon: LibraryBig, phase: 0, tag: 'masters' },
+      {
+        key: 'masterLibrary',
+        path: '/masters/library',
+        icon: LibraryBig,
+        phase: 0,
+        tag: 'masters',
+        permission: 'core.edit',
+      },
       {
         key: 'valueLists',
         path: '/masters/lists',
@@ -430,7 +516,14 @@ export const WORKSPACE_NAV: NavSection[] = [
         tag: 'masters',
         permission: 'core.edit',
       },
-      { key: 'buildMaster', path: '/masters/build', icon: Sparkles, phase: 0, tag: 'masters' },
+      {
+        key: 'buildMaster',
+        path: '/masters/build',
+        icon: Sparkles,
+        phase: 0,
+        tag: 'masters',
+        permission: 'core.edit',
+      },
     ],
   },
 ];
@@ -472,7 +565,13 @@ export function findNavItem(pathname: string): NavItem | undefined {
 export const navAllowed = (
   item: NavItem,
   permissions: readonly string[],
-  company?: { hospitality?: boolean },
+  company?: { hospitality?: boolean; team?: boolean },
 ) =>
   (!item.permission || hasPermission(permissions, item.permission)) &&
   (!item.needs || company?.[item.needs] === true);
+
+/** What the menu needs to know about the person beyond their rights. */
+export const navFlags = (me: { company: { hospitality?: boolean }; user: { hasTeam?: boolean } }) => ({
+  hospitality: me.company.hospitality,
+  team: me.user.hasTeam === true,
+});

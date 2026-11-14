@@ -19,7 +19,7 @@ export function StockToday({ canMove, canAdjust }: { canMove: boolean; canAdjust
   const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get('q') ?? '');
   const [moving, setMoving] = useState<string | null>(null);
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const { items, counts } = q.data;
   const rows = items
     .filter((i) => band === 'all' || i.band === band)

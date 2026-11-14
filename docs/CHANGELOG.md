@@ -1,5 +1,60 @@
 # Changelog
 
+## 14/11/2026 — Recommended access; the weekly letter written by AI; your own Whisper for voice
+
+- **Roles → Recommended access**: shows what would change, then applies it. Staff see their own branch and their daily work; stock, sales, money and hospitality screens go to the people who work in them; Members move to the role of their department's work. The menu now hides every screen a role cannot use. Check the result with "See as this person" in the org chart.
+- **Weekly letter**: written in words by the company's AI (DeepSeek works) from the week's figures, with the figures shown beneath. Without AI the figures are sent as before.
+- **Voice on Telegram**: a new speech choice, "Your own Whisper server" (free, no key). DeepSeek cannot turn speech into text, so pick this, Gemini or OpenAI. See INSTALL.md §7B.
+
+## 14/11/2026 — Sweep of every screen: fixes
+
+- **Roles → "How far this role sees"**: own work, their branches, their legal entity or the whole company. Until now this could only be set through the API, so every role saw every branch. Existing roles are unchanged (whole company) — set staff roles to "Their branches".
+- Roles on a phone: the role is picked from a dropdown, so its settings are on screen.
+- Menu: EA system and Cover board are hidden from people who cannot open them; an empty section heading (Money) is no longer drawn.
+- Shadow mode: an Owner can no longer look as another Owner.
+- Phone: bigger tap areas for switches, the department drag handle, small links and the flowchart's zoom buttons.
+- Pulse: the outlet's QR code on screen, with "Save the QR". What-if: fixed costs a month.
+
+## 14/11/2026 — Owner's desk, second batch; questions on Telegram
+
+- **Shadow mode**: the Owner opens a person in the org chart and looks at MONO as they see it (read-only, with a banner).
+- **Weekly letter** (owner's desk, and to the owner on Monday): three things better, three worse, one decision waiting. Built from the figures by fixed rules — not written by the AI.
+- **What if**: sliders for price, footfall, cost and staff against the last 90 days. Fixed costs (rent …) are not counted.
+- **Copy the best**: the leading branch's checklists that other branches lack, copied in one tap for the manager to assign.
+- **Pulse**: a public rating link per outlet (make a QR from it); 1–2 stars become the manager's task. No QR image is drawn on screen.
+- **Surprise checks**: a ticked checklist item is asked for again with a photo taken now; the verifier judges it; results by person.
+- **Telegram**: `/ask <question>`, or send the question as a voice message (needs Whisper or Gemini chosen for speech in AI settings).
+
+## 14/11/2026 — Owner's desk (first nine pages)
+
+A new menu item for the Owner and Admins, under Workspace: **Morning** (every linked company side by side), **Exceptions** (only what broke its normal range), **Leaks** (unexplained rupees by person), **Promises** (kept vs broken), **Cost of delay** (late steps in rupees), **Branch league**, **Only one knows** (bus-factor map), **Vendors** (scorecard and cheaper alternatives) and **Cash flow** (60-day calendar). All read data already in MONO; nothing new needs to be entered except the normal ranges and each process's value per day.
+
+## 14/11/2026 — PDFs print ₹ and Hindi; a review sheet for the Hindi strings
+
+- Every server PDF (muster, MIS, reports, documents, step timeline) now prints the rupee sign and Hindi names correctly, with proper conjuncts and matras.
+- `docs/hindi-review.csv` lists all 5,936 screen strings with their English and current Hindi and an empty "Corrected Hindi" column. A Hindi speaker fills that column; `node scripts/hindi-review.mjs import` applies the corrections.
+
+## 14/11/2026 — HR rule changes: from today, or from a date, with a preview
+
+- **Check & save** in HR Rules now asks when the change starts. *From today* keeps every recorded day exactly as it is (the old answers are remembered for those days, even if a month is recalculated later). *From a date* works the recorded days from that date out again.
+- **See what would change** tries the change without saving: "14 recorded days would change for 6 people", with examples, and names months that will not be touched because their pay is closed.
+
+## 14/11/2026 — Transfers carry a choice about open work; a bar and a kitchen in one outlet
+
+- **Transfer dialog**: lists the person's open work (tasks, process steps, tickets, recurring checklists) and asks — keep it, hand it to someone who stays, or give it back to the branch manager.
+- **Stock by menu category**: an outlet can take a category's stock from another location of its branch (System Master → Hospitality → outlet). Drinks sold reduce the bar's stock; a drink is switched off when the bar is out even if the kitchen has it.
+- Fixed: saving an outlet no longer wipes its UPI id.
+
+## 14/11/2026 — Attendance: late is not also a half day; recalculate a month
+
+- **Rule corrected** for fixed shifts: someone 53 minutes late who stays to the end of an 8-hour shift is **Late**, not Half day — lateness has its own rule and is no longer counted against the hours a second time; the hours test is about leaving early. A day never asks for more hours than the shift has. Overtime counts only beyond the shift's own length (late and stayed late is time made up).
+- **Recalculate** (Attendance → Monthly report, HR only): works a month's recorded days out again with today's rules — needed for days settled before this change. Refused for a month whose pay is closed.
+
+## 14/11/2026 — Who works where: branches on the people screens, transfers
+
+- **Org chart → Group by Branch**: one column per branch with its manager and its people by department, a warning column for people with no branch, and a branch filter. Drag a person onto another branch (or open the person → Transfer) to move them.
+- **Users**: a Branch column, a branch filter with head-counts, "Move to branch" for the ticked people, and the branch on every card. The person sheet opens the same transfer dialog.
+- **Transfer dialog**: home branch, the date it takes effect, the branches the person also works at, and their earlier branches. `POST /api/branches/people/move` moves several people at once (keeping their other branches); `GET /api/branches/people/:id` gives the history; the people list now carries `branchName` and `alsoBranchIds`.
 ## 14/11/2026 — Monthly attendance report (muster) and daily punches
 
 - **HR → Attendance → Monthly report** (HODs, branch managers and HR; everyone else sees only themselves through

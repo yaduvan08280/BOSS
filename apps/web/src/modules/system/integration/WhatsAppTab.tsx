@@ -19,7 +19,7 @@ const LIVE = new Set(['wati', 'aisensy']);
 export function WhatsAppTab() {
   const q = useChannels();
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return <WhatsAppForm key={JSON.stringify(q.data.whatsapp.meta)} state={q.data.whatsapp} />;
 }
 

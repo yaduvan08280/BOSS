@@ -231,7 +231,7 @@ function Overview({ plan, progress, go }: { plan: PlanData; progress: Progress; 
             const done = progress.config.done.includes(x);
             return (
               <li key={x} className="flex items-center justify-between gap-2 px-4 py-2 text-sm">
-                <button type="button" className="text-left hover:underline" onClick={() => go(x)}>
+                <button type="button" className="-my-2 py-2 text-left hover:underline" onClick={() => go(x)}>
                   {t(`crm.s.page.${x}`)}
                 </button>
                 <StatusChip tone={done ? 'ok' : 'neutral'}>

@@ -38,7 +38,7 @@ export function DashboardPage({ me }: { me: Me }) {
       timeZone: 'UTC',
     }).format(new Date(`${m}-01T00:00:00Z`));
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const d = q.data;
   return (
     <div className="space-y-5">

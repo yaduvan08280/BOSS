@@ -33,7 +33,7 @@ export function MasterRowsPage({ me }: { me: Me }) {
   );
   void me;
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const { master, rows, canEdit } = q.data;
   const shown = master.fields
     .filter((f) => !['photo', 'file', 'signature', 'items', 'longtext', 'location'].includes(f.type))

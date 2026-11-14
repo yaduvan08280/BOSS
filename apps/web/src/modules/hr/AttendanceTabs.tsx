@@ -25,7 +25,7 @@ export function TeamTab({ tz, today }: { tz: string; today: string }) {
       {q.isPending ? (
         <PageSkeleton />
       ) : q.isError ? (
-        <ErrorState onRetry={() => void q.refetch()} />
+        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : !q.data.rows.length ? (
         <EmptyState icon={Users} title={t('hr.a.noTeam')} />
       ) : (
@@ -114,7 +114,7 @@ export function CorrectionsTab({ tz }: { tz: string }) {
   const users = useUsers();
   const name = (id: string) => users.data?.find((u) => u.id === id)?.name;
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       {q.data.toDecide.length > 0 && (

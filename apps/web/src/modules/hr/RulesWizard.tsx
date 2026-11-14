@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useUsers } from '@/modules/system/api';
 import { hm, hrApi, useHrMutation, useHrRules } from './api';
+import { RuleStart } from './RuleStart';
 import { StepAnswer, StepAutopilot, StepBuddy } from './BuddySteps';
 import { StepLate, StepLeave, StepPunches } from './RulesSteps';
 
@@ -17,7 +18,7 @@ const STEPS = ['late', 'punches', 'leave', 'buddy', 'answer', 'autopilot', 'chec
 export function RulesWizard() {
   const q = useHrRules();
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return <Wizard key={JSON.stringify(q.data.rules)} saved={q.data.rules} />;
 }
 
@@ -25,8 +26,9 @@ function Wizard({ saved }: { saved: HrRules }) {
   const { t } = useTranslation();
   const [rules, setRules] = useState(saved);
   const [step, setStep] = useState(0);
+  const [from, setFrom] = useState('');
   const save = useHrMutation(
-    () => hrApi.saveRules(rules),
+    () => hrApi.saveRules(rules, from || undefined),
     () => t('hr.w.saved'),
   );
   const key = STEPS[step]!;
@@ -75,6 +77,7 @@ function Wizard({ saved }: { saved: HrRules }) {
         </CardHeader>
         <CardContent>{body}</CardContent>
       </Card>
+      {key === 'check' && <RuleStart rules={rules} from={from} onFrom={setFrom} />}
       <div className="flex flex-wrap justify-between gap-2">
         <Button variant="ghost" disabled={step === 0} onClick={() => setStep(step - 1)}>
           {t('hr.w.back')}

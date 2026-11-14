@@ -44,7 +44,7 @@ export function QualityMeter({ words }: { words: number }) {
 export function BusinessDetailsPage() {
   const q = useBusinessDetails();
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return <DetailsForm key={q.data.updatedAt ?? 'new'} saved={q.data.text} />;
 }
 

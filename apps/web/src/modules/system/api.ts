@@ -31,6 +31,7 @@ export type Role = {
   permissions: string[];
   people: number;
   builtIn: boolean;
+  reach?: string;
 };
 export type Contact = { id: string; role: string; name: string; phone: string | null; email: string | null };
 export type CompanyProfile = {

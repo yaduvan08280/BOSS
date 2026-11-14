@@ -24,7 +24,7 @@ export function ItemsTab({ canEdit }: { canEdit: boolean }) {
     () => t('ims.i.removed'),
   );
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const rows = q.data.items.filter(
     (i) => !search.trim() || matchScore(search, [i.code, i.name, i.category, i.vendor].join(' ')) > 0,
   );

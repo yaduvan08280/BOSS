@@ -17,7 +17,7 @@ import type { OrgPerson } from '@mono/shared';
 import { ErrorState, PageSkeleton } from '@/components/page';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Switch } from '@/components/ui/form';
+import { Select, Switch } from '@/components/ui/form';
 import { cn } from '@/lib/utils';
 import { post, useDepartments, useDesignations, useOrgMutation, useRoles, useUsers } from '../api';
 import { membersOf } from '../departments/members';
@@ -26,6 +26,12 @@ import { TempPasswords, type TempPassword } from '../users/TempPasswords';
 import { DeptColumn, PersonCard, type DragData } from './OrgColumns';
 import { ZoomContext } from './zoom';
 import { MoveDialog, PersonPanel, type PendingMove } from './OrgDialogs';
+import { BranchBoard } from './BranchBoard';
+import { OrgList } from './OrgList';
+import { BranchMoveDialog } from '../users/BranchMoveDialog';
+import { useStructure } from '../branches/api';
+import { useMe } from '@/modules/auth/session';
+import { hasPermission } from '@mono/shared';
 
 type View = 'full' | 'chart' | 'list';
 
@@ -46,6 +52,12 @@ export function OrgChartTab() {
   const [filter, setFilter] = useState<string>('all');
   const [showLeft, setShowLeft] = useState(false);
   const [view, setView] = useState<View>('full');
+  const [by, setBy] = useState<'dept' | 'branch'>('dept');
+  const [branch, setBranch] = useState('all');
+  const [placing, setPlacing] = useState<{ people: OrgPerson[]; to?: string } | null>(null);
+  const branches = useStructure().data?.branches ?? [];
+  const me = useMe().data;
+  const canMove = !!me && hasPermission(me.user.permissions, 'org.edit');
   const [zoom, setZoom] = useState(1);
   const [pending, setPending] = useState<PendingMove | null>(null);
   const [open, setOpen] = useState<OrgPerson | null>(null);
@@ -75,9 +87,10 @@ export function OrgChartTab() {
     return (users.data ?? []).filter(
       (p) =>
         (showLeft || p.status === 'ACTIVE') &&
+        (by === 'branch' || branch === 'all' || p.branchId === branch || p.alsoBranchIds?.includes(branch)) &&
         (!needle || `${p.name} ${p.designationName ?? ''} ${p.code}`.toLowerCase().includes(needle)),
     );
-  }, [users.data, q, showLeft]);
+  }, [users.data, q, showLeft, by, branch]);
 
   // A search result links here with ?person=<id>; show that person until the panel is closed.
   const [params, setParams] = useSearchParams();
@@ -93,7 +106,8 @@ export function OrgChartTab() {
   }, [people, all, filter, view]);
 
   if (users.isPending || depts.isPending) return <PageSkeleton />;
-  if (users.isError || depts.isError) return <ErrorState onRetry={() => void users.refetch()} />;
+  if (users.isError || depts.isError)
+    return <ErrorState onRetry={() => void users.refetch()} error={users.error} />;
 
   const everyone = users.data.filter((p) => p.status === 'ACTIVE');
   const owners = people.filter((p) => p.roleKey === 'OWNER');
@@ -211,35 +225,6 @@ export function OrgChartTab() {
     </div>
   );
 
-  const list = (
-    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-      {columns.map((d) => (
-        <Card key={d.id} className="p-3">
-          <div className="mb-2 flex items-center justify-between text-sm font-semibold">
-            {d.name}{' '}
-            <span className="tabular text-xs text-muted-foreground">{membersOf(people, d.id).length}</span>
-          </div>
-          <div className="space-y-1.5">
-            {membersOf(people, d.id).map((p) => (
-              <button
-                key={p.id}
-                onClick={() => setOpen(p)}
-                className="flex w-full items-center justify-between gap-2 rounded-control px-2 py-1.5 text-left text-sm hover:bg-muted"
-              >
-                <span className="truncate">{p.name}</span>
-                {p.id === d.hodUserId && (
-                  <span className="rounded-pill bg-accent px-1.5 text-[10px] font-bold text-accent-foreground">
-                    HOD
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-        </Card>
-      ))}
-    </div>
-  );
-
   return (
     <div className="space-y-4">
       {view === 'full' && (
@@ -262,7 +247,7 @@ export function OrgChartTab() {
             className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none"
           />
         </label>
-        {view !== 'list' && (
+        {view !== 'list' && by === 'dept' && (
           <div className="flex items-center rounded-control border bg-card">
             <Button
               variant="ghost"
@@ -289,7 +274,35 @@ export function OrgChartTab() {
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
           <Switch checked={showLeft} onCheckedChange={setShowLeft} /> {t('org.chart.leftInactive')}
         </label>
-        <div className="ml-auto flex rounded-control bg-muted p-1">
+        <Select
+          value={branch}
+          onChange={(e) => setBranch(e.target.value)}
+          aria-label={t('org.place.branch')}
+          className="h-10 w-auto max-w-[14rem]"
+        >
+          <option value="all">{t('org.place.allBranches')}</option>
+          {branches.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.name}
+            </option>
+          ))}
+        </Select>
+        <div className="flex rounded-control bg-muted p-1" role="group" aria-label={t('org.place.groupBy')}>
+          {(['dept', 'branch'] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setBy(v)}
+              aria-pressed={by === v}
+              className={cn(
+                'h-8 rounded-[calc(var(--radius)*0.5)] px-3 text-xs font-medium',
+                by === v ? 'bg-card shadow-sm' : 'text-muted-foreground',
+              )}
+            >
+              {t(v === 'dept' ? 'org.place.byDept' : 'org.place.byBranch')}
+            </button>
+          ))}
+        </div>
+        <div className={cn('ml-auto flex rounded-control bg-muted p-1', by === 'branch' && 'hidden')}>
           {(['full', 'chart', 'list'] as const).map((v) => (
             <button
               key={v}
@@ -304,7 +317,12 @@ export function OrgChartTab() {
           ))}
         </div>
       </div>
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0">
+      <div
+        className={cn(
+          '-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0',
+          by === 'branch' && 'hidden',
+        )}
+      >
         {[{ id: 'all', name: t('home.all') }, ...all].map((d) => (
           <button
             key={d.id}
@@ -318,9 +336,21 @@ export function OrgChartTab() {
           </button>
         ))}
       </div>
-      <p className="text-xs text-muted-foreground">{t('org.chart.hint')}</p>
-      {view === 'list' ? (
-        list
+      <p className="text-xs text-muted-foreground">
+        {t(by === 'branch' ? 'org.place.boardHint' : 'org.chart.hint')}
+      </p>
+      {by === 'branch' ? (
+        <BranchBoard
+          people={people}
+          everyone={users.data}
+          depts={deptMap}
+          branchFilter={branch}
+          canMove={canMove}
+          onOpen={setOpen}
+          onMove={(list, to) => setPlacing({ people: list, to })}
+        />
+      ) : view === 'list' ? (
+        <OrgList columns={columns} people={people} onOpen={setOpen} />
       ) : (
         <ZoomContext.Provider value={zoom}>
           <DndContext sensors={sensors} collisionDetection={underPointer} onDragEnd={onDragEnd}>
@@ -329,7 +359,20 @@ export function OrgChartTab() {
         </ZoomContext.Provider>
       )}
       <MoveDialog move={pending} onChoose={choose} onCancel={() => setPending(null)} />
-      <PersonPanel person={shown} depts={deptMap} onClose={closePanel} />
+      <PersonPanel
+        person={shown}
+        depts={deptMap}
+        onClose={closePanel}
+        onPlace={canMove ? (p) => (closePanel(), setPlacing({ people: [p] })) : undefined}
+      />
+      {placing && (
+        <BranchMoveDialog
+          key={placing.people.map((p) => p.id).join()}
+          people={placing.people}
+          toBranchId={placing.to}
+          onClose={() => setPlacing(null)}
+        />
+      )}
       <AddPeopleDialog
         key={addTo ?? 'none'}
         open={!!addTo}

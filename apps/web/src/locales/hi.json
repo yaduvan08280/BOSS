@@ -1,5 +1,6 @@
 {
   "common": {
+    "noAccess": "यह आपके लिए खुला नहीं है",
     "scrollLeft": "पहले के विकल्प दिखाएँ",
     "scrollRight": "और विकल्प दिखाएँ",
     "loading": "लोड हो रहा है…",
@@ -172,7 +173,8 @@
     "engineDesigner": "बिज़नेस इंजन",
     "payroll": "वेतन",
     "crmPlan": "प्लान और सेटअप",
-    "errors": "त्रुटियाँ"
+    "errors": "त्रुटियाँ",
+    "ownerDesk": "मालिक की डेस्क"
   },
   "navDesc": {
     "home": "कुछ भी खोजें, या शुरुआत चुनें",
@@ -222,7 +224,8 @@
     "engineDesigner": "हर मॉड्यूल कैसे चलता है, और उसे बदलने वाले स्विच",
     "payroll": "हाज़िरी से कुल वेतन, वेतन नियम और साल की छुट्टियाँ",
     "crmPlan": "साल की योजना और 15 पेज का CRM सेटअप",
-    "errors": "क्या गड़बड़ हुई, कहाँ और कितनी बार"
+    "errors": "क्या गड़बड़ हुई, कहाँ और कितनी बार",
+    "ownerDesk": "अपवाद, रिसाव, वादे और पैसा — सभी शाखाओं और कंपनियों में"
   },
   "home": {
     "heading": "{{name}}, आज क्या करना है?",
@@ -296,7 +299,9 @@
       "telegramNotLinked_one": "{{count}} व्यक्ति ने Telegram नहीं जोड़ा",
       "telegramNotLinked_other": "{{count}} लोगों ने Telegram नहीं जोड़ा",
       "branchesWithoutManager_one": "{{count}} शाखा का कोई प्रबंधक नहीं",
-      "branchesWithoutManager_other": "{{count}} शाखाओं का कोई प्रबंधक नहीं"
+      "branchesWithoutManager_other": "{{count}} शाखाओं का कोई प्रबंधक नहीं",
+      "peopleWithoutBranch_one": "{{count}} व्यक्ति की कोई शाखा नहीं",
+      "peopleWithoutBranch_other": "{{count}} लोगों की कोई शाखा नहीं"
     },
     "openDesigner": "फ़्लो डिज़ाइनर खोलें",
     "openBuilder": "FMS बिल्डर खोलें"
@@ -341,6 +346,59 @@
     }
   },
   "org": {
+    "place": {
+      "title": "{{name}} कहाँ काम करते हैं",
+      "titleMany_one": "{{count}} व्यक्ति को शाखा में भेजें",
+      "titleMany_other": "{{count}} लोगों को शाखा में भेजें",
+      "hint": "होम शाखा वह है जहाँ व्यक्ति गिना जाता है, हाज़िरी लगाता है और काम पाता है। इसे बदलना ट्रांसफ़र है।",
+      "home": "होम शाखा",
+      "from": "कब से (ट्रांसफ़र की तारीख़)",
+      "also": "इन शाखाओं में भी काम",
+      "none": "कोई शाखा नहीं",
+      "note": "हो चुका काम व्यक्ति के नाम रहता है। नए टास्क, चेकलिस्ट और हाज़िरी उस दिन से नई शाखा के होंगे।",
+      "move": "{{to}} में ट्रांसफ़र करें",
+      "saved": "{{name}}: शाखा सेव हुई",
+      "savedMany_one": "{{count}} व्यक्ति भेजा गया",
+      "savedMany_other": "{{count}} लोग भेजे गए",
+      "history": "पहले की शाखाएँ",
+      "always": "शुरू से",
+      "branch": "शाखा",
+      "allBranches": "सभी शाखाएँ",
+      "noBranch": "अभी कोई शाखा नहीं",
+      "noBranchWarn_one": "{{count}} व्यक्ति की कोई शाखा नहीं — जगह के हिसाब से उनके काम का कोई ज़िम्मेदार नहीं।",
+      "noBranchWarn_other": "{{count}} लोगों की कोई शाखा नहीं — जगह के हिसाब से उनके काम का कोई ज़िम्मेदार नहीं।",
+      "giveBranch": "इन्हें शाखा दें",
+      "transfer": "ट्रांसफ़र / शाखा बदलें",
+      "moveBulk": "शाखा में भेजें",
+      "groupBy": "समूह",
+      "byDept": "विभाग",
+      "byBranch": "शाखा",
+      "managers": "शाखा प्रबंधक",
+      "noManager": "अभी कोई प्रबंधक नहीं — शाखाएँ में चुनें",
+      "alsoHere": "यहाँ भी काम करते हैं",
+      "boardHint": "ट्रांसफ़र के लिए व्यक्ति को दूसरी शाखा पर खींचें, या व्यक्ति खोलकर ट्रांसफ़र चुनें।",
+      "people_one": "{{count}} व्यक्ति",
+      "people_other": "{{count}} लोग",
+      "noDept": "कोई विभाग नहीं",
+      "workTitle_one": "{{count}} खुला काम — इसका क्या हो?",
+      "workTitle_other": "{{count}} खुले काम — इनका क्या हो?",
+      "workTitleMany": "इनका खुला काम — इसका क्या हो?",
+      "wTasks_one": "{{count}} टास्क",
+      "wTasks_other": "{{count}} टास्क",
+      "wSteps_one": "{{count}} प्रोसेस स्टेप",
+      "wSteps_other": "{{count}} प्रोसेस स्टेप",
+      "wTickets_one": "{{count}} हेल्प टिकट",
+      "wTickets_other": "{{count}} हेल्प टिकट",
+      "wChecklists_one": "{{count}} दोहराने वाली चेकलिस्ट",
+      "wChecklists_other": "{{count}} दोहराने वाली चेकलिस्ट",
+      "taker": "काम कौन लेगा",
+      "theManager": "शाखा प्रबंधक",
+      "work": {
+        "keep": "रखें — काम व्यक्ति के साथ जाएगा",
+        "handover": "यहीं रहने वाले किसी को सौंपें",
+        "manager": "{{manager}} को वापस दें"
+      }
+    },
     "add": "जोड़ें",
     "choose": "चुनें…",
     "default": "डिफ़ॉल्ट",
@@ -2357,7 +2415,8 @@
     "stt": {
       "browser": "ब्राउज़र (मुफ़्त; Chrome में सबसे अच्छा)",
       "openai": "OpenAI Whisper (हिंदी और अंग्रेज़ी)",
-      "gemini": "Google Gemini"
+      "gemini": "Google Gemini",
+      "whisper": "आपका अपना Whisper सर्वर (मुफ़्त; हिंदी और अंग्रेज़ी; कुछ भी आपके सर्वर से बाहर नहीं जाता)"
     },
     "set": {
       "provider": "1. कौन सा AI",
@@ -2380,6 +2439,8 @@
       "sttHint": "Used by every Dictate / Speak button. The browser works without a key but needs Chrome.",
       "sttModel": "Speech model",
       "sttKey": "Speech API key",
+      "sttBaseUrl": "Whisper सर्वर का पता",
+      "sttBaseUrlHint": "कोई भी सर्वर जो OpenAI का /audio/transcriptions समझता हो, जैसे MONO मशीन पर चलता Whisper कंटेनर। कोई key नहीं चाहिए।",
       "dailySummary": "मालिक को 08:45 पर रोज़ का सारांश",
       "dailySummaryHint": "Telegram पर छोटा संदेश: कल क्या हुआ, क्या देर से है, आज क्या करना है।",
       "test": "जाँचें",

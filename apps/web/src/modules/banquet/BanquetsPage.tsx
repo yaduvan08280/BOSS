@@ -111,7 +111,7 @@ export function BanquetsPage({ me }: { me: Me }) {
         events.isPending ? (
           <PageSkeleton />
         ) : events.isError ? (
-          <ErrorState onRetry={() => void events.refetch()} />
+          <ErrorState onRetry={() => void events.refetch()} error={events.error} />
         ) : list.length === 0 ? (
           <EmptyState icon={PartyPopper} title={t('bq.none')} body={t('bq.noneBody')} />
         ) : (

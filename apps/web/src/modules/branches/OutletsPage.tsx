@@ -84,7 +84,7 @@ export function OutletsPage() {
       {q.isPending ? (
         <PageSkeleton />
       ) : q.isError ? (
-        <ErrorState onRetry={() => void q.refetch()} />
+        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : q.data.rows.length === 0 ? (
         <EmptyState icon={Trophy} title={t('outlets.emptyTitle')} body={t('outlets.emptyBody')} />
       ) : (

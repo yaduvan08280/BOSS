@@ -52,6 +52,8 @@ export const meSchema = z.object({
     permissions: z.array(z.string()),
     mustChangePassword: z.boolean(),
     branchId: z.string().nullable().optional(),
+    /** HR, or somebody with a team: the cover board is theirs to open. */
+    hasTeam: z.boolean().optional(),
     favourites: z.array(z.string()),
   }),
   company: z.object({

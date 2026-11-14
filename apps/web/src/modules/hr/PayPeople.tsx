@@ -27,7 +27,7 @@ export function PayPeople() {
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<TermsRow | null>(null);
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const rows = q.data.filter(
     (r) =>
       !search.trim() ||

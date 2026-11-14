@@ -1,5 +1,6 @@
 import type { ApiError as ApiErrorBody } from '@mono/shared';
 import { branchHeader } from './branch';
+import { viewAsHeader } from './view-as';
 
 export class ApiError extends Error {
   constructor(
@@ -35,6 +36,7 @@ export async function api<T>(path: string, opts: Options = {}): Promise<T> {
     headers: {
       ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
       ...branchHeader(),
+      ...viewAsHeader(),
       ...headers,
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,

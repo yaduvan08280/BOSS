@@ -166,7 +166,7 @@ export function OrderPanel({
       {order.isPending ? (
         <PageSkeleton />
       ) : order.isError || !o ? (
-        <ErrorState onRetry={() => void order.refetch()} />
+        <ErrorState onRetry={() => void order.refetch()} error={order.error} />
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
           {(o.aggregator || (open && ['TAKEAWAY', 'DELIVERY'].includes(o.type))) && (

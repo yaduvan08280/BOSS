@@ -187,3 +187,31 @@ model Holiday {
   @@index([companyId, date])
   @@map("holidays")
 }
+
+/// A surprise check (the owner's "mystery audit"): a ticked checklist item is asked again at a random time and
+/// must be shown with a photo taken now. The run's verifier (else the branch manager) says whether it holds.
+model SpotCheck {
+  id          String    @id @default(cuid(2))
+  companyId   String    @map("company_id")
+  branchId    String?   @map("branch_id")
+  runId       String    @map("run_id")
+  runItemId   String    @map("run_item_id")
+  doerId      String    @map("doer_id")
+  deciderId   String?   @map("decider_id")
+  text        String
+  checklist   String
+  /// ASKED | ANSWERED | OK | NOT_OK | MISSED
+  status      String    @default("ASKED")
+  askedAt     DateTime  @default(now()) @map("asked_at") @db.Timestamptz(3)
+  dueAt       DateTime  @map("due_at") @db.Timestamptz(3)
+  photoId     String?   @map("photo_id")
+  answeredAt  DateTime? @map("answered_at") @db.Timestamptz(3)
+  decidedById String?   @map("decided_by_id")
+  decidedAt   DateTime? @map("decided_at") @db.Timestamptz(3)
+  note        String?
+
+  @@unique([runItemId])
+  @@index([companyId, status])
+  @@index([companyId, doerId, askedAt])
+  @@map("spot_checks")
+}

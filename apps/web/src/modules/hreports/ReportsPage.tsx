@@ -125,7 +125,7 @@ export function HospReportsPage() {
       {q.isPending ? (
         <PageSkeleton />
       ) : q.isError ? (
-        <ErrorState onRetry={() => void q.refetch()} />
+        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : tab === 'flash' && flash.data ? (
         flash.data.outlets.length + flash.data.rooms.length === 0 ? (
           <EmptyState icon={BarChart3} title={t('hrep.nothing')} body={t('hrep.nothingBody')} />

@@ -22,6 +22,9 @@ model Outlet {
   kind          String    @default("RESTAURANT")
   /// Where its stock is taken from ("" = the main store).
   locationId    String    @default("") @map("location_id")
+  /// Menu categories that take their stock from another location of the branch (the bar's drinks from the bar):
+  /// [{ category, locationId }]. A category not listed uses `locationId`.
+  stockRoutes   Json      @default("[]") @map("stock_routes")
   priceListId   String?   @map("price_list_id")
   openMin       Int       @default(0) @map("open_min")
   closeMin      Int       @default(1440) @map("close_min")
@@ -241,4 +244,23 @@ model MenuPrice {
 
   @@index([companyId, menuItemId])
   @@map("menu_prices")
+}
+
+/// A guest's ten-second rating from the QR on the table or the bill (the owner's "pulse"). A low score becomes a
+/// task for the branch manager. The steward is found from the bill number when the guest types one.
+model PulseRating {
+  id        String   @id @default(cuid(2))
+  companyId String   @map("company_id")
+  branchId  String   @map("branch_id")
+  outletId  String   @map("outlet_id")
+  stars     Int
+  comment   String?
+  billNo    String?  @map("bill_no")
+  stewardId String?  @map("steward_id")
+  taskId    String?  @map("task_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([companyId, createdAt])
+  @@index([companyId, outletId, createdAt])
+  @@map("pulse_ratings")
 }

@@ -54,7 +54,7 @@ export function SheetTab({ tz, today }: { tz: string; today: string }) {
       {q.isPending ? (
         <PageSkeleton />
       ) : q.isError ? (
-        <ErrorState onRetry={() => void q.refetch()} />
+        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : !rows.length ? (
         <p className="text-sm text-muted-foreground">
           {q.data.length ? t('common.noMatch') : t('ims.sh.empty')}
@@ -131,7 +131,7 @@ export function ApprovalsTab({ tz }: { tz: string }) {
       ),
   );
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   if (!q.data.length) return <EmptyState icon={ClipboardCheck} title={t('ims.ap.none')} />;
   return (
     <ul className="divide-y rounded-card border bg-card">

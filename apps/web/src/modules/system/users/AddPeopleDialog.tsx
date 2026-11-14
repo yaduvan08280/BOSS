@@ -10,7 +10,7 @@ import { Checkbox, Field, Select, Textarea } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { ApiError } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import { post, useOrgMutation, type Designation, type Role } from '../api';
+import { post, useBranches, useOrgMutation, type Designation, type Role } from '../api';
 import type { TempPassword } from './TempPasswords';
 
 type Props = {
@@ -32,6 +32,7 @@ const EMPTY = {
   designationId: '',
   roleId: '',
   reportsToId: '',
+  branchId: '',
   loginEnabled: false,
 };
 
@@ -46,6 +47,7 @@ export function AddPeopleDialog({
   onPasswords,
 }: Props) {
   const { t } = useTranslation();
+  const branches = useBranches().data ?? [];
   const [mode, setMode] = useState<'one' | 'paste'>('one');
   const [form, setForm] = useState({ ...EMPTY, mainDepartmentId: defaultDept ?? '' });
   const [text, setText] = useState('');
@@ -63,6 +65,7 @@ export function AddPeopleDialog({
         mainDepartmentId: body.mainDepartmentId || null,
         designationId: body.designationId || null,
         reportsToId: body.reportsToId || null,
+        branchId: body.branchId || null,
         roleId: body.roleId || undefined,
       }),
     { success: (r) => t('org.users.personAdded', { name: r.person.name }) },
@@ -72,6 +75,7 @@ export function AddPeopleDialog({
       post<{ created: number; newDepartments: string[] }>('/api/org/users/bulk', {
         people,
         createMissing: true,
+        branchId: form.branchId || null,
       }),
     { silentError: true, success: (r) => t('org.users.imported', { count: r.created }) },
   );
@@ -81,7 +85,7 @@ export function AddPeopleDialog({
   const submitOne = () =>
     createOne.mutate(form, {
       onSuccess: (r) => {
-        setForm({ ...EMPTY, mainDepartmentId: form.mainDepartmentId });
+        setForm({ ...EMPTY, mainDepartmentId: form.mainDepartmentId, branchId: form.branchId });
         onClose();
         if (r.tempPassword)
           onPasswords([
@@ -228,6 +232,23 @@ export function AddPeopleDialog({
                 ))}
             </Select>
           </Field>
+          {branches.length > 0 && (
+            <Field label={t('org.place.branch')}>
+              <Select
+                value={form.branchId}
+                onChange={(e) => setForm({ ...form, branchId: e.target.value })}
+                aria-label={t('org.place.branch')}
+              >
+                <option value="">{branches.length === 1 ? branches[0]!.name : t('org.place.none')}</option>
+                {branches.length > 1 &&
+                  branches.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+              </Select>
+            </Field>
+          )}
           <label className="flex items-center gap-2 text-sm sm:col-span-2">
             <Checkbox
               checked={form.loginEnabled}
@@ -239,6 +260,23 @@ export function AddPeopleDialog({
       ) : (
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">{t('org.users.pasteHint')}</p>
+          {branches.length > 1 && (
+            <Field label={t('org.place.branch')}>
+              <Select
+                value={form.branchId}
+                onChange={(e) => setForm({ ...form, branchId: e.target.value })}
+                aria-label={t('org.place.branch')}
+              >
+                <option value="">{branches.length === 1 ? branches[0]!.name : t('org.place.none')}</option>
+                {branches.length > 1 &&
+                  branches.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+              </Select>
+            </Field>
+          )}
           <Textarea
             autoFocus
             value={text}

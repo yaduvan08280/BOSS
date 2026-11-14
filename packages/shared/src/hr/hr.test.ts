@@ -32,6 +32,33 @@ describe('attendance rules (§9.1 defaults: grace 15 min, half day after 150 min
       reasons: ['16 min late'],
     });
   });
+  it('on a shift as long as the full day, coming late is a late mark — not a half day for the hours too', () => {
+    const eight = { shift: { start: 11 * 60, end: 19 * 60 } };
+    // Inside the grace and out at shift end: 7 h 50 min of work is a full day.
+    expect(day([p('IN', '11:10'), p('OUT', '19:00')], eight)).toMatchObject({ status: 'PRESENT' });
+    // 53 minutes late, stayed 31 minutes past the end: Late; the extra time made up for it, so no overtime.
+    expect(day([p('IN', '11:53'), p('OUT', '19:31')], eight)).toMatchObject({
+      status: 'LATE',
+      lateMinutes: 53,
+      overtimeMinutes: 0,
+      reasons: ['53 min late'],
+    });
+    // Leaving early is what the hours are about: on time but gone at 17:30 is a half day.
+    expect(day([p('IN', '11:00'), p('OUT', '17:30')], eight)).toMatchObject({ status: 'HALF_DAY' });
+    // Late and left early: both count.
+    expect(day([p('IN', '11:40'), p('OUT', '18:00')], eight).status).toBe('HALF_DAY');
+    // Late past "half day after" is still a half day.
+    expect(day([p('IN', '13:30'), p('OUT', '19:00')], eight).status).toBe('HALF_DAY');
+    // Real extra work: on time and 45 minutes past the end is 45 minutes of overtime.
+    expect(day([p('IN', '11:00'), p('OUT', '19:45')], eight)).toMatchObject({
+      status: 'PRESENT',
+      overtimeMinutes: 45,
+    });
+    // A shift shorter than the full-day hours asks only for its own length.
+    expect(
+      day([p('IN', '09:00'), p('OUT', '16:00')], { shift: { start: 9 * 60, end: 16 * 60 } }).status,
+    ).toBe('PRESENT');
+  });
   it('very late or too few hours is a half day; under half the hours is absent', () => {
     expect(day([p('IN', '11:30'), p('OUT', '20:00')])).toMatchObject({
       status: 'HALF_DAY',

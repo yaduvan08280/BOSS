@@ -38,7 +38,7 @@ export function TelegramTab() {
   );
 
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const { stats, people, bot, connected } = q.data;
   const pct = stats.total ? Math.round((stats.linked / stats.total) * 100) : 0;
   const notLinked = people.filter((p) => p.state !== 'linked');

@@ -178,7 +178,7 @@ function DepartmentCard({ dept, all, people, onSetHod, onAddSub, onOpenSub, onDe
           <button
             {...listeners}
             {...attributes}
-            className="-ml-1 mt-2 cursor-grab touch-none text-muted-foreground active:cursor-grabbing"
+            className="-ml-3 -mb-2 cursor-grab touch-none p-2 text-muted-foreground active:cursor-grabbing"
             aria-label={t('org.departments.drag')}
           >
             <GripVertical className="size-4" />
@@ -272,7 +272,7 @@ function DepartmentCard({ dept, all, people, onSetHod, onAddSub, onOpenSub, onDe
           </div>
           <Link
             to={`/system/users?dept=${dept.id}`}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+            className="-my-2.5 inline-flex items-center gap-1.5 py-2.5 text-xs font-medium text-muted-foreground hover:text-foreground"
           >
             <Users className="size-3.5" /> {t('org.departments.people')}
           </Link>

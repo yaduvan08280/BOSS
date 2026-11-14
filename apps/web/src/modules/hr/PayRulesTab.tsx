@@ -19,7 +19,7 @@ type Scope = PayRules['overrides'][number]['scope'];
 export function PayRulesTab() {
   const q = usePayRules();
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return <RulesForm key={JSON.stringify(q.data.rules)} saved={q.data.rules} />;
 }
 

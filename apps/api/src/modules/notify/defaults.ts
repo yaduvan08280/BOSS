@@ -16,6 +16,16 @@ export async function loadDefaultTemplates(tx: Tx, companyId: string, channels?:
   const missing = defaultTemplates(channels).filter((t) => !have.has(`${t.code}:${t.language}`));
   if (missing.length)
     await tx.template.createMany({ data: missing.map((t) => ({ ...t, companyId, isDefault: true })) });
+  // The owner's letter is now one text (written by the AI, else the figures): built-in templates still holding
+  // the earlier three-part sentence are brought along.
+  for (const old of await tx.template.findMany({
+    where: { companyId, event: 'report.owner_letter', isDefault: true, body: { contains: '{{better}}' } },
+    select: { id: true, body: true },
+  }))
+    await tx.template.update({
+      where: { id: old.id },
+      data: { body: old.body.replace(/[^\n]*\{\{better\}\}[^\n]*/, '{{text}}') },
+    });
   return missing.length;
 }
 

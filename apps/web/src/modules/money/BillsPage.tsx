@@ -94,7 +94,7 @@ export function BillsPage({ me }: { me: Me }) {
       {bills.isPending ? (
         <PageSkeleton />
       ) : bills.isError ? (
-        <ErrorState onRetry={() => void bills.refetch()} />
+        <ErrorState onRetry={() => void bills.refetch()} error={bills.error} />
       ) : rows.length === 0 ? (
         <EmptyState icon={FileText} title={t('money.bills.emptyTitle')} body={t('money.bills.emptyBody')} />
       ) : (
@@ -234,7 +234,7 @@ function BillDrawer({
         {q.isPending ? (
           <div className="h-32 animate-pulse rounded-control bg-muted" />
         ) : q.isError || !b ? (
-          <ErrorState onRetry={() => void q.refetch()} />
+          <ErrorState onRetry={() => void q.refetch()} error={q.error} />
         ) : (
           <div className="space-y-4 text-sm">
             <StatusChip tone={STATUS_TONE[b.status]}>{t(`money.status.${b.status}`)}</StatusChip>

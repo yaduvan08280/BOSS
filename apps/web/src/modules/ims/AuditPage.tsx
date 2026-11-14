@@ -29,7 +29,7 @@ function Counts() {
   const { t } = useTranslation();
   const q = useCounts();
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const d = q.data;
   return (
     <div className="space-y-4">
@@ -132,7 +132,7 @@ function Dead({ tz }: { tz: string }) {
   const { t } = useTranslation();
   const q = useDead();
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const d = q.data;
   return (
     <div className="space-y-4">

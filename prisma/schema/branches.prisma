@@ -219,3 +219,18 @@ model ApprovalRoute {
   @@unique([companyId, kind, entityId, branchId])
   @@map("approval_routes")
 }
+
+/// One person who owns more than one company in this MONO (the owner's morning page shows them side by side).
+/// The link is made once by signing in to the other company from this one — never by a matching mobile alone.
+model OwnerLink {
+  id             String   @id @default(cuid(2))
+  companyId      String   @map("company_id")
+  userId         String   @map("user_id")
+  otherCompanyId String   @map("other_company_id")
+  otherUserId    String   @map("other_user_id")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([userId, otherCompanyId])
+  @@index([companyId, userId])
+  @@map("owner_links")
+}

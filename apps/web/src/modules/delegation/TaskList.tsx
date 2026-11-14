@@ -237,7 +237,7 @@ export function TaskList({
       {list.isPending ? (
         <PageSkeleton />
       ) : list.isError ? (
-        <ErrorState onRetry={() => void list.refetch()} />
+        <ErrorState onRetry={() => void list.refetch()} error={list.error} />
       ) : list.data.tasks.length === 0 ? (
         <EmptyState icon={CheckCheck} title={t(`task.empty.${tab}`)} />
       ) : phone ? (

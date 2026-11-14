@@ -7,7 +7,7 @@ import { canOpenSystemMaster, hasPermission, type Me, type SystemSummary } from 
 import { AlertBanner } from '@/components/alert-banner';
 import { api } from '@/lib/api';
 import { cn, firstName } from '@/lib/utils';
-import { ALL_ITEMS, navAllowed, type NavItem } from '@/layout/nav';
+import { ALL_ITEMS, navAllowed, navFlags, type NavItem } from '@/layout/nav';
 import { ME_KEY } from '@/modules/auth/session';
 import { SearchResults } from '@/modules/search/SearchResults';
 import { handleListKeys } from '@/modules/search/keys';
@@ -85,13 +85,13 @@ export function HomePage({ me }: { me: Me }) {
       (i) =>
         i.key !== 'home' &&
         i.key !== 'uiKit' &&
-        navAllowed(i, me.user.permissions, me.company) &&
+        navAllowed(i, me.user.permissions, navFlags(me)) &&
         (i.tag !== 'setup' && i.tag !== 'messaging' ? true : admin),
     );
     const inChip = visible.filter((i) => (chip === 'all' ? i.tag !== 'setup' : i.tag === chip));
     const rank = (i: NavItem) => (favourites.includes(i.key) ? 0 : 1);
     return [...inChip].sort((a, b) => rank(a) - rank(b));
-  }, [chip, favourites, admin, me.user.permissions, me.company]);
+  }, [chip, favourites, admin, me]);
 
   return (
     <div className="mx-auto max-w-4xl">

@@ -32,7 +32,7 @@ export function CollectionsPage({ me }: { me: Me }) {
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState<Collections['rows'][number] | null>(null);
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const d = q.data;
   const rows = d.rows.filter(
     (r) => !search.trim() || matchScore(search, [r.name, r.city, r.mobile].join(' ')) > 0,

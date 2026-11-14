@@ -29,7 +29,7 @@ export function Designations() {
   );
   const remove = useOrgMutation((id: string) => del(`/api/org/designations/${id}`));
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return (
     <Card className="max-w-3xl">
       <CardContent className="space-y-4 pt-5">

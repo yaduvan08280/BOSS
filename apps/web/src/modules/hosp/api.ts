@@ -13,6 +13,7 @@ export type Outlet = {
   branchId: string;
   branch: string;
   locationId: string;
+  stockRoutes?: { category: string; locationId: string }[];
   priceListId: string | null;
   openMin: number;
   closeMin: number;

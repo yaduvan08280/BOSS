@@ -32,7 +32,7 @@ export function AppearanceTab() {
     queryKey: ['org', 'appearance'],
     queryFn: () => api<AppearanceInput>('/api/org/appearance'),
   });
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   if (!q.data) return <PageSkeleton />;
   // Remount only when the saved look really changes, so a background refetch never wipes edits.
   return <AppearanceForm key={JSON.stringify(q.data)} saved={q.data} />;

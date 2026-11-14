@@ -47,7 +47,7 @@ function Scorecard({ tz }: { tz: string }) {
   const at = zonedToUtc(addDays(localDate(new Date(), tz), offset * 7), 12 * 60, tz).toISOString();
   const q = useScorecard(at);
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const { week, rows } = q.data;
   const exportCsv = () =>
     download(`scorecard-${week.start}.csv`, [
@@ -174,7 +174,7 @@ function Ryg({ tz }: { tz: string }) {
   })();
   const q = useRyg(range.from.toISOString(), range.to.toISOString());
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const sum = (k: 'green' | 'yellow' | 'red' | 'open') => q.data.reduce((a, r) => a + r[k], 0);
   return (
     <div className="space-y-3">

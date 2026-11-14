@@ -21,7 +21,7 @@ export function Authed() {
   if (me.error instanceof ApiError && me.error.status === 401) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
-  if (!me.data) return <ErrorState onRetry={() => void me.refetch()} />;
+  if (!me.data) return <ErrorState onRetry={() => void me.refetch()} error={me.error} />;
   return <AppShell me={me.data} />;
 }
 

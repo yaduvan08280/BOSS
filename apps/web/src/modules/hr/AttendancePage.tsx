@@ -8,6 +8,7 @@ import { useParamState } from '@/lib/work';
 import { useMonth } from './api';
 import { CorrectionsTab, ImportTab, TeamTab } from './AttendanceTabs';
 import { MusterTab } from './MusterTab';
+import { RecalcButton } from './RecalcButton';
 import { MonthGrid } from './MonthGrid';
 import { PunchCard } from './PunchCard';
 
@@ -41,7 +42,7 @@ export function AttendancePage({ me }: { me: Me }) {
         (q.isPending ? (
           <PageSkeleton />
         ) : q.isError ? (
-          <ErrorState onRetry={() => void q.refetch()} />
+          <ErrorState onRetry={() => void q.refetch()} error={q.error} />
         ) : (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_380px]">
             <PunchCard month={q.data} tz={tz} />
@@ -53,6 +54,11 @@ export function AttendancePage({ me }: { me: Me }) {
           </div>
         ))}
       {tab === 'team' && <TeamTab tz={tz} today={today} />}
+      {tab === 'month' && admin && (
+        <div className="flex justify-end">
+          <RecalcButton today={today} />
+        </div>
+      )}
       {tab === 'month' && <MusterTab tz={tz} today={today} />}
       {tab === 'corrections' && <CorrectionsTab tz={tz} />}
       {tab === 'import' && <ImportTab />}

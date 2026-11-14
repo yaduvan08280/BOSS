@@ -1,5 +1,6 @@
 {
   "common": {
+    "noAccess": "This is not open to you",
     "scrollLeft": "Show earlier options",
     "scrollRight": "Show more options",
     "loading": "Loading…",
@@ -172,7 +173,8 @@
     "engineDesigner": "Business Engine",
     "payroll": "Payroll",
     "crmPlan": "Plan & setup",
-    "errors": "Errors"
+    "errors": "Errors",
+    "ownerDesk": "Owner's desk"
   },
   "navDesc": {
     "home": "Search anything, or pick where to start",
@@ -222,7 +224,8 @@
     "engineDesigner": "How each module flows, and the switches that change it",
     "payroll": "Gross pay from attendance, pay rules and leave a year",
     "crmPlan": "The year plan and the 15-page CRM setup",
-    "errors": "What went wrong, where and how often"
+    "errors": "What went wrong, where and how often",
+    "ownerDesk": "Exceptions, leaks, promises and money — across branches and companies"
   },
   "home": {
     "heading": "What do you want to do, {{name}}?",
@@ -296,7 +299,9 @@
       "telegramNotLinked_one": "{{count}} person hasn't linked Telegram",
       "telegramNotLinked_other": "{{count}} people haven't linked Telegram",
       "branchesWithoutManager_one": "{{count}} branch has no manager",
-      "branchesWithoutManager_other": "{{count}} branches have no manager"
+      "branchesWithoutManager_other": "{{count}} branches have no manager",
+      "peopleWithoutBranch_one": "{{count}} person has no branch",
+      "peopleWithoutBranch_other": "{{count}} people have no branch"
     },
     "openDesigner": "Open the flow designer",
     "openBuilder": "Open the FMS builder"
@@ -341,6 +346,59 @@
     }
   },
   "org": {
+    "place": {
+      "title": "Where {{name}} works",
+      "titleMany_one": "Move {{count}} person to a branch",
+      "titleMany_other": "Move {{count}} people to a branch",
+      "hint": "The home branch is where the person is counted, punches in and gets work. Changing it is a transfer.",
+      "home": "Home branch",
+      "from": "From (date of the transfer)",
+      "also": "Also works at",
+      "none": "No branch",
+      "note": "Work already done stays in the person's name. New tasks, checklists and attendance follow the new branch from that day.",
+      "move": "Transfer to {{to}}",
+      "saved": "{{name}}: branch saved",
+      "savedMany_one": "{{count}} person moved",
+      "savedMany_other": "{{count}} people moved",
+      "history": "Earlier branches",
+      "always": "from the start",
+      "branch": "Branch",
+      "allBranches": "All branches",
+      "noBranch": "No branch yet",
+      "noBranchWarn_one": "{{count}} person has no branch — nobody is responsible for their work by place.",
+      "noBranchWarn_other": "{{count}} people have no branch — nobody is responsible for their work by place.",
+      "giveBranch": "Give them a branch",
+      "transfer": "Transfer / change branch",
+      "moveBulk": "Move to branch",
+      "groupBy": "Group by",
+      "byDept": "Department",
+      "byBranch": "Branch",
+      "managers": "Branch manager",
+      "noManager": "No manager yet — set one in Branches",
+      "alsoHere": "Also work here",
+      "boardHint": "Drag a person onto another branch to transfer them, or open a person and choose Transfer.",
+      "people_one": "{{count}} person",
+      "people_other": "{{count}} people",
+      "noDept": "No department",
+      "workTitle_one": "{{count}} piece of open work — what should happen to it?",
+      "workTitle_other": "{{count}} pieces of open work — what should happen to them?",
+      "workTitleMany": "Their open work — what should happen to it?",
+      "wTasks_one": "{{count}} task",
+      "wTasks_other": "{{count}} tasks",
+      "wSteps_one": "{{count}} process step",
+      "wSteps_other": "{{count}} process steps",
+      "wTickets_one": "{{count}} help ticket",
+      "wTickets_other": "{{count}} help tickets",
+      "wChecklists_one": "{{count}} recurring checklist",
+      "wChecklists_other": "{{count}} recurring checklists",
+      "taker": "Who takes the work",
+      "theManager": "the branch manager",
+      "work": {
+        "keep": "Keep it — the work moves with the person",
+        "handover": "Hand it to someone who stays",
+        "manager": "Give it back to {{manager}}"
+      }
+    },
     "add": "Add",
     "choose": "Choose…",
     "default": "Default",
@@ -2357,7 +2415,8 @@
     "stt": {
       "browser": "The browser (free; best in Chrome)",
       "openai": "OpenAI Whisper (Hindi and English)",
-      "gemini": "Google Gemini"
+      "gemini": "Google Gemini",
+      "whisper": "Your own Whisper server (free; Hindi and English; nothing leaves your server)"
     },
     "set": {
       "provider": "1. Which AI",
@@ -2380,6 +2439,8 @@
       "sttHint": "Used by every Dictate / Speak button. The browser works without a key but needs Chrome.",
       "sttModel": "Speech model",
       "sttKey": "Speech API key",
+      "sttBaseUrl": "Whisper server address",
+      "sttBaseUrlHint": "Any server that speaks OpenAI's /audio/transcriptions, such as a Whisper container on the MONO machine. No key is needed.",
       "dailySummary": "Daily summary to the owner at 08:45",
       "dailySummaryHint": "A short Telegram message: what was done yesterday, what is late, what is due today.",
       "test": "Test",

@@ -27,7 +27,7 @@ export function NbdPage({ me }: { me: Me }) {
   const [lead, setLead] = useState<LeadCard | null>(null);
   const today = localDate(new Date(), me.company.timezone);
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const d = q.data;
   return (
     <div className="space-y-5">

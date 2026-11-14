@@ -30,7 +30,7 @@ export function RecordTypesPage({ me }: { me: Me }) {
   );
   const fy = financialYear(new Date(), me.company.timezone).short;
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const { types, canAdmin } = q.data;
   const add = canAdmin && (
     <div className="flex flex-wrap gap-2">

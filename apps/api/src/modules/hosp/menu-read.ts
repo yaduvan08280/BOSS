@@ -10,6 +10,7 @@ import {
   branchRulesSchema,
   dryDayOn,
   isLiquor,
+  stockPlaceFor,
 } from '@mono/shared';
 import { booksOf } from '../ims/recipes';
 import type { Actor } from '../work/actor';
@@ -44,6 +45,9 @@ export async function menuFor(db: Db, actor: Actor, outletId: string, at = new D
   const now = clock(at, tz);
   const today = localDate(at, tz);
   const where = { companyId: actor.companyId, deletedAt: null };
+  // Every location this outlet takes stock from: its own, and any a menu category is routed to.
+  const stockRoutes = (outlet.stockRoutes ?? []) as { category: string; locationId: string }[];
+  const places = [...new Set([outlet.locationId, ...stockRoutes.map((r) => r.locationId)])];
   const [categories, items, groups, prices, routes, books, balances] = await Promise.all([
     db.menuCategory.findMany({ where, orderBy: [{ sort: 'asc' }, { name: 'asc' }] }),
     db.menuItem.findMany({ where: { ...where, active: true }, orderBy: { name: 'asc' } }),
@@ -52,7 +56,7 @@ export async function menuFor(db: Db, actor: Actor, outletId: string, at = new D
     db.kotRoute.findMany({ where: { companyId: actor.companyId, outletId } }),
     booksOf(db, actor.companyId),
     db.stockBalance.findMany({
-      where: { companyId: actor.companyId, locationId: outlet.locationId, qty: { gt: 0 } },
+      where: { companyId: actor.companyId, locationId: { in: places }, qty: { gt: 0 } },
     }),
   ]);
   // What the outlet's location can still use: expired batches don't count.
@@ -70,14 +74,17 @@ export async function menuFor(db: Db, actor: Actor, outletId: string, at = new D
   );
   const held = new Map<string, number>();
   for (const b of balances)
-    if (!expired.has(b.batchId)) held.set(b.itemId, (held.get(b.itemId) ?? 0) + Number(b.qty));
+    if (!expired.has(b.batchId)) {
+      const k = `${b.locationId}|${b.itemId}`;
+      held.set(k, (held.get(k) ?? 0) + Number(b.qty));
+    }
   const names = new Map(
     (await db.item.findMany({ where: { companyId: actor.companyId }, select: { id: true, name: true } })).map(
       (i) => [i.id, i.name],
     ),
   );
   /** The first ingredient the location is short of to make `qty` of a stock item; null = it can be made. */
-  const shortOf = (itemId: string | null | undefined, qty: number): string | null => {
+  const shortOf = (itemId: string | null | undefined, qty: number, place: string): string | null => {
     if (!itemId) return null;
     const item = books.items.get(itemId);
     if (!item) return null;
@@ -88,7 +95,8 @@ export async function menuFor(db: Db, actor: Actor, outletId: string, at = new D
       // A dish with no recipe can't be checked against stock: it is not switched off for that.
       return null;
     }
-    for (const [id, n] of needs) if ((held.get(id) ?? 0) + 1e-9 < n) return names.get(id) ?? 'stock';
+    for (const [id, n] of needs)
+      if ((held.get(`${place}|${id}`) ?? 0) + 1e-9 < n) return names.get(id) ?? 'stock';
     return null;
   };
   // Tickets with no route of their own go to the outlet's default route, else to its first station.
@@ -154,6 +162,7 @@ export async function menuFor(db: Db, actor: Actor, outletId: string, at = new D
         items: mine
           .filter((i) => i.categoryId === c.id)
           .map((i) => {
+            const place = stockPlaceFor(outlet, c.name);
             const ps = menuPrices(i.id);
             const base = priceAt(Number(i.price), ps, { outletId, ...now });
             const variants = ((i.variants as Variant[] | null) ?? []).map((v) => {
@@ -163,14 +172,14 @@ export async function menuFor(db: Db, actor: Actor, outletId: string, at = new D
                 name: v.name,
                 price: p.price,
                 label: p.label,
-                short: shortOf(v.itemId ?? i.itemId, v.itemId ? 1 : (v.factor ?? 1)),
+                short: shortOf(v.itemId ?? i.itemId, v.itemId ? 1 : (v.factor ?? 1), place),
               };
             });
             const combo = (i.combo as { menuItemId: string; qty: number }[] | null) ?? [];
             // A combo is short when any of its parts is; an item with variants when every variant is.
             const comboShort =
               combo
-                .map((part) => shortOf(items.find((x) => x.id === part.menuItemId)?.itemId, part.qty))
+                .map((part) => shortOf(items.find((x) => x.id === part.menuItemId)?.itemId, part.qty, place))
                 .find(Boolean) ?? null;
             const short = combo.length
               ? comboShort
@@ -178,7 +187,7 @@ export async function menuFor(db: Db, actor: Actor, outletId: string, at = new D
                 ? variants.every((v) => v.short)
                   ? variants[0]!.short
                   : null
-                : shortOf(i.itemId, 1);
+                : shortOf(i.itemId, 1, place);
             const dryOff = liquor(c.name, i.itemId);
             const out = i.off || dryOff ? ('off' as const) : short ? ('stock' as const) : null;
             return {

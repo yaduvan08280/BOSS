@@ -70,7 +70,7 @@ export function RecordDrawer({
       >
         {q.isError ? (
           <div className="p-5">
-            <ErrorState onRetry={() => void q.refetch()} />
+            <ErrorState onRetry={() => void q.refetch()} error={q.error} />
           </div>
         ) : !d || !def ? (
           <div className="p-5">

@@ -44,7 +44,7 @@ export function MecaPage({ me }: { me: Me }) {
       {q.isPending ? (
         <PageSkeleton />
       ) : q.isError ? (
-        <ErrorState onRetry={() => void q.refetch()} />
+        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : !q.data.rows.length ? (
         <EmptyState icon={TrendingUp} title={t('crm.m.none')} body={t('crm.m.noneBody')} />
       ) : (

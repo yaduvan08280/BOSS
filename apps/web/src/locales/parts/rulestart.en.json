@@ -1,0 +1,14 @@
+{
+  "ruleStart": {
+    "title": "When does this change start?",
+    "now": "From today",
+    "nowHint": "Days already recorded stay exactly as they are. Use this for a new policy.",
+    "dated": "From a date",
+    "datedHint": "The recorded days from that date are worked out again with the new rules.",
+    "date": "Start date",
+    "see": "See what would change",
+    "would": "{{days}} recorded days would change for {{people}} people (from {{from}})",
+    "nothing": "Nothing would change in the {{days}} recorded days",
+    "closed": "Not touched — pay already closed for: {{months}}"
+  }
+}

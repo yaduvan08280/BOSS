@@ -245,7 +245,7 @@ function PushCard({ state, envDefault }: { state: ChannelState; envDefault: bool
 export function ChannelsTab() {
   const q = useChannels();
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const env = q.data.envDefaults;
   return (
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">

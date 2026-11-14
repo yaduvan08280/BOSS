@@ -12,9 +12,11 @@ model AiConfig {
   /// Price per million tokens (USD) when the model is not in MONO's price list
   priceIn       Decimal?  @map("price_in") @db.Decimal(10, 4)
   priceOut      Decimal?  @map("price_out") @db.Decimal(10, 4)
-  /// browser | openai | gemini — who turns speech into text
+  /// browser | openai | gemini | whisper — who turns speech into text
   sttProvider   String    @default("browser") @map("stt_provider")
   sttModel      String?   @map("stt_model")
+  /// A Whisper-compatible server of the company's own (sttProvider = whisper)
+  sttBaseUrl    String?   @map("stt_base_url")
   dailySummary  Boolean   @default(true) @map("daily_summary")
   lastTestAt    DateTime? @map("last_test_at") @db.Timestamptz(3)
   lastTestOk    Boolean?  @map("last_test_ok")

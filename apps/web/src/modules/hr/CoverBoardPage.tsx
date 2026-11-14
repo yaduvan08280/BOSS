@@ -27,7 +27,7 @@ export function CoverBoardPage({ me }: { me: Me }) {
       {q.isPending ? (
         <PageSkeleton />
       ) : q.isError ? (
-        <ErrorState onRetry={() => void q.refetch()} />
+        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : (
         <>
           <div className="grid grid-cols-3 gap-2">

@@ -6,7 +6,7 @@ import { Avatar, BrandMark } from '@/components/brand';
 import { cn } from '@/lib/utils';
 import { useWorkCounts } from '@/modules/workspace/useWorkCounts';
 import type { MenuSection } from '@/modules/records/menu';
-import { navAllowed } from './nav';
+import { navAllowed, navFlags } from './nav';
 
 type Props = {
   me: Me;
@@ -44,46 +44,49 @@ export function Sidebar({ me, sections, collapsed = false, onToggle, onNavigate,
       </div>
 
       <nav className="flex-1 overflow-y-auto overscroll-contain px-3 pb-4" aria-label={t('shell.menu')}>
-        {sections.map((section) => (
-          <div key={section.key} className="mt-4 first:mt-1">
-            {!collapsed && (
-              <div className="mb-1.5 px-3 text-[11px] font-medium uppercase tracking-[0.14em] text-sidebar-muted">
-                {section.label ?? t(`section.${section.key}`)}
-              </div>
-            )}
-            <ul className="space-y-0.5">
-              {section.items
-                .filter((i) => navAllowed(i, me.user.permissions, me.company))
-                .map((item) => (
-                  <li key={item.key}>
-                    <NavLink
-                      to={item.path}
-                      end={item.path === '/'}
-                      onClick={onNavigate}
-                      title={collapsed ? (item.label ?? t(`nav.${item.key}`)) : undefined}
-                      className={({ isActive }) =>
-                        cn(
-                          'flex h-10 items-center gap-3 rounded-control px-3 text-sm transition-colors',
-                          collapsed && 'justify-center px-0',
-                          isActive
-                            ? 'bg-sidebar-active font-semibold text-sidebar-active-foreground'
-                            : 'hover:bg-sidebar-hover',
-                        )
-                      }
-                    >
-                      <item.icon className="size-[18px] shrink-0" aria-hidden />
-                      {!collapsed && <span className="truncate">{item.label ?? t(`nav.${item.key}`)}</span>}
-                      {!collapsed && Boolean(badge[item.key]) && (
-                        <span className="tabular ml-auto rounded-pill bg-sidebar-hover px-1.5 text-[11px] font-semibold">
-                          {badge[item.key]}
-                        </span>
-                      )}
-                    </NavLink>
-                  </li>
-                ))}
-            </ul>
-          </div>
-        ))}
+        {sections
+          // A section whose every item is closed to this person is not shown at all.
+          .filter((section) => section.items.some((i) => navAllowed(i, me.user.permissions, navFlags(me))))
+          .map((section) => (
+            <div key={section.key} className="mt-4 first:mt-1">
+              {!collapsed && (
+                <div className="mb-1.5 px-3 text-[11px] font-medium uppercase tracking-[0.14em] text-sidebar-muted">
+                  {section.label ?? t(`section.${section.key}`)}
+                </div>
+              )}
+              <ul className="space-y-0.5">
+                {section.items
+                  .filter((i) => navAllowed(i, me.user.permissions, navFlags(me)))
+                  .map((item) => (
+                    <li key={item.key}>
+                      <NavLink
+                        to={item.path}
+                        end={item.path === '/'}
+                        onClick={onNavigate}
+                        title={collapsed ? (item.label ?? t(`nav.${item.key}`)) : undefined}
+                        className={({ isActive }) =>
+                          cn(
+                            'flex h-10 items-center gap-3 rounded-control px-3 text-sm transition-colors',
+                            collapsed && 'justify-center px-0',
+                            isActive
+                              ? 'bg-sidebar-active font-semibold text-sidebar-active-foreground'
+                              : 'hover:bg-sidebar-hover',
+                          )
+                        }
+                      >
+                        <item.icon className="size-[18px] shrink-0" aria-hidden />
+                        {!collapsed && <span className="truncate">{item.label ?? t(`nav.${item.key}`)}</span>}
+                        {!collapsed && Boolean(badge[item.key]) && (
+                          <span className="tabular ml-auto rounded-pill bg-sidebar-hover px-1.5 text-[11px] font-semibold">
+                            {badge[item.key]}
+                          </span>
+                        )}
+                      </NavLink>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          ))}
       </nav>
 
       <div className={cn('border-t border-sidebar-border p-3', collapsed && 'px-2')}>

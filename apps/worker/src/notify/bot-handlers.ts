@@ -10,6 +10,7 @@ import {
   redeemLinkCode,
   type Storage,
 } from '@mono/api/services';
+import { askReply, voiceReply } from './bot-ask';
 import {
   doneCommand,
   fmsButton,
@@ -244,6 +245,7 @@ export function helpText(capture: boolean) {
     '/today — due today, and anything late',
     '/done 12 what you did — mark task #12 done (just /done lists your tasks)',
     '/move 12 05/11/2026 18:00 reason — move task #12',
+    '/ask <question> — ask about your data (or send the question as a voice message)',
     ...(capture ? ['/capture <text> — note something on the EA board (or just type it)'] : []),
     'Reply to a task message with text to add a note, or with a photo to attach proof.',
   ].join('\n');
@@ -260,6 +262,7 @@ export async function onText(
   text: string,
   appName: string,
   replyTo?: number,
+  appSecret = '',
 ): Promise<BotReply> {
   const t = text.trim();
   const cmd = /^\/([a-z_]+)(?:@\w+)?(?:\s+([\s\S]*))?$/i.exec(t);
@@ -283,6 +286,10 @@ export async function onText(
           : onDoneList(db, scope, chatId, appName);
       case 'move':
         return reply(await onCommand(db, scope, chatId, 'move', args));
+      case 'ask': {
+        const me = await whoIs(db, scope, chatId);
+        return reply(me ? await askReply(db, me, appSecret, args) : 'Link your Telegram first.');
+      }
       default:
         return reply(`I don't know /${name}.\n\n${helpText(await canCapture(db, scope, chatId))}`);
     }
@@ -367,4 +374,16 @@ export async function onCommand(
   if (!me) return 'Link your Telegram first.';
   const who = { id: me.id, companyId: me.companyId };
   return command === 'done' ? doneCommand(db, who, args) : moveCommand(db, who, args);
+}
+
+/** A voice message from a linked chat is a spoken question. */
+export async function onVoice(
+  db: Db,
+  scope: BotScope,
+  chatId: string,
+  appSecret: string,
+  clip: Parameters<typeof voiceReply>[3],
+): Promise<string> {
+  const me = await whoIs(db, scope, chatId);
+  return me ? voiceReply(db, me, appSecret, clip) : 'Link your Telegram first.';
 }

@@ -6,6 +6,7 @@ import { actorOf } from '../delegation/routes';
 import { assignCover, coverBoard } from './absence';
 import { punch } from './attendance';
 import { musterMonth } from './muster';
+import { previewRules, recalcMonth } from './recalc';
 import { musterFile, musterPdf } from './muster-export';
 import { balancesOf } from './balance';
 import { answerBuddy, askAnotherBuddy } from './buddy';
@@ -50,8 +51,28 @@ export async function hrRoutes(app: FastifyInstance, opts: { appName?: string } 
   );
   r.put(
     '/api/hr/rules',
-    { ...admin(), schema: { tags, body: z.record(z.string(), z.unknown()) } },
-    async (q) => saveHrRules(app.prisma, actorOf(q), q.body),
+    {
+      ...admin(),
+      schema: {
+        tags,
+        body: z.record(z.string(), z.unknown()),
+        querystring: z.object({ from: date.optional() }),
+      },
+    },
+    async (q) => saveHrRules(app.prisma, actorOf(q), q.body, q.query.from),
+  );
+  // "This would change 14 days for 6 people": a rule change tried on the recorded days, nothing saved.
+  r.post(
+    '/api/hr/rules/preview',
+    {
+      ...admin(),
+      schema: {
+        tags,
+        body: z.record(z.string(), z.unknown()),
+        querystring: z.object({ from: date.optional() }),
+      },
+    },
+    async (q) => previewRules(app.prisma, actorOf(q), q.body, q.query.from),
   );
 
   r.get(
@@ -111,6 +132,12 @@ export async function hrRoutes(app: FastifyInstance, opts: { appName?: string } 
     departmentId: z.string().max(40).optional(),
     branchId: z.string().max(40).optional(),
   });
+  // After a rule changes: the month's settled days worked out again (HR; not a month whose pay is closed).
+  r.post(
+    '/api/hr/attendance/recalculate',
+    { ...view(), schema: { tags, body: z.object({ month: z.string().regex(/^\d{4}-\d{2}$/) }) } },
+    async (q) => recalcMonth(app.prisma, actorOf(q), q.body.month),
+  );
   r.get('/api/hr/attendance/muster', { ...view(), schema: { tags, querystring: musterQuery } }, async (q) =>
     musterMonth(app.prisma, actorOf(q), q.query),
   );

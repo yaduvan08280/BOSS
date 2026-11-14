@@ -1,0 +1,11 @@
+{
+  "recalc": {
+    "button": "Recalculate",
+    "title": "Recalculate attendance",
+    "hint": "Works every recorded day of the month out again with the rules as they are now. Use it after changing a rule in HR Rules. A month whose pay is closed must be reopened in Payroll first.",
+    "month": "Month",
+    "go": "Recalculate {{month}}",
+    "done": "{{days}} days checked, {{changed}} changed",
+    "failed": "Could not recalculate"
+  }
+}

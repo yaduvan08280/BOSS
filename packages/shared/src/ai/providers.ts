@@ -4,7 +4,8 @@ import { z } from 'zod';
 export const AI_PROVIDERS = ['anthropic', 'openai', 'gemini', 'ollama', 'deepseek'] as const;
 export type AiProvider = (typeof AI_PROVIDERS)[number];
 
-export const STT_PROVIDERS = ['browser', 'openai', 'gemini'] as const;
+/** `whisper` is a Whisper-compatible server the company runs itself (no key, nothing leaves the building). */
+export const STT_PROVIDERS = ['browser', 'openai', 'gemini', 'whisper'] as const;
 export type SttProvider = (typeof STT_PROVIDERS)[number];
 
 /** Models MONO knows the price of (USD per million tokens). Others use the prices typed in settings. */
@@ -58,7 +59,12 @@ export const aiConfigInputSchema = z
     sttProvider: z.enum(STT_PROVIDERS).default('browser'),
     sttModel: z.string().trim().max(100).nullish(),
     sttKey: z.string().trim().max(400).optional(),
+    sttBaseUrl: z.url().nullish().or(z.literal('')),
     dailySummary: z.boolean().default(true),
+  })
+  .refine((c) => c.sttProvider !== 'whisper' || Boolean(c.sttBaseUrl), {
+    message: 'Your own Whisper server needs its address, e.g. http://whisper:8000/v1',
+    path: ['sttBaseUrl'],
   })
   .refine((c) => c.provider !== 'ollama' || Boolean(c.baseUrl), {
     message: 'Ollama needs the address it runs on, e.g. http://localhost:11434',

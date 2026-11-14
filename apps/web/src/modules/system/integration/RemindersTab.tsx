@@ -42,7 +42,7 @@ export function RemindersTab() {
     patch(`/api/notify/reminders/${id}`, { isDefault: true }),
   );
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
 
   const chip = (on: boolean, label: string, onClick: () => void) => (
     <button

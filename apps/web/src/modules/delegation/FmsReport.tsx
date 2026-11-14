@@ -23,7 +23,7 @@ export function FmsReport({ tz }: { tz: string }) {
   const at = zonedToUtc(addDays(localDate(new Date(), tz), offset * 7), 12 * 60, tz).toISOString();
   const q = useFmsReport(at);
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const { week, total, rows, flows } = q.data;
   const head = (c: string) => t(`task.fmsRep.col.${c}`);
   const exportCsv = () =>

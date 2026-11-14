@@ -1,12 +1,13 @@
 import type { Db } from '@mono/db';
 import type { leaveTypeSchema } from '@mono/shared';
-import { hrRulesSchema, type HrRules } from '@mono/shared';
+import { hrRulesSchema, localDate, sameAttendance, withChangeFrom, type HrRules } from '@mono/shared';
 import { z } from 'zod';
 import { writeAudit } from '../../lib/audit';
 import { AppError, notFound } from '../../lib/errors';
 import { can, type Actor } from '../work/actor';
 import { ensureLeaveTypes } from './balance';
 import { decidable, hrRulesOf } from './people';
+import { recalcFrom } from './recalc';
 
 const needAdmin = (actor: Actor) => {
   if (!can(actor, 'hr.admin')) throw new AppError(403, 'FORBIDDEN', 'Only HR admins change this');
@@ -18,9 +19,22 @@ export async function readHrRules(db: Db, companyId: string) {
 }
 
 /** Check & save (§9.1 step 7). People named in overrides and the HR person must be real. */
-export async function saveHrRules(db: Db, actor: Actor, input: unknown) {
+/**
+ * Check & save (§9.1 step 7). A change to the attendance answers starts on a day: today when none is named
+ * ("from now on" — the days already recorded stay as they are), or the day given, in which case the recorded
+ * days from that day are worked out again (not in months whose pay is closed).
+ */
+export async function saveHrRules(db: Db, actor: Actor, input: unknown, from?: string) {
   needAdmin(actor);
-  const rules: HrRules = hrRulesSchema.parse(input);
+  const current = await hrRulesOf(db, actor.companyId);
+  const company = await db.company.findUniqueOrThrow({
+    where: { id: actor.companyId },
+    select: { timezone: true },
+  });
+  const today = localDate(new Date(), company.timezone);
+  // The history is MONO's: whatever a client sends for it is ignored.
+  const typed: HrRules = hrRulesSchema.parse(input);
+  const rules: HrRules = withChangeFrom(current, { ...typed, past: current.past }, from ?? today);
   const ids = [
     rules.leave.hrUserId,
     ...rules.overrides.filter((o) => o.scope === 'person').map((o) => o.id),
@@ -59,7 +73,9 @@ export async function saveHrRules(db: Db, actor: Actor, input: unknown) {
       },
     );
   });
-  return readHrRules(db, actor.companyId);
+  const recalculated =
+    from && from < today && !sameAttendance(current, typed) ? await recalcFrom(db, actor, from) : null;
+  return { ...(await readHrRules(db, actor.companyId)), recalculated };
 }
 
 export const holidaySchema = z.object({

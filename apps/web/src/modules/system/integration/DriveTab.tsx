@@ -86,7 +86,7 @@ export function DriveTab() {
   }, [params, setParams, t]);
 
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const s = q.data;
   const tick = (k: string) => {
     const next = ticks.includes(k) ? ticks.filter((x) => x !== k) : [...ticks, k];

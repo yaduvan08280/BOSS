@@ -21,7 +21,8 @@ export function ConnectTab({ me }: { me: Me }) {
   const [tab, setTab] = useState<Tab>('connections');
   const canAdmin = hasPermission(me.user.permissions, 'integrations.admin');
   if (health.isPending) return <PageSkeleton />;
-  if (health.isError || !health.data) return <ErrorState onRetry={() => void health.refetch()} />;
+  if (health.isError || !health.data)
+    return <ErrorState onRetry={() => void health.refetch()} error={health.error} />;
   const h = health.data;
   const find = (kind: string) => h.connections.find((c) => c.kind === kind && c.active);
   return (

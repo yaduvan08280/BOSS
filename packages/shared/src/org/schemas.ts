@@ -124,6 +124,8 @@ export const bulkCreateSchema = z.object({
   people: z.array(pastedPersonSchema).min(1).max(500),
   /** Create departments/designations that don't exist yet. */
   createMissing: z.boolean().default(true),
+  /** The branch everyone on the list works at (left out: the company's only branch, else none). */
+  branchId: id.nullish(),
 });
 
 export const bulkActionSchema = z.discriminatedUnion('action', [

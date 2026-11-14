@@ -47,6 +47,7 @@ export async function listOutlets(db: Db, actor: Actor) {
     branchId: o.branchId,
     branch: branch.get(o.branchId) ?? '',
     locationId: o.locationId,
+    stockRoutes: (o.stockRoutes ?? []) as { category: string; locationId: string }[],
     priceListId: o.priceListId,
     openMin: o.openMin,
     closeMin: o.closeMin,
@@ -75,6 +76,18 @@ export async function saveOutlet(db: Db, actor: Actor, input: z.input<typeof out
     }))
   )
     throw new AppError(400, 'VALIDATION_FAILED', 'The stock location must be one of the outlet’s branch');
+  const routed = [...new Set(o.stockRoutes.map((r) => r.locationId))];
+  if (
+    routed.length &&
+    (await db.location.count({
+      where: { id: { in: routed }, companyId: actor.companyId, branchId: o.branchId, deletedAt: null },
+    })) !== routed.length
+  )
+    throw new AppError(
+      400,
+      'VALIDATION_FAILED',
+      'A category’s stock location must be one of the outlet’s branch',
+    );
   if (
     o.priceListId &&
     !(await db.priceList.count({ where: { id: o.priceListId, companyId: actor.companyId, deletedAt: null } }))

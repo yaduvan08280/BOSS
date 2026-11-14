@@ -64,9 +64,10 @@ export function shiftWindow(date: string, shift: { start: number; end: number },
 /**
  * One person's day from their punches and the HR rules (§9.1 step 1–2):
  * - more than the grace late → Late; later than "half day after" → Half day;
- * - fewer hours than a full day → Half day (at least half of it) or Absent;
+ * - fewer hours than a full day → Half day (at least half of it) or Absent — on a shift the late minutes are
+ *   not counted against the hours again (lateness has its own rule), so this is about leaving early;
  * - no punch-out → Half day until a correction, or out at shift end (rule);
- * - overtime counts once past shift end by the threshold;
+ * - overtime counts once past shift end by the threshold, and only beyond the day's own hours;
  * - work on a holiday or weekly off earns a comp-off.
  */
 export function computeDay(d: DayInput): DayResult {
@@ -126,8 +127,12 @@ export function computeDay(d: DayInput): DayResult {
       : pattern.kind === 'daily'
         ? worked - fullDay
         : 0;
+  // On a shift, time past the shift's end is overtime only as far as the shift's own hours were worked first:
+  // someone who came late and stayed late made up their time, they did not work extra.
+  const shiftLength = minutes(start, end);
+  const extra = pattern.kind === 'shift' ? Math.min(past, worked - shiftLength) : past;
   const overtime =
-    d.rules.punches.overtime && past >= Math.max(1, d.rules.punches.overtimeAfterMinutes) ? past : 0;
+    d.rules.punches.overtime && extra >= Math.max(1, d.rules.punches.overtimeAfterMinutes) ? extra : 0;
   const out = {
     ...base,
     outAt,
@@ -138,13 +143,18 @@ export function computeDay(d: DayInput): DayResult {
   };
 
   // With half a day on leave, half a day of work is a full day's attendance. Weekly hours: any work counts.
-  const needed = pattern.kind === 'weekly' ? 1 : d.leave === 'half' ? fullDay / 2 : fullDay;
+  // On a shift the day never asks for more hours than the shift has.
+  const dayHours = pattern.kind === 'shift' ? Math.min(fullDay, shiftLength) : fullDay;
+  const needed = pattern.kind === 'weekly' ? 1 : d.leave === 'half' ? dayHours / 2 : dayHours;
+  // Coming late is judged by the late rule alone (grace, then Late, then Half day): the minutes someone was
+  // late are not counted against their hours a second time. The hours test is about leaving early.
+  const forgiven = pattern.kind === 'shift' && late < d.rules.late.halfDayAfterMinutes ? late : 0;
   let status: AttendanceStatus = 'PRESENT';
   if (missedOut && !toShiftEnd) {
     status = 'HALF_DAY';
     reasons.push('No punch-out: half day until a correction');
-  } else if (worked < needed) {
-    status = worked >= needed / 2 ? 'HALF_DAY' : 'ABSENT';
+  } else if (worked + forgiven < needed) {
+    status = worked + forgiven >= needed / 2 ? 'HALF_DAY' : 'ABSENT';
     reasons.push(`Worked ${Math.round(worked / 6) / 10} h of ${needed / 60} h`);
   } else if (pattern.kind === 'weekly') {
     reasons.push(`Worked ${Math.round(worked / 6) / 10} h`);

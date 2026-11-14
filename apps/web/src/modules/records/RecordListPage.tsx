@@ -36,7 +36,7 @@ export function RecordListPage({ me }: { me: Me }) {
     return q.error instanceof ApiError && q.error.status === 403 ? (
       <NoAccess message={q.error.message} />
     ) : (
-      <ErrorState onRetry={() => void q.refetch()} />
+      <ErrorState onRetry={() => void q.refetch()} error={q.error} />
     );
   // A fresh list per type, so one type's filters never leak into another's.
   return <TypeList key={q.data.id} type={q.data} me={me} />;
@@ -217,7 +217,7 @@ function TypeList({ type, me }: { type: RecordTypeView; me: Me }) {
       {list.isPending ? (
         <ListSkeleton />
       ) : list.isError ? (
-        <ErrorState onRetry={() => void list.refetch()} />
+        <ErrorState onRetry={() => void list.refetch()} error={list.error} />
       ) : !data!.rows.length ? (
         all === 0 && !params.q && !extra ? (
           <EmptyState

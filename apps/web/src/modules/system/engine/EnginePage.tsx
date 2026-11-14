@@ -52,7 +52,7 @@ export function EnginePage() {
   const graph = engineGraph(module, drafts[module] ?? info?.settings);
 
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError || !info) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError || !info) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
 
   return (
     <div className="space-y-4">

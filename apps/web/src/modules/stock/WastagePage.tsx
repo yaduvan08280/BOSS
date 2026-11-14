@@ -38,7 +38,7 @@ export function WastagePage({ me }: { me: Me }) {
       {q.isPending ? (
         <PageSkeleton />
       ) : q.isError ? (
-        <ErrorState onRetry={() => void q.refetch()} />
+        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : q.data.rows.length === 0 ? (
         <EmptyState icon={Trash} title={t('stock.waste.emptyTitle')} body={t('stock.waste.emptyBody')} />
       ) : (

@@ -67,7 +67,7 @@ function Lists({ onEdit }: { onEdit?: (l: PriceList) => void }) {
   const { t } = useTranslation();
   const q = usePriceLists();
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   if (!q.data.length)
     return <EmptyState icon={Tags} title={t('stock.prices.noLists')} body={t('stock.prices.noListsBody')} />;
   return (
@@ -213,7 +213,7 @@ function Board({ canSet }: { canSet: boolean }) {
     t('stock.prices.rateSaved'),
   );
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return (
     <div className="max-w-2xl space-y-3">
       <p className="text-sm text-muted-foreground">{t('stock.prices.boardIntro')}</p>

@@ -40,7 +40,7 @@ function Lists({ tz }: { tz: string }) {
   const [params, setParams] = useSearchParams();
   const [search, setSearch] = useState('');
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   if (!q.data.length)
     return <EmptyState icon={ListChecks} title={t('lists.p.empty')} body={t('lists.p.emptyBody')} />;
 

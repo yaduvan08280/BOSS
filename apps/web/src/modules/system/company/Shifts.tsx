@@ -68,7 +68,7 @@ export function Shifts() {
   const makeDefault = useOrgMutation((id: string) => patch(`/api/org/shifts/${id}`, { isDefault: true }));
 
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
 
   const submit = () => {
     if (!draft) return;

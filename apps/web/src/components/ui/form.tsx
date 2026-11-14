@@ -16,7 +16,7 @@ export function Switch({ className, ...props }: ComponentProps<typeof S.Root>) {
   return (
     <S.Root
       className={cn(
-        'relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-pill border-2 border-transparent bg-border transition-colors data-[state=checked]:bg-primary disabled:opacity-50',
+        "relative inline-flex h-6 w-11 shrink-0 before:absolute before:-inset-x-1 before:-inset-y-2.5 before:content-[''] cursor-pointer items-center rounded-pill border-2 border-transparent bg-border transition-colors data-[state=checked]:bg-primary disabled:opacity-50",
         className,
       )}
       {...props}

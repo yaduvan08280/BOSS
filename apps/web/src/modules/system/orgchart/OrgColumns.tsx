@@ -60,6 +60,9 @@ export function PersonCard({
         <span className="block truncate text-xs text-muted-foreground">
           {person.designationName ?? person.roleName}
         </span>
+        {person.branchName && (
+          <span className="block truncate text-[11px] text-muted-foreground/80">{person.branchName}</span>
+        )}
       </span>
     </button>
   );

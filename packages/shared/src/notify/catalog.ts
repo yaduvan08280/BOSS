@@ -205,6 +205,15 @@ const ROWS: Row[] = [
     '{{verifier}} ने {{checklist}} जाँच ली।',
   ],
   [
+    'checklist.spot_check',
+    'team',
+    ['doer'],
+    'Show it now: {{item}}',
+    'A surprise check on {{checklist}}: take a photo of "{{item}}" in MONO within {{minutes}} minutes.',
+    'अभी दिखाएँ: {{item}}',
+    '{{checklist}} की अचानक जाँच: {{minutes}} मिनट के अंदर MONO में "{{item}}" की फ़ोटो लें।',
+  ],
+  [
     'checklist.rejected',
     'team',
     ['doer'],
@@ -793,6 +802,15 @@ const ROWS: Row[] = [
     'Sales {{sales}} · {{covers}} guests · {{perCover}} a guest. Rooms {{occupancy}} · ADR {{adr}} · RevPAR {{revPar}}. Food cost {{foodCost}} · drinks {{beverageCost}}. Cash: {{cash}}. Voids {{voids}} · discounts {{discounts}} · no-charge bills {{noCharge}}.',
     'कल ({{day}}): {{sales}}',
     'बिक्री {{sales}} · {{covers}} मेहमान · प्रति मेहमान {{perCover}}। कमरे {{occupancy}} · ADR {{adr}} · RevPAR {{revPar}}। खाने की लागत {{foodCost}} · पेय {{beverageCost}}। नकद: {{cash}}। वॉइड {{voids}} · छूट {{discounts}} · बिना शुल्क बिल {{noCharge}}।',
+  ],
+  [
+    'report.owner_letter',
+    'team',
+    ['owner'],
+    'Your week ({{week}})',
+    '{{text}}',
+    'आपका हफ़्ता ({{week}})',
+    '{{text}}',
   ],
   [
     'reservation.requested',

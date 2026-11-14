@@ -35,7 +35,7 @@ export function DayPage() {
   );
   const reprint = usePosMutation((id: string) => post(`/api/pos/checks/${id}/reprint`), t('pos.reprinted'));
   if (outlets.isPending) return <PageSkeleton />;
-  if (outlets.isError) return <ErrorState onRetry={() => void outlets.refetch()} />;
+  if (outlets.isError) return <ErrorState onRetry={() => void outlets.refetch()} error={outlets.error} />;
   const z = day.data;
   return (
     <div>
@@ -56,7 +56,7 @@ export function DayPage() {
       {day.isPending ? (
         <PageSkeleton />
       ) : day.isError || !z ? (
-        <ErrorState onRetry={() => void day.refetch()} />
+        <ErrorState onRetry={() => void day.refetch()} error={day.error} />
       ) : (
         <div className="space-y-5">
           <div className="flex flex-wrap items-center gap-2 text-sm">
