@@ -15,9 +15,16 @@ Chromium at 390 × 844 and 1440 × 900 (owner, captain, chef). Fixed ones are on
 | 6 | The order sheet did not name its table | `pos/OrderPanel.tsx` |
 | 7 | On phones the search box of Delegation, Users, Org chart and Templates shrank to an icon | 4 screens |
 | 8 | Two HR tests failed every Saturday (leave "tomorrow" = Sunday, the weekly off) | `hr.test.ts`, `hr-cover.test.ts` |
+| 9 | No month-wide attendance report: added the muster register and daily punch report with Excel / PDF / CSV | `hr/muster.ts`, `hr/muster-export.ts`, `hr/MusterTab.tsx` + test |
+| 10 | A leave approved after its days were settled left them "absent" (muster and pay wrong) | `hr/leave.ts` + test |
 
 ## Not fixed (gaps to decide on)
 
+- **Weekly offs come from the default shift, not each person's shift or a rota**: lounge and kitchen staff on a
+  7-day shift show Sundays as WO/P (comp-off earned) and a rota day off reads as absent. Hospitality needs a
+  per-person weekly off or rota.
+- **Full day = 8 h with an 8-hour shift**: leaving 2 minutes early is a half day; set "hours of work for a full
+  day" below the shift length (7.5 h) for TORA.
 - **An outlet takes all its stock from one location**: a bar and a kitchen in the same outlet must share a store.
   A route per menu category (bar items from the bar, food from the kitchen) would fix it.
 - **FMS stock steps use the old free-text location** (`stock.from.fixed`), not Phase 13 locations.

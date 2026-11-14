@@ -1,0 +1,67 @@
+{
+  "muster": {
+    "department": "Department",
+    "allDepartments": "All departments",
+    "branch": "Branch",
+    "allBranches": "All branches",
+    "search": "Search name, code or department",
+    "view": {
+      "muster": "Muster register",
+      "punches": "Daily punches"
+    },
+    "dl": {
+      "musterXlsx": "Muster (Excel)",
+      "musterPdf": "Muster (PDF)",
+      "punchesXlsx": "Daily punches (Excel)",
+      "csv": "CSV"
+    },
+    "nobody": "Nobody to show for this month",
+    "kpi": {
+      "people": "People",
+      "present": "Present",
+      "absent": "Absent",
+      "late": "Late marks",
+      "leave": "On leave",
+      "overtime": "Overtime"
+    },
+    "days": "days",
+    "times": "times",
+    "hours": "hrs",
+    "person": "Person",
+    "total": {
+      "present": "Present days (late counts as present)",
+      "late": "Late marks",
+      "halfDays": "Half days",
+      "absent": "Absent days",
+      "leave": "Leave days",
+      "weeklyOffs": "Weekly offs",
+      "holidays": "Holidays"
+    },
+    "short": {
+      "present": "P",
+      "late": "LT",
+      "halfDays": "HD",
+      "absent": "A",
+      "leave": "L",
+      "weeklyOffs": "WO",
+      "holidays": "H",
+      "hours": "Hrs",
+      "ot": "OT"
+    },
+    "prevDay": "Previous day",
+    "nextDay": "Next day",
+    "day": "Day",
+    "noDay": "Nothing recorded on {{date}}",
+    "noOut": "no punch-out",
+    "worked": "Worked",
+    "late": "Late",
+    "ot": "OT",
+    "notIn": "Not in yet",
+    "live": "Not settled yet — as it stands now",
+    "in": "In",
+    "out": "Out",
+    "punches": "Punches",
+    "flagged": "flagged",
+    "legend": "P present · LT late (counts as present) · HD half day · A absent · CL, SL, EL… leave by type (½ = half day) · WO weekly off · H holiday · WO/P, H/P worked on an off day · – no record · … not settled yet · dots: before joining or after today. Tap a day to see its punches."
+  }
+}

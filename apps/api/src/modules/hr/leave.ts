@@ -14,6 +14,7 @@ import { writeAudit } from '../../lib/audit';
 import { AppError, notFound } from '../../lib/errors';
 import { emitEvent } from '../../lib/events';
 import { ownerOf, type Actor } from '../work/actor';
+import { settleDay } from './attendance';
 import { companyCalendar } from './calendar';
 import { balancesOf, ensureLeaveTypes, period } from './balance';
 import { cancelCovers, runCovers, scheduleCovers } from './cover';
@@ -330,8 +331,25 @@ export async function decideLeave(db: Db, actor: Actor, id: string, ok: boolean,
       },
     });
   });
-  if (ok) await runCovers(db);
+  if (ok) {
+    await runCovers(db);
+    await resettleDays(db, leave);
+  }
   return { ...out, withoutCover };
+}
+
+/**
+ * A leave decided after its days were settled (off sick on Monday, asked for on Tuesday): settle those days
+ * again, so the muster and pay read "on leave" instead of "absent" — and the other way round when it is cancelled.
+ */
+async function resettleDays(db: Db, leave: LeaveRequest) {
+  const days = await db.attendanceDay.findMany({
+    where: { userId: leave.userId, date: { gte: leave.from, lte: leave.to } },
+    select: { date: true },
+  });
+  if (!days.length) return;
+  const p = await hrPerson(db, leave.companyId, leave.userId);
+  for (const d of days) await settleDay(db, leave.companyId, p, d.date);
 }
 
 export async function cancelLeave(db: Db, actor: Actor, id: string) {
@@ -345,7 +363,7 @@ export async function cancelLeave(db: Db, actor: Actor, id: string) {
   ).timezone;
   const started = Date.now() >= zonedToUtc(leave.from, 0, tz).getTime();
   transition(leaveMachine, { from: leave.status as 'PENDING', action: 'cancel', roles, ctx: { started } });
-  return db.$transaction(async (tx) => {
+  const out = await db.$transaction(async (tx) => {
     if (leave.status === 'APPROVED') {
       const rules = await hrRulesOf(tx, leave.companyId);
       await tx.leaveBalance.updateMany({
@@ -369,4 +387,6 @@ export async function cancelLeave(db: Db, actor: Actor, id: string) {
     );
     return tx.leaveRequest.update({ where: { id: leave.id }, data: { status: 'CANCELLED' } });
   });
+  if (leave.status === 'APPROVED') await resettleDays(db, leave);
+  return out;
 }

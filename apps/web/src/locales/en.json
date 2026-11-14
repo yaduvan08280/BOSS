@@ -2644,6 +2644,7 @@
       "tab": {
         "today": "Today",
         "team": "Team",
+        "month": "Monthly report",
         "corrections": "Corrections",
         "import": "Import"
       },

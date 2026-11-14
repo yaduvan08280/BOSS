@@ -5,6 +5,8 @@ import { leaveQuotasSchema, leaveRequestSchema, leaveTypeSchema, payMonthSchema 
 import { actorOf } from '../delegation/routes';
 import { assignCover, coverBoard } from './absence';
 import { punch } from './attendance';
+import { musterMonth } from './muster';
+import { musterFile, musterPdf } from './muster-export';
 import { balancesOf } from './balance';
 import { answerBuddy, askAnotherBuddy } from './buddy';
 import {
@@ -36,7 +38,7 @@ const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const idParam = z.object({ id: z.string() });
 
 /** HR (CLAUDE.md §9): rules, calendar, punches and attendance, corrections, leave, Buddy and the cover board. */
-export async function hrRoutes(app: FastifyInstance) {
+export async function hrRoutes(app: FastifyInstance, opts: { appName?: string } = {}) {
   const r = app.withTypeProvider<ZodTypeProvider>();
   const tags = ['hr'];
   // A fresh hook list per route (decision 62).
@@ -102,6 +104,44 @@ export async function hrRoutes(app: FastifyInstance) {
       },
     },
     async (q) => myMonth(app.prisma, actorOf(q), q.query.month, q.query.userId),
+  );
+  // The month for many people: the muster register and the daily punches behind it (screen and downloads).
+  const musterQuery = z.object({
+    month: z.string().regex(/^\d{4}-\d{2}$/),
+    departmentId: z.string().max(40).optional(),
+    branchId: z.string().max(40).optional(),
+  });
+  r.get('/api/hr/attendance/muster', { ...view(), schema: { tags, querystring: musterQuery } }, async (q) =>
+    musterMonth(app.prisma, actorOf(q), q.query),
+  );
+  r.get(
+    '/api/hr/attendance/muster/export',
+    {
+      ...view(),
+      schema: {
+        tags,
+        querystring: musterQuery.extend({
+          kind: z.enum(['muster', 'punches']).default('muster'),
+          format: z.enum(['xlsx', 'csv', 'pdf']).default('xlsx'),
+        }),
+      },
+    },
+    async (q, reply) => {
+      const { kind, format, ...rest } = q.query;
+      const data = await musterMonth(app.prisma, actorOf(q), rest);
+      if (format === 'pdf') {
+        const pdf = await musterPdf(data, opts.appName ?? 'MONO');
+        return reply
+          .header('Content-Type', 'application/pdf')
+          .header('Content-Disposition', `attachment; filename="muster-${data.month}.pdf"`)
+          .send(pdf);
+      }
+      const f = musterFile(data, kind, format);
+      return reply
+        .header('Content-Type', f.type)
+        .header('Content-Disposition', `attachment; filename="${f.name}"`)
+        .send(f.body);
+    },
   );
   r.get(
     '/api/hr/attendance/team',

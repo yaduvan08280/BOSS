@@ -7,19 +7,23 @@ import { TabStrip } from '@/components/work';
 import { useParamState } from '@/lib/work';
 import { useMonth } from './api';
 import { CorrectionsTab, ImportTab, TeamTab } from './AttendanceTabs';
+import { MusterTab } from './MusterTab';
 import { MonthGrid } from './MonthGrid';
 import { PunchCard } from './PunchCard';
 
-const TABS = ['today', 'team', 'corrections', 'import'] as const;
+const TABS = ['today', 'team', 'month', 'corrections', 'import'] as const;
 
-/** HR → Attendance (CLAUDE.md §9.2): punch, my month, the team's day, corrections, biometric import. */
+/** HR → Attendance (CLAUDE.md §9.2): punch, my month, the team's day, the monthly muster and punch report,
+ * corrections, biometric import. */
 export function AttendancePage({ me }: { me: Me }) {
   const { t } = useTranslation();
   const tz = me.company.timezone;
   const today = localDate(new Date(), tz);
   const lead = hasPermission(me.user.permissions, 'hr.approve');
   const admin = hasPermission(me.user.permissions, 'hr.admin');
-  const tabs = TABS.filter((k) => (k === 'team' ? lead || admin : k === 'import' ? admin : true));
+  const tabs = TABS.filter((k) =>
+    k === 'team' || k === 'month' ? lead || admin : k === 'import' ? admin : true,
+  );
   const { value: tab, set } = useParamState('tab', tabs, 'today');
   const [month, setMonth] = useState(today.slice(0, 7));
   const q = useMonth(month);
@@ -49,6 +53,7 @@ export function AttendancePage({ me }: { me: Me }) {
           </div>
         ))}
       {tab === 'team' && <TeamTab tz={tz} today={today} />}
+      {tab === 'month' && <MusterTab tz={tz} today={today} />}
       {tab === 'corrections' && <CorrectionsTab tz={tz} />}
       {tab === 'import' && <ImportTab />}
     </div>
