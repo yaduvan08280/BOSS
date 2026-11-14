@@ -21,8 +21,12 @@ function fontDir(): string | null {
 }
 
 // Hindi (Devanagari and its extensions, the joiners that shape it) and the rupee sign, which Helvetica lacks.
-const DEVA = /[ऀ-ॿ꣠-ꣿ᳐-᳿‌‍₹]/;
-const RUNS = /([ऀ-ॿ꣠-ꣿ᳐-᳿‌‍₹]+(?:[ ऀ-ॿ꣠-ꣿ᳐-᳿‌‍₹]*[ऀ-ॿ꣠-ꣿ᳐-᳿‌‍₹])?)/;
+const SET = '\\u0900-\\u097f\\ua8e0-\\ua8ff\\u1cd0-\\u1cff\\u200c\\u200d\\u20b9';
+// The class is tested one character at a time on purpose (marks and joiners included), so the rule does not apply.
+/* eslint-disable no-misleading-character-class */
+const DEVA = new RegExp(`[${SET}]`);
+const RUNS = new RegExp(`([${SET}]+(?:[ ${SET}]*[${SET}])?)`);
+/* eslint-enable no-misleading-character-class */
 
 /** A text split so Hindi and ₹ are set in the Devanagari font and the rest in Helvetica. */
 export function scriptRuns(text: string): string | (string | { text: string; font: string })[] {
