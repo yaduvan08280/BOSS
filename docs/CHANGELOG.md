@@ -1,5 +1,10 @@
 # Changelog
 
+## 14/11/2026 — PDFs print ₹ and Hindi; a review sheet for the Hindi strings
+
+- Every server PDF (muster, MIS, reports, documents, step timeline) now prints the rupee sign and Hindi names correctly, with proper conjuncts and matras.
+- `docs/hindi-review.csv` lists all 5,936 screen strings with their English and current Hindi and an empty "Corrected Hindi" column. A Hindi speaker fills that column; `node scripts/hindi-review.mjs import` applies the corrections.
+
 ## 14/11/2026 — HR rule changes: from today, or from a date, with a preview
 
 - **Check & save** in HR Rules now asks when the change starts. *From today* keeps every recorded day exactly as it is (the old answers are remembered for those days, even if a month is recalculated later). *From a date* works the recorded days from that date out again.

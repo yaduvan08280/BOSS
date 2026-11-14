@@ -35,6 +35,8 @@ WORKDIR /app
 COPY --from=prod-deps /app/node_modules node_modules
 COPY --from=tools /app/apps/api/dist apps/api/dist
 COPY --from=tools /app/apps/worker/dist apps/worker/dist
+# Fonts for PDFs (Hindi names and the rupee sign).
+COPY apps/api/assets apps/api/assets
 COPY package.json ./
 RUN mkdir -p /data/uploads && chown -R node:node /data
 USER node
