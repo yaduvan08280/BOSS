@@ -54,7 +54,7 @@ export function MastersPage({ me }: { me: Me }) {
       {q.isPending ? (
         <PageSkeleton />
       ) : q.isError ? (
-        <ErrorState onRetry={() => void q.refetch()} />
+        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : !q.data.length ? (
         <EmptyState icon={Boxes} title={t('ai.master.none')} body={t('ai.master.noneBody')} />
       ) : (

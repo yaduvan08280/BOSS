@@ -31,7 +31,7 @@ export function RolesTab() {
   const role = roles.find((r) => r.id === selectedId) ?? roles[0];
 
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError || !role) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError || !role) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const { modules, actions } = q.data;
   const isOwner = role.key === 'OWNER';
   const perms = new Set(drafts[role.id] ?? role.permissions);

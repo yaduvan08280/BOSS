@@ -85,7 +85,12 @@ export function UsersTab() {
           : dept !== 'all' && p.mainDepartmentId !== dept && !p.alsoWorksIn.includes(dept)
       )
         return false;
-      if (branch === 'none' ? p.branchId : branch !== 'all' && p.branchId !== branch && !p.alsoBranchIds?.includes(branch)) return false;
+      if (
+        branch === 'none'
+          ? p.branchId
+          : branch !== 'all' && p.branchId !== branch && !p.alsoBranchIds?.includes(branch)
+      )
+        return false;
       if (!needle) return true;
       const deptName = p.mainDepartmentId ? (deptMap.get(p.mainDepartmentId)?.name ?? '') : '';
       return [p.name, p.code, p.mobile ?? '', p.email ?? '', deptName]
@@ -96,7 +101,8 @@ export function UsersTab() {
   }, [all, q, dept, deptMap, branch]);
 
   if (users.isPending || depts.isPending) return <PageSkeleton />;
-  if (users.isError || depts.isError) return <ErrorState onRetry={() => void users.refetch()} />;
+  if (users.isError || depts.isError)
+    return <ErrorState onRetry={() => void users.refetch()} error={users.error} />;
 
   const setDept = (id: string) => setParams(id === 'all' ? {} : { dept: id }, { replace: true });
   const toggle = (id: string) =>

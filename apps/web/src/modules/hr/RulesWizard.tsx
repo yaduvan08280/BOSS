@@ -17,7 +17,7 @@ const STEPS = ['late', 'punches', 'leave', 'buddy', 'answer', 'autopilot', 'chec
 export function RulesWizard() {
   const q = useHrRules();
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return <Wizard key={JSON.stringify(q.data.rules)} saved={q.data.rules} />;
 }
 

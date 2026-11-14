@@ -30,7 +30,7 @@ export function MaxReviewPage({ me }: { me: Me }) {
       {q.isPending ? (
         <PageSkeleton />
       ) : q.isError ? (
-        <ErrorState onRetry={() => void q.refetch()} />
+        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : (
         <>
           {q.data.canReview && (

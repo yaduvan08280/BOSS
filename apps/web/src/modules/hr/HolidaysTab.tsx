@@ -68,7 +68,7 @@ export function HolidaysTab({ me }: { me: Me }) {
     () => t('org.saved'),
   );
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return (
     <div className="@container">
       <div className="grid grid-cols-1 gap-4 @5xl:grid-cols-[1fr_380px]">

@@ -69,7 +69,7 @@ function Recipes({ onEdit }: { onEdit?: (r: Recipe) => void }) {
   const { t } = useTranslation();
   const q = useRecipes();
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   if (!q.data.length)
     return (
       <EmptyState
@@ -246,7 +246,7 @@ function Orders() {
   const q = useProduction();
   const [finish, setFinish] = useState<Production | null>(null);
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   if (!q.data.length)
     return (
       <EmptyState icon={ChefHat} title={t('stock.kitchen.noOrders')} body={t('stock.kitchen.noOrdersBody')} />

@@ -78,7 +78,7 @@ export function DayClosePage({ me }: { me: Me }) {
       ) : q.isPending ? (
         <PageSkeleton />
       ) : q.isError ? (
-        <ErrorState onRetry={() => void q.refetch()} />
+        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : q.data.modes.length === 0 ? (
         <EmptyState icon={Landmark} title={t('money.close.noModes')} body={t('money.close.noModesBody')} />
       ) : (

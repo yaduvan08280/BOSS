@@ -72,7 +72,7 @@ function Rates() {
     t('org.deleted'),
   );
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return (
     <div className="max-w-2xl space-y-3">
       <p className="text-sm text-muted-foreground">{t('money.rates.intro')}</p>
@@ -145,7 +145,7 @@ function Modes() {
   const [d, setD] = useState<{ name: string; kind: (typeof MODE_KINDS)[number] }>({ name: '', kind: 'CASH' });
   const save = useMoneyMutation(() => api('/api/money/modes', { method: 'POST', body: d }), t('org.saved'));
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return (
     <div className="max-w-xl space-y-3">
       <Card className="grid grid-cols-2 items-end gap-2 p-3 sm:grid-cols-[1fr_140px_auto]">
@@ -204,7 +204,7 @@ function Vendors() {
     t('org.saved'),
   );
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const name = new Map((parties.data ?? []).map((p) => [p.id, p.name]));
   return (
     <div className="max-w-2xl space-y-3">
@@ -262,7 +262,7 @@ function Tally() {
     t('org.saved'),
   );
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return (
     <div className="max-w-xl space-y-3">
       <p className="text-sm text-muted-foreground">{t('money.tally.intro')}</p>

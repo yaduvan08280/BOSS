@@ -50,7 +50,7 @@ export function TemplatesTab() {
   }, [q.data, channel, category, search]);
 
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
 
   return (
     <div className="space-y-3">

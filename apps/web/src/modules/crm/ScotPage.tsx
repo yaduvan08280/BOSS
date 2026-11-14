@@ -25,7 +25,7 @@ export function ScotPage({ me }: { me: Me }) {
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState<string | null>(null);
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const d = q.data;
   const in7 = addDays(d.today, 7);
   const rows = d.rows

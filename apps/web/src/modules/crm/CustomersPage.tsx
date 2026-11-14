@@ -25,7 +25,7 @@ export function CustomersPage({ me }: { me: Me }) {
   const [tagsOpen, setTagsOpen] = useState(false);
   const perms = me.user.permissions;
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const own = progress.data?.config.tags ?? [];
   const rows = q.data.customers
     .filter((c) => chip === 'all' || c.autoTags.includes(chip as never) || c.tags.includes(chip))

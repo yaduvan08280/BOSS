@@ -18,7 +18,7 @@ export function RoomsPanel() {
   const [edit, setEdit] = useState<Partial<RoomType> | null>(null);
   const [add, setAdd] = useState<RoomType | null>(null);
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return (
     <div className="space-y-3">
       <div className="flex justify-end">

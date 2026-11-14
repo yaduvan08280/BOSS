@@ -61,7 +61,7 @@ export function TransfersPage({ me }: { me: Me }) {
       {q.isPending ? (
         <PageSkeleton />
       ) : q.isError ? (
-        <ErrorState onRetry={() => void q.refetch()} />
+        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : rows.length === 0 ? (
         <EmptyState
           icon={Truck}

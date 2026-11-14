@@ -42,7 +42,7 @@ export function AttendancePage({ me }: { me: Me }) {
         (q.isPending ? (
           <PageSkeleton />
         ) : q.isError ? (
-          <ErrorState onRetry={() => void q.refetch()} />
+          <ErrorState onRetry={() => void q.refetch()} error={q.error} />
         ) : (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_380px]">
             <PunchCard month={q.data} tz={tz} />

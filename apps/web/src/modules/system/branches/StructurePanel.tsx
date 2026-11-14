@@ -56,7 +56,7 @@ export function StructurePanel() {
   const remove = useOrgMutation((url: string) => del(url), { success: t('org.deleted') });
 
   if (q.isPending || users.isPending) return <PageSkeleton />;
-  if (q.isError || users.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError || users.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const s = q.data;
   const people = users.data;
   const name = new Map(people.map((p) => [p.id, p.name]));

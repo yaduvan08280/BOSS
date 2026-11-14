@@ -69,7 +69,7 @@ export function LocationsPage({ me }: { me: Me }) {
           {stock.isPending ? (
             <PageSkeleton />
           ) : stock.isError ? (
-            <ErrorState onRetry={() => void stock.refetch()} />
+            <ErrorState onRetry={() => void stock.refetch()} error={stock.error} />
           ) : rows.length === 0 ? (
             <EmptyState
               icon={Boxes}
@@ -176,7 +176,7 @@ function Expiry() {
   const { t } = useTranslation();
   const q = useExpiry();
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   if (!q.data.length)
     return <EmptyState icon={Boxes} title={t('stock.expiryNone')} body={t('stock.expiryNoneBody')} />;
   return (
@@ -209,7 +209,7 @@ function Value() {
   const { t } = useTranslation();
   const q = useValuation();
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">

@@ -101,7 +101,7 @@ export function CompliancePage({ me }: { me: Me }) {
         list.isPending ? (
           <PageSkeleton />
         ) : list.isError || !d ? (
-          <ErrorState onRetry={() => void list.refetch()} />
+          <ErrorState onRetry={() => void list.refetch()} error={list.error} />
         ) : (
           <div className="space-y-4">
             {d.items.length === 0 && (

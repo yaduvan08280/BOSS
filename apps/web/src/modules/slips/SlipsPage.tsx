@@ -80,7 +80,7 @@ export function SlipsPage({ me }: { me: Me }) {
       ) : list.isPending ? (
         <PageSkeleton />
       ) : list.isError ? (
-        <ErrorState onRetry={() => void list.refetch()} />
+        <ErrorState onRetry={() => void list.refetch()} error={list.error} />
       ) : !data!.slips.length ? (
         <EmptyState icon={NotebookPen} title={t(`slip.empty.${tab}`)} body={t('slip.emptyBody')} />
       ) : (

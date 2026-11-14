@@ -28,7 +28,7 @@ export function FloorsPanel() {
     t('org.saved'),
   );
   if (outlets.isPending) return <PageSkeleton />;
-  if (outlets.isError) return <ErrorState onRetry={() => void outlets.refetch()} />;
+  if (outlets.isError) return <ErrorState onRetry={() => void outlets.refetch()} error={outlets.error} />;
   if (!outlets.data.length)
     return (
       <EmptyState icon={LayoutGrid} title={t('hosp.floor.noOutlet')} body={t('hosp.floor.noOutletBody')} />

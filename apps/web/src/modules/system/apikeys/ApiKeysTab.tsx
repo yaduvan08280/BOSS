@@ -30,7 +30,8 @@ export function ApiKeysTab() {
     () => t('keys.revoked'),
   );
   if (info.isPending || keys.isPending) return <PageSkeleton />;
-  if (info.isError || keys.isError) return <ErrorState onRetry={() => void keys.refetch()} />;
+  if (info.isError || keys.isError)
+    return <ErrorState onRetry={() => void keys.refetch()} error={keys.error} />;
   const list = keys.data.filter(
     (k) => !search.trim() || matchScore(search, `${k.name} ${k.masked} ${k.createdBy ?? ''}`) > 0,
   );

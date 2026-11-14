@@ -19,7 +19,7 @@ export function OutletsPanel() {
   const q = useOutlets();
   const [edit, setEdit] = useState<Partial<Outlet> | null>(null);
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return (
     <div className="space-y-3">
       <div className="flex justify-end">

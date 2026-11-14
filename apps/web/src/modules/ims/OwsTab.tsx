@@ -23,7 +23,7 @@ export function OwsTab({ canOrder, onOrdered }: { canOrder: boolean; onOrdered: 
     (r) => t('ims.o.made', { count: r.orders.length, numbers: r.orders.map((o) => o.number).join(', ') }),
   );
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const d = q.data;
   const qtyOf = (id: string, dflt: number) => {
     const v = edits[id];

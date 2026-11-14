@@ -26,7 +26,7 @@ export function NotificationsPage() {
       {q.isPending ? (
         <PageSkeleton />
       ) : q.isError ? (
-        <ErrorState onRetry={() => void q.refetch()} />
+        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : q.data.items.length === 0 ? (
         <EmptyState icon={BellOff} title={t('shell.noNotifications')} body={t('notify.inbox.emptyBody')} />
       ) : (

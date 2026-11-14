@@ -70,7 +70,7 @@ export function ValuesPanel({ list, tz, onBack }: { list: ListInfo; tz: string; 
       {q.isPending ? (
         <Skeleton aria-busy className="h-48 rounded-card" />
       ) : q.isError ? (
-        <ErrorState onRetry={() => void q.refetch()} />
+        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : !values.length ? (
         <EmptyState
           icon={ListPlus}

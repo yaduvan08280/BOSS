@@ -151,7 +151,7 @@ export function MusterTab({ tz, today }: { tz: string; today: string }) {
       {q.isPending ? (
         <PageSkeleton />
       ) : q.isError ? (
-        <ErrorState onRetry={() => void q.refetch()} />
+        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : !people.length ? (
         <EmptyState icon={Users} title={t('muster.nobody')} />
       ) : (

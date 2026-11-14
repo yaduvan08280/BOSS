@@ -24,7 +24,7 @@ import { aiApi, useAiConfig, useAiMutation, useAiUsage, usd, type AiConfigView }
 export function AiTab() {
   const q = useAiConfig();
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return (
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_360px]">
       <AiForm key={JSON.stringify(q.data)} saved={q.data} />
@@ -273,7 +273,7 @@ function Usage() {
         {q.isPending ? (
           <PageSkeleton />
         ) : q.isError ? (
-          <ErrorState onRetry={() => void q.refetch()} />
+          <ErrorState onRetry={() => void q.refetch()} error={q.error} />
         ) : (
           <>
             <div className="grid grid-cols-3 gap-2 text-center">

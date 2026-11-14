@@ -80,7 +80,7 @@ export function HousekeepingPage({ me }: { me: Me }) {
       {board.isPending ? (
         <PageSkeleton />
       ) : board.isError || !d ? (
-        <ErrorState onRetry={() => void board.refetch()} />
+        <ErrorState onRetry={() => void board.refetch()} error={board.error} />
       ) : (
         <>
           <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">

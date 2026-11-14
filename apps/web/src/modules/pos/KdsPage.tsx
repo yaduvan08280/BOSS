@@ -32,7 +32,7 @@ export function KdsPage() {
     post(`/api/pos/items/${a.id}/ready`, { ready: a.ready }),
   );
   if (outlets.isPending) return <PageSkeleton />;
-  if (outlets.isError) return <ErrorState onRetry={() => void outlets.refetch()} />;
+  if (outlets.isError) return <ErrorState onRetry={() => void outlets.refetch()} error={outlets.error} />;
   return (
     <div>
       <PageHeader title={t('pos.kds.title')} subtitle={t('pos.kds.subtitle')} />
@@ -75,7 +75,7 @@ export function KdsPage() {
       {q.isPending ? (
         <PageSkeleton />
       ) : q.isError ? (
-        <ErrorState onRetry={() => void q.refetch()} />
+        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : q.data.tickets.length === 0 ? (
         <EmptyState icon={ChefHat} title={t('pos.kds.emptyTitle')} body={t('pos.kds.emptyBody')} />
       ) : (

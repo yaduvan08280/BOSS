@@ -76,7 +76,7 @@ export function LiveFmsPage({ me }: { me: Me }) {
       {q.isPending ? (
         <PageSkeleton />
       ) : q.isError ? (
-        <ErrorState onRetry={() => void q.refetch()} />
+        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : !flow ? (
         <EmptyState icon={Workflow} title={t('fms.noLive')} body={t('fms.noLiveBody')} />
       ) : (

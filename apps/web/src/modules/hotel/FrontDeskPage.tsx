@@ -53,7 +53,7 @@ export function FrontDeskPage({ me }: { me: Me }) {
       {desk.isPending ? (
         <PageSkeleton />
       ) : desk.isError || !d ? (
-        <ErrorState onRetry={() => void desk.refetch()} />
+        <ErrorState onRetry={() => void desk.refetch()} error={desk.error} />
       ) : (
         <>
           <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">

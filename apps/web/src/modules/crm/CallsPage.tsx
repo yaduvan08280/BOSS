@@ -38,7 +38,7 @@ export function CallsPage({ me }: { me: Me }) {
   const [grid, setGrid] = useState(false);
   const [answering, setAnswering] = useState<{ call: CallRow; result: Result } | null>(null);
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const d = q.data;
   const rows = d.calls.filter((c) =>
     filter === 'done'

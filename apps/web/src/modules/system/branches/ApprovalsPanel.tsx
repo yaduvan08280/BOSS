@@ -38,7 +38,7 @@ export function ApprovalsPanel() {
 
   if (routes.isPending || structure.isPending || users.isPending) return <PageSkeleton />;
   if (routes.isError || structure.isError || users.isError)
-    return <ErrorState onRetry={() => void routes.refetch()} />;
+    return <ErrorState onRetry={() => void routes.refetch()} error={routes.error} />;
   const s = structure.data;
   const placeOf = (r: Route) =>
     r.branchId

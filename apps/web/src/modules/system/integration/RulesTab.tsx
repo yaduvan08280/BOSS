@@ -37,7 +37,7 @@ export function RulesTab() {
   const all = q.data ?? [];
   const rows = all.filter((r) => module === 'all' || moduleOf(r.event) === module);
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const active = all.filter((r) => r.active);
 
   return (

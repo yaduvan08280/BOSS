@@ -45,7 +45,7 @@ export function TapePage({ me }: { me: Me }) {
       {tape.isPending ? (
         <PageSkeleton />
       ) : tape.isError || !d ? (
-        <ErrorState onRetry={() => void tape.refetch()} />
+        <ErrorState onRetry={() => void tape.refetch()} error={tape.error} />
       ) : (
         <div className="space-y-4">
           {d.unassigned.length > 0 && (

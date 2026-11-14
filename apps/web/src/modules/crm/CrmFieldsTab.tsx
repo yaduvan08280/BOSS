@@ -16,7 +16,7 @@ const TYPES = ['lead', 'quotation', 'customer', 'order'] as const;
 export function CrmFieldsTab() {
   const q = useProgress();
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return <Fields key={JSON.stringify(q.data.config.fields)} saved={q.data.config.fields} />;
 }
 

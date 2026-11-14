@@ -36,7 +36,7 @@ export function CountsPage({ me }: { me: Me }) {
       {q.isPending ? (
         <PageSkeleton />
       ) : q.isError ? (
-        <ErrorState onRetry={() => void q.refetch()} />
+        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : q.data.length === 0 ? (
         <EmptyState
           icon={ClipboardList}
@@ -194,7 +194,7 @@ function Sheet({ id, onClose }: { id: string; onClose: () => void }) {
       {q.isPending ? (
         <PageSkeleton />
       ) : q.isError || !c ? (
-        <ErrorState onRetry={() => void q.refetch()} />
+        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : (
         <ul className="space-y-2">
           {c.lines.map((l) => (

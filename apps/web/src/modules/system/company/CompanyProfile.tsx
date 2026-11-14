@@ -45,7 +45,7 @@ type GstResult = {
 export function CompanyProfile() {
   const q = useCompany();
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return <ProfileForm key={q.data.profile.id} profile={q.data.profile} contacts={q.data.contacts} />;
 }
 

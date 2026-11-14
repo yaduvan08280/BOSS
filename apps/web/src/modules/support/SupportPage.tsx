@@ -26,7 +26,7 @@ export function SupportPage() {
     queryFn: () => api<{ contacts: Person[]; admins: Person[] }>('/api/org/support'),
   });
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const people = [
     ...q.data.contacts,
     ...q.data.admins.filter((a) => !q.data.contacts.some((c) => c.name === a.name)),

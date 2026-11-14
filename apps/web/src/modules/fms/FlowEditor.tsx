@@ -51,7 +51,7 @@ export function FlowEditorPage({ me }: { me: Me }) {
   const { id } = useParams();
   const q = useFlow(id);
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError || !q.data) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError || !q.data) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return <Editor key={`${q.data.id}-${q.data.version}`} flow={q.data} me={me} />;
 }
 

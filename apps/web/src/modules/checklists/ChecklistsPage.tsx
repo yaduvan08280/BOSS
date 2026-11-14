@@ -41,7 +41,7 @@ function RunList({
   const phone = useIsPhone();
   const q = useRuns(scope);
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const { runs, tiles } = q.data;
   const due = (r: Run) => {
     if (r.status !== 'OPEN') return null;
@@ -170,7 +170,7 @@ function MasterList({ names, onEdit }: { names: Map<string, string>; onEdit: (m:
     t('org.deleted'),
   );
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   if (!q.data.length) return <EmptyState icon={ClipboardCheck} title={t('chk.noMasters')} />;
   return (
     <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">

@@ -1,5 +1,6 @@
 {
   "common": {
+    "noAccess": "This is not open to you",
     "scrollLeft": "Show earlier options",
     "scrollRight": "Show more options",
     "loading": "Loading…",

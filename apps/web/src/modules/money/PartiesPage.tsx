@@ -75,7 +75,7 @@ export function PartiesPage({ me }: { me: Me }) {
       {q.isPending ? (
         <PageSkeleton />
       ) : q.isError ? (
-        <ErrorState onRetry={() => void q.refetch()} />
+        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : rows.length === 0 ? (
         <EmptyState icon={Users} title={t('money.parties.emptyTitle')} body={t('money.parties.emptyBody')} />
       ) : (
@@ -240,7 +240,7 @@ function StatementDialog({ party, onClose }: { party: Party; onClose: () => void
       {q.isPending ? (
         <div className="h-32 animate-pulse rounded-control bg-muted" />
       ) : q.isError ? (
-        <ErrorState onRetry={() => void q.refetch()} />
+        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : q.data.lines.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t('money.noPapers')}</p>
       ) : (

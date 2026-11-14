@@ -43,7 +43,7 @@ export function ReportBuilderPage({ me }: { me: Me }) {
   const { id } = useParams();
   const saved = useReport(id);
   const sources = useReportSources();
-  if (id && saved.isError) return <ErrorState onRetry={() => void saved.refetch()} />;
+  if (id && saved.isError) return <ErrorState onRetry={() => void saved.refetch()} error={saved.error} />;
   if (sources.isPending || (id && saved.isPending)) return <PageSkeleton />;
   const first = sources.data?.[0];
   if (!id && !first)
@@ -170,7 +170,11 @@ function Builder({
       )}
       {!canEdit ? (
         (result ??
-        (preview.isError ? <ErrorState onRetry={() => void preview.refetch()} /> : <PageSkeleton />))
+        (preview.isError ? (
+          <ErrorState onRetry={() => void preview.refetch()} error={preview.error} />
+        ) : (
+          <PageSkeleton />
+        )))
       ) : (
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
           <div className="space-y-3">

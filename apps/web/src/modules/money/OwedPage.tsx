@@ -41,7 +41,7 @@ export function OwedPage() {
       {q.isPending ? (
         <PageSkeleton />
       ) : q.isError ? (
-        <ErrorState onRetry={() => void q.refetch()} />
+        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : rows.length === 0 ? (
         <EmptyState
           icon={HandCoins}

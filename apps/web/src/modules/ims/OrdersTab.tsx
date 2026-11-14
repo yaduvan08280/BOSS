@@ -28,7 +28,7 @@ export function OrdersTab({ canOrder }: { canOrder: boolean }) {
   const [open, setOpen] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const rows = q.data.filter(
     (p) =>
       !search.trim() ||

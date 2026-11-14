@@ -31,7 +31,7 @@ export function BookPage({ me }: { me: Me }) {
   const canHost = hasPermission(me.user.permissions, 'hosp.create');
   const canSetUp = hasPermission(me.user.permissions, 'hosp.edit');
   if (outlets.isPending) return <PageSkeleton />;
-  if (outlets.isError) return <ErrorState onRetry={() => void outlets.refetch()} />;
+  if (outlets.isError) return <ErrorState onRetry={() => void outlets.refetch()} error={outlets.error} />;
   if (!outlets.data.length)
     return <EmptyState icon={CalendarClock} title={t('pos.noOutlet')} body={t('pos.noOutletBody')} />;
   const b = book.data;
@@ -81,7 +81,7 @@ export function BookPage({ me }: { me: Me }) {
       {book.isPending ? (
         <PageSkeleton />
       ) : book.isError || !b ? (
-        <ErrorState onRetry={() => void book.refetch()} />
+        <ErrorState onRetry={() => void book.refetch()} error={book.error} />
       ) : (
         <>
           <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">

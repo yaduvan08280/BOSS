@@ -19,7 +19,7 @@ type Tab = (typeof TABS)[number];
 export function InventorySetup() {
   const q = useImsRules();
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return <Setup key={JSON.stringify(q.data.rules)} saved={q.data.rules} />;
 }
 

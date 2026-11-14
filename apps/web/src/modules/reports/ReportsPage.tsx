@@ -12,7 +12,7 @@ export function ReportsPage() {
   const q = useReports();
   const sources = useReportSources();
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const { reports, canCreate } = q.data;
   const nameOf = (s: { kind: string; id: string }) =>
     sources.data?.find((x) => x.kind === s.kind && x.id === s.id)?.name ?? '';

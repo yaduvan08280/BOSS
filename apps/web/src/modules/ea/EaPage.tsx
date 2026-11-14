@@ -54,7 +54,7 @@ export function EaPage({ me }: { me: Me }) {
       {q.isPending ? (
         <PageSkeleton />
       ) : q.isError || !board ? (
-        <ErrorState onRetry={() => void q.refetch()} />
+        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : (
         <>
           <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">

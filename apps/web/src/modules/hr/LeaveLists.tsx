@@ -157,7 +157,7 @@ export function MineTab({ me, today }: { me: Me; today: string }) {
       {q.isPending ? (
         <PageSkeleton />
       ) : q.isError ? (
-        <ErrorState onRetry={() => void q.refetch()} />
+        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : !q.data.mine.length ? (
         <EmptyState icon={CalendarOff} title={t('hr.l.none')} />
       ) : (
@@ -175,7 +175,7 @@ export function ApproveTab({ me }: { me: Me }) {
   const { t } = useTranslation();
   const q = useLeaveLists();
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   if (!q.data.toDecide.length) return <EmptyState icon={Check} title={t('hr.l.nothingToApprove')} />;
   return (
     <ul className="space-y-2">
@@ -196,7 +196,7 @@ export function BuddyTab({ tz }: { tz: string }) {
     () => t('org.saved'),
   );
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   if (!q.data.asks.length) return <EmptyState icon={Handshake} title={t('hr.l.noAsks')} />;
   return (
     <ul className="space-y-2">

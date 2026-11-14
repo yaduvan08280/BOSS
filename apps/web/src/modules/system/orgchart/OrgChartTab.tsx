@@ -106,7 +106,8 @@ export function OrgChartTab() {
   }, [people, all, filter, view]);
 
   if (users.isPending || depts.isPending) return <PageSkeleton />;
-  if (users.isError || depts.isError) return <ErrorState onRetry={() => void users.refetch()} />;
+  if (users.isError || depts.isError)
+    return <ErrorState onRetry={() => void users.refetch()} error={users.error} />;
 
   const everyone = users.data.filter((p) => p.status === 'ACTIVE');
   const owners = people.filter((p) => p.roleKey === 'OWNER');

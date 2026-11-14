@@ -28,7 +28,7 @@ export function TypeEditorPage({ me }: { me: Me }) {
   const q = useRecordType(id ?? '', Boolean(id));
   if (!hasPermission(me.user.permissions, 'records.admin')) return <ErrorState />;
   if (id && q.isPending) return <PageSkeleton />;
-  if (id && q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (id && q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   // A fresh editor for every saved version, so the draft never mixes two versions.
   return <Editor key={q.data?.updatedAt ?? 'new'} type={id ? q.data : undefined} />;
 }

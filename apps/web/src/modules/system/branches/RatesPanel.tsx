@@ -37,7 +37,8 @@ export function RatesPanel() {
     setDraft({});
   };
   if (structure.isPending || rates.isPending) return <PageSkeleton />;
-  if (structure.isError || rates.isError) return <ErrorState onRetry={() => void rates.refetch()} />;
+  if (structure.isError || rates.isError)
+    return <ErrorState onRetry={() => void rates.refetch()} error={rates.error} />;
   const currencies = [...new Set(structure.data.entities.map((e) => e.currency))].filter((c) => c !== 'INR');
   const label = new Intl.DateTimeFormat(i18n.language === 'hi' ? 'hi-IN' : 'en-IN', {
     month: 'long',

@@ -19,7 +19,7 @@ export function OrdersPage({ me }: { me: Me }) {
   const [open, setOpen] = useState<string | null>(null);
   const tz = me.company.timezone;
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const d = q.data;
   const total = d.columns.reduce((a, c) => a + c.cards.length, 0) + d.other.length;
   return (

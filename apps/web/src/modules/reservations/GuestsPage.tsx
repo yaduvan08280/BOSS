@@ -74,7 +74,7 @@ export function GuestsPage({ me }: { me: Me }) {
       {guests.isPending ? (
         <PageSkeleton />
       ) : guests.isError ? (
-        <ErrorState onRetry={() => void guests.refetch()} />
+        <ErrorState onRetry={() => void guests.refetch()} error={guests.error} />
       ) : guests.data.guests.length === 0 ? (
         <EmptyState icon={Users} title={t('guest.empty')} body={t('guest.emptyBody')} />
       ) : (
