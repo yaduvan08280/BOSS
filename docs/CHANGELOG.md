@@ -5,6 +5,21 @@
 - **Org chart → Group by Branch**: one column per branch with its manager and its people by department, a warning column for people with no branch, and a branch filter. Drag a person onto another branch (or open the person → Transfer) to move them.
 - **Users**: a Branch column, a branch filter with head-counts, "Move to branch" for the ticked people, and the branch on every card. The person sheet opens the same transfer dialog.
 - **Transfer dialog**: home branch, the date it takes effect, the branches the person also works at, and their earlier branches. `POST /api/branches/people/move` moves several people at once (keeping their other branches); `GET /api/branches/people/:id` gives the history; the people list now carries `branchName` and `alsoBranchIds`.
+## 14/11/2026 — Monthly attendance report (muster) and daily punches
+
+- **HR → Attendance → Monthly report** (HODs, branch managers and HR; everyone else sees only themselves through
+  the API): the **muster register** — one row per person, one code per day (P, LT, HD, A, CL/SL/EL… by leave
+  type, ½ for half a day, WO, H, WO/P or H/P when someone worked an off day, – no record) with the month's totals
+  (present, late, half days, absent, leave, weekly offs, holidays, hours worked, late minutes, overtime) — and
+  **daily punches**: each person's in, out, hours, late and overtime for a day, every punch with its source
+  (app, biometric, correction), and why the day counts as it does. Filter by month, department, branch and name;
+  tap a day for its punches.
+- **Downloads**: muster as **Excel** and **PDF** (A3 landscape, codes in a coloured grid, legend), daily punches
+  as **Excel** and **CSV** — `GET /api/hr/attendance/muster` and `/api/hr/attendance/muster/export?kind=muster|punches&format=xlsx|csv|pdf`.
+- It reads what payroll reads: settled days, the last two days worked out as they stand, the branch calendar for
+  holidays and weekly offs, approved leave, nothing before joining (HR-details DOJ, else when the person was added).
+- **Fixed: a leave approved after its days were settled** (off sick Monday, asked Tuesday) left those days
+  "absent"; approving re-settles them as "on leave", and cancelling an approved leave settles them again.
 
 ## 14/11/2026 — Fixes found setting up a restaurant group (TORA SKYLOUNGE demo)
 

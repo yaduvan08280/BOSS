@@ -159,7 +159,7 @@ export async function buildApp(opts: BuildOptions) {
   await app.register(misRoutes, { appName: env.APP_NAME });
   await app.register(fmsRoutes, { env });
   await app.register(aiRoutes, { env });
-  await app.register(hrRoutes);
+  await app.register(hrRoutes, { appName: env.APP_NAME });
   await app.register(imsRoutes);
   await app.register(stockRoutes);
   await app.register(hospRoutes);

@@ -8,7 +8,8 @@ cd scripts/tora-demo
 export OWNER_ID=<owner mobile> OWNER_PW=<owner password>   # MONO_URL / MONO_ORIGIN if not localhost:3000 / :5173
 node org.mjs && node ims.mjs && node hosp.mjs && node setup2.mjs && node fms.mjs && node work.mjs \
   && node records.mjs && node stock.mjs && node pos.mjs && node res.mjs && node hotel.mjs && node hotel3.mjs \
-  && node crm.mjs && node hr.mjs
+  && node crm.mjs && node hr.mjs && node attendance.mjs && node rota-fix.mjs
+cd ../.. && npx tsx scripts/tora-demo/settle-days.ts 2026-11-01 2026-11-13   # the nightly job for the past days
 ```
 
 `org.mjs` writes `ids.json` (the ids of what it made); the later scripts read it. Staff logins get the demo password

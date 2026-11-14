@@ -40,7 +40,9 @@ Rebuild it on another machine with `scripts/tora-demo/` (see its README).
 8. **Inventory → Recipes & production**: cost % per dish; **Transfers**: central store → Murlipura; **Stock**: bands.
 9. **Front desk / Room calendar** (Vaishali): 3 guests in house, Emma Clarke (British) with Form C due.
 10. **Banquets**: Agarwal reception (confirmed, BEO sent), TechNova (quoted).
-11. **Hospitality reports → Flash**, **CRM dashboard** (₹7.30 L month target), **Weekly MIS**, **Outlet comparison**,
+11. **HR → Attendance → Monthly report**: November's muster (Diwali as H/P, two leaves, late marks), tap a day for
+    its punches; download the muster as Excel or PDF and the daily punches as Excel.
+12. **Hospitality reports → Flash**, **CRM dashboard** (₹7.30 L month target), **Weekly MIS**, **Outlet comparison**,
     **Reports** (4 saved: parties by occasion, complaints by source …), **Compliance** (music licence ends 30/11).
 
 ## Before the meeting

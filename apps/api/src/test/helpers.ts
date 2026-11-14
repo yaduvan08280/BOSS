@@ -98,6 +98,8 @@ export async function signedIn(app: App, identifier: string, password: string) {
     put: (url: string, body: unknown) => call('PUT', url, body),
     patch: (url: string, body: unknown) => call('PATCH', url, body),
     del: (url: string) => call('DELETE', url),
+    /** A download: the whole response (headers, `body` as text, `rawPayload` as bytes). */
+    raw: (url: string) => app.inject({ method: 'GET', url, headers: { cookie: asHeader(jar), origin: ORIGIN } }),
   };
 }
 
