@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Select } from '@/components/ui/form';
+import { SetupLink } from '@/modules/hosp/SetupLink';
 import { dmy } from './api';
 
 /** Which property, and its business date (it moves only with the night audit). */
@@ -31,6 +32,9 @@ export function PropertyBar({
           {t('hotel.businessDate', { date: dmy(businessDate) })}
         </span>
       )}
+      <span className="ml-auto">
+        <SetupLink part="rooms" />
+      </span>
     </div>
   );
 }

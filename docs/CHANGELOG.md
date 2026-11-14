@@ -1,5 +1,16 @@
 # Changelog
 
+## 14/11/2026 — Tables and rooms are easy to find and change
+
+- **Rooms**: tap a room number to change its number, room type, floor, features and connecting rooms, or delete
+  it; a room type can be deleted once it has no rooms (it says so otherwise).
+- **Floors**: rename a floor, or delete it once its tables are gone (pencil next to the floor's name).
+- **Floors & tables** opens on a dining outlet (last chosen, else the home branch's) instead of the first by name
+  — it opened on in-room dining, which has no tables, and looked empty.
+- **Shortcuts** for owners and admins: "Tables & layout" on the POS, "Rooms & categories" on every hotel screen;
+  System Master → Hospitality now keeps its part in the address (`?part=floors&outlet=…`, `?part=rooms`).
+- **Tables can be dragged on phones and tablets** (the page used to scroll instead).
+
 ## 14/11/2026 — Ask answers stock, sales, bills, attendance and bookings
 
 - **Ask (Home search) reads six more views**: stock now by item and place, stock movements (receipts, issues,

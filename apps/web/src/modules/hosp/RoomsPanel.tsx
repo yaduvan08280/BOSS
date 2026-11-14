@@ -9,7 +9,7 @@ import { Field, Select } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { rupees } from '@/modules/stock/api';
 import { useBranches } from '@/modules/system/api';
-import { send, useHospMutation, useRooms, type RoomType } from './api';
+import { send, useHospMutation, useRooms, type Room, type RoomType } from './api';
 
 /** Room types (occupancy, beds, amenities, the declared tariff) and the rooms of each, by number. */
 export function RoomsPanel() {
@@ -17,6 +17,7 @@ export function RoomsPanel() {
   const q = useRooms();
   const [edit, setEdit] = useState<Partial<RoomType> | null>(null);
   const [add, setAdd] = useState<RoomType | null>(null);
+  const [room, setRoom] = useState<Room | null>(null);
   if (q.isPending) return <PageSkeleton />;
   if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return (
@@ -60,18 +61,21 @@ export function RoomsPanel() {
                     {q.data.rooms
                       .filter((r) => r.typeId === ty.id)
                       .map((r) => (
-                        <span
+                        <button
                           key={r.id}
-                          className="rounded-pill border px-2 py-0.5 font-mono text-xs"
+                          type="button"
+                          onClick={() => setRoom(r)}
+                          className="h-8 min-w-11 rounded-pill border px-2.5 font-mono text-xs hover:bg-muted"
+                          aria-label={t('hosp.room.editOne', { number: r.number })}
                           title={
                             r.connectsTo.length
                               ? t('hosp.room.connects', { rooms: r.connectsTo.join(', ') })
-                              : undefined
+                              : t('hosp.room.editOne', { number: r.number })
                           }
                         >
                           {r.number}
                           {r.connectsTo.length > 0 && ' ⇄'}
-                        </span>
+                        </button>
                       ))}
                   </div>
                 )}
@@ -82,6 +86,13 @@ export function RoomsPanel() {
       )}
       {edit && <TypeDialog type={edit} onClose={() => setEdit(null)} />}
       {add && <RoomsDialog type={add} onClose={() => setAdd(null)} />}
+      {room && (
+        <RoomDialog
+          room={room}
+          types={q.data.types.filter((x) => x.branchId === room.branchId)}
+          onClose={() => setRoom(null)}
+        />
+      )}
     </div>
   );
 }
@@ -121,6 +132,8 @@ function TypeDialog({ type, onClose }: { type: Partial<RoomType>; onClose: () =>
         : send('POST', '/api/hosp/room-types', body),
     t('org.saved'),
   );
+  const drop = useHospMutation(() => send('DELETE', `/api/hosp/room-types/${type.id}`), t('org.deleted'));
+
   const text = (
     k: keyof typeof d,
     label: string,
@@ -140,13 +153,25 @@ function TypeDialog({ type, onClose }: { type: Partial<RoomType>; onClose: () =>
       onOpenChange={(o) => !o && onClose()}
       title={type.id ? type.name : t('hosp.room.addType')}
       footer={
-        <Button
-          variant="primary"
-          disabled={!d.name.trim() || !d.code.trim() || !branchId || save.isPending}
-          onClick={() => save.mutate(undefined, { onSuccess: onClose })}
-        >
-          {t('common.save')}
-        </Button>
+        <>
+          {type.id && (
+            <Button
+              variant="ghost"
+              disabled={drop.isPending}
+              title={type.rooms ? t('hosp.room.typeHasRooms') : undefined}
+              onClick={() => drop.mutate(undefined, { onSuccess: onClose })}
+            >
+              {t('org.delete')}
+            </Button>
+          )}
+          <Button
+            variant="primary"
+            disabled={!d.name.trim() || !d.code.trim() || !branchId || save.isPending}
+            onClick={() => save.mutate(undefined, { onSuccess: onClose })}
+          >
+            {t('common.save')}
+          </Button>
+        </>
       }
     >
       <div className="grid grid-cols-2 gap-3">
@@ -217,6 +242,84 @@ function RoomsDialog({ type, onClose }: { type: RoomType; onClose: () => void })
         </Field>
         <Field label={t('hosp.room.floor')}>
           <Input value={d.floor} onChange={(e) => setD({ ...d, floor: e.target.value })} />
+        </Field>
+      </div>
+    </Dialog>
+  );
+}
+
+/** One room: its number, category, floor, features and connecting doors — or delete it. */
+function RoomDialog({ room, types, onClose }: { room: Room; types: RoomType[]; onClose: () => void }) {
+  const { t } = useTranslation();
+  const [d, setD] = useState({
+    number: room.number,
+    typeId: room.typeId,
+    floor: room.floor ?? '',
+    features: room.features.join(', '),
+    connectsTo: room.connectsTo.join(', '),
+  });
+  const list = (v: string) =>
+    v
+      .split(',')
+      .map((x) => x.trim())
+      .filter(Boolean);
+  const save = useHospMutation(
+    () =>
+      send('PUT', `/api/hosp/rooms/${room.id}`, {
+        typeId: d.typeId,
+        number: d.number.trim(),
+        floor: d.floor.trim() || null,
+        features: list(d.features),
+        connectsTo: list(d.connectsTo),
+      }),
+    t('org.saved'),
+  );
+  const drop = useHospMutation(() => send('DELETE', `/api/hosp/rooms/${room.id}`), t('org.deleted'));
+  return (
+    <Dialog
+      open
+      onOpenChange={(o) => !o && onClose()}
+      title={t('hosp.room.editOne', { number: room.number })}
+      footer={
+        <>
+          <Button
+            variant="ghost"
+            disabled={drop.isPending}
+            onClick={() => drop.mutate(undefined, { onSuccess: onClose })}
+          >
+            {t('org.delete')}
+          </Button>
+          <Button
+            variant="primary"
+            disabled={!d.number.trim() || save.isPending}
+            onClick={() => save.mutate(undefined, { onSuccess: onClose })}
+          >
+            {t('common.save')}
+          </Button>
+        </>
+      }
+    >
+      <div className="grid grid-cols-2 gap-3">
+        <Field label={t('hosp.room.number')}>
+          <Input value={d.number} onChange={(e) => setD({ ...d, number: e.target.value })} autoFocus />
+        </Field>
+        <Field label={t('hosp.room.floor')}>
+          <Input value={d.floor} onChange={(e) => setD({ ...d, floor: e.target.value })} />
+        </Field>
+        <Field label={t('hosp.room.type')} className="col-span-2">
+          <Select value={d.typeId} onChange={(e) => setD({ ...d, typeId: e.target.value })}>
+            {types.map((ty) => (
+              <option key={ty.id} value={ty.id}>
+                {ty.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label={t('hosp.room.features')} className="col-span-2" hint={t('hosp.room.featuresHint')}>
+          <Input value={d.features} onChange={(e) => setD({ ...d, features: e.target.value })} />
+        </Field>
+        <Field label={t('hosp.room.connectsTo')} className="col-span-2" hint={t('hosp.room.connectsHint')}>
+          <Input value={d.connectsTo} onChange={(e) => setD({ ...d, connectsTo: e.target.value })} />
         </Field>
       </div>
     </Dialog>

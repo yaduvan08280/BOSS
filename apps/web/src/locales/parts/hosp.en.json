@@ -66,7 +66,11 @@
       "noOutlet": "Add an outlet first",
       "noOutletBody": "Floors, tables and ticket routing belong to an outlet.",
       "emptyTitle": "No floors yet",
-      "emptyBody": "Add a floor (Ground floor, Terrace) to place its tables."
+      "emptyBody": "Add a floor (Ground floor, Terrace) to place its tables.",
+      "edit": "Edit floor: {{name}}",
+      "label": "Floor name",
+      "hasTables_one": "Delete is possible once its {{count}} table is moved or deleted.",
+      "hasTables_other": "Delete is possible once its {{count}} tables are moved or deleted."
     },
     "table": {
       "add": "Add a table",
@@ -112,7 +116,15 @@
       "to": "To room no.",
       "floor": "Floor",
       "emptyTitle": "No room types yet",
-      "emptyBody": "Add a room type, then its rooms by number."
+      "emptyBody": "Add a room type, then its rooms by number.",
+      "editOne": "Room {{number}}",
+      "number": "Room number",
+      "type": "Room type",
+      "features": "Features",
+      "featuresHint": "Comma separated, e.g. Balcony, Bathtub, City view",
+      "connectsTo": "Connecting rooms",
+      "connectsHint": "Room numbers with a connecting door, comma separated",
+      "typeHasRooms": "Move or delete its rooms first"
     },
     "printer": {
       "title": "Printers",
@@ -229,6 +241,10 @@
       "factorHint": "Share is how much of the recipe a variant uses: half = 0.5.",
       "addVariant": "Add a variant",
       "groups": "Add-on groups"
+    },
+    "setup": {
+      "tables": "Tables & layout",
+      "rooms": "Rooms & categories"
     }
   }
 }

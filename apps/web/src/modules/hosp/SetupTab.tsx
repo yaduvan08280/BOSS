@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { ErrorState, PageSkeleton } from '@/components/page';
 import { Card } from '@/components/ui/card';
@@ -17,7 +17,17 @@ const PARTS = ['outlets', 'floors', 'rooms', 'printers', 'rules'] as const;
 export function HospitalitySetupTab() {
   const { t } = useTranslation();
   const q = useHosp();
-  const [part, setPart] = useState<(typeof PARTS)[number]>('outlets');
+  // The part is in the address, so the POS and the front desk can link straight to tables or rooms.
+  const [params, setParams] = useSearchParams();
+  const asked = params.get('part');
+  const part = PARTS.find((k) => k === asked) ?? 'outlets';
+  const setPart = (k: (typeof PARTS)[number]) =>
+    setParams((p) => {
+      const next = new URLSearchParams(p);
+      next.set('part', k);
+      if (k !== 'floors') next.delete('outlet');
+      return next;
+    });
   const toggle = useHospMutation(
     (enabled: boolean) => send('PUT', '/api/hosp/settings', { enabled }),
     t('org.saved'),

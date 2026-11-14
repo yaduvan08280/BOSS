@@ -12,6 +12,7 @@ import { ApiError } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { useOutlets } from '@/modules/hosp/api';
 import { useOutletChoice } from '@/modules/hosp/outletChoice';
+import { SetupLink } from '@/modules/hosp/SetupLink';
 import { rupees } from '@/modules/stock/api';
 import { post, useApprovals, useFloor, usePosMutation, type Approval, type TableState } from './api';
 import { OrderPanel } from './OrderPanel';
@@ -99,6 +100,7 @@ export function PosPage({ me }: { me: Me }) {
             ))}
           </Select>
         </div>
+        <SetupLink part="floors" outletId={current} />
         {waiting > 0 && (
           <span className="flex items-center gap-1 rounded-pill bg-status-warn-bg px-3 py-1 text-sm text-status-warn-fg">
             <WifiOff className="size-4" /> {t('pos.queued', { count: waiting })}

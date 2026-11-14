@@ -1,5 +1,6 @@
-import { LayoutGrid, Plus } from 'lucide-react';
+import { LayoutGrid, Pencil, Plus } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { TABLE_SHAPES } from '@mono/shared';
 import { EmptyState, ErrorState, PageSkeleton } from '@/components/page';
@@ -9,6 +10,7 @@ import { Checkbox, Field, Select } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { send, useHospMutation, useOutlets, usePlan, type Table } from './api';
+import { useOutletChoice } from './outletChoice';
 
 const COLS = 24;
 
@@ -16,12 +18,17 @@ const COLS = 24;
 export function FloorsPanel() {
   const { t } = useTranslation();
   const outlets = useOutlets();
-  const [outletId, setOutletId] = useState('');
-  const current = outletId || outlets.data?.[0]?.id || '';
+  // Start at the outlet the address names (a link from the POS), else the one picked last, else a dining room.
+  const [params] = useSearchParams();
+  const [chosen, setOutletId] = useOutletChoice(outlets.data);
+  const linked = params.get('outlet');
+  const [fromLink, setFromLink] = useState(Boolean(linked));
+  const current = fromLink && linked && outlets.data?.some((o) => o.id === linked) ? linked : chosen;
   const plan = usePlan(current);
   const [floorId, setFloorId] = useState('');
   const [edit, setEdit] = useState<Partial<Table> | null>(null);
   const [bulk, setBulk] = useState(false);
+  const [floorEdit, setFloorEdit] = useState(false);
   const [name, setName] = useState('');
   const addFloor = useHospMutation(
     () => send('POST', '/api/hosp/floors', { outletId: current, name }),
@@ -42,6 +49,7 @@ export function FloorsPanel() {
           aria-label={t('hosp.outlet.one')}
           value={current}
           onChange={(e) => {
+            setFromLink(false);
             setOutletId(e.target.value);
             setFloorId('');
           }}
@@ -89,6 +97,15 @@ export function FloorsPanel() {
                 {f.name} · {f.tables.length}
               </button>
             ))}
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              aria-label={t('hosp.floor.edit', { name: floor.name })}
+              title={t('hosp.floor.edit', { name: floor.name })}
+              onClick={() => setFloorEdit(true)}
+            >
+              <Pencil />
+            </Button>
             <span className="ml-auto flex gap-2">
               <Button size="sm" variant="secondary" onClick={() => setBulk(true)}>
                 {t('hosp.table.many')}
@@ -104,6 +121,16 @@ export function FloorsPanel() {
       )}
       {edit && floor && <TableDialog floorId={floor.id} table={edit} onClose={() => setEdit(null)} />}
       {bulk && floor && <BulkDialog floorId={floor.id} onClose={() => setBulk(false)} />}
+      {floorEdit && floor && (
+        <FloorDialog
+          outletId={current}
+          floor={floor}
+          onClose={(gone) => {
+            setFloorEdit(false);
+            if (gone) setFloorId('');
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -147,6 +174,7 @@ function Plan({ tables, onOpen }: { tables: Table[]; onOpen: (t: Table) => void 
                 const s = spot(e);
                 if (s.x !== drag.x || s.y !== drag.y) setDrag({ ...drag, ...s, moved: true });
               }}
+              onPointerCancel={() => setDrag(null)}
               onPointerUp={() => {
                 if (drag?.id !== t.id) return;
                 if (drag.moved) move.mutate({ id: t.id, x: drag.x, y: drag.y });
@@ -154,7 +182,8 @@ function Plan({ tables, onOpen }: { tables: Table[]; onOpen: (t: Table) => void 
                 setDrag(null);
               }}
               className={cn(
-                'absolute flex flex-col items-center justify-center border bg-card text-[11px] font-medium leading-tight shadow-sm',
+                // touch-none: on a phone or tablet the finger moves the table instead of scrolling the page.
+                'absolute flex touch-none flex-col items-center justify-center border bg-card text-[11px] font-medium leading-tight shadow-sm',
                 t.shape === 'ROUND' ? 'rounded-full' : 'rounded-control',
                 drag?.id === t.id && 'ring-2 ring-ring',
               )}
@@ -172,6 +201,57 @@ function Plan({ tables, onOpen }: { tables: Table[]; onOpen: (t: Table) => void 
         })}
       </div>
     </div>
+  );
+}
+
+/** Rename a floor, or delete it once its tables are moved or deleted. */
+function FloorDialog({
+  outletId,
+  floor,
+  onClose,
+}: {
+  outletId: string;
+  floor: { id: string; name: string; tables: Table[] };
+  onClose: (gone?: boolean) => void;
+}) {
+  const { t } = useTranslation();
+  const [name, setName] = useState(floor.name);
+  const save = useHospMutation(
+    () => send('PUT', `/api/hosp/floors/${floor.id}`, { outletId, name }),
+    t('org.saved'),
+  );
+  const drop = useHospMutation(() => send('DELETE', `/api/hosp/floors/${floor.id}`), t('org.deleted'));
+  return (
+    <Dialog
+      open
+      onOpenChange={(o) => !o && onClose()}
+      title={t('hosp.floor.edit', { name: floor.name })}
+      description={
+        floor.tables.length ? t('hosp.floor.hasTables', { count: floor.tables.length }) : undefined
+      }
+      footer={
+        <>
+          <Button
+            variant="ghost"
+            disabled={drop.isPending || floor.tables.length > 0}
+            onClick={() => drop.mutate(undefined, { onSuccess: () => onClose(true) })}
+          >
+            {t('org.delete')}
+          </Button>
+          <Button
+            variant="primary"
+            disabled={!name.trim() || save.isPending}
+            onClick={() => save.mutate(undefined, { onSuccess: () => onClose() })}
+          >
+            {t('common.save')}
+          </Button>
+        </>
+      }
+    >
+      <Field label={t('hosp.floor.label')}>
+        <Input value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+      </Field>
+    </Dialog>
   );
 }
 
