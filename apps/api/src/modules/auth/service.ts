@@ -2,6 +2,7 @@ import { packWords } from '../packs/manage';
 import type { Db } from '@mono/db';
 import type { Me } from '@mono/shared';
 import { readAppearance } from '../org/company.routes';
+import { hrScope } from '../hr/people';
 import { pendingCounts } from '../work/counts';
 import type { ActorContext } from '../../lib/audit';
 import { AppError, unauthenticated } from '../../lib/errors';
@@ -177,6 +178,12 @@ export async function getMe(db: Db, userId: string, appName: string): Promise<Me
   });
   const look = readAppearance(user.company.settings, appName);
   const prefs = (user.prefs ?? {}) as { favourites?: unknown };
+  // Whether there is anybody whose attendance and cover this person looks after (HR, a manager, a head).
+  const scope = await hrScope(db, {
+    companyId: user.companyId,
+    userId,
+    permissions: user.role.permissions,
+  }).catch(() => ({ all: false, team: [] as string[] }));
   return {
     user: {
       id: user.id,
@@ -193,6 +200,7 @@ export async function getMe(db: Db, userId: string, appName: string): Promise<Me
       mustChangePassword: user.mustChangePassword,
       /** Home branch: screens with an outlet or property picker start there. */
       branchId: user.branchId,
+      hasTeam: scope.all || scope.team.length > 0,
       favourites: Array.isArray(prefs.favourites)
         ? prefs.favourites.filter((f): f is string => typeof f === 'string')
         : [],

@@ -104,6 +104,8 @@ export default fp(async function authPlugin(app: FastifyInstance, opts: { secret
         },
       });
       if (!target) throw new AppError(404, 'NOT_FOUND', 'Person not found');
+      if (target.role.key === 'OWNER')
+        throw new AppError(403, 'FORBIDDEN', "Another Owner's view is not open to you");
       shadowOf = user.id;
       user = { ...target, mustChangePassword: false };
     }

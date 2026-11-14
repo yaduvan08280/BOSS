@@ -64,9 +64,11 @@ export async function ownerRoutes(app: FastifyInstance, opts: { secret: string }
         throw new AppError(403, 'FORBIDDEN', 'Only an Owner can look as someone else');
       const person = await db.user.findFirst({
         where: { id: q.body.userId, companyId: q.auth!.companyId, deletedAt: null },
-        select: { id: true, name: true },
+        select: { id: true, name: true, role: { select: { key: true } } },
       });
       if (!person) throw new AppError(404, 'NOT_FOUND', 'Person not found');
+      if (person.role.key === 'OWNER' && person.id !== q.auth!.userId)
+        throw new AppError(403, 'FORBIDDEN', "Another Owner's view is not open to you");
       await db.auditLog.create({
         data: {
           companyId: q.auth!.companyId,
@@ -77,7 +79,7 @@ export async function ownerRoutes(app: FastifyInstance, opts: { secret: string }
           after: { name: person.name },
         },
       });
-      return person;
+      return { id: person.id, name: person.name };
     },
   );
   r.get('/api/owner/exceptions', { ...signedIn(), schema: { tags, querystring: span } }, async (q) =>

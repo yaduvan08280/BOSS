@@ -237,7 +237,7 @@
       "staff": "People added or removed",
       "close": "Close on",
       "noClose": "Stay open every day",
-      "foot": "A rough guide from your own last 90 days — not a forecast. Rent, power and other fixed costs are not in it.",
+      "foot": "A rough guide from your own last 90 days — not a forecast. Type your fixed costs below to see what is left after them.",
       "day": {
         "mon": "Monday",
         "tue": "Tuesday",
@@ -246,14 +246,16 @@
         "fri": "Friday",
         "sat": "Saturday",
         "sun": "Sunday"
-      }
+      },
+      "fixed": "Fixed costs a month (₹)",
+      "fixedHint": "Rent, electricity, licences — what you pay whatever the sales. Kept on this device only."
     },
     "u": {
       "average": "Average",
       "ratings": "Ratings",
       "low": "1–2 stars",
       "outlets": "By outlet",
-      "outletsHint": "Copy an outlet's link and make a QR from it for the tables and the bill. Guests need no app and no sign-in.",
+      "outletsHint": "Show an outlet's QR code and print it for the tables and the bill, or copy its link. Guests need no app and no sign-in.",
       "copy": "Copy the link",
       "copied": "Link copied",
       "n_one": "{{count}} rating",
@@ -261,7 +263,10 @@
       "stewards": "By steward",
       "stewardsHint": "Only ratings where the guest typed a bill number; lowest first.",
       "latest": "What guests wrote",
-      "none": "No words yet."
+      "none": "No words yet.",
+      "qr": "QR code",
+      "qrSave": "Save the QR",
+      "qrHint": "Print it for the tables and the bill. Guests scan it with their phone camera — no app, no sign-in."
     },
     "s": {
       "rule": "Surprise checks",

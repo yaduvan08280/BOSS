@@ -88,7 +88,7 @@ export type NavItem = {
   /** Shown only to people with this permission. */
   permission?: PermissionKey;
   /** Shown only when the company has switched this module on. */
-  needs?: 'hospitality';
+  needs?: 'hospitality' | 'team';
 };
 
 export type NavSection = { key: string; items: NavItem[] };
@@ -99,7 +99,14 @@ export const WORKSPACE_NAV: NavSection[] = [
     items: [
       { key: 'home', path: '/', icon: House, phase: 0, tag: 'workspace' },
       { key: 'myWorkspace', path: '/workspace', icon: Inbox, phase: 0, tag: 'workspace' },
-      { key: 'ownerDesk', path: '/owner', icon: Telescope, phase: 0, tag: 'workspace', permission: 'core.admin' },
+      {
+        key: 'ownerDesk',
+        path: '/owner',
+        icon: Telescope,
+        phase: 0,
+        tag: 'workspace',
+        permission: 'core.admin',
+      },
       { key: 'support', path: '/support', icon: LifeBuoy, phase: 0, tag: 'workspace' },
     ],
   },
@@ -110,7 +117,7 @@ export const WORKSPACE_NAV: NavSection[] = [
       { key: 'checklists', path: '/checklists', icon: ListChecks, phase: 0, tag: 'businessEngine' },
       { key: 'helpSlips', path: '/help-slips', icon: NotebookPen, phase: 0, tag: 'businessEngine' },
       { key: 'helpTickets', path: '/help-tickets', icon: Ticket, phase: 0, tag: 'businessEngine' },
-      { key: 'ea', path: '/ea', icon: ClipboardList, phase: 0, tag: 'businessEngine' },
+      { key: 'ea', path: '/ea', icon: ClipboardList, phase: 0, tag: 'businessEngine', permission: 'ea.view' },
       { key: 'weeklyMis', path: '/mis', icon: ChartColumn, phase: 0, tag: 'businessEngine' },
     ],
   },
@@ -144,7 +151,7 @@ export const WORKSPACE_NAV: NavSection[] = [
     items: [
       { key: 'attendance', path: '/hr/attendance', icon: CalendarCheck, phase: 0, tag: 'hr' },
       { key: 'leave', path: '/hr/leave', icon: CalendarOff, phase: 0, tag: 'hr' },
-      { key: 'coverBoard', path: '/hr/cover', icon: Handshake, phase: 0, tag: 'hr' },
+      { key: 'coverBoard', path: '/hr/cover', icon: Handshake, phase: 0, tag: 'hr', needs: 'team' },
       {
         key: 'payroll',
         path: '/hr/payroll',
@@ -474,7 +481,13 @@ export function findNavItem(pathname: string): NavItem | undefined {
 export const navAllowed = (
   item: NavItem,
   permissions: readonly string[],
-  company?: { hospitality?: boolean },
+  company?: { hospitality?: boolean; team?: boolean },
 ) =>
   (!item.permission || hasPermission(permissions, item.permission)) &&
   (!item.needs || company?.[item.needs] === true);
+
+/** What the menu needs to know about the person beyond their rights. */
+export const navFlags = (me: { company: { hospitality?: boolean }; user: { hasTeam?: boolean } }) => ({
+  hospitality: me.company.hospitality,
+  team: me.user.hasTeam === true,
+});

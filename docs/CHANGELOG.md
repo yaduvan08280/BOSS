@@ -1,5 +1,14 @@
 # Changelog
 
+## 14/11/2026 — Sweep of every screen: fixes
+
+- **Roles → "How far this role sees"**: own work, their branches, their legal entity or the whole company. Until now this could only be set through the API, so every role saw every branch. Existing roles are unchanged (whole company) — set staff roles to "Their branches".
+- Roles on a phone: the role is picked from a dropdown, so its settings are on screen.
+- Menu: EA system and Cover board are hidden from people who cannot open them; an empty section heading (Money) is no longer drawn.
+- Shadow mode: an Owner can no longer look as another Owner.
+- Phone: bigger tap areas for switches, the department drag handle, small links and the flowchart's zoom buttons.
+- Pulse: the outlet's QR code on screen, with "Save the QR". What-if: fixed costs a month.
+
 ## 14/11/2026 — Owner's desk, second batch; questions on Telegram
 
 - **Shadow mode**: the Owner opens a person in the org chart and looks at MONO as they see it (read-only, with a banner).

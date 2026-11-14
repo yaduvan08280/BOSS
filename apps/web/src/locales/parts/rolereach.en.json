@@ -1,0 +1,17 @@
+{
+  "rolereach": {
+    "label": "How far this role sees",
+    "owner": "The Owner always sees the whole company.",
+    "own": "Only their own work",
+    "branches": "Their branches",
+    "entity": "Their legal entity",
+    "group": "The whole company",
+    "hint": {
+      "own": "People with this role see only work they are part of — what they do, gave, verify or started.",
+      "branches": "People with this role see the work of the branches they work at or manage, plus anything that has no branch.",
+      "entity": "People with this role see every branch of their legal entity.",
+      "group": "People with this role see every branch. Choose \"Their branches\" for staff who should only see their own branch."
+    },
+    "pick": "Role"
+  }
+}

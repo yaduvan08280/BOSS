@@ -87,7 +87,10 @@ export function HeaderCards({ summary }: { summary: SystemSummary | undefined })
             <span className="opacity-75">
               {t('system.peopleDepts', { people: company.people, departments: company.departments })}
             </span>
-            <Link to="/system/company" className="inline-flex items-center gap-1 font-semibold">
+            <Link
+              to="/system/company"
+              className="-my-2.5 inline-flex items-center gap-1 py-2.5 font-semibold"
+            >
               {t('system.openTab')} <ArrowRight className="size-3.5" />
             </Link>
           </div>
@@ -129,7 +132,10 @@ export function HeaderCards({ summary }: { summary: SystemSummary | undefined })
               })}
             </div>
           </div>
-          <Link to="/fms/builder" className="mt-2 inline-flex items-center gap-1 text-xs font-semibold">
+          <Link
+            to="/fms/builder"
+            className="-mb-2.5 inline-flex items-center gap-1 pt-2 pb-2.5 text-xs font-semibold"
+          >
             {t('system.openBuilder')} <ArrowRight className="size-3.5" />
           </Link>
         </CardShell>

@@ -160,6 +160,10 @@ describe("the owner's desk", () => {
     // A member cannot look as the owner.
     expect((await asha.api.get('/api/auth/me', { 'x-mono-view-as': w.owner.id })).status).toBe(403);
     expect((await asha.api.post('/api/owner/view-as', { userId: w.owner.id })).status).toBe(403);
+    // Not even an Owner looks through another Owner's eyes.
+    const partner = await w.person('Second Owner', 'OWNER');
+    expect((await w.api.post('/api/owner/view-as', { userId: partner.id })).status).toBe(403);
+    expect((await w.api.get('/api/auth/me', { 'x-mono-view-as': partner.id })).status).toBe(403);
   }, 60_000);
 
   it('the weekly letter, the what-if base and copying a branch’s checklists', async () => {

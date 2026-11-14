@@ -219,7 +219,7 @@ export async function answerSpotCheck(db: Db, actor: Actor, id: string, attachme
     });
     await tx.spotCheck.update({
       where: { id: s.id },
-      data: { status: s.deciderId ? 'ANSWERED' : 'ANSWERED', photoId: file.id, answeredAt: new Date() },
+      data: { status: 'ANSWERED', photoId: file.id, answeredAt: new Date() },
     });
   });
   return { ok: true };

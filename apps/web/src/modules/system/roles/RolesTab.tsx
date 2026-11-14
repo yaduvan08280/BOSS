@@ -4,10 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { ErrorState, PageSkeleton } from '@/components/page';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge, Checkbox } from '@/components/ui/form';
+import { Badge, Checkbox, Select } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { del, patch, post, useOrgMutation, useRoles, type Role } from '../api';
+import { RoleReach } from './RoleReach';
 
 const PROCESS_ROLES = ['coordinator', 'problemSolver', 'verifier'];
 
@@ -48,12 +49,25 @@ export function RolesTab() {
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[280px_1fr]">
       <div className="space-y-3">
         <Card className="p-2">
+          {/* A phone gets a dropdown: a long list would push the role's settings off the screen. */}
+          <Select
+            className="mb-1 lg:hidden"
+            aria-label={t('rolereach.pick')}
+            value={role.id}
+            onChange={(e) => setSelectedId(e.target.value)}
+          >
+            {roles.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name} ({r.people})
+              </option>
+            ))}
+          </Select>
           {roles.map((r) => (
             <button
               key={r.id}
               onClick={() => setSelectedId(r.id)}
               className={cn(
-                'flex w-full items-center gap-3 rounded-control px-3 py-2.5 text-left text-sm',
+                'hidden w-full items-center gap-3 rounded-control px-3 py-2.5 text-left text-sm lg:flex',
                 r.id === role.id ? 'bg-muted font-semibold' : 'hover:bg-muted/60',
               )}
             >
@@ -140,6 +154,9 @@ export function RolesTab() {
             )}
           </div>
         </CardHeader>
+        <CardContent className="border-b pb-4">
+          <RoleReach key={role.id} roleId={role.id} reach={role.reach} locked={isOwner} />
+        </CardContent>
         <CardContent className="overflow-x-auto">
           <table className="w-full min-w-[520px] text-sm">
             <thead>

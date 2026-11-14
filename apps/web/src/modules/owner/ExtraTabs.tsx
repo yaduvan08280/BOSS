@@ -7,10 +7,12 @@ import { ErrorState, KpiTile, PageSkeleton } from '@/components/page';
 import { Button } from '@/components/ui/button';
 import { Field, Select } from '@/components/ui/form';
 import { api } from '@/lib/api';
-import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import { cn, safeStorage } from '@/lib/utils';
 import type { LeagueRow } from './api';
 import { dmy, rupees } from './format';
 import { Section } from './parts';
+import { QrDialog } from './QrDialog';
 
 type Line = { key: string; now: string; before: string; change: number };
 type Letter = {
@@ -110,6 +112,8 @@ export function WhatIfTab() {
   const [lost, setLost] = useState(0.5);
   const [staff, setStaff] = useState(0);
   const [closed, setClosed] = useState('');
+  const [fixed, setFixedRaw] = useState(() => safeStorage.get('mono.whatif.fixed') ?? '');
+  const setFixed = (v: string) => (safeStorage.set('mono.whatif.fixed', v), setFixedRaw(v));
   if (q.isPending) return <PageSkeleton />;
   if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const b = q.data;
@@ -119,8 +123,9 @@ export function WhatIfTab() {
   const sales = b.monthlySales * (1 + price / 100) * volume * (1 - closedShare);
   const cost = b.monthlyCost * volume * (1 - closedShare);
   const payroll = b.monthlyPayroll + staff * b.avgSalary;
-  const before = b.monthlySales - b.monthlyCost - b.monthlyPayroll;
-  const after = sales - cost - payroll;
+  const fixedCost = Math.max(0, Number(fixed) || 0);
+  const before = b.monthlySales - b.monthlyCost - b.monthlyPayroll - fixedCost;
+  const after = sales - cost - payroll - fixedCost;
   const slider = (
     label: string,
     value: number,
@@ -187,6 +192,14 @@ export function WhatIfTab() {
                 </option>
               ))}
             </Select>
+          </Field>
+          <Field label={t('owner.i.fixed')} hint={t('owner.i.fixedHint')}>
+            <Input
+              inputMode="numeric"
+              value={fixed}
+              onChange={(e) => setFixed(e.target.value.replace(/[^0-9]/g, ''))}
+              placeholder="0"
+            />
           </Field>
         </div>
       </Section>
@@ -259,6 +272,7 @@ type PulseData = {
 /** What guests said: the average by outlet and by steward, the latest words, and each outlet's link for its QR. */
 export function PulseTab({ span }: { span: { from?: string; to?: string } }) {
   const { t } = useTranslation();
+  const [qr, setQr] = useState<{ outlet: string; link: string } | null>(null);
   const q = useQuery({
     queryKey: ['owner', 'pulse', span.from ?? ''],
     queryFn: () => api<PulseData>(`/api/owner/pulse${span.from ? `?from=${span.from}` : ''}`),
@@ -291,9 +305,14 @@ export function PulseTab({ span }: { span: { from?: string; to?: string } }) {
                   {stars(o.average)} · {t('owner.u.n', { count: o.count })}
                 </span>
               </span>
-              <Button size="sm" onClick={() => copy(o.link)}>
-                {t('owner.u.copy')}
-              </Button>
+              <span className="flex gap-2">
+                <Button size="sm" variant="primary" onClick={() => setQr(o)}>
+                  {t('owner.u.qr')}
+                </Button>
+                <Button size="sm" onClick={() => copy(o.link)}>
+                  {t('owner.u.copy')}
+                </Button>
+              </span>
             </li>
           ))}
         </ul>
@@ -333,6 +352,9 @@ export function PulseTab({ span }: { span: { from?: string; to?: string } }) {
           <p className="rounded-card border bg-card p-4 text-sm text-muted-foreground">{t('owner.u.none')}</p>
         )}
       </Section>
+      {qr && (
+        <QrDialog title={qr.outlet} url={`${window.location.origin}${qr.link}`} onClose={() => setQr(null)} />
+      )}
     </div>
   );
 }
