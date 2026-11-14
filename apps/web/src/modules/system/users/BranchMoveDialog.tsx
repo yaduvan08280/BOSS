@@ -58,7 +58,11 @@ export function BranchMoveDialog({
             homeBranchId: home || null,
             ...(from !== today() ? { from } : {}),
           }),
-    { success: one ? t('org.place.saved', { name: one.name }) : t('org.place.savedMany', { count: people.length }) },
+    {
+      success: one
+        ? t('org.place.saved', { name: one.name })
+        : t('org.place.savedMany', { count: people.length }),
+    },
   );
   const moving = one ? home !== (one.branchId ?? '') : true;
 
@@ -66,7 +70,9 @@ export function BranchMoveDialog({
     <Dialog
       open
       onOpenChange={(o) => !o && onClose()}
-      title={one ? t('org.place.title', { name: one.name }) : t('org.place.titleMany', { count: people.length })}
+      title={
+        one ? t('org.place.title', { name: one.name }) : t('org.place.titleMany', { count: people.length })
+      }
       description={t('org.place.hint')}
       footer={
         <>

@@ -21,6 +21,7 @@ import { bulkCreatePeople } from './users.bulk';
 import {
   assertOwnerRemains,
   assertUnique,
+  branchForNew,
   cleanIdentifiers,
   nextUserCode,
   personInclude,
@@ -94,7 +95,7 @@ export async function userRoutes(app: FastifyInstance) {
         const user = await tx.user.create({
           data: {
             ...rest,
-            branchId: myBranchFor(request, rest.branchId),
+            branchId: await branchForNew(tx, myBranchFor(request, rest.branchId)),
             companyId: ctx.companyId,
             mobile,
             email,

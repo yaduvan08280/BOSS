@@ -110,3 +110,17 @@ export async function revokeSessions(tx: Tx, userIds: string[]) {
     data: { revokedAt: new Date() },
   });
 }
+
+/**
+ * The branch a new person starts at: the one named (it must exist), else the company's only branch — so nobody
+ * is left without a place in a one-branch company — else none (the person shows as "no branch yet").
+ */
+export async function branchForNew(tx: Tx, branchId: string | null | undefined) {
+  if (branchId) {
+    if (!(await tx.branch.count({ where: { id: branchId, deletedAt: null } })))
+      throw new AppError(404, 'NOT_FOUND', 'Branch not found');
+    return branchId;
+  }
+  const live = await tx.branch.findMany({ where: { deletedAt: null }, select: { id: true }, take: 2 });
+  return live.length === 1 ? live[0]!.id : null;
+}

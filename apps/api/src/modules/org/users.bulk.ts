@@ -3,9 +3,13 @@ import { normalizeMobile, type PastedPerson } from '@mono/shared';
 import type { ActorContext } from '../../lib/audit';
 import { AppError } from '../../lib/errors';
 import { recordChange } from '../../lib/events';
-import { nextUserCode, roleByKey } from './users.service';
+import { branchForNew, nextUserCode, roleByKey } from './users.service';
 
-type Input = { people: Omit<PastedPerson, 'line' | 'errors'>[]; createMissing: boolean };
+type Input = {
+  people: Omit<PastedPerson, 'line' | 'errors'>[];
+  createMissing: boolean;
+  branchId?: string | null;
+};
 
 /** Create everyone from a pasted list in one go, or nobody: every problem is reported per line. */
 export async function bulkCreatePeople(tx: Tx, ctx: ActorContext, input: Input) {
@@ -88,6 +92,7 @@ export async function bulkCreatePeople(tx: Tx, ctx: ActorContext, input: Input) 
   }
 
   const member = await roleByKey(tx, 'MEMBER');
+  const branchId = await branchForNew(tx, input.branchId);
   const ids: string[] = [];
   for (const p of people) {
     const user = await tx.user.create({
@@ -98,6 +103,7 @@ export async function bulkCreatePeople(tx: Tx, ctx: ActorContext, input: Input) 
         mobile: p.mobile,
         email: p.email,
         roleId: member.id,
+        branchId,
         mainDepartmentId: p.department ? (deptByName.get(key(p.department)) ?? null) : null,
         designationId: p.designation ? (desigByName.get(key(p.designation)) ?? null) : null,
       },

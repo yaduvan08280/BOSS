@@ -53,7 +53,12 @@ function Person({
     >
       <span className="relative shrink-0">
         <Avatar name={person.name} url={person.avatarUrl} className="size-8" />
-        <span className={cn('absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full ring-2 ring-card', DOT[person.status])} />
+        <span
+          className={cn(
+            'absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full ring-2 ring-card',
+            DOT[person.status],
+          )}
+        />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-medium">{person.name}</span>
@@ -116,7 +121,9 @@ function Column({
               : t('org.place.noBranchWarn', { count: people.length })}
           </div>
         </div>
-        <span className="tabular rounded-pill bg-card px-2 py-0.5 text-xs font-semibold">{people.length}</span>
+        <span className="tabular rounded-pill bg-card px-2 py-0.5 text-xs font-semibold">
+          {people.length}
+        </span>
       </header>
       {branch && (
         <div className="rounded-control border border-dashed p-1.5">

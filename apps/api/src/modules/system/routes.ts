@@ -61,6 +61,9 @@ export async function systemRoutes(app: FastifyInstance) {
       });
       const allBranches = mine ? await db.branch.count({ where: { deletedAt: null } }) : live.length;
       const unmanaged = live.filter((b) => !managed.some((m) => m.branchId === b.id)).length;
+      const noBranchPeople = await db.user.count({
+        where: { deletedAt: null, status: 'ACTIVE', branchId: null, role: { key: { not: 'OWNER' } } },
+      });
       const profileDone = Boolean(
         company.name && company.city && company.state && company.ownerName && company.mobile,
       );
@@ -81,6 +84,10 @@ export async function systemRoutes(app: FastifyInstance) {
         { key: 'telegramNotLinked', ok: people > 0 && telegram === people, count: people - telegram },
         ...(allBranches > 1
           ? [{ key: 'branchesWithoutManager', ok: unmanaged === 0, count: unmanaged }]
+          : []),
+        // Work is answered for by place: once there are branches, everyone needs one.
+        ...(allBranches > 0 && !mine
+          ? [{ key: 'peopleWithoutBranch', ok: noBranchPeople === 0, count: noBranchPeople }]
           : []),
       ];
       const ready = checks.filter((c) => c.ok).length;

@@ -85,7 +85,7 @@ export function ScrollRow({
   );
 
   return (
-    <div className="relative">
+    <div className="relative max-w-full min-w-0">
       {more.left && arrow('left')}
       <div
         ref={ref}

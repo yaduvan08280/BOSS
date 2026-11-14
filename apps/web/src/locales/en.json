@@ -296,7 +296,9 @@
       "telegramNotLinked_one": "{{count}} person hasn't linked Telegram",
       "telegramNotLinked_other": "{{count}} people haven't linked Telegram",
       "branchesWithoutManager_one": "{{count}} branch has no manager",
-      "branchesWithoutManager_other": "{{count}} branches have no manager"
+      "branchesWithoutManager_other": "{{count}} branches have no manager",
+      "peopleWithoutBranch_one": "{{count}} person has no branch",
+      "peopleWithoutBranch_other": "{{count}} people have no branch"
     },
     "openDesigner": "Open the flow designer",
     "openBuilder": "Open the FMS builder"

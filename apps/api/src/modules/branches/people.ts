@@ -39,7 +39,9 @@ export async function movePeople(
   if (people.length !== ids.length) throw notFound('Person');
   if (
     input.homeBranchId &&
-    !(await db.branch.count({ where: { id: input.homeBranchId, companyId: actor.companyId, deletedAt: null } }))
+    !(await db.branch.count({
+      where: { id: input.homeBranchId, companyId: actor.companyId, deletedAt: null },
+    }))
   )
     throw notFound('Branch');
   if (input.from && !/^\d{4}-\d{2}-\d{2}$/.test(input.from))

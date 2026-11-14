@@ -17,6 +17,7 @@ const GAP_LINKS: Record<string, string> = {
   noShift: '/system/company/shifts',
   telegramNotLinked: '/system/integration',
   branchesWithoutManager: '/system/branches',
+  peopleWithoutBranch: '/system/org-chart',
 };
 
 function CardShell({
@@ -82,7 +83,7 @@ export function HeaderCards({ summary }: { summary: SystemSummary | undefined })
             <span className="text-base opacity-60">/{company.stepsTotal}</span>
           </div>
           <div className="text-xs opacity-75">{t('system.stepsDone')}</div>
-          <div className="mt-auto flex items-center justify-between pt-3 text-xs">
+          <div className="mt-auto flex items-center justify-between gap-3 pt-3 text-xs">
             <span className="opacity-75">
               {t('system.peopleDepts', { people: company.people, departments: company.departments })}
             </span>

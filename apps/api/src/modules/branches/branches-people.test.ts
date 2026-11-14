@@ -19,7 +19,10 @@ describe('who works where', () => {
     const ravi = await g.at('Ravi Rooftop', g.b.rooftop.id);
     const lone = await w.person('Lone Nobranch');
     await ok(
-      w.api.put(`/api/branches/people/${asha.id}`, { homeBranchId: g.b.rooftop.id, alsoBranchIds: [g.b.lake.id] }),
+      w.api.put(`/api/branches/people/${asha.id}`, {
+        homeBranchId: g.b.rooftop.id,
+        alsoBranchIds: [g.b.lake.id],
+      }),
     );
     const list = async () => (await ok<Person[]>(w.api.get('/api/org/users'))) as Person[];
     const of = async (id: string) => (await list()).find((p) => p.id === id)!;
@@ -41,17 +44,23 @@ describe('who works where', () => {
       await ok(w.api.post('/api/branches/people/move', { userIds: [ravi.id], homeBranchId: g.b.garden.id })),
     ).toEqual({ moved: 0, unchanged: 1 });
 
-    const places = await ok<{ homeBranchId: string; moves: { branchId: string; fromBranchId: string | null }[] }>(
-      w.api.get(`/api/branches/people/${ravi.id}`),
-    );
+    const places = await ok<{
+      homeBranchId: string;
+      moves: { branchId: string; fromBranchId: string | null }[];
+    }>(w.api.get(`/api/branches/people/${ravi.id}`));
     expect(places.homeBranchId).toBe(g.b.garden.id);
     expect(places.moves[0]).toMatchObject({ branchId: g.b.garden.id });
 
     // A branch that does not exist, a stranger, and someone without the right are refused.
-    expect((await w.api.post('/api/branches/people/move', { userIds: [ravi.id], homeBranchId: 'nope' })).status).toBe(404);
-    expect((await w.api.post('/api/branches/people/move', { userIds: ['nobody'], homeBranchId: null })).status).toBe(404);
     expect(
-      (await ravi.api.post('/api/branches/people/move', { userIds: [ravi.id], homeBranchId: g.b.lake.id })).status,
+      (await w.api.post('/api/branches/people/move', { userIds: [ravi.id], homeBranchId: 'nope' })).status,
+    ).toBe(404);
+    expect(
+      (await w.api.post('/api/branches/people/move', { userIds: ['nobody'], homeBranchId: null })).status,
+    ).toBe(404);
+    expect(
+      (await ravi.api.post('/api/branches/people/move', { userIds: [ravi.id], homeBranchId: g.b.lake.id }))
+        .status,
     ).toBe(403);
   }, 30_000);
 });
