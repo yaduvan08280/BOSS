@@ -5,6 +5,7 @@ import {
   generateTheme,
   SEED_POOL,
   seedClashesWithStatus,
+  THEME_PRESETS,
   type ThemeOptions,
 } from './generate';
 
@@ -76,5 +77,30 @@ describe('generateTheme', () => {
     expect(seedClashesWithStatus('#DC2626')).toBe('bad');
     expect(seedClashesWithStatus('#4F46E5')).toBeNull();
     expect(seedClashesWithStatus('#5B5F66')).toBeNull();
+  });
+
+  it('the Navy & Gold special look has its own palette in light and dark, readable everywhere', () => {
+    const preset = THEME_PRESETS['navy-gold']!;
+    expect(preset.style).toBe('navy');
+    for (const mode of ['light', 'dark'] as const) {
+      const t = generateTheme({ ...preset, mode });
+      expect(t.accent).toBe('#E1B15A');
+      expect(t['sidebar-active']).toBe('#E1B15A');
+      for (const [fg, bg] of [
+        ['foreground', 'background'],
+        ['foreground', 'card'],
+        ['muted-foreground', 'card'],
+        ['primary-foreground', 'primary'],
+        ['ink-foreground', 'ink'],
+        ['accent-foreground', 'accent'],
+        ['accent-soft-foreground', 'accent-soft'],
+        ['sidebar-foreground', 'sidebar'],
+        ['sidebar-active-foreground', 'sidebar-active'],
+      ] as const)
+        expect(contrast(t[fg]!, t[bg]!), `${mode} ${fg} on ${bg}`).toBeGreaterThanOrEqual(4.5);
+    }
+    expect(generateTheme({ ...preset, mode: 'light' }).primary).toBe('#0B204C');
+    // The same seed without the style is the generated look, not this palette.
+    expect(generateTheme({ ...preset, style: 'standard', mode: 'light' }).card).not.toBe('#FFFFFF');
   });
 });

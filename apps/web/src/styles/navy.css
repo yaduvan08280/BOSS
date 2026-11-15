@@ -1,0 +1,116 @@
+/*
+ * The "Navy & Gold" special look (Appearance → presets). The colours come from the theme tokens; this file changes
+ * the shapes that make the look: serif headings and figures, navy tab bars with a gold line under the open tab,
+ * navy table heads with small capitals, a navy band on top of dialogs, navy pills for the open sub-tab.
+ */
+[data-style='navy'] {
+  --font-display: 'Playfair Display', 'Noto Sans Devanagari', Georgia, serif;
+  --navy-bar: #0b204c;
+  --navy-gold: #e1b15a;
+}
+
+[data-style='navy'] main h1,
+[data-style='navy'] main h2,
+[data-style='navy'] [data-slot='card-title'],
+[data-style='navy'] [data-ui='sheet-head'] h2,
+[data-style='navy'] [data-ui='kpi'] {
+  font-family: var(--font-display);
+  letter-spacing: 0;
+}
+
+/* Tab bars: one navy bar, white words, gold under the open tab. */
+[data-style='navy'] [data-ui='tabs'] {
+  gap: 2px;
+  border: 0;
+  border-radius: calc(var(--radius) * 0.75);
+  background: var(--navy-bar);
+  padding: 0 6px;
+  min-width: 100%;
+}
+[data-style='navy'] [data-ui='tabs'] > button,
+[data-style='navy'] [data-ui='tabs'] > a {
+  margin-bottom: 0;
+  border-bottom-width: 3px;
+  border-color: transparent;
+  color: rgb(255 255 255 / 0.72);
+}
+[data-style='navy'] [data-ui='tabs'] > button:hover,
+[data-style='navy'] [data-ui='tabs'] > a:hover {
+  color: #fff;
+}
+[data-style='navy'] [data-ui='tabs'] > button[data-current='true'],
+[data-style='navy'] [data-ui='tabs'] > a[aria-current='page'] {
+  border-color: var(--navy-gold);
+  color: #fff;
+}
+
+/* The arrows of a tab bar that does not fit fade into the navy bar, not the page. */
+[data-style='navy'] div:has(> div > [data-ui='tabs']) > [data-ui='scroll-arrow'] {
+  border-radius: calc(var(--radius) * 0.75);
+}
+[data-style='navy'] div:has(> div > [data-ui='tabs']) > [data-ui='scroll-arrow'][data-side='left'] {
+  background-image: linear-gradient(to right, var(--navy-bar) 55%, transparent);
+}
+[data-style='navy'] div:has(> div > [data-ui='tabs']) > [data-ui='scroll-arrow'][data-side='right'] {
+  background-image: linear-gradient(to left, var(--navy-bar) 55%, transparent);
+}
+/* Count badges inside the bar stay readable. */
+[data-style='navy'] [data-ui='tabs'] > * > span {
+  background: rgb(255 255 255 / 0.16);
+  color: #fff;
+}
+
+/* Sub-tabs: the open one is a navy pill. */
+[data-style='navy'] [data-ui='seg'] {
+  background: transparent;
+  padding: 0;
+}
+[data-style='navy'] [data-ui='seg'] > [aria-selected='true'] {
+  background: var(--navy-bar);
+  color: #fff;
+  box-shadow: none;
+}
+[data-style='navy'] [data-ui='seg'] > [aria-selected='false'] {
+  color: var(--foreground);
+}
+
+/* Table heads: navy, white small capitals. */
+[data-style='navy'] main thead,
+[data-style='navy'] [role='dialog'] thead {
+  background: var(--navy-bar);
+  color: #fff;
+}
+[data-style='navy'] main thead th,
+[data-style='navy'] [role='dialog'] thead th {
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Dialogs and sheets: a navy band with the title, a gold line under it. */
+[data-style='navy'] [role='dialog'] > [data-ui='sheet-head'] {
+  border-bottom: 3px solid var(--navy-gold);
+  background: var(--navy-bar);
+  padding-bottom: 0.875rem;
+  color: #fff;
+}
+[data-style='navy'] [role='dialog'] > [data-ui='sheet-head'] p,
+[data-style='navy'] [role='dialog'] > [data-ui='sheet-head'] button {
+  color: rgb(255 255 255 / 0.8);
+}
+[data-style='navy'] [role='dialog'] > [data-ui='sheet-head'] button:hover {
+  background: rgb(255 255 255 / 0.12);
+  color: #fff;
+}
+/* The left menu drawer keeps its own (already navy) heading. */
+[data-style='navy'] [role='dialog'].bg-sidebar > [data-ui='sheet-head'] {
+  border: 0;
+  background: transparent;
+}
+
+/* Cards: white, a thin line and a soft shadow. */
+[data-style='navy'] main [data-slot='card'] {
+  box-shadow: 0 1px 2px rgb(11 32 76 / 0.06);
+}

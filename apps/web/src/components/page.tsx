@@ -59,6 +59,7 @@ export function KpiTile({
       </div>
       <div className="mt-2">
         <span
+          data-ui="kpi"
           className={cn(
             'tabular text-2xl font-semibold tracking-tight sm:text-3xl',
             tone === 'bad' && 'text-status-bad',

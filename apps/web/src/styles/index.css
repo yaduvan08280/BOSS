@@ -4,6 +4,9 @@
 @import '@fontsource/noto-sans-devanagari/400.css';
 @import '@fontsource/noto-sans-devanagari/500.css';
 @import '@fontsource/noto-sans-devanagari/600.css';
+@import '@fontsource/playfair-display/latin-600.css';
+@import '@fontsource/playfair-display/latin-700.css';
+@import './navy.css';
 
 @custom-variant dark (&:where(.dark, .dark *));
 

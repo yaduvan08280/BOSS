@@ -23,7 +23,7 @@ export function TabStrip<T extends string>({
 }) {
   return (
     <ScrollRow watch={active}>
-      <div className="flex w-max gap-1 border-b">
+      <div data-ui="tabs" className="flex w-max gap-1 border-b">
         {tabs.map((k) => (
           <button
             key={k}

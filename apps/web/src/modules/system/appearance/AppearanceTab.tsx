@@ -102,7 +102,7 @@ function AppearanceForm({ saved }: { saved: AppearanceInput }) {
                 {SEED_POOL.map((c) => (
                   <button
                     key={c}
-                    onClick={() => setTheme({ seed: c })}
+                    onClick={() => setTheme({ seed: c, style: 'standard' })}
                     style={{ background: c }}
                     aria-label={c}
                     className={cn(
@@ -119,7 +119,7 @@ function AppearanceForm({ saved }: { saved: AppearanceInput }) {
                   <input
                     type="color"
                     value={theme.seed.toLowerCase()}
-                    onChange={(e) => setTheme({ seed: e.target.value.toUpperCase() })}
+                    onChange={(e) => setTheme({ seed: e.target.value.toUpperCase(), style: 'standard' })}
                     className="absolute inset-0 cursor-pointer opacity-0"
                     aria-label={t('org.look.anyColour')}
                   />

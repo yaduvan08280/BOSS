@@ -39,7 +39,10 @@ export function SheetContent({
       <D.Overlay className="fixed inset-0 z-50 bg-black/45 backdrop-blur-[2px]" />
       <D.Content className={cn(panel({ side }), className)} aria-describedby={undefined} {...props}>
         {side === 'bottom' && <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-border" />}
-        <div className={cn('flex items-start justify-between gap-3 px-5 pt-4', hideTitle && 'sr-only')}>
+        <div
+          data-ui="sheet-head"
+          className={cn('flex items-start justify-between gap-3 px-5 pt-4', hideTitle && 'sr-only')}
+        >
           <div className="min-w-0">
             <D.Title className="text-base font-semibold">{title}</D.Title>
             {description && (

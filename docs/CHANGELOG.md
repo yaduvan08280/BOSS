@@ -1,5 +1,9 @@
 # Changelog
 
+## 15/11/2026 — A special theme: Navy & Gold
+
+System Master → Appearance → presets → **Navy & Gold**: navy bars, buttons and table heads, gold highlights, white cards, serif headings and figures, a navy band on dialogs. Light and dark. Pick any other preset or colour to go back.
+
 ## 15/11/2026 — "All" on the hotel screens and Live FMS; the flash over several days
 
 - **Front desk, Room calendar, Housekeeping, Night audit, Room rates**: "All properties" shows every property one under the other (offered when there is more than one).

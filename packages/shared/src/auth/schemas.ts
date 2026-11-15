@@ -34,6 +34,8 @@ export const themeSettingsSchema = z.object({
   radius: z.number().int().min(4).max(22),
   sidebar: z.enum(['dark', 'light']),
   buttons: z.enum(['accent', 'ink']),
+  /** A special look with its own fixed palette and shapes ('navy' = navy and gold); absent = the generated look. */
+  style: z.enum(['standard', 'navy']).optional(),
 });
 export type ThemeSettings = z.infer<typeof themeSettingsSchema>;
 

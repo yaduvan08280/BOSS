@@ -17,6 +17,7 @@ export function Seg<T extends string>({
   return (
     <div
       role="tablist"
+      data-ui="seg"
       className="mb-4 flex max-w-full gap-1 overflow-x-auto rounded-control bg-muted p-1 sm:inline-flex"
     >
       {options.map((o) => (

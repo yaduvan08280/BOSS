@@ -69,6 +69,8 @@ export function ScrollRow({
     <button
       type="button"
       tabIndex={-1}
+      data-ui="scroll-arrow"
+      data-side={side}
       onClick={() => step(side === 'left' ? -1 : 1)}
       aria-label={t(side === 'left' ? 'common.scrollLeft' : 'common.scrollRight')}
       className={cn(

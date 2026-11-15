@@ -18,6 +18,8 @@ export function applyTheme(settings: ThemeSettings, mode: ThemeMode) {
   for (const [k, v] of Object.entries(tokens)) root.style.setProperty(`--${k}`, v);
   root.classList.toggle('dark', resolved === 'dark');
   root.dataset.mode = resolved;
+  // A special look also changes shapes (bars, table heads, headings) — see styles/navy.css.
+  root.dataset.style = settings.style ?? 'standard';
   root.style.colorScheme = resolved;
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', tokens.sidebar ?? '#1F1E1B');
   safeStorage.set(CACHE_KEY, JSON.stringify({ settings, mode }));

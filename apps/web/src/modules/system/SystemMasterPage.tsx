@@ -24,7 +24,7 @@ export function SystemMasterLayout() {
       <h1 className="sr-only">{t('system.title')}</h1>
       <HeaderCards summary={summary.data} />
       <ScrollRow label={t('system.title')} watch={pathname}>
-        <div className="flex w-max gap-1 border-b">
+        <div data-ui="tabs" className="flex w-max gap-1 border-b">
           {tabs.map((tab) => {
             const count = BADGE_FOR[tab.key] ? summary.data?.counts[BADGE_FOR[tab.key]!] : undefined;
             return (

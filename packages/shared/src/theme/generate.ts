@@ -11,6 +11,8 @@ export type ThemeOptions = {
   sidebar: 'dark' | 'light';
   /** Primary buttons in the seed colour, or in ink. */
   buttons: 'accent' | 'ink';
+  /** A special look with a palette of its own; the seed and warmth are then not used. */
+  style?: 'standard' | 'navy' | undefined;
   mode: 'light' | 'dark';
 };
 
@@ -27,6 +29,62 @@ export const THEME_PRESETS: Record<string, Omit<ThemeOptions, 'mode'>> = {
   ink: { seed: '#1C1B19', warmth: 30, radius: 12, sidebar: 'dark', buttons: 'ink' },
   quartz: { seed: '#1F3A5F', warmth: 55, radius: 14, sidebar: 'light', buttons: 'accent' },
   indigo: { seed: '#4F46E5', warmth: 20, radius: 10, sidebar: 'light', buttons: 'accent' },
+  'navy-gold': { seed: '#0B204C', warmth: 20, radius: 12, sidebar: 'dark', buttons: 'accent', style: 'navy' },
+};
+
+/**
+ * The "Navy & Gold" special look: deep navy for bars, buttons and headings, gold for highlights, white cards
+ * on a near-white page. A fixed palette (not generated from the seed), in light and dark.
+ */
+const NAVY: Record<'light' | 'dark', ThemeTokens> = {
+  light: {
+    background: '#F7F8FB',
+    card: '#FFFFFF',
+    muted: '#F1F3F7',
+    border: '#DCE0EA',
+    foreground: '#0B1A3A',
+    'muted-foreground': '#535C6F',
+    ink: '#0B204C',
+    'ink-foreground': '#FFFFFF',
+    accent: '#E1B15A',
+    'accent-foreground': '#0B204C',
+    'accent-soft': '#FBF3E2',
+    'accent-soft-foreground': '#6B4E13',
+    primary: '#0B204C',
+    'primary-foreground': '#FFFFFF',
+    sidebar: '#14234C',
+    'sidebar-foreground': '#E6EAF4',
+    'sidebar-muted': '#9AA6C4',
+    'sidebar-hover': '#1D2F61',
+    'sidebar-border': '#22346A',
+    'sidebar-active': '#E1B15A',
+    'sidebar-active-foreground': '#0B204C',
+    ring: '#2B4A9A',
+  },
+  dark: {
+    background: '#0A1226',
+    card: '#111B36',
+    muted: '#18244A',
+    border: '#263563',
+    foreground: '#EEF1F8',
+    'muted-foreground': '#A9B3CC',
+    ink: '#1B2D62',
+    'ink-foreground': '#FFFFFF',
+    accent: '#E1B15A',
+    'accent-foreground': '#0B204C',
+    'accent-soft': '#3A2F16',
+    'accent-soft-foreground': '#F0D08F',
+    primary: '#E1B15A',
+    'primary-foreground': '#0B204C',
+    sidebar: '#070E20',
+    'sidebar-foreground': '#E6EAF4',
+    'sidebar-muted': '#8E9ABB',
+    'sidebar-hover': '#131E40',
+    'sidebar-border': '#18244A',
+    'sidebar-active': '#E1B15A',
+    'sidebar-active-foreground': '#0B204C',
+    ring: '#E1B15A',
+  },
 };
 
 /** A curated pool shown as swatches in Appearance (any colour is still allowed via the picker). */
@@ -140,6 +198,17 @@ export function generateTheme(input: ThemeOptions): ThemeTokens {
   t.ring = dark
     ? oklch(clamp(L, 0.7, 0.85), Math.max(C, 0.08), H)
     : oklch(clamp(L, 0.5, 0.65), Math.max(C, 0.1), H);
+
+  if (input.style === 'navy') {
+    Object.assign(t, NAVY[input.mode]);
+    t.popover = t.card!;
+    t['popover-foreground'] = t.foreground!;
+    t['card-foreground'] = t.foreground!;
+    t.input = t.border!;
+    t['muted-foreground'] = ensureContrast(t['muted-foreground']!, t.card!, 4.5);
+    t['muted-foreground'] = ensureContrast(t['muted-foreground'], t.background!, 4.5);
+    t['sidebar-muted'] = ensureContrast(t['sidebar-muted']!, t.sidebar!, 3);
+  }
 
   const statuses = STATUS_COLORS[input.mode];
   for (const tone of STATUS_TONES) {
