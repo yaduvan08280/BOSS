@@ -18,6 +18,8 @@ export async function loadDefaultTemplates(tx: Tx, companyId: string, channels?:
     await tx.template.createMany({ data: missing.map((t) => ({ ...t, companyId, isDefault: true })) });
   // The owner's letter is now one text (written by the AI, else the figures): built-in templates still holding
   // the earlier three-part sentence are brought along.
+  // A company that had no templates until now has nothing old to bring along.
+  if (!have.size) return missing.length;
   for (const old of await tx.template.findMany({
     where: { companyId, event: 'report.owner_letter', isDefault: true, body: { contains: '{{better}}' } },
     select: { id: true, body: true },
