@@ -286,6 +286,176 @@
       "finalInvoice": "Final invoice"
     },
     "statusesN_one": "{{count}} status",
-    "statusesN_other": "{{count}} statuses"
+    "statusesN_other": "{{count}} statuses",
+    "setupTab": "Set up",
+    "howLinks": "How it connects",
+    "setup": {
+      "nothing": "This process has nothing of its own to set: it runs by the steps on its chart.",
+      "openSetup": "Open where it is set up",
+      "allRules": "All the rules for this area",
+      "cantRead": "These rules could not be opened.",
+      "onePerLine": "One per line.",
+      "undo": "Undo changes",
+      "from": {
+        "hr": "From the HR rules — saving here changes them for the whole company.",
+        "ims": "From the inventory rules.",
+        "crm": "From the Sales CRM set-up.",
+        "hosp": "From the hospitality rules.",
+        "hotel": "From this property's hotel rules.",
+        "branch": "From this branch's banquet rules.",
+        "booking": "From this outlet's booking rules."
+      },
+      "scope": {
+        "property": "Property",
+        "branch": "Branch",
+        "outlet": "Outlet"
+      },
+      "none": {
+        "property": "No property has rooms yet.",
+        "branch": "No branches yet.",
+        "outlet": "No outlets yet."
+      }
+    },
+    "unit": {
+      "min": "min",
+      "hours": "hours",
+      "days": "days",
+      "pct": "%",
+      "people": "people",
+      "items": "items"
+    },
+    "f": {
+      "hr_leave_hrUserId": "HR person",
+      "hr_autopilot_autoApproveShort": "Approve short leave by itself",
+      "hr_buddy_noBuddy": "Leave approved but some work has no Buddy",
+      "hr_buddy_needsBuddy": "Which leaves need a Buddy",
+      "hr_buddy_needsBuddyDays": "…from this many days",
+      "hr_leave_compOffValidDays": "Comp-off must be used within",
+      "hr_buddyAnswer_answerHours": "Buddy must answer within",
+      "hr_autopilot_autoPick": "Nobody chosen as Buddy: the system picks one",
+      "hr_buddy_otherDepartment": "Buddy can be from another department",
+      "hr_buddy_otherBranch": "Buddy can be from another branch",
+      "hr_buddy_maxCover": "One Buddy may cover at most",
+      "hr_buddyAnswer_onReturn": "When the person is back",
+      "hr_autopilot_absentToBuddy": "Absent with no leave: work goes to their Buddy",
+      "hr_buddyAnswer_absentConfirmHours": "Absent without leave: HOD confirms cover within",
+      "crm_split_crrPct": "Share of the year's target from existing customers",
+      "crm_split_gpFollows": "Gross profit target follows the same split",
+      "crm_seats_nbdSc": "NBD sales coordinators",
+      "crm_seats_salesRep": "Sales reps in the field",
+      "crm_nbd_stages": "Days allowed at each lead stage",
+      "crm_seats_crrSc": "CRR sales coordinators",
+      "crm_seats_osr": "Outside sales reps",
+      "crm_customers_sleepingDays": "A customer is sleeping after no order for",
+      "crm_customers_lostDays": "A customer is lost after no order for",
+      "crm_seats_crm": "CRM people (they run each order after it is taken)",
+      "crm_customers_newOrders": "A customer is new for their first",
+      "crm_customers_newDays": "…or for their first",
+      "ims_people_purchaseIds": "Purchase people",
+      "ims_people_storeKeeperIds": "Store keepers",
+      "ims_ows_orderWeekday": "Order day",
+      "ims_ows_daysAhead": "Order list ready this many days before",
+      "ims_stock_emergencyApprovals": "An emergency transfer between outlets needs a yes from",
+      "ims_stock_valuation": "How stock is valued",
+      "ims_stock_expiryAlertDays": "Warn before expiry",
+      "ims_stock_wasteApproveOverPaise": "Waste worth more than this waits for a yes",
+      "ims_people_approverIds": "Who approves stock adjustments",
+      "ims_people_anyOne": "One approver's yes is enough",
+      "ims_people_neverOwn": "Nobody approves their own adjustment",
+      "ims_people_ownerAlways": "The owner can always approve",
+      "ims_stock_varianceFlagPct": "Flag a count that differs by more than",
+      "ims_people_reviewerIds": "Who reviews counts",
+      "ims_audit_topByValue": "Each cycle, count the top items by value",
+      "ims_audit_cycleDays": "Audit cycle",
+      "ims_audit_deadAfterDays": "No movement for this long = dead stock",
+      "ims_people_auditIds": "Auditors",
+      "booking_autoConfirm": "Online bookings are confirmed at once",
+      "booking_depositFrom": "Parties this size and more pay a deposit",
+      "booking_depositPerHeadPaise": "Deposit per person",
+      "booking_holdMin": "Hold the table after the booking time",
+      "booking_reminderHours": "Remind the guest before",
+      "booking_cancelFreeHours": "Deposit comes back if cancelled at least",
+      "booking_noShowDeposit": "Deposit on a no-show",
+      "hosp_approverIds": "Who approves a discount above someone's limit",
+      "hosp_ncReasons": "Reasons for a no-charge bill",
+      "hosp_dayClose_cutoffMin": "The business day ends at",
+      "hosp_dayClose_blindCash": "Blind cash count",
+      "hosp_dayClose_closerIds": "Who closes the day",
+      "hotel_checkInMin": "Check-in time",
+      "hotel_checkOutMin": "Check-out time",
+      "hotel_graceMin": "Free margin around the times",
+      "hotel_earlyFeePct": "Early check-in fee (of the night's rate)",
+      "hotel_lateFeePct": "Late check-out fee (of the night's rate)",
+      "hotel_lateFullMin": "Leaving after this costs a whole night",
+      "hotel_formCHours": "Form C due after check-in (foreign guests)",
+      "hotel_requestSolverId": "Who gets guest requests",
+      "hotel_requestSlaMin": "A guest request must be done within",
+      "hotel_maintenanceSolverId": "Who gets repair tickets for blocked rooms",
+      "hotel_hkChecklist": "Cleaning checklist for every room",
+      "branch_banquet_advancePct": "Advance needed to confirm an event",
+      "branch_banquet_cancelFreeDays": "Advance comes back if cancelled at least"
+    },
+    "h": {
+      "hr_leave_hrUserId": "Hears about every leave and may approve it.",
+      "hr_autopilot_autoApproveShort": "A day or less, with all work covered.",
+      "hr_buddy_needsBuddyDays": "Used when “A number of days and more” is chosen.",
+      "hr_leave_compOffValidDays": "Comp-off earned by working a holiday.",
+      "hr_buddyAnswer_answerHours": "Then the next person is suggested.",
+      "crm_split_crrPct": "The rest is new business (NBD).",
+      "crm_seats_nbdSc": "They own new leads.",
+      "crm_nbd_stages": "A lead that stays longer is shown as late.",
+      "crm_seats_crrSc": "They call existing customers.",
+      "ims_people_purchaseIds": "They raise and send purchase orders.",
+      "ims_people_storeKeeperIds": "They receive and send stock.",
+      "ims_ows_orderWeekday": "The day the weekly order list is made.",
+      "ims_stock_valuation": "The cost of what production uses.",
+      "ims_people_anyOne": "Off: every approver must say yes.",
+      "ims_stock_varianceFlagPct": "Compared with what should have been used.",
+      "booking_autoConfirm": "Unless a deposit is due. Off: staff confirm each one.",
+      "booking_depositFrom": "0 = nobody pays one.",
+      "booking_holdMin": "Then it is a no-show.",
+      "hosp_approverIds": "The owner always may.",
+      "hosp_dayClose_cutoffMin": "A bill after midnight but before this belongs to the day before.",
+      "hosp_dayClose_blindCash": "Whoever counts does not see what is expected.",
+      "branch_banquet_advancePct": "Share of the quotation (0 = none)."
+    },
+    "o": {
+      "hr_buddy_noBuddy": {
+        "block": "Block approval",
+        "warn": "Warn only",
+        "off": "Allow — nobody is asked"
+      },
+      "hr_buddy_needsBuddy": {
+        "any": "Any leave, half days too",
+        "fullDay": "A full day and more",
+        "days": "A number of days and more"
+      },
+      "hr_buddyAnswer_onReturn": {
+        "notStarted": "Work not started goes back",
+        "all": "All work goes back",
+        "keep": "The Buddy keeps it"
+      },
+      "ims_ows_orderWeekday": {
+        "1": "Monday",
+        "2": "Tuesday",
+        "3": "Wednesday",
+        "4": "Thursday",
+        "5": "Friday",
+        "6": "Saturday",
+        "7": "Sunday"
+      },
+      "ims_stock_emergencyApprovals": {
+        "one": "One side",
+        "both": "Both sides"
+      },
+      "ims_stock_valuation": {
+        "AVG": "Average cost",
+        "FIFO": "First in, first out"
+      },
+      "booking_noShowDeposit": {
+        "KEEP": "Keep it",
+        "REFUND": "Give it back"
+      }
+    }
   }
 }

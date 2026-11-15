@@ -39,6 +39,11 @@ type Def = {
   /** The hospitality module must be switched on. */
   hosp?: boolean;
   links?: ProcessLink[];
+  /**
+   * Where the company's own rules for this process change its paths (decision 239): from those rules (the ones its
+   * "Set up" panel edits), the situations to draw and the hand-overs that still happen.
+   */
+  follows?: (rules: Record<string, unknown>) => { also?: unknown[]; links?: ProcessLink[] };
 } & (
   | { engine: EngineModule }
   | {
@@ -87,6 +92,11 @@ export const PROCESSES: readonly Def[] = [
       { from: 'PENDING', to: 'buddy', key: 'asksBuddy' },
       { from: 'APPROVED', to: 'cover', key: 'workMoves' },
     ],
+    // "Leave without a Buddy: allowed, nobody asked" — no Buddy is asked.
+    follows: (r) =>
+      (r.buddy as { noBuddy?: string } | undefined)?.noBuddy === 'off'
+        ? { links: [{ from: 'APPROVED', to: 'cover', key: 'workMoves' }] }
+        : {},
   },
   {
     key: 'buddy',
@@ -265,6 +275,9 @@ export const PROCESSES: readonly Def[] = [
       { from: 'REQUESTED', to: 'bill', key: 'deposit' },
       { from: 'seat', to: 'pos_order', key: 'opensOrder' },
     ],
+    // An outlet that takes no deposits never sends a booking to Money for one.
+    follows: (r) =>
+      Number(r.depositFrom ?? 0) > 0 ? {} : { links: [{ from: 'seat', to: 'pos_order', key: 'opensOrder' }] },
   },
   {
     key: 'waitlist',
@@ -401,12 +414,17 @@ export const PROCESSES: readonly Def[] = [
 export type ProcessKey = string;
 export const processDef = (key: string) => PROCESSES.find((p) => p.key === key);
 
-/** The chart of one process (an engine module under the company's settings). */
+/** The chart of one process under the company's rules (an engine module's settings, or its "Set up" rules). */
 export function processGraph(key: string, settings?: unknown): FlowGraph | null {
   const d = processDef(key);
   if (!d) return null;
   if ('engine' in d) return engineGraph(d.engine, settings, d.links);
-  return machineGraph(d.machine, d.ctx as never, { ...d.opts, links: d.links });
+  const f = settings && d.follows ? d.follows(settings as Record<string, unknown>) : {};
+  return machineGraph(d.machine, d.ctx as never, {
+    ...d.opts,
+    ...(f.also ? { also: f.also } : {}),
+    links: f.links ?? d.links,
+  });
 }
 
 /** Processes that lead into this one (the other half of "how it connects"). */

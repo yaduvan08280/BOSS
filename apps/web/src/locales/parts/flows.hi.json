@@ -286,6 +286,176 @@
       "finalInvoice": "आख़िरी इनवॉइस"
     },
     "statusesN_one": "{{count}} स्थिति",
-    "statusesN_other": "{{count}} स्थितियाँ"
+    "statusesN_other": "{{count}} स्थितियाँ",
+    "setupTab": "सेट करें",
+    "howLinks": "कैसे जुड़ा है",
+    "setup": {
+      "nothing": "इस प्रक्रिया में अपना कुछ सेट करने को नहीं है: यह अपने चार्ट के चरणों से चलती है।",
+      "openSetup": "जहाँ यह सेट होता है वहाँ खोलें",
+      "allRules": "इस हिस्से के सारे नियम",
+      "cantRead": "ये नियम खुल नहीं सके।",
+      "onePerLine": "हर लाइन में एक।",
+      "undo": "बदलाव वापस लें",
+      "from": {
+        "hr": "HR नियमों से — यहाँ सेव करने से पूरी कंपनी के लिए बदलते हैं।",
+        "ims": "इन्वेंटरी नियमों से।",
+        "crm": "सेल्स CRM सेट-अप से।",
+        "hosp": "हॉस्पिटैलिटी नियमों से।",
+        "hotel": "इस प्रॉपर्टी के होटल नियमों से।",
+        "branch": "इस ब्रांच के बैंक्वेट नियमों से।",
+        "booking": "इस आउटलेट के बुकिंग नियमों से।"
+      },
+      "scope": {
+        "property": "प्रॉपर्टी",
+        "branch": "ब्रांच",
+        "outlet": "आउटलेट"
+      },
+      "none": {
+        "property": "अभी किसी प्रॉपर्टी में कमरे नहीं हैं।",
+        "branch": "अभी कोई ब्रांच नहीं।",
+        "outlet": "अभी कोई आउटलेट नहीं।"
+      }
+    },
+    "unit": {
+      "min": "मिनट",
+      "hours": "घंटे",
+      "days": "दिन",
+      "pct": "%",
+      "people": "लोग",
+      "items": "आइटम"
+    },
+    "f": {
+      "hr_leave_hrUserId": "HR व्यक्ति",
+      "hr_autopilot_autoApproveShort": "छोटी छुट्टी अपने-आप मंज़ूर",
+      "hr_buddy_noBuddy": "छुट्टी मंज़ूर, पर कुछ काम का Buddy नहीं",
+      "hr_buddy_needsBuddy": "किन छुट्टियों में Buddy चाहिए",
+      "hr_buddy_needsBuddyDays": "…इतने दिनों से",
+      "hr_leave_compOffValidDays": "कॉम्प-ऑफ़ इतने में लेना होगा",
+      "hr_buddyAnswer_answerHours": "Buddy इतने में जवाब दे",
+      "hr_autopilot_autoPick": "कोई Buddy नहीं चुना: सिस्टम चुन ले",
+      "hr_buddy_otherDepartment": "Buddy दूसरे विभाग से हो सकता है",
+      "hr_buddy_otherBranch": "Buddy दूसरी ब्रांच से हो सकता है",
+      "hr_buddy_maxCover": "एक Buddy ज़्यादा से ज़्यादा इतनों को कवर करे",
+      "hr_buddyAnswer_onReturn": "व्यक्ति के लौटने पर",
+      "hr_autopilot_absentToBuddy": "बिना छुट्टी गैरहाज़िर: काम उनके Buddy को",
+      "hr_buddyAnswer_absentConfirmHours": "बिना छुट्टी गैरहाज़िर: HOD इतने में कवर पक्का करें",
+      "crm_split_crrPct": "साल के टारगेट में पुराने ग्राहकों का हिस्सा",
+      "crm_split_gpFollows": "ग्रॉस प्रॉफ़िट टारगेट भी इसी बँटवारे से",
+      "crm_seats_nbdSc": "NBD सेल्स कोऑर्डिनेटर",
+      "crm_seats_salesRep": "फ़ील्ड सेल्स रेप",
+      "crm_nbd_stages": "लीड के हर चरण के लिए दिन",
+      "crm_seats_crrSc": "CRR सेल्स कोऑर्डिनेटर",
+      "crm_seats_osr": "आउटसाइड सेल्स रेप",
+      "crm_customers_sleepingDays": "इतने दिन ऑर्डर नहीं तो ग्राहक सोया हुआ",
+      "crm_customers_lostDays": "इतने दिन ऑर्डर नहीं तो ग्राहक खोया हुआ",
+      "crm_seats_crm": "CRM लोग (ऑर्डर के बाद का काम)",
+      "crm_customers_newOrders": "ग्राहक पहले इतने ऑर्डर तक नया",
+      "crm_customers_newDays": "…या पहले इतने दिन",
+      "ims_people_purchaseIds": "ख़रीद वाले लोग",
+      "ims_people_storeKeeperIds": "स्टोर कीपर",
+      "ims_ows_orderWeekday": "ऑर्डर का दिन",
+      "ims_ows_daysAhead": "ऑर्डर लिस्ट इतने दिन पहले तैयार",
+      "ims_stock_emergencyApprovals": "आउटलेट के बीच इमरजेंसी ट्रांसफ़र में हाँ चाहिए",
+      "ims_stock_valuation": "स्टॉक की क़ीमत कैसे लगे",
+      "ims_stock_expiryAlertDays": "एक्सपायरी से पहले चेतावनी",
+      "ims_stock_wasteApproveOverPaise": "इससे ज़्यादा का वेस्ट हाँ का इंतज़ार करे",
+      "ims_people_approverIds": "स्टॉक एडजस्टमेंट कौन मंज़ूर करे",
+      "ims_people_anyOne": "एक मंज़ूर करने वाले की हाँ काफ़ी",
+      "ims_people_neverOwn": "कोई अपना एडजस्टमेंट ख़ुद मंज़ूर न करे",
+      "ims_people_ownerAlways": "मालिक हमेशा मंज़ूर कर सकते हैं",
+      "ims_stock_varianceFlagPct": "इससे ज़्यादा फ़र्क़ वाली गिनती पर झंडा",
+      "ims_people_reviewerIds": "गिनती कौन जाँचे",
+      "ims_audit_topByValue": "हर चक्र में क़ीमत से ऊपर के इतने आइटम गिनें",
+      "ims_audit_cycleDays": "ऑडिट चक्र",
+      "ims_audit_deadAfterDays": "इतने दिन हलचल नहीं = डेड स्टॉक",
+      "ims_people_auditIds": "ऑडिटर",
+      "booking_autoConfirm": "ऑनलाइन बुकिंग तुरंत पक्की",
+      "booking_depositFrom": "इतने या ज़्यादा लोगों पर डिपॉज़िट",
+      "booking_depositPerHeadPaise": "प्रति व्यक्ति डिपॉज़िट",
+      "booking_holdMin": "बुकिंग समय के बाद टेबल रोकें",
+      "booking_reminderHours": "मेहमान को इतने पहले याद दिलाएँ",
+      "booking_cancelFreeHours": "कम से कम इतने पहले कैंसिल पर डिपॉज़िट वापस",
+      "booking_noShowDeposit": "नो-शो पर डिपॉज़िट",
+      "hosp_approverIds": "सीमा से ज़्यादा डिस्काउंट कौन मंज़ूर करे",
+      "hosp_ncReasons": "नो-चार्ज बिल के कारण",
+      "hosp_dayClose_cutoffMin": "बिज़नेस का दिन यहाँ ख़त्म",
+      "hosp_dayClose_blindCash": "ब्लाइंड कैश गिनती",
+      "hosp_dayClose_closerIds": "दिन कौन बंद करे",
+      "hotel_checkInMin": "चेक-इन समय",
+      "hotel_checkOutMin": "चेक-आउट समय",
+      "hotel_graceMin": "समय के आसपास छूट",
+      "hotel_earlyFeePct": "जल्दी चेक-इन शुल्क (रात के रेट का)",
+      "hotel_lateFeePct": "देर से चेक-आउट शुल्क (रात के रेट का)",
+      "hotel_lateFullMin": "इसके बाद जाने पर पूरी रात का पैसा",
+      "hotel_formCHours": "चेक-इन के बाद Form C (विदेशी मेहमान)",
+      "hotel_requestSolverId": "मेहमानों की रिक्वेस्ट किसे",
+      "hotel_requestSlaMin": "मेहमान की रिक्वेस्ट इतने में पूरी हो",
+      "hotel_maintenanceSolverId": "बंद कमरों के रिपेयर टिकट किसे",
+      "hotel_hkChecklist": "हर कमरे की सफ़ाई चेकलिस्ट",
+      "branch_banquet_advancePct": "इवेंट पक्का करने के लिए एडवांस",
+      "branch_banquet_cancelFreeDays": "कम से कम इतने दिन पहले कैंसिल पर एडवांस वापस"
+    },
+    "h": {
+      "hr_leave_hrUserId": "हर छुट्टी की ख़बर पाते हैं और उसे मंज़ूर कर सकते हैं।",
+      "hr_autopilot_autoApproveShort": "एक दिन या कम, और सारा काम कवर हो।",
+      "hr_buddy_needsBuddyDays": "जब “कुछ दिन और उससे ज़्यादा” चुना हो।",
+      "hr_leave_compOffValidDays": "छुट्टी के दिन काम करके मिला कॉम्प-ऑफ़।",
+      "hr_buddyAnswer_answerHours": "फिर अगला व्यक्ति सुझाया जाता है।",
+      "crm_split_crrPct": "बाकी नया बिज़नेस (NBD) है।",
+      "crm_seats_nbdSc": "नई लीड इनकी हैं।",
+      "crm_nbd_stages": "इससे ज़्यादा रुकी लीड देर में दिखती है।",
+      "crm_seats_crrSc": "ये पुराने ग्राहकों को कॉल करते हैं।",
+      "ims_people_purchaseIds": "ये परचेज़ ऑर्डर बनाते और भेजते हैं।",
+      "ims_people_storeKeeperIds": "ये स्टॉक लेते और भेजते हैं।",
+      "ims_ows_orderWeekday": "जिस दिन हफ़्ते की ऑर्डर लिस्ट बनती है।",
+      "ims_stock_valuation": "प्रोडक्शन में लगे सामान की लागत।",
+      "ims_people_anyOne": "बंद: हर एक की हाँ चाहिए।",
+      "ims_stock_varianceFlagPct": "जितना इस्तेमाल होना चाहिए था उससे तुलना।",
+      "booking_autoConfirm": "जब तक डिपॉज़िट बाकी न हो। बंद: स्टाफ़ हर एक पक्की करे।",
+      "booking_depositFrom": "0 = कोई डिपॉज़िट नहीं।",
+      "booking_holdMin": "फिर नो-शो।",
+      "hosp_approverIds": "मालिक हमेशा कर सकते हैं।",
+      "hosp_dayClose_cutoffMin": "आधी रात के बाद पर इससे पहले का बिल पिछले दिन का।",
+      "hosp_dayClose_blindCash": "गिनने वाले को अपेक्षित रक़म नहीं दिखती।",
+      "branch_banquet_advancePct": "कोटेशन का हिस्सा (0 = नहीं)।"
+    },
+    "o": {
+      "hr_buddy_noBuddy": {
+        "block": "मंज़ूरी रोकें",
+        "warn": "सिर्फ़ चेतावनी",
+        "off": "चलने दें — किसी से न पूछें"
+      },
+      "hr_buddy_needsBuddy": {
+        "any": "हर छुट्टी, आधे दिन भी",
+        "fullDay": "पूरा दिन और ज़्यादा",
+        "days": "कुछ दिन और ज़्यादा"
+      },
+      "hr_buddyAnswer_onReturn": {
+        "notStarted": "शुरू न हुआ काम वापस",
+        "all": "सारा काम वापस",
+        "keep": "Buddy के पास रहे"
+      },
+      "ims_ows_orderWeekday": {
+        "1": "सोमवार",
+        "2": "मंगलवार",
+        "3": "बुधवार",
+        "4": "गुरुवार",
+        "5": "शुक्रवार",
+        "6": "शनिवार",
+        "7": "रविवार"
+      },
+      "ims_stock_emergencyApprovals": {
+        "one": "एक तरफ़",
+        "both": "दोनों तरफ़"
+      },
+      "ims_stock_valuation": {
+        "AVG": "औसत लागत",
+        "FIFO": "पहले आया, पहले गया"
+      },
+      "booking_noShowDeposit": {
+        "KEEP": "रख लें",
+        "REFUND": "वापस करें"
+      }
+    }
   }
 }

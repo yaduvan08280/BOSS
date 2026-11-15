@@ -66,4 +66,17 @@ describe('process catalog (decision 238)', () => {
     expect(plain.nodes.some((n) => n.id === 'stay')).toBe(false);
     expect(plain.edges.every((e) => plain.nodes.some((n) => n.id === e.target))).toBe(true);
   });
+
+  it('follows the company rules its Set up panel edits', () => {
+    const targets = (key: string, rules?: unknown) =>
+      processGraph(key, rules)!
+        .nodes.filter((n) => n.kind === 'link')
+        .map((n) => n.target)
+        .sort();
+    expect(targets('leave')).toEqual(['buddy', 'cover']);
+    expect(targets('leave', { buddy: { noBuddy: 'warn' } })).toEqual(['buddy', 'cover']);
+    expect(targets('leave', { buddy: { noBuddy: 'off' } })).toEqual(['cover']);
+    expect(targets('reservation', { depositFrom: 6 })).toEqual(['bill', 'pos_order']);
+    expect(targets('reservation', { depositFrom: 0 })).toEqual(['pos_order']);
+  });
 });

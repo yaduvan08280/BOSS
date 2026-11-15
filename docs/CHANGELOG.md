@@ -1,5 +1,18 @@
 # Changelog
 
+## 15/11/2026 — Set up every process from the Business Engine
+
+- **Every process in the Business Engine now has a Set up tab** next to its chart, like the five original modules:
+  leave, Buddy and cover (HR rules), year plan, leads, calls and orders (Sales CRM), purchase orders, transfers,
+  production, adjustments, counts and audits (inventory), table bookings (per outlet), POS orders and bills, hotel
+  stays, room status and cleaning (per property), and banquets (per branch).
+- These are the rules the app already runs by, so saving here changes how the work really happens. Hotel rules
+  (check-in and check-out times, early and late fees, Form C, who gets guest requests and repair tickets, the
+  cleaning checklist) and banquet rules (advance %, free cancellation days) can be changed for the first time.
+- The chart follows a change before it is saved where the change alters the flow — e.g. leave that needs no Buddy
+  no longer shows "Asks a Buddy"; an outlet that takes no deposits no longer sends bookings to Money.
+- A **How it connects** tab shows what each process leads to and comes from, the five original modules included.
+
 ## 14/11/2026 — Business Engine draws every process
 
 - **System Master → Business Engine now shows a flowchart for every process in MONO**, by area: HR (leave, Buddy,

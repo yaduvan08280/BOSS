@@ -42,6 +42,7 @@ import { useEngine } from './api';
 import { EngineAlerts } from './EngineAlerts';
 import { FlowChart, FlowLegend } from './FlowChart';
 import { FmsView } from './FmsView';
+import { ProcessSetup, type SetupDraft } from './ProcessSetup';
 import { FmsInfo, MapIndex, ProcessInfo } from './ProcessSide';
 import { SettingsPanel } from './SettingsPanel';
 
@@ -89,6 +90,9 @@ export function EnginePage() {
   const [view, setView] = useState<'chart' | 'alerts'>('chart');
   const [full, setFull] = useState(false);
   const [drafts, setDrafts] = useState<Partial<Record<EngineModule, Record<string, unknown>>>>({});
+  // A process's own rules from its Set up panel: the chart follows them (decision 239).
+  const [setup, setSetup] = useState<SetupDraft>();
+  const [side, setSide] = useState<'setup' | 'links'>('setup');
   const q = useEngine();
   const flows = useFlows();
   const people = useUsers().data ?? [];
@@ -102,7 +106,7 @@ export function EnginePage() {
       ? systemMap(hosp)
       : engine
         ? engineGraph(engine, drafts[engine] ?? info?.settings, processDef(engine)?.links)
-        : processGraph(process);
+        : processGraph(process, setup?.process === process ? setup.rules : undefined);
 
   if (q.isPending) return <PageSkeleton />;
   if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
@@ -274,20 +278,43 @@ export function EnginePage() {
         </Card>
 
         <Card className="p-4">
-          {engine && info ? (
-            <SettingsPanel
-              key={`${engine}-${JSON.stringify(info.settings)}`}
-              info={info}
-              people={people}
-              tz={tz}
-              onDraft={(d) => setDrafts({ ...drafts, [engine]: d })}
-            />
-          ) : process === 'fms' ? (
+          {process === 'fms' ? (
             flow && <FmsInfo flow={flow} />
           ) : process === 'map' ? (
             <MapIndex keys={shown.map((p) => p.key)} onOpen={open} />
           ) : (
-            <ProcessInfo process={process} onOpen={open} />
+            <div className="space-y-4">
+              <div role="tablist" className="grid grid-cols-2 rounded-control bg-muted p-1">
+                {(['setup', 'links'] as const).map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    role="tab"
+                    aria-selected={side === v}
+                    onClick={() => setSide(v)}
+                    className={cn(
+                      'h-9 rounded-[calc(var(--radius)*0.5)] px-3 text-sm font-medium whitespace-nowrap',
+                      side === v ? 'bg-card shadow-sm' : 'text-muted-foreground',
+                    )}
+                  >
+                    {t(v === 'setup' ? 'flows.setupTab' : 'flows.howLinks')}
+                  </button>
+                ))}
+              </div>
+              {side === 'links' ? (
+                <ProcessInfo process={process} onOpen={open} />
+              ) : engine && info ? (
+                <SettingsPanel
+                  key={`${engine}-${JSON.stringify(info.settings)}`}
+                  info={info}
+                  people={people}
+                  tz={tz}
+                  onDraft={(d) => setDrafts({ ...drafts, [engine]: d })}
+                />
+              ) : (
+                <ProcessSetup key={process} process={process} people={people} onDraft={setSetup} />
+              )}
+            </div>
           )}
         </Card>
       </div>
