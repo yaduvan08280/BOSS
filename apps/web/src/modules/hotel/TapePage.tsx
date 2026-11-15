@@ -2,13 +2,14 @@ import { BedDouble } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { hasPermission, type Me } from '@mono/shared';
-import { EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/components/page';
+import { EmptyState, ErrorState, PageSkeleton } from '@/components/page';
 import { StatusChip } from '@/components/status-chip';
 import { Card } from '@/components/ui/card';
 import { Select } from '@/components/ui/form';
 import { cn } from '@/lib/utils';
 import { ROOM_TONE, send, useHotelMutation, useProperty, useTape } from './api';
 import { PropertyBar } from './PropertyBar';
+import { EveryProperty, HotelHeader } from './scope';
 import { StayDialog } from './StayDialog';
 
 const CELL: Record<string, string> = {
@@ -18,7 +19,7 @@ const CELL: Record<string, string> = {
 };
 
 /** The room calendar (phase 17): rooms down, days across; a stay in its cells; bookings still waiting for a room. */
-export function TapePage({ me }: { me: Me }) {
+function TapeBody({ me }: { me: Me }) {
   const { t } = useTranslation();
   const p = useProperty();
   const tape = useTape(p.branchId, 14);
@@ -35,7 +36,7 @@ export function TapePage({ me }: { me: Me }) {
   const d = tape.data;
   return (
     <div>
-      <PageHeader title={t('hotel.tape.title')} subtitle={t('hotel.tape.subtitle')} />
+      <HotelHeader title={t('hotel.tape.title')} subtitle={t('hotel.tape.subtitle')} />
       <PropertyBar
         list={p.list}
         branchId={p.branchId}
@@ -154,5 +155,16 @@ export function TapePage({ me }: { me: Me }) {
         />
       )}
     </div>
+  );
+}
+
+/** One property, or every property one under the other. */
+export function TapePage({ me }: { me: Me }) {
+  const { t } = useTranslation();
+  const p = useProperty();
+  return (
+    <EveryProperty title={t('hotel.tape.title')} subtitle={t('hotel.tape.subtitle')} list={p.list}>
+      {() => <TapeBody me={me} />}
+    </EveryProperty>
   );
 }

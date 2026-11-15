@@ -1,0 +1,7 @@
+{
+  "fmsAll": {
+    "all": "All processes",
+    "late_one": "{{count}} late record, across all processes",
+    "late_other": "{{count}} late records, across all processes"
+  }
+}

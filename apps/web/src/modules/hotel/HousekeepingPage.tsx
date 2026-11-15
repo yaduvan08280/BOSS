@@ -2,7 +2,7 @@ import { BedDouble } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { hasPermission, type Me } from '@mono/shared';
-import { EmptyState, ErrorState, KpiTile, PageHeader, PageSkeleton } from '@/components/page';
+import { EmptyState, ErrorState, KpiTile, PageSkeleton } from '@/components/page';
 import { StatusChip } from '@/components/status-chip';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -23,11 +23,12 @@ import {
   type HkBoard,
 } from './api';
 import { PropertyBar } from './PropertyBar';
+import { EveryProperty, HotelHeader } from './scope';
 
 type RoomRow = HkBoard['rooms'][number];
 
 /** Housekeeping (phase 17): every room's state, today's cleaning with its checklist, inspection, rooms out of order, lost & found. */
-export function HousekeepingPage({ me }: { me: Me }) {
+function HousekeepingBody({ me }: { me: Me }) {
   const { t } = useTranslation();
   const p = useProperty();
   const board = useBoard(p.branchId);
@@ -60,7 +61,7 @@ export function HousekeepingPage({ me }: { me: Me }) {
   const d = board.data;
   return (
     <div>
-      <PageHeader
+      <HotelHeader
         title={t('hotel.hk.title')}
         subtitle={t('hotel.hk.subtitle')}
         actions={
@@ -280,5 +281,16 @@ function BlockDialog({ room, today, onClose }: { room: RoomRow; today: string; o
         </Field>
       </div>
     </Dialog>
+  );
+}
+
+/** One property, or every property one under the other. */
+export function HousekeepingPage({ me }: { me: Me }) {
+  const { t } = useTranslation();
+  const p = useProperty();
+  return (
+    <EveryProperty title={t('hotel.hk.title')} subtitle={t('hotel.hk.subtitle')} list={p.list}>
+      {() => <HousekeepingBody me={me} />}
+    </EveryProperty>
   );
 }

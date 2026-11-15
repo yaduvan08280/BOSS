@@ -1,5 +1,11 @@
 # Changelog
 
+## 15/11/2026 — "All" on the hotel screens and Live FMS; the flash over several days
+
+- **Front desk, Room calendar, Housekeeping, Night audit, Room rates**: "All properties" shows every property one under the other (offered when there is more than one).
+- **Live FMS**: "All processes" — every process's running / late / due today / on hold / closed counts, and all late records in one list.
+- **Hospitality reports → Flash**: From – To, one flash per day under its heading.
+
 ## 15/11/2026 — See several days and every outlet at once
 
 - **Reservations** opens on the next 7 days at **all outlets**, bookings under a heading for each day. Pick one outlet or any dates (From – To, or Today / Next 7 days / Next 30 days).

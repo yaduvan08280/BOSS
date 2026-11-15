@@ -1,43 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
-import { BarChart3 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { EmptyState, ErrorState, KpiTile, PageHeader, PageSkeleton } from '@/components/page';
+import { ErrorState, PageHeader, PageSkeleton } from '@/components/page';
 import { Card } from '@/components/ui/card';
 import { DateInput } from '@/components/ui/date-input';
 import { Select } from '@/components/ui/form';
 import { api } from '@/lib/api';
 import { rupees } from '@/modules/stock/api';
 import { Seg } from '@/modules/stock/ui';
+import { FlashDays } from './FlashDays';
 
 type Tab = 'flash' | 'sales' | 'kitchen' | 'audit' | 'team';
-type Flash = {
-  day: string;
-  outlets: {
-    outletId: string;
-    outlet: string;
-    sales: number;
-    covers: number;
-    perCover: number;
-    voids: { count: number; value: number };
-    discounts: number;
-    noCharge: number;
-    cashSystem: number;
-    cashCounted: number | null;
-    cashDiff: number | null;
-    closed: boolean;
-  }[];
-  rooms: { branch: string; occupancyPct: number; adr: number; revPar: number; sold: number; rooms: number }[];
-  cost: Record<'food' | 'beverage', { sales: number; cost: number; pct: number | null }>;
-  totals: {
-    sales: number;
-    covers: number;
-    perCover: number;
-    voids: number;
-    discounts: number;
-    noCharge: number;
-  };
-};
 type Sales = {
   total: number;
   covers: number;
@@ -78,13 +51,13 @@ export function HospReportsPage() {
   const get = <T,>(key: string, url: string, on: boolean) =>
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useQuery({ queryKey: ['hreports', key, url], queryFn: () => api<T>(url), enabled: on });
-  const flash = get<Flash>('flash', `/api/hosp/reports/flash?day=${from}`, tab === 'flash');
   const sales = get<Sales>('sales', `/api/hosp/reports/sales?${span}&by=${by}`, tab === 'sales');
   const service = get<Service>('service', `/api/hosp/reports/service?${span}`, tab === 'kitchen');
   const audit = get<Audit>('audit', `/api/hosp/reports/audit?${span}`, tab === 'audit');
   const team = get<Team>('team', `/api/hosp/reports/team?day=${from}`, tab === 'team');
-  const q = { flash, sales, kitchen: service, audit, team }[tab];
-  const oneDay = tab === 'flash' || tab === 'team';
+  // The flash reads day by day itself; the other tabs are one request each.
+  const q = { flash: sales, sales, kitchen: service, audit, team }[tab];
+  const oneDay = tab === 'team';
   const row = 'flex flex-wrap items-center justify-between gap-2 border-b py-2 text-sm last:border-0';
   return (
     <div className="space-y-4">
@@ -122,84 +95,12 @@ export function HospReportsPage() {
           </div>
         )}
       </div>
-      {q.isPending ? (
+      {tab !== 'flash' && q.isPending ? (
         <PageSkeleton />
-      ) : q.isError ? (
+      ) : tab !== 'flash' && q.isError ? (
         <ErrorState onRetry={() => void q.refetch()} error={q.error} />
-      ) : tab === 'flash' && flash.data ? (
-        flash.data.outlets.length + flash.data.rooms.length === 0 ? (
-          <EmptyState icon={BarChart3} title={t('hrep.nothing')} body={t('hrep.nothingBody')} />
-        ) : (
-          <div className="space-y-4" data-testid="flash">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <KpiTile
-                hero
-                label={t('hrep.sales', { day: dmy(flash.data.day) })}
-                value={rupees(flash.data.totals.sales)}
-              />
-              <KpiTile
-                label={t('hrep.covers')}
-                value={String(flash.data.totals.covers)}
-                note={t('hrep.perCover', { amount: rupees(flash.data.totals.perCover) })}
-              />
-              <KpiTile
-                label={t('hrep.foodCost')}
-                value={flash.data.cost.food.pct == null ? '—' : `${flash.data.cost.food.pct}%`}
-                note={t('hrep.drinkCost', {
-                  pct: flash.data.cost.beverage.pct == null ? '—' : `${flash.data.cost.beverage.pct}%`,
-                })}
-              />
-              <KpiTile
-                label={t('hrep.voidsDiscounts')}
-                value={rupees(flash.data.totals.voids + flash.data.totals.discounts)}
-                note={t('hrep.noCharge', { count: flash.data.totals.noCharge })}
-              />
-            </div>
-            <Card className="p-4">
-              {flash.data.outlets.map((o) => (
-                <div key={o.outletId} className={row}>
-                  <div>
-                    <div className="font-medium">{o.outlet}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {t('hrep.outletLine', {
-                        covers: o.covers,
-                        perCover: rupees(o.perCover),
-                        voids: rupees(o.voids.value),
-                        discounts: rupees(o.discounts),
-                      })}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-semibold tabular">{rupees(o.sales)}</div>
-                    <div
-                      className={o.cashDiff ? 'text-xs text-status-bad-fg' : 'text-xs text-muted-foreground'}
-                    >
-                      {o.cashDiff == null
-                        ? t('hrep.cashOpen')
-                        : o.cashDiff === 0
-                          ? t('hrep.cashOk')
-                          : t('hrep.cashDiff', { amount: rupees(o.cashDiff) })}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {flash.data.rooms.map((r) => (
-                <div key={r.branch} className={row}>
-                  <div className="font-medium">{r.branch}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {t('hrep.roomsLine', {
-                      sold: r.sold,
-                      rooms: r.rooms,
-                      occ: r.occupancyPct,
-                      adr: rupees(r.adr),
-                      revPar: rupees(r.revPar),
-                    })}
-                  </div>
-                </div>
-              ))}
-            </Card>
-          </div>
-        )
+      ) : tab === 'flash' ? (
+        <FlashDays span={{ from, to: to < from ? from : to }} today={today()} />
       ) : tab === 'sales' && sales.data ? (
         <Card className="p-4" data-testid="sales-report">
           <div className={`${row} font-semibold`}>

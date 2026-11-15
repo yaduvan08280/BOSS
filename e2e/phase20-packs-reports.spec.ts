@@ -117,7 +117,8 @@ test('hospitality reports of a day: the flash, sales, kitchen times, voids and d
     await box.press('Enter');
   };
   // F4: the flash of that day — this outlet's line with its guests and its discount.
-  await pick('Day');
+  await pick('From');
+  await pick('To');
   const flash = page.getByTestId('flash');
   await expect(flash.getByText(`Sales on ${day}`)).toBeVisible();
   await expect(flash.locator('div', { hasText: n.outlet }).first()).toContainText('2 guests');

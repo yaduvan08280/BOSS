@@ -2,7 +2,7 @@ import { BedDouble, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MEAL_PLANS, hasPermission, type Me } from '@mono/shared';
-import { EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/components/page';
+import { EmptyState, ErrorState, PageSkeleton } from '@/components/page';
 import { StatusChip } from '@/components/status-chip';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,9 +13,10 @@ import type { RoomType } from '@/modules/hosp/api';
 import { rupees } from '@/modules/stock/api';
 import { send, useHotelMutation, usePlans, useProperty, type Plan } from './api';
 import { PropertyBar } from './PropertyBar';
+import { EveryProperty, HotelHeader } from './scope';
 
 /** Rate plans (phase 17): what a night costs for each room type on each plan. */
-export function RatesPage({ me }: { me: Me }) {
+function RatesBody({ me }: { me: Me }) {
   const { t } = useTranslation();
   const p = useProperty();
   const plans = usePlans(p.branchId);
@@ -26,7 +27,7 @@ export function RatesPage({ me }: { me: Me }) {
     return <EmptyState icon={BedDouble} title={t('hotel.noRooms')} body={t('hotel.noRoomsBody')} />;
   return (
     <div>
-      <PageHeader
+      <HotelHeader
         title={t('hotel.rates.title')}
         subtitle={t('hotel.rates.subtitle')}
         actions={
@@ -166,5 +167,16 @@ function PlanDialog({
         ))}
       </div>
     </Dialog>
+  );
+}
+
+/** One property, or every property one under the other. */
+export function RatesPage({ me }: { me: Me }) {
+  const { t } = useTranslation();
+  const p = useProperty();
+  return (
+    <EveryProperty title={t('hotel.rates.title')} subtitle={t('hotel.rates.subtitle')} list={p.list}>
+      {() => <RatesBody me={me} />}
+    </EveryProperty>
   );
 }

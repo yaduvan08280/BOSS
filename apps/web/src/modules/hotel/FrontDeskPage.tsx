@@ -2,7 +2,7 @@ import { BedDouble, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { hasPermission, type Me } from '@mono/shared';
-import { EmptyState, ErrorState, KpiTile, PageHeader, PageSkeleton } from '@/components/page';
+import { EmptyState, ErrorState, KpiTile, PageSkeleton } from '@/components/page';
 import { StatusChip } from '@/components/status-chip';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -11,12 +11,13 @@ import { dmy, STAY_TONE, useDesk, useProperty, type Desk, type StayRow } from '.
 import { CheckInDialog } from './CheckInDialog';
 import { NewBookingDialog } from './NewBookingDialog';
 import { PropertyBar } from './PropertyBar';
+import { EveryProperty, HotelHeader } from './scope';
 import { StayDialog } from './StayDialog';
 
 type Tab = keyof Omit<Desk, 'businessDate'>;
 
 /** The front desk (phase 17): who arrives, who is in the house, who leaves — and everything done for a guest. */
-export function FrontDeskPage({ me }: { me: Me }) {
+function FrontDeskBody({ me }: { me: Me }) {
   const { t } = useTranslation();
   const p = useProperty();
   const desk = useDesk(p.branchId);
@@ -32,7 +33,7 @@ export function FrontDeskPage({ me }: { me: Me }) {
   const tabs: Tab[] = ['arrivals', 'inHouse', 'departures', 'dueOuts'];
   return (
     <div>
-      <PageHeader
+      <HotelHeader
         title={t('hotel.desk.title')}
         subtitle={t('hotel.desk.subtitle')}
         actions={
@@ -120,5 +121,16 @@ export function FrontDeskPage({ me }: { me: Me }) {
         </>
       )}
     </div>
+  );
+}
+
+/** One property, or every property one under the other. */
+export function FrontDeskPage({ me }: { me: Me }) {
+  const { t } = useTranslation();
+  const p = useProperty();
+  return (
+    <EveryProperty title={t('hotel.desk.title')} subtitle={t('hotel.desk.subtitle')} list={p.list}>
+      {() => <FrontDeskBody me={me} />}
+    </EveryProperty>
   );
 }

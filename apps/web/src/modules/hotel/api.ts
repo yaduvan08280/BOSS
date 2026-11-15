@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { usePropertyScope } from './scope-ctx';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import type { HotelRules, StayStatus } from '@mono/shared';
@@ -227,7 +228,10 @@ export const send = <T = unknown>(url: string, body: unknown = {}, method = 'POS
 export function useProperty() {
   const rooms = useRooms();
   const branches = useBranches();
-  const [picked, setPicked] = useState('');
+  const scope = usePropertyScope();
+  const [own, setOwn] = useState('');
+  const picked = scope ? scope.picked : own;
+  const setPicked = scope ? scope.choose : setOwn;
   const ids = [...new Set((rooms.data?.types ?? []).map((t) => t.branchId))];
   const list = ids.map((id) => ({ id, name: branches.data?.find((x) => x.id === id)?.name ?? '…' }));
   return {

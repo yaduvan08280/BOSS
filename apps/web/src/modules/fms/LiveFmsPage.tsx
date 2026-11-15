@@ -15,6 +15,7 @@ import { useDueLabel, useParamState } from '@/lib/work';
 import { formatDateTime } from '@/lib/when';
 import { useUsers } from '@/modules/system/api';
 import { RECORD_TONE, useLive } from './api';
+import { LiveAll } from './LiveAll';
 import { ExtraValues, LiveColumnsButton } from './LiveColumns';
 import { RecordDrawer } from './RecordDrawer';
 import { StartDialog } from './StartDialog';
@@ -31,7 +32,9 @@ export function LiveFmsPage({ me }: { me: Me }) {
   const people = useUsers().data ?? [];
   const names = new Map(people.map((p) => [p.id, p.name]));
   const due = useDueLabel();
-  const q = useLive(flowId, tab === 'report' ? 'running' : tab);
+  // 'all' = every process side by side; otherwise one process (the first when none is named).
+  const all = flowId === 'all';
+  const q = useLive(all ? null : flowId, tab === 'report' ? 'running' : tab);
   const [starting, setStarting] = useState(false);
   const data = q.data;
   const flow = data?.flow;
@@ -79,6 +82,29 @@ export function LiveFmsPage({ me }: { me: Me }) {
         <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : !flow ? (
         <EmptyState icon={Workflow} title={t('fms.noLive')} body={t('fms.noLiveBody')} />
+      ) : all ? (
+        <>
+          <Select
+            aria-label={t('fms.flow')}
+            className="w-auto min-w-64"
+            value="all"
+            onChange={(e) => set({ flow: e.target.value, record: null })}
+          >
+            <option value="all">{t('fmsAll.all')}</option>
+            {data!.flows.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.code} · {f.name}
+              </option>
+            ))}
+          </Select>
+          <LiveAll
+            flows={data!.flows}
+            tz={tz}
+            names={names}
+            onFlow={(id) => set({ flow: id, record: null })}
+            onRecord={(id, record) => set({ flow: id, tab: 'late', record })}
+          />
+        </>
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-2">
@@ -88,6 +114,7 @@ export function LiveFmsPage({ me }: { me: Me }) {
               value={flow.id}
               onChange={(e) => set({ flow: e.target.value, record: null })}
             >
+              {data!.flows.length > 1 && <option value="all">{t('fmsAll.all')}</option>}
               {data!.flows.map((f) => (
                 <option key={f.id} value={f.id}>
                   {f.code} · {f.name}

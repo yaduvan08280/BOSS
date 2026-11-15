@@ -2,16 +2,17 @@ import { BedDouble, Moon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { hasPermission, type Me } from '@mono/shared';
-import { EmptyState, ErrorState, KpiTile, PageHeader, PageSkeleton } from '@/components/page';
+import { EmptyState, ErrorState, KpiTile, PageSkeleton } from '@/components/page';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Confirm } from '@/components/ui/dialog';
 import { rupees } from '@/modules/stock/api';
 import { dmy, send, useAudits, useHotelMutation, useProperty, type AuditPack } from './api';
 import { PropertyBar } from './PropertyBar';
+import { EveryProperty, HotelHeader } from './scope';
 
 /** The night audit (phase 17): close the hotel's day, and read the pack of each day closed. */
-export function AuditPage({ me }: { me: Me }) {
+function AuditBody({ me }: { me: Me }) {
   const { t } = useTranslation();
   const p = useProperty();
   const audits = useAudits(p.branchId);
@@ -28,7 +29,7 @@ export function AuditPage({ me }: { me: Me }) {
   const last: AuditPack | undefined = d?.audits[0];
   return (
     <div>
-      <PageHeader
+      <HotelHeader
         title={t('hotel.audit.title')}
         subtitle={t('hotel.audit.subtitle')}
         actions={
@@ -121,5 +122,16 @@ export function AuditPage({ me }: { me: Me }) {
         />
       )}
     </div>
+  );
+}
+
+/** One property, or every property one under the other. */
+export function AuditPage({ me }: { me: Me }) {
+  const { t } = useTranslation();
+  const p = useProperty();
+  return (
+    <EveryProperty title={t('hotel.audit.title')} subtitle={t('hotel.audit.subtitle')} list={p.list}>
+      {() => <AuditBody me={me} />}
+    </EveryProperty>
   );
 }
