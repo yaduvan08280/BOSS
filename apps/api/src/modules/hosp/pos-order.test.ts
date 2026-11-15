@@ -218,7 +218,8 @@ describe('POS: orders, kitchen tickets, kitchen display, voids, table operations
     expect((await order(s, o.id)).items.find((i) => i.id === cola)!.status).toBe('VOID');
     // The bar's ticket had only the cola: it is cancelled. The kitchen's still has the tikka.
     const kots = await ctx.prisma.kot.findMany({ where: { orderId: o.id }, orderBy: { number: 'asc' } });
-    expect(kots.map((k) => k.status)).toEqual(['NEW', 'CANCELLED']);
+    // Which of the two tickets got the lower number is not fixed (they are made together), so compare as a set.
+    expect(kots.map((k) => k.status).sort()).toEqual(['CANCELLED', 'NEW']);
     // A dish cooked and then cancelled: its paneer is gone — written off as a returned dish.
     await ok(voidIt(r.manager.api, tikka!, { reason: 'Guest left', cooked: true }));
     expect(await at(ctx.prisma, r.stock.paneer, r.kitchenLoc)).toBe(4800);
