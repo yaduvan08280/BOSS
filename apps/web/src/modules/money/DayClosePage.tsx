@@ -6,37 +6,30 @@ import { hasPermission, type Me } from '@mono/shared';
 import { EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/components/page';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { DateInput } from '@/components/ui/date-input';
+import { DateRange, type Span } from '@/components/date-range';
 import { Select } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { api } from '@/lib/api';
 import { useBranches } from '@/modules/system/api';
 import { money, toMinor, useMoneyMutation, useToday } from './api';
-
-type Sheet = {
-  closed: boolean;
-  modes: {
-    modeId: string;
-    name: string;
-    kind: string;
-    expected: number;
-    counted: number | null;
-    difference: number | null;
-  }[];
-};
+import { DayCloseOverview, type Sheet } from './DayCloseOverview';
 
 /** A branch's day close: for each way money is taken, what the day's papers expect against what was counted. */
 export function DayClosePage({ me }: { me: Me }) {
   const { t } = useTranslation();
   const branches = useBranches();
   const [branchId, setBranchId] = useState('');
-  const [date, setDate] = useState(useToday());
+  const today = useToday();
+  const [span, setSpan] = useState<Span>({ from: today, to: today });
+  // '' = every branch. One branch on one day is the closing sheet; anything wider is the overview.
+  const [all, setAll] = useState(false);
+  const date = span.from;
   const [counted, setCounted] = useState<Record<string, string>>({});
   const at = branchId || branches.data?.[0]?.id || '';
   const q = useQuery({
     queryKey: ['money', 'day-close', at, date],
     queryFn: () => api<Sheet>(`/api/money/day-close?branchId=${at}&date=${date}`),
-    enabled: Boolean(at),
+    enabled: Boolean(at) && !all && span.from === span.to,
   });
   const close = useMoneyMutation(
     () =>
@@ -59,22 +52,35 @@ export function DayClosePage({ me }: { me: Me }) {
       <div className="mb-4 flex flex-wrap gap-2">
         <Select
           aria-label={t('hrBranch.branch')}
-          value={at}
-          onChange={(e) => setBranchId(e.target.value)}
+          value={all ? '' : at}
+          onChange={(e) => {
+            setAll(!e.target.value);
+            if (e.target.value) setBranchId(e.target.value);
+          }}
           className="w-56"
         >
+          {(branches.data ?? []).length > 1 && <option value="">{t('bar.allBranches')}</option>}
           {(branches.data ?? []).map((b) => (
             <option key={b.id} value={b.id}>
               {b.name}
             </option>
           ))}
         </Select>
-        <div className="w-40">
-          <DateInput value={date} onChange={setDate} aria-label={t('money.date')} />
-        </div>
+        <DateRange value={span} onChange={setSpan} today={today} maxDays={31} />
       </div>
       {!at ? (
         <EmptyState icon={Landmark} title={t('org.branches.emptyTitle')} body={t('org.branches.emptyBody')} />
+      ) : all || span.from !== span.to ? (
+        <DayCloseOverview
+          branches={all ? (branches.data ?? []) : (branches.data ?? []).filter((b) => b.id === at)}
+          span={span}
+          today={today}
+          onOpen={(branchId, day) => {
+            setAll(false);
+            setBranchId(branchId);
+            setSpan({ from: day, to: day });
+          }}
+        />
       ) : q.isPending ? (
         <PageSkeleton />
       ) : q.isError ? (

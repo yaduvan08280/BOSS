@@ -41,6 +41,7 @@ import {
   makeReservation,
   staffOutlet,
 } from './reservations';
+import { bookSpan } from './res-span';
 import { actOnWaitlist, joinWaitlist, quote, quoteQuery, waitActSchema, waitlist } from './waitlist';
 
 const idParam = z.object({ id: z.string() });
@@ -59,6 +60,22 @@ export async function reservationRoutes(app: FastifyInstance, opts: { env: Env }
     schema: { tags, params: idParam, body: schema },
   });
 
+  // Several days, one outlet or all of the person's outlets.
+  r.get(
+    '/api/reservations/book',
+    {
+      ...view(),
+      schema: {
+        tags,
+        querystring: z.object({
+          from: day.optional(),
+          to: day.optional(),
+          outletId: z.string().max(40).optional(),
+        }),
+      },
+    },
+    async (q) => bookSpan(db, actorOf(q), q.query),
+  );
   r.get(
     '/api/reservations/outlets/:id/book',
     { ...view(), schema: { tags, params: idParam, querystring: z.object({ day: day.optional() }) } },

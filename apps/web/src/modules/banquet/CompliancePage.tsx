@@ -10,7 +10,7 @@ import { DateInput } from '@/components/ui/date-input';
 import { Field, Select } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Seg } from '@/modules/stock/ui';
-import { dmy, send, useBanquetMutation, useCompliance, useHospBranch, useTemps } from './api';
+import { dmy, send, useBanquetMutation, useComplianceOf, useHospBranch, useTempsOf } from './api';
 
 const TONE = { VALID: 'ok', EXPIRING: 'warn', EXPIRED: 'bad' } as const;
 
@@ -18,8 +18,8 @@ const TONE = { VALID: 'ok', EXPIRING: 'warn', EXPIRED: 'bad' } as const;
 export function CompliancePage({ me }: { me: Me }) {
   const { t } = useTranslation();
   const b = useHospBranch();
-  const list = useCompliance(b.branchId);
-  const temps = useTemps(b.branchId);
+  const list = useComplianceOf(b.shown);
+  const temps = useTempsOf(b.shown);
   const [tab, setTab] = useState<'licences' | 'temps'>('licences');
   const [f, setF] = useState({ kind: 'FSSAI', name: '', number: '', expiresOn: '', every: '' });
   const [renew, setRenew] = useState<Record<string, string>>({});
@@ -65,16 +65,25 @@ export function CompliancePage({ me }: { me: Me }) {
   if (b.loading) return <PageSkeleton />;
   if (!b.list.length)
     return <EmptyState icon={ShieldCheck} title={t('pos.noOutlet')} body={t('pos.noOutletBody')} />;
-  const d = list.data;
+  const order = { EXPIRED: 0, EXPIRING: 1, VALID: 2 } as Record<string, number>;
+  const d = list.first && {
+    today: list.first.today,
+    counts: {
+      expired: list.all.reduce((n, x) => n + x.counts.expired, 0),
+      expiring: list.all.reduce((n, x) => n + x.counts.expiring, 0),
+      valid: list.all.reduce((n, x) => n + x.counts.valid, 0),
+    },
+    // What has run out first, then what is about to, whichever branch it belongs to.
+    items: [...list.rows].sort(
+      (x, y) => (order[x.state] ?? 3) - (order[y.state] ?? 3) || x.expiresOn.localeCompare(y.expiresOn),
+    ),
+  };
   return (
     <div>
       <PageHeader title={t('cmp.title')} subtitle={t('cmp.subtitle')} />
       <div className="mb-4 w-full sm:w-64">
-        <Select
-          aria-label={t('bq.branch')}
-          value={b.branchId}
-          onChange={(e) => b.setBranchId(e.target.value)}
-        >
+        <Select aria-label={t('bq.branch')} value={b.value} onChange={(e) => b.choose(e.target.value)}>
+          {b.list.length > 1 && <option value="">{t('bar.allBranches')}</option>}
           {b.list.map((x) => (
             <option key={x.id} value={x.id}>
               {x.name}
@@ -100,8 +109,8 @@ export function CompliancePage({ me }: { me: Me }) {
       {tab === 'licences' ? (
         list.isPending ? (
           <PageSkeleton />
-        ) : list.isError || !d ? (
-          <ErrorState onRetry={() => void list.refetch()} error={list.error} />
+        ) : list.error || !d ? (
+          <ErrorState onRetry={list.refetch} error={list.error} />
         ) : (
           <div className="space-y-4">
             {d.items.length === 0 && (
@@ -117,6 +126,7 @@ export function CompliancePage({ me }: { me: Me }) {
                     <div className="min-w-0">
                       <div className="font-medium">{c.name}</div>
                       <div className="text-xs text-muted-foreground">
+                        {b.all ? `${c.branch} · ` : ''}
                         {c.number ? `${c.number} · ` : ''}
                         {t('cmp.until', { day: dmy(c.expiresOn) })}
                         {c.everyDays ? ` · ${t('cmp.every', { days: c.everyDays })}` : ''}
@@ -153,7 +163,7 @@ export function CompliancePage({ me }: { me: Me }) {
                 </li>
               ))}
             </ul>
-            {canManage && (
+            {canManage && !b.all && (
               <Card className="grid gap-2 p-3 sm:grid-cols-5">
                 <Field label={t('cmp.kind')}>
                   <Select value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value })}>
@@ -203,7 +213,7 @@ export function CompliancePage({ me }: { me: Me }) {
       ) : (
         <div className="space-y-4">
           <ul className="grid gap-2 sm:grid-cols-2">
-            {(temps.data?.points ?? []).map((x) => {
+            {temps.rows.map((x) => {
               const r = read[x.id] ?? { value: '', action: '' };
               return (
                 <li key={x.id}>
@@ -261,7 +271,7 @@ export function CompliancePage({ me }: { me: Me }) {
               );
             })}
           </ul>
-          {canManage && (
+          {canManage && !b.all && (
             <Card className="grid gap-2 p-3 sm:grid-cols-4">
               <Field label={t('cmp.point')}>
                 <Input value={p.name} onChange={(e) => setP({ ...p, name: e.target.value })} />

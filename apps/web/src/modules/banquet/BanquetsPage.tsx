@@ -1,5 +1,6 @@
 import { PartyPopper, Plus } from 'lucide-react';
 import { useState } from 'react';
+import { DayHeading } from '@/components/date-range';
 import { useTranslation } from 'react-i18next';
 import { hasPermission, type Me } from '@mono/shared';
 import { EmptyState, ErrorState, KpiTile, PageHeader, PageSkeleton } from '@/components/page';
@@ -18,7 +19,7 @@ import {
   EVENT_TONE,
   send,
   useBanquetMutation,
-  useEvents,
+  useEventsOf,
   useHalls,
   useHospBranch,
   usePackages,
@@ -32,7 +33,7 @@ const mins = (hhmm: string) => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice
 export function BanquetsPage({ me }: { me: Me }) {
   const { t } = useTranslation();
   const b = useHospBranch();
-  const events = useEvents(b.branchId);
+  const events = useEventsOf(b.shown);
   const halls = useHalls(b.branchId);
   const packages = usePackages();
   const [tab, setTab] = useState<'events' | 'setup'>('events');
@@ -63,7 +64,10 @@ export function BanquetsPage({ me }: { me: Me }) {
   if (b.loading) return <PageSkeleton />;
   if (!b.list.length)
     return <EmptyState icon={PartyPopper} title={t('pos.noOutlet')} body={t('pos.noOutletBody')} />;
-  const list = events.data?.events ?? [];
+  // Soonest first, a heading for each day.
+  const list = [...events.rows].sort((x, y) => (x.day + x.from).localeCompare(y.day + y.from));
+  const today = events.first?.today ?? '';
+  const days = [...new Set(list.map((e) => e.day))];
   const open = list.find((e) => e.id === openId);
   const count = (s: string) => list.filter((e) => e.status === s).length;
   return (
@@ -73,6 +77,7 @@ export function BanquetsPage({ me }: { me: Me }) {
         subtitle={t('bq.subtitle')}
         actions={
           canSell &&
+          !b.all &&
           (halls.data ?? []).length > 0 && (
             <Button size="sm" variant="primary" onClick={() => setAdding(true)}>
               <Plus /> {t('bq.newEnquiry')}
@@ -81,11 +86,8 @@ export function BanquetsPage({ me }: { me: Me }) {
         }
       />
       <div className="mb-4 w-full sm:w-64">
-        <Select
-          aria-label={t('bq.branch')}
-          value={b.branchId}
-          onChange={(e) => b.setBranchId(e.target.value)}
-        >
+        <Select aria-label={t('bq.branch')} value={b.value} onChange={(e) => b.choose(e.target.value)}>
+          {b.list.length > 1 && <option value="">{t('bar.allBranches')}</option>}
           {b.list.map((x) => (
             <option key={x.id} value={x.id}>
               {x.name}
@@ -110,37 +112,52 @@ export function BanquetsPage({ me }: { me: Me }) {
       {tab === 'events' ? (
         events.isPending ? (
           <PageSkeleton />
-        ) : events.isError ? (
-          <ErrorState onRetry={() => void events.refetch()} error={events.error} />
+        ) : events.error ? (
+          <ErrorState onRetry={events.refetch} error={events.error} />
         ) : list.length === 0 ? (
           <EmptyState icon={PartyPopper} title={t('bq.none')} body={t('bq.noneBody')} />
         ) : (
-          <ul className="space-y-2">
-            {list.map((e) => (
-              <li key={e.id}>
-                <button type="button" className="w-full text-left" onClick={() => setOpenId(e.id)}>
-                  <Card className="flex flex-wrap items-center justify-between gap-3 p-3">
-                    <div className="min-w-0">
-                      <div className="font-medium">
-                        {e.occasion} · {e.guest?.name}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        <span className="font-mono">{e.number}</span> · {dmy(e.day)} {e.from}–{e.to} ·{' '}
-                        {e.halls.map((h) => h.name).join(' + ')} · {e.guaranteedCovers ?? e.expectedCovers}
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {e.totals.total > 0 && (
-                        <span className="tabular text-sm">{rupees(e.totals.total)}</span>
-                      )}
-                      <StatusChip tone={EVENT_TONE[e.status]}>{t(`bq.status.${e.status}`)}</StatusChip>
-                    </div>
-                  </Card>
-                </button>
-              </li>
+          <div className="space-y-4">
+            {days.map((day) => (
+              <section key={day} className="space-y-2">
+                <DayHeading day={day} today={today} />
+                <ul className="space-y-2">
+                  {list
+                    .filter((e) => e.day === day)
+                    .map((e) => (
+                      <li key={e.id}>
+                        <button type="button" className="w-full text-left" onClick={() => setOpenId(e.id)}>
+                          <Card className="flex flex-wrap items-center justify-between gap-3 p-3">
+                            <div className="min-w-0">
+                              <div className="font-medium">
+                                {e.occasion} · {e.guest?.name}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                <span className="font-mono">{e.number}</span> · {dmy(e.day)} {e.from}–{e.to} ·{' '}
+                                {b.all ? `${e.branch} · ` : ''}
+                                {e.halls.map((h) => h.name).join(' + ')} ·{' '}
+                                {e.guaranteedCovers ?? e.expectedCovers}
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              {e.totals.total > 0 && (
+                                <span className="tabular text-sm">{rupees(e.totals.total)}</span>
+                              )}
+                              <StatusChip tone={EVENT_TONE[e.status]}>
+                                {t(`bq.status.${e.status}`)}
+                              </StatusChip>
+                            </div>
+                          </Card>
+                        </button>
+                      </li>
+                    ))}
+                </ul>
+              </section>
             ))}
-          </ul>
+          </div>
         )
+      ) : b.all ? (
+        <p className="text-sm text-muted-foreground">{t('bq.pickBranch')}</p>
       ) : (
         <div className="grid gap-5 lg:grid-cols-2">
           <section className="space-y-2">
@@ -222,10 +239,10 @@ export function BanquetsPage({ me }: { me: Me }) {
           </section>
         </div>
       )}
-      {adding && events.data && (
+      {adding && events.first && (
         <EnquiryDialog
           branchId={b.branchId}
-          today={events.data.today}
+          today={events.first.today}
           halls={halls.data ?? []}
           onClose={() => setAdding(false)}
         />

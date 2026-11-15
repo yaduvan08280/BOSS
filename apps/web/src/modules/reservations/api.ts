@@ -103,6 +103,23 @@ export const useBook = (outletId: string, day: string) =>
     `/api/reservations/outlets/${outletId}/book${day ? `?day=${day}` : ''}`,
     Boolean(outletId),
   );
+export type SpanRes = Res & { outletId: string; outlet: string };
+export type BookSpan = {
+  from: string;
+  to: string;
+  today: string;
+  outlets: { id: string; name: string }[];
+  counts: Book['counts'];
+  days: ({ day: string } & Book['counts'])[];
+  reservations: SpanRes[];
+};
+/** Several days at one outlet, or at every outlet of the person (`outletId` empty). */
+export const useBookSpan = (from: string, to: string, outletId: string) =>
+  usePoll<BookSpan>(
+    ['span', from, to, outletId],
+    `/api/reservations/book?${new URLSearchParams({ ...(from ? { from, to } : {}), ...(outletId ? { outletId } : {}) })}`,
+    true,
+  );
 export const useSlots = (outletId: string, day: string, size: number, except?: string) =>
   usePoll<Slots>(
     ['slots', outletId, day, size, except],

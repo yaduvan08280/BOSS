@@ -6,11 +6,12 @@ import { formatDateTime, formatLocalDate, localDate, type Me } from '@mono/share
 import { EmptyState, ErrorState, KpiTile, PageHeader, PageSkeleton } from '@/components/page';
 import { StatusChip } from '@/components/status-chip';
 import { Button } from '@/components/ui/button';
-import { DateInput } from '@/components/ui/date-input';
+import { DateRange, DayHeading, type Span } from '@/components/date-range';
+import { useDays } from '@/lib/use-days';
 import { Select } from '@/components/ui/form';
 import { personLabel } from '@/lib/people';
 import { useUsers } from '@/modules/system/api';
-import { hrApi, useCoverBoard, useHrMutation, type CoverBoard, type CoverItem } from './api';
+import { hrApi, useHrMutation, type CoverBoard, type CoverItem } from './api';
 
 const STATE = { covered: 'ok', accepted: 'ok', asked: 'warn', none: 'bad' } as const;
 
@@ -18,35 +19,50 @@ const STATE = { covered: 'ok', accepted: 'ok', asked: 'warn', none: 'bad' } as c
 export function CoverBoardPage({ me }: { me: Me }) {
   const { t } = useTranslation();
   const tz = me.company.timezone;
-  const [date, setDate] = useState(localDate(new Date(), tz));
-  const q = useCoverBoard(date);
+  const today = localDate(new Date(), tz);
+  const [span, setSpan] = useState<Span>({ from: today, to: today });
+  const q = useDays<CoverBoard>(['hr', 'cover'], span, (d) => `/api/hr/cover?date=${d}`, 14);
+  const loaded = q.days.flatMap((d) => (d.data ? [{ day: d.day, board: d.data }] : []));
+  const sum = (k: 'away' | 'work' | 'uncovered') => loaded.reduce((n, d) => n + d.board.counts[k], 0);
+  const busy = loaded.filter((d) => d.board.away.length);
   return (
     <div className="space-y-5">
       <PageHeader title={t('nav.coverBoard')} subtitle={t('navDesc.coverBoard')} />
-      <DateInput value={date} onChange={setDate} aria-label={t('hr.c.day')} className="w-44" />
-      {q.isPending ? (
+      <DateRange value={span} onChange={setSpan} today={today} ahead maxDays={14} />
+      {q.error ? (
+        <ErrorState onRetry={q.refetch} error={q.error} />
+      ) : q.isPending ? (
         <PageSkeleton />
-      ) : q.isError ? (
-        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
       ) : (
         <>
           <div className="grid grid-cols-3 gap-2">
-            <KpiTile label={t('hr.c.away')} value={q.data.counts.away} hero />
-            <KpiTile label={t('hr.c.work')} value={q.data.counts.work} />
+            <KpiTile label={t('hr.c.away')} value={sum('away')} hero />
+            <KpiTile label={t('hr.c.work')} value={sum('work')} />
             <KpiTile
               label={t('hr.c.noBuddy')}
-              value={q.data.counts.uncovered}
-              tone={q.data.counts.uncovered ? 'bad' : undefined}
+              value={sum('uncovered')}
+              tone={sum('uncovered') ? 'bad' : undefined}
             />
           </div>
-          {!q.data.away.length ? (
+          {!busy.length ? (
             <EmptyState icon={UserCheck} title={t('hr.c.everyoneIn')} />
           ) : (
-            <ul className="space-y-3">
-              {q.data.away.map((a) => (
-                <Away key={a.person.id} a={a} date={date} tz={tz} />
-              ))}
-            </ul>
+            busy.map(({ day, board }) => (
+              <section key={day} className="space-y-3">
+                {span.from !== span.to && (
+                  <DayHeading
+                    day={day}
+                    today={today}
+                    note={t('hr.c.dayNote', { away: board.counts.away, uncovered: board.counts.uncovered })}
+                  />
+                )}
+                <ul className="space-y-3">
+                  {board.away.map((a) => (
+                    <Away key={a.person.id} a={a} date={day} tz={tz} />
+                  ))}
+                </ul>
+              </section>
+            ))
           )}
         </>
       )}

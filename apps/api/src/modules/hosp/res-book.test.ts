@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { localDate } from '@mono/shared';
+import { addDays, localDate } from '@mono/shared';
 import { makeApp } from '../../test/helpers';
 import { world } from '../records/testkit';
 import { ok } from './pos-kit';
@@ -311,5 +311,46 @@ describe('Reservations: the book, availability, the public page (phase 16)', { t
     // Seated, the order's state wins; cancelled, the table is free again.
     await ok(h.act(soon.id, 'seat'));
     expect((await t('T1')).state).toBe('SEATED');
+  });
+
+  it('the book over several days and every outlet: day by day, each day with its counts', async () => {
+    const w = await world(ctx.app);
+    const h = await hostDesk(ctx.prisma, w);
+    const a = await h.reserve({ partySize: 2, guest: { name: 'Asha Span', mobile: '98290 22001' } });
+    const b = await h.reserve({
+      day: addDays(h.tomorrow, 2),
+      partySize: 4,
+      guest: { name: 'Rohit Span', mobile: '98290 22002' },
+    });
+    type Span = {
+      from: string;
+      to: string;
+      outlets: { id: string }[];
+      counts: { bookings: number; covers: number };
+      days: { day: string; bookings: number; covers: number }[];
+      reservations: { id: string; day: string; outlet: string; outletId: string }[];
+    };
+    // Nothing asked: today and the six days after, at every outlet of the person.
+    const week = await ok<Span>(w.api.get('/api/reservations/book'));
+    expect(week.to).toBe(addDays(week.from, 6));
+    expect(week.counts).toMatchObject({ bookings: 2, covers: 6 });
+    expect(week.days.map((d) => d.day)).toEqual([h.tomorrow, addDays(h.tomorrow, 2)]);
+    expect(week.days[1]).toMatchObject({ bookings: 1, covers: 4 });
+    expect(week.reservations.map((r) => r.id)).toEqual([a.id, b.id]);
+    expect(week.reservations[0]!.outletId).toBe(h.r.outlet);
+    expect(week.reservations[0]!.outlet.length).toBeGreaterThan(0);
+    // One day only, one outlet only.
+    const one = await ok<Span>(
+      w.api.get(`/api/reservations/book?from=${h.tomorrow}&to=${h.tomorrow}&outletId=${h.r.outlet}`),
+    );
+    expect(one.reservations.map((r) => r.id)).toEqual([a.id]);
+    // An outlet that is not theirs shows nothing; a span that is too wide or backwards is refused.
+    expect((await ok<Span>(w.api.get('/api/reservations/book?outletId=nope'))).reservations).toEqual([]);
+    expect(
+      (await w.api.get(`/api/reservations/book?from=${h.tomorrow}&to=${addDays(h.tomorrow, 90)}`)).status,
+    ).toBe(400);
+    expect(
+      (await w.api.get(`/api/reservations/book?from=${h.tomorrow}&to=${addDays(h.tomorrow, -1)}`)).status,
+    ).toBe(400);
   });
 });

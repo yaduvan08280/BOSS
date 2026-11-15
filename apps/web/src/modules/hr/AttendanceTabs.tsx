@@ -7,56 +7,80 @@ import { EmptyState, ErrorState, PageSkeleton } from '@/components/page';
 import { StatusChip } from '@/components/status-chip';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DateInput } from '@/components/ui/date-input';
+import { DateRange, DayHeading, type Span } from '@/components/date-range';
+import { useDays } from '@/lib/use-days';
 import { Textarea } from '@/components/ui/form';
 import { useUsers } from '@/modules/system/api';
-import { hrApi, STATUS_TONE, useCorrections, useHrMutation, useTeamDay, type Correction } from './api';
+import { hrApi, STATUS_TONE, useCorrections, useHrMutation, type Correction, type TeamRow } from './api';
 
 const time = (iso: string | null, tz: string) => (iso ? formatDateTime(iso, tz).slice(-5) : '—');
 
-/** One day for the team (HOD) or everyone (HR). */
+/** The team (HOD) or everyone (HR), day by day over the span chosen — today to start with. */
 export function TeamTab({ tz, today }: { tz: string; today: string }) {
   const { t } = useTranslation();
-  const [date, setDate] = useState(today);
-  const q = useTeamDay(date);
+  const [span, setSpan] = useState<Span>({ from: today, to: today });
+  const q = useDays<{ date: string; rows: TeamRow[] }>(
+    ['hr', 'team'],
+    span,
+    (d) => `/api/hr/attendance/team?date=${d}`,
+  );
+  const shown = [...q.days].reverse().filter((d) => d.data?.rows.length);
   return (
     <div className="space-y-3">
-      <DateInput value={date} onChange={setDate} aria-label={t('hr.a.day')} className="w-44" />
-      {q.isPending ? (
+      <DateRange value={span} onChange={setSpan} today={today} maxDays={31} />
+      {q.error ? (
+        <ErrorState onRetry={q.refetch} error={q.error} />
+      ) : q.isPending ? (
         <PageSkeleton />
-      ) : q.isError ? (
-        <ErrorState onRetry={() => void q.refetch()} error={q.error} />
-      ) : !q.data.rows.length ? (
+      ) : !shown.length ? (
         <EmptyState icon={Users} title={t('hr.a.noTeam')} />
       ) : (
-        <ul className="divide-y rounded-card border bg-card">
-          {q.data.rows.map((r) => (
-            <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
-              <div className="min-w-0">
-                <div className="font-medium">
-                  <Who name={r.name} />
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {[r.code, r.department].filter(Boolean).join(' · ')}
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {r.flags.length > 0 && (
-                  <span
-                    className="inline-flex items-center gap-1 text-xs text-status-warn-fg"
-                    title={r.flags.map((f) => f.flagReason).join(', ')}
+        shown.map(({ day, data }) => {
+          const rows = data!.rows;
+          const away = rows.filter((r) => r.status === 'ABSENT').length;
+          return (
+            <section key={day} className="space-y-2">
+              {span.from !== span.to && (
+                <DayHeading
+                  day={day}
+                  today={today}
+                  note={t('hr.a.dayNote', { people: rows.length, absent: away })}
+                />
+              )}
+              <ul className="divide-y rounded-card border bg-card">
+                {rows.map((r) => (
+                  <li
+                    key={r.id}
+                    className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm"
                   >
-                    <AlertTriangle className="size-3.5" /> {r.flags[0]!.flagReason}
-                  </span>
-                )}
-                <span className="tabular-nums text-muted-foreground">
-                  {time(r.inAt, tz)} – {time(r.outAt, tz)}
-                </span>
-                <StatusChip tone={STATUS_TONE[r.status]}>{t(`hr.status.${r.status}`)}</StatusChip>
-              </div>
-            </li>
-          ))}
-        </ul>
+                    <div className="min-w-0">
+                      <div className="font-medium">
+                        <Who name={r.name} />
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {[r.code, r.department].filter(Boolean).join(' · ')}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {r.flags.length > 0 && (
+                        <span
+                          className="inline-flex items-center gap-1 text-xs text-status-warn-fg"
+                          title={r.flags.map((f) => f.flagReason).join(', ')}
+                        >
+                          <AlertTriangle className="size-3.5" /> {r.flags[0]!.flagReason}
+                        </span>
+                      )}
+                      <span className="tabular-nums text-muted-foreground">
+                        {time(r.inAt, tz)} – {time(r.outAt, tz)}
+                      </span>
+                      <StatusChip tone={STATUS_TONE[r.status]}>{t(`hr.status.${r.status}`)}</StatusChip>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          );
+        })
       )}
     </div>
   );

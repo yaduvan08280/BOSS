@@ -33,14 +33,14 @@ test('a booking from the phone call to the paid bill, the waitlist, guests and t
     new Date(Date.now() + 86_400_000),
   );
   const dialog = page.getByRole('dialog');
-  /** Type a day into the page's day box once the book has loaded, and wait until it is taken. */
+  /** Type the first day into the page's range once the book has loaded, and wait until it is taken. */
   const setDay = async () => {
     await expect(page.getByText('Guests expected')).toBeVisible();
-    const box = page.getByRole('textbox', { name: 'Day' });
+    // The book opens on the next seven days; starting it tomorrow makes tomorrow the day a new booking is for.
+    const box = page.getByRole('textbox', { name: 'From' });
     await box.fill(tomorrow);
     await box.press('Enter');
     await expect(box).toHaveValue(tomorrow);
-    await expect(page.getByRole('button', { name: 'Today', exact: true })).toBeVisible();
   };
   await signIn(page);
   await call(page, 'PUT', '/api/hosp/settings', { enabled: true });

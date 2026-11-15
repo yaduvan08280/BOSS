@@ -71,7 +71,8 @@
       "CLOSED": "Closed",
       "LOST": "Lost",
       "CANCELLED": "Cancelled"
-    }
+    },
+    "pickBranch": "Choose one branch to set up its halls and packages."
   },
   "bar": {
     "title": "Bar register",
@@ -95,7 +96,9 @@
       "sold": "Sold",
       "breakage": "Breakage",
       "closing": "Closing"
-    }
+    },
+    "allBranches": "All branches",
+    "pickBranch": "Choose one branch to see its licence and dry days, or to download its register."
   },
   "cmp": {
     "title": "Compliance",

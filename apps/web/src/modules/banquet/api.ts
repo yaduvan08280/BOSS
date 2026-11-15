@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import type { BanquetStatus, BranchRules, ComplianceState } from '@mono/shared';
@@ -153,7 +153,24 @@ export function useHospBranch() {
   const seen = new Map<string, string>();
   for (const o of outlets.data ?? []) if (!seen.has(o.branchId)) seen.set(o.branchId, o.branch);
   const list = [...seen].map(([id, name]) => ({ id, name }));
-  return { loading: outlets.isPending, list, branchId: picked || list[0]?.id || '', setBranchId: setPicked };
+  const [all, setAll] = useState(false);
+  const branchId = picked || list[0]?.id || '';
+  const wide = all && list.length > 1;
+  return {
+    loading: outlets.isPending,
+    list,
+    branchId,
+    setBranchId: setPicked,
+    /** Every branch at once: an overview — adding and set-up still need one branch. */
+    all: wide,
+    /** The picker's value ('' = all) and its change. */
+    value: wide ? '' : branchId,
+    choose: (id: string) => {
+      setAll(!id);
+      if (id) setPicked(id);
+    },
+    shown: wide ? list : list.filter((x) => x.id === branchId),
+  };
 }
 export const EVENT_TONE: Record<BanquetStatus, 'ok' | 'warn' | 'bad' | 'info' | 'over' | 'neutral'> = {
   ENQUIRY: 'warn',
@@ -165,3 +182,59 @@ export const EVENT_TONE: Record<BanquetStatus, 'ok' | 'warn' | 'bad' | 'info' | 
   CANCELLED: 'bad',
 };
 export const dmy = (day: string) => day.split('-').reverse().join('/');
+
+/** One read per branch shown, joined: each row carries its branch's name. */
+function useEach<T, R>(
+  key: string,
+  branches: { id: string; name: string }[],
+  url: (id: string) => string,
+  rows: (d: T) => R[],
+  ms: number | false = false,
+) {
+  const results = useQueries({
+    queries: branches.map((b) => ({
+      queryKey: [...KEY, key, b.id],
+      queryFn: () => api<T>(url(b.id)),
+      refetchInterval: ms,
+    })),
+  });
+  const failed = results.find((r) => r.isError);
+  return {
+    isPending: results.some((r) => r.isPending),
+    error: failed?.error ?? null,
+    refetch: () => results.forEach((r) => void r.refetch()),
+    first: results[0]?.data,
+    all: results.flatMap((r) => (r.data ? [r.data] : [])),
+    rows: results.flatMap((r, i) =>
+      r.data ? rows(r.data).map((x) => ({ ...x, branch: branches[i]!.name })) : [],
+    ),
+  };
+}
+type Branches = { id: string; name: string }[];
+export const useEventsOf = (branches: Branches) =>
+  useEach<{ today: string; events: BanquetEvent[] }, BanquetEvent>(
+    'events',
+    branches,
+    (id) => `/api/banquets/events?branchId=${id}`,
+    (d) => d.events,
+    30_000,
+  );
+type ComplianceOut = {
+  today: string;
+  counts: Record<'valid' | 'expiring' | 'expired', number>;
+  items: ComplianceRow[];
+};
+export const useComplianceOf = (branches: Branches) =>
+  useEach<ComplianceOut, ComplianceRow>(
+    'compliance',
+    branches,
+    (id) => `/api/compliance?branchId=${id}`,
+    (d) => d.items,
+  );
+export const useTempsOf = (branches: Branches) =>
+  useEach<{ points: TempPoint[] }, TempPoint>(
+    'temps',
+    branches,
+    (id) => `/api/compliance/temps?branchId=${id}`,
+    (d) => d.points,
+  );

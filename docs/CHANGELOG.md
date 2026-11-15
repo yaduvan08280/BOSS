@@ -1,5 +1,12 @@
 # Changelog
 
+## 15/11/2026 — See several days and every outlet at once
+
+- **Reservations** opens on the next 7 days at **all outlets**, bookings under a heading for each day. Pick one outlet or any dates (From – To, or Today / Next 7 days / Next 30 days).
+- **Date ranges with day headings** instead of a single date on Team attendance, the Cover board, the Bar register and Money → Day close.
+- **"All" first** in the outlet / branch picker on Reservations, Bar register, Day close, Banquets, Compliance and POS → Bills & day close. Adding and set-up still ask for one outlet or branch.
+- Banquets lists events under their day.
+
 ## 14/11/2026 — Recommended access; the weekly letter written by AI; your own Whisper for voice
 
 - **Roles → Recommended access**: shows what would change, then applies it. Staff see their own branch and their daily work; stock, sales, money and hospitality screens go to the people who work in them; Members move to the role of their department's work. The menu now hides every screen a role cannot use. Check the result with "See as this person" in the org chart.

@@ -13,12 +13,15 @@ import { useOutlets } from '@/modules/hosp/api';
 import { useOutletChoice } from '@/modules/hosp/outletChoice';
 import { rupees } from '@/modules/stock/api';
 import { post, useChecks, useDay, usePosMutation, type Check } from './api';
+import { DayOverview } from './DayOverview';
 
 /** Bills and day close (phase 15): today's bills, the Z report, the cash counted by note, closing the day. */
 export function DayPage() {
   const { t } = useTranslation();
   const outlets = useOutlets();
   const [current, setOutletId] = useOutletChoice(outlets.data);
+  // Every outlet at once is an overview; closing a day is done on one outlet.
+  const [all, setAll] = useState(false);
 
   const day = useDay(current);
   const checks = useChecks(current);
@@ -43,9 +46,13 @@ export function DayPage() {
       <div className="mb-4 w-full sm:w-64">
         <Select
           aria-label={t('hosp.outlet.one')}
-          value={current}
-          onChange={(e) => setOutletId(e.target.value)}
+          value={all ? '' : current}
+          onChange={(e) => {
+            setAll(!e.target.value);
+            if (e.target.value) setOutletId(e.target.value);
+          }}
         >
+          {(outlets.data ?? []).length > 1 && <option value="">{t('res.allOutlets')}</option>}
           {(outlets.data ?? []).map((o) => (
             <option key={o.id} value={o.id}>
               {o.name}
@@ -53,7 +60,15 @@ export function DayPage() {
           ))}
         </Select>
       </div>
-      {day.isPending ? (
+      {all ? (
+        <DayOverview
+          outlets={outlets.data ?? []}
+          onOpen={(id) => {
+            setOutletId(id);
+            setAll(false);
+          }}
+        />
+      ) : day.isPending ? (
         <PageSkeleton />
       ) : day.isError || !z ? (
         <ErrorState onRetry={() => void day.refetch()} error={day.error} />

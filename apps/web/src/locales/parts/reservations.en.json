@@ -5,7 +5,7 @@
   "navDesc.guests": "Guest profiles: visits, likes, allergies, consent",
   "res": {
     "title": "Reservations",
-    "subtitle": "The day's table bookings and the waitlist",
+    "subtitle": "Table bookings by day, at one outlet or all of them, and the waitlist",
     "new": "New booking",
     "book": "Book the table",
     "change": "Change booking {{number}}",
@@ -130,7 +130,11 @@
         "SEATED": "Seated",
         "LEFT": "Left"
       }
-    }
+    },
+    "allOutlets": "All outlets",
+    "emptySpan": "No booking on these days. Choose other days, or take a new booking.",
+    "dayNote": "{{bookings}} bookings · {{covers}} guests",
+    "whichOutlet": "Which outlet?"
   },
   "guest": {
     "title": "Guests",
