@@ -119,7 +119,8 @@ export async function settleOrder(tx: Tx, actor: Actor, outlet: PosOutlet, order
       where: { orderId, status: { in: ['FIRED', 'READY'] } },
       data: { status: 'SERVED' },
     });
-    // The food has gone and the bill is paid: tickets the kitchen never bumped leave its "to make" list too.
+    // The food has gone and the bill is paid: tickets the kitchen never bumped leave its "to make" list too
+    // (no ready time is made up for them, so the kitchen-times report still counts them as never timed).
     const kotIds = [...new Set(order.items.map((i) => i.kotId).filter((id): id is string => Boolean(id)))];
     const now = new Date();
     for (const k of await tx.kot.findMany({
@@ -133,7 +134,7 @@ export async function settleOrder(tx: Tx, actor: Actor, outlet: PosOutlet, order
       }).to;
       await tx.kot.update({
         where: { id: k.id },
-        data: { status: bumped, bumpedAt: now, readyAt: k.readyAt ?? now },
+        data: { status: bumped, bumpedAt: now },
       });
     }
     await consumeOrder(tx, actor, outlet, order);
