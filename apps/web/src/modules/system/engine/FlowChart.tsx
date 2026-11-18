@@ -58,7 +58,7 @@ function FlowNode({ data }: NodeProps<Node<Data>>) {
       </span>
       {data.roles && <span className="mt-0.5 text-[11px] font-normal opacity-70">{data.roles}</span>}
       {data.off && (
-        <span className="mt-0.5 rounded-pill bg-background px-1.5 text-[9px] font-semibold uppercase text-muted-foreground">
+        <span className="mt-0.5 rounded-pill bg-background px-1.5 text-[10px] font-semibold uppercase text-muted-foreground">
           {t('engine.off')}
         </span>
       )}

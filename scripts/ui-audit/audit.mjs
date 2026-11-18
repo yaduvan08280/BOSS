@@ -213,7 +213,7 @@ async function crawl(page, path, errs) {
       const tab = page.locator(TABS).nth(t);
       const name = ((await tab.innerText().catch(() => '')) || '').trim().replace(/\s+/g, ' ').slice(0, 24);
       try {
-        await tab.click({ timeout: 1200 });
+        await tab.click({ timeout: 4000 });
       } catch {
         continue;
       }
