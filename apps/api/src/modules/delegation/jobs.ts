@@ -1,6 +1,7 @@
 import type { Db } from '@mono/db';
 import { localDate } from '@mono/shared';
 import { emitEvent } from '../../lib/events';
+import { afterId, paged } from '../../lib/paged';
 import { moduleSettings } from '../work/settings';
 import { effectiveVerifier } from './service';
 
@@ -9,13 +10,22 @@ import { effectiveVerifier } from './service';
  * Then again once a day (local morning) while they stay overdue, so people aren't flooded.
  */
 export async function flagOverdueTasks(db: Db, now = new Date()): Promise<number> {
-  const late = await db.task.findMany({
-    where: { deletedAt: null, status: { in: ['OPEN', 'AWAITING_ACCEPTANCE'] }, plannedAt: { lt: now } },
-    take: 500,
-  });
+  const late = paged((after, take) =>
+    db.task.findMany({
+      where: {
+        deletedAt: null,
+        status: { in: ['OPEN', 'AWAITING_ACCEPTANCE'] },
+        plannedAt: { lt: now },
+        ...afterId(after),
+      },
+      orderBy: { id: 'asc' },
+      take,
+    }),
+  );
   let flagged = 0;
   const tzCache = new Map<string, string>();
-  for (const t of late) {
+  const settings = new Map<string, Awaited<ReturnType<typeof moduleSettings<'delegation'>>>>();
+  for await (const t of late) {
     let tz = tzCache.get(t.companyId);
     if (!tz) {
       tz = (await db.company.findUniqueOrThrow({ where: { id: t.companyId }, select: { timezone: true } }))
@@ -23,7 +33,9 @@ export async function flagOverdueTasks(db: Db, now = new Date()): Promise<number
       tzCache.set(t.companyId, tz);
     }
     if (t.lastOverdueNotifiedAt && localDate(t.lastOverdueNotifiedAt, tz) === localDate(now, tz)) continue;
-    const s = await moduleSettings(db, t.companyId, 'delegation');
+    let s = settings.get(t.companyId);
+    if (!s) settings.set(t.companyId, (s = await moduleSettings(db, t.companyId, 'delegation')));
+    const set = s;
     await db.$transaction(async (tx) => {
       const res = await tx.task.updateMany({
         where: { id: t.id, lastOverdueNotifiedAt: t.lastOverdueNotifiedAt },
@@ -40,7 +52,7 @@ export async function flagOverdueTasks(db: Db, now = new Date()): Promise<number
           payload: {
             doerId: t.doerId,
             creatorId: t.creatorId,
-            verifierId: effectiveVerifier(t, s),
+            verifierId: effectiveVerifier(t, set),
             number: t.number,
             title: t.description.slice(0, 80),
             due: t.plannedAt.toISOString(),
@@ -60,12 +72,15 @@ export async function flagOverdueTasks(db: Db, now = new Date()): Promise<number
  * reminds the doer and tells the creator, once per assignment.
  */
 export async function remindUnaccepted(db: Db, now = new Date()): Promise<number> {
-  const waiting = await db.task.findMany({
-    where: { deletedAt: null, status: 'AWAITING_ACCEPTANCE' },
-    take: 500,
-  });
+  const waiting = paged((after, take) =>
+    db.task.findMany({
+      where: { deletedAt: null, status: 'AWAITING_ACCEPTANCE', ...afterId(after) },
+      orderBy: { id: 'asc' },
+      take,
+    }),
+  );
   let sent = 0;
-  for (const t of waiting) {
+  for await (const t of waiting) {
     const s = await moduleSettings(db, t.companyId, 'delegation');
     const since = await db.taskEvent.findFirst({
       where: { taskId: t.id, toStatus: 'AWAITING_ACCEPTANCE' },

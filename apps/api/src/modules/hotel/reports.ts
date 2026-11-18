@@ -7,6 +7,7 @@ import { hotelFor, hotelOf, seer } from './core';
 import { releaseBlock } from './blocks';
 import { tell } from './bookings';
 import { releaseFixedRooms } from './maintenance';
+import { afterId, paged } from '../../lib/paged';
 
 /**
  * Phase 17 — the registers a hotel must keep and the numbers it watches: the guest (police) register, the Form C
@@ -163,23 +164,34 @@ export async function occupancy(db: Db, actor: Actor, q: z.infer<typeof register
 export async function hotelSweep(db: Db, now = new Date(), onlyCompanyId?: string) {
   const scope = onlyCompanyId ? { companyId: onlyCompanyId } : {};
   const out = { released: 0, formC: 0, rooms: 0 };
-  for (const b of await db.groupBlock.findMany({ where: { ...scope, status: 'HELD' }, take: 500 })) {
+  const held = paged((after, take) =>
+    db.groupBlock.findMany({
+      where: { ...scope, status: 'HELD', ...afterId(after) },
+      orderBy: { id: 'asc' },
+      take,
+    }),
+  );
+  for await (const b of held) {
     const hotel = await hotelFor(db, b.companyId, b.branchId);
     if (hotel.businessDate <= b.releaseOn) continue;
     await releaseBlock(db, b.companyId, b.id, null);
     out.released++;
   }
-  const due = await db.stay.findMany({
-    where: {
-      ...scope,
-      status: 'CHECKED_IN',
-      formCFiledAt: null,
-      formCReminded: false,
-      formCDueAt: { lte: new Date(now.getTime() + 6 * 3_600_000) },
-    },
-    take: 200,
-  });
-  for (const s of due) {
+  const due = paged((after, take) =>
+    db.stay.findMany({
+      where: {
+        ...scope,
+        status: 'CHECKED_IN',
+        formCFiledAt: null,
+        formCReminded: false,
+        formCDueAt: { lte: new Date(now.getTime() + 6 * 3_600_000) },
+        ...afterId(after),
+      },
+      orderBy: { id: 'asc' },
+      take,
+    }),
+  );
+  for await (const s of due) {
     const hotel = await hotelFor(db, s.companyId, s.branchId);
     await db.$transaction(async (tx) => {
       await tx.stay.update({ where: { id: s.id }, data: { formCReminded: true } });

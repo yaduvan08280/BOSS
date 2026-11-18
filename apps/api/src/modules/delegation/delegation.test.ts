@@ -182,6 +182,21 @@ describe('delegation lifecycle', () => {
     expect(overdueEvents).toBe(1);
     expect(again).toBe(0);
 
+    // More late tasks than one page holds: the one that sorts last is still reached.
+    const { id: _id, number: _n, ...copy } = late;
+    const now = new Date();
+    await ctx.prisma.task.createMany({
+      data: Array.from({ length: 520 }, (_, i) => ({ ...copy, number: 10_000 + i, lastOverdueNotifiedAt: now })),
+    });
+    const last = await ctx.prisma.task.create({
+      data: { ...copy, id: 'zzzzzzzzzzzzzzzzzzzzzzzz', number: 20_000, lastOverdueNotifiedAt: null },
+    });
+    await flagOverdueTasks(ctx.prisma, now);
+    expect(
+      await ctx.prisma.domainEvent.count({ where: { name: 'delegation.overdue', entityId: last.id } }),
+    ).toBe(1);
+    await ctx.prisma.task.deleteMany({ where: { companyId: company.id, number: { gte: 10_000 } } });
+
     const tilesRes = await doer.api.get('/api/tasks/tiles');
     if (tilesRes.status !== 200) throw new Error(JSON.stringify(tilesRes.body));
     const tiles = tilesRes.body;
@@ -199,7 +214,7 @@ describe('delegation lifecycle', () => {
       red: 1,
       open: 1,
     });
-  });
+  }, 60_000);
 
   it("closes the owner's own task without a verification, and doesn't score one as missing", async () => {
     const { api, owner } = await team();

@@ -46,16 +46,17 @@ export function sendToPrinter(address: string, bytes: Buffer, timeoutMs = 3000):
 
 /** The worker's sweep: every queued job of a network printer is tried once; failures count towards FAILED. */
 export async function sendQueued(db: Db, onlyCompanyId?: string) {
+  // Only the printers the server itself reaches: a site agent's waiting jobs must not fill the batch and hold
+  // the network printers' tickets back.
+  const scope = onlyCompanyId ? { companyId: onlyCompanyId } : {};
+  const printers = new Map(
+    (await db.printer.findMany({ where: { connection: 'NETWORK', ...scope } })).map((p) => [p.id, p]),
+  );
   const jobs = await db.printJob.findMany({
-    where: { status: 'QUEUED', ...(onlyCompanyId ? { companyId: onlyCompanyId } : {}) },
+    where: { status: 'QUEUED', printerId: { in: [...printers.keys()] }, ...scope },
     orderBy: { createdAt: 'asc' },
     take: 200,
   });
-  const printers = new Map(
-    (await db.printer.findMany({ where: { id: { in: [...new Set(jobs.map((j) => j.printerId))] } } })).map(
-      (p) => [p.id, p],
-    ),
-  );
   let sent = 0;
   for (const job of jobs) {
     const printer = printers.get(job.printerId);

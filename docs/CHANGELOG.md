@@ -1,5 +1,9 @@
 # Changelog
 
+## 18/11/2026 — Background jobs reach every row
+
+Reminder and follow-up jobs used to read a fixed first batch (200 – 5,000 rows) in no order; in a busy company the rows after that batch could go without their reminder for good. They now page through everything, 500 at a time: overdue and unaccepted tasks, checklist reminders and misses, late slips, ticket escalation, reservation reminders and no-shows, group blocks to give back, Form C reminders, licence reminders. The print sweep now reads only the server's own printers, so jobs waiting for a site agent cannot hold kitchen tickets back.
+
 ## 15/11/2026 — A special theme: Navy & Gold
 
 System Master → Appearance → presets → **Navy & Gold**: navy bars, buttons and table heads, gold highlights, white cards, serif headings and figures, a navy band on dialogs. Light and dark. Pick any other preset or colour to go back.

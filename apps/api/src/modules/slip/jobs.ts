@@ -1,6 +1,7 @@
 import type { Db } from '@mono/db';
 import { formatShortDateTime } from '@mono/shared';
 import { emitEvent } from '../../lib/events';
+import { afterId, paged } from '../../lib/paged';
 import { moduleSettings } from '../work/settings';
 import { autoCloseSlip, slipWaitingOn } from './service';
 
@@ -9,18 +10,22 @@ import { autoCloseSlip, slipWaitingOn } from './service';
  * time limit; close decided slips the raiser left open past theirs (approved ones once the task is done).
  */
 export async function sweepSlips(db: Db, now = new Date()): Promise<{ late: number; closed: number }> {
-  const rows = await db.slip.findMany({
-    where: {
-      deletedAt: null,
-      status: { in: ['SUBMITTED', 'RETURNED', 'WITH_APPROVER', 'APPROVED', 'REJECTED'] },
-    },
-    take: 1000,
-  });
+  const rows = paged((after, take) =>
+    db.slip.findMany({
+      where: {
+        deletedAt: null,
+        status: { in: ['SUBMITTED', 'RETURNED', 'WITH_APPROVER', 'APPROVED', 'REJECTED'] },
+        ...afterId(after),
+      },
+      orderBy: { id: 'asc' },
+      take,
+    }),
+  );
   const settings = new Map<string, Awaited<ReturnType<typeof moduleSettings<'slip'>>>>();
   const zones = new Map<string, string>();
   let late = 0;
   let closed = 0;
-  for (const slip of rows) {
+  for await (const slip of rows) {
     if (!settings.has(slip.companyId)) {
       settings.set(slip.companyId, await moduleSettings(db, slip.companyId, 'slip'));
       const c = await db.company.findUniqueOrThrow({

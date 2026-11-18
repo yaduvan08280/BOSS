@@ -8,6 +8,7 @@ import {
   type ChecklistBranchPlan,
 } from '@mono/shared';
 import { emitEvent } from '../../lib/events';
+import { afterId, paged } from '../../lib/paged';
 import { companyCalendar } from '../hr/calendar';
 import { checklistCovers } from '../hr/cover';
 import { moduleSettings } from '../work/settings';
@@ -150,13 +151,18 @@ export async function sweepChecklists(db: Db, now = new Date(), onlyMasterId?: s
 
 /** Runs still open after their window: auto-closed as MISSED (the owner hears about it through the rules). */
 export async function expireChecklists(db: Db, now = new Date()): Promise<number> {
-  const late = await db.checklistRun.findMany({
-    where: { status: 'OPEN', windowEndsAt: { lt: now }, master: { deletedAt: null } },
-    include: { master: { select: { name: true } } },
-    take: 200,
-  });
+  const late = paged((after, take) =>
+    db.checklistRun.findMany({
+      where: { status: 'OPEN', windowEndsAt: { lt: now }, master: { deletedAt: null }, ...afterId(after) },
+      include: { master: { select: { name: true } } },
+      orderBy: { id: 'asc' },
+      take,
+    }),
+  );
+  let missed = 0;
   const tellOwner = new Map<string, boolean>();
-  for (const run of late) {
+  for await (const run of late) {
+    missed++;
     if (!tellOwner.has(run.companyId))
       tellOwner.set(
         run.companyId,
@@ -192,19 +198,28 @@ export async function expireChecklists(db: Db, now = new Date()): Promise<number
       );
     });
   }
-  return late.length;
+  return missed;
 }
 
 /** One reminder per run, `remindBeforeMinutes` before it is due. */
 export async function remindChecklists(db: Db, now = new Date()): Promise<number> {
-  const open = await db.checklistRun.findMany({
-    where: { status: 'OPEN', remindedAt: null, windowEndsAt: { gt: now }, master: { deletedAt: null } },
-    include: { master: { select: { name: true } } },
-    take: 500,
-  });
+  const open = paged((after, take) =>
+    db.checklistRun.findMany({
+      where: {
+        status: 'OPEN',
+        remindedAt: null,
+        windowEndsAt: { gt: now },
+        master: { deletedAt: null },
+        ...afterId(after),
+      },
+      include: { master: { select: { name: true } } },
+      orderBy: { id: 'asc' },
+      take,
+    }),
+  );
   let sent = 0;
   const settingsCache = new Map<string, number>();
-  for (const run of open) {
+  for await (const run of open) {
     let before = settingsCache.get(run.companyId);
     if (before === undefined) {
       before = (await moduleSettings(db, run.companyId, 'checklist')).remindBeforeMinutes;

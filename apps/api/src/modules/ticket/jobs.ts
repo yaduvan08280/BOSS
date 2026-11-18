@@ -1,6 +1,7 @@
 import type { Db } from '@mono/db';
 import { ticketEscalation } from '@mono/shared';
 import { emitEvent } from '../../lib/events';
+import { afterId, paged } from '../../lib/paged';
 import { chainFor } from '../branches/approvals';
 import { hodFor, ownerOf } from '../work/actor';
 import { moduleSettings } from '../work/settings';
@@ -14,14 +15,17 @@ const DAY = 24 * 3600_000;
  * and close resolved tickets after 24 h when the company chose "auto after 24 hrs".
  */
 export async function sweepTickets(db: Db, now = new Date()): Promise<{ escalated: number; closed: number }> {
-  const rows = await db.ticket.findMany({
-    where: { deletedAt: null, status: { in: ['OPEN', 'IN_PROGRESS', 'RESOLVED'] } },
-    take: 2000,
-  });
+  const rows = paged((after, take) =>
+    db.ticket.findMany({
+      where: { deletedAt: null, status: { in: ['OPEN', 'IN_PROGRESS', 'RESOLVED'] }, ...afterId(after) },
+      orderBy: { id: 'asc' },
+      take,
+    }),
+  );
   const cache = new Map<string, Awaited<ReturnType<typeof moduleSettings<'ticket'>>>>();
   let escalated = 0;
   let closed = 0;
-  for (const t of rows) {
+  for await (const t of rows) {
     if (!cache.has(t.companyId)) cache.set(t.companyId, await moduleSettings(db, t.companyId, 'ticket'));
     const s = cache.get(t.companyId)!;
 

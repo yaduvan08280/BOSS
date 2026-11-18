@@ -1,6 +1,7 @@
 import type { Db } from '@mono/db';
 import { reservationMachine, transition } from '@mono/shared';
 import { writeAudit } from '../../lib/audit';
+import { afterId, paged } from '../../lib/paged';
 import { resOutlet, tellGuest, type ResOutlet } from './res-core';
 import { endIn } from './res-flow';
 
@@ -9,18 +10,21 @@ import { endIn } from './res-flow';
  * once the hold time after the booking has passed, and a request nobody confirmed lapses at its time.
  */
 export async function reservationSweep(db: Db, now = new Date(), onlyCompanyId?: string) {
-  const rows = await db.reservation.findMany({
-    where: {
-      ...(onlyCompanyId ? { companyId: onlyCompanyId } : {}),
-      status: { in: ['REQUESTED', 'CONFIRMED', 'REMINDED'] },
-      startAt: { lt: new Date(now.getTime() + 72 * 3_600_000) },
-    },
-    orderBy: { startAt: 'asc' },
-    take: 500,
-  });
+  const rows = paged((after, take) =>
+    db.reservation.findMany({
+      where: {
+        ...(onlyCompanyId ? { companyId: onlyCompanyId } : {}),
+        status: { in: ['REQUESTED', 'CONFIRMED', 'REMINDED'] },
+        startAt: { lt: new Date(now.getTime() + 72 * 3_600_000) },
+        ...afterId(after),
+      },
+      orderBy: { id: 'asc' },
+      take,
+    }),
+  );
   const outlets = new Map<string, ResOutlet | null>();
   const out = { reminded: 0, noShows: 0, lapsed: 0 };
-  for (const r of rows) {
+  for await (const r of rows) {
     if (!outlets.has(r.outletId))
       outlets.set(r.outletId, await resOutlet(db, { id: r.outletId, companyId: r.companyId }));
     const outlet = outlets.get(r.outletId);

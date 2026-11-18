@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { writeAudit } from '../../lib/audit';
 import { AppError, notFound } from '../../lib/errors';
 import { emitEvent } from '../../lib/events';
+import { afterId, paged } from '../../lib/paged';
 import { claimMark } from '../ea/jobs';
 import { ctxOf } from '../hosp/access';
 import type { Actor } from '../work/actor';
@@ -163,13 +164,16 @@ export async function deleteCompliance(db: Db, actor: Actor, id: string) {
 
 /** Reminders (worker, daily is enough; safe to run often): each step — 60, 30, 7 days, the day, run out — is told once. */
 export async function complianceSweep(db: Db, onlyCompanyId?: string) {
-  const rows = await db.complianceItem.findMany({
-    where: { deletedAt: null, ...(onlyCompanyId ? { companyId: onlyCompanyId } : {}) },
-    take: 5000,
-  });
+  const rows = paged((after, take) =>
+    db.complianceItem.findMany({
+      where: { deletedAt: null, ...(onlyCompanyId ? { companyId: onlyCompanyId } : {}), ...afterId(after) },
+      orderBy: { id: 'asc' },
+      take,
+    }),
+  );
   const places = new Map<string, Awaited<ReturnType<typeof placeFor>> | null>();
   let sent = 0;
-  for (const c of rows) {
+  for await (const c of rows) {
     if (!places.has(c.branchId))
       places.set(c.branchId, await placeFor(db, c.companyId, c.branchId).catch(() => null));
     const place = places.get(c.branchId);
