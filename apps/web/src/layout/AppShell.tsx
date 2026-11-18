@@ -98,7 +98,7 @@ export function AppShell({ me }: { me: Me }) {
           onOpenMenu={() => setDrawer(true)}
           {...menuProps}
         />
-        <main className="mx-auto w-full max-w-[1440px] px-4 pb-28 pt-5 sm:pt-6 lg:px-8 lg:pb-24">
+        <main className="mx-auto w-full max-w-[124rem] px-4 pb-28 pt-5 sm:pt-6 lg:px-8 lg:pb-24">
           {me.user.mustChangePassword ? (
             <div className="mx-auto max-w-md space-y-4 pt-4">
               <div>

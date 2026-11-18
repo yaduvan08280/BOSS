@@ -48,7 +48,7 @@ export function ApprovalsPanel() {
         : t('branches.route.wholeGroup');
 
   return (
-    <div className="max-w-3xl space-y-4">
+    <div className="max-w-3xl space-y-4 min-[1800px]:max-w-5xl">
       <p className="text-sm text-muted-foreground">{t('branches.route.intro')}</p>
       {APPROVAL_KINDS.map((kind) => {
         const mine = routes.data

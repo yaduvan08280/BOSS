@@ -86,7 +86,7 @@ export function ChangePasswordCard({ onDone }: { onDone?: () => void }) {
 export function AccountPage({ me }: { me: Me }) {
   const { t } = useTranslation();
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-3xl min-[1800px]:max-w-5xl">
       <PageHeader title={t('account.title')} subtitle={t('account.subtitle')} />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card>

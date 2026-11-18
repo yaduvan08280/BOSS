@@ -133,7 +133,7 @@ export function Branches() {
       {all.length === 0 ? (
         <EmptyState icon={GitFork} title={t('org.branches.emptyTitle')} body={t('org.branches.emptyBody')} />
       ) : (
-        <ul className="max-w-3xl space-y-2">
+        <ul className="max-w-3xl space-y-2 min-[1800px]:max-w-5xl">
           {all.filter((b) => !b.parentId || !all.some((p) => p.id === b.parentId)).map((b) => node(b, 0))}
         </ul>
       )}

@@ -84,7 +84,7 @@ function Rates() {
   if (q.isPending) return <PageSkeleton />;
   if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return (
-    <div className="max-w-2xl space-y-3">
+    <div className="max-w-2xl space-y-3 min-[1800px]:max-w-5xl">
       <p className="text-sm text-muted-foreground">{t('money.rates.intro')}</p>
       <Card className="grid grid-cols-2 items-end gap-2 p-3 sm:grid-cols-[minmax(0,1fr)_100px_150px_auto]">
         <Field label={t('money.rates.code')}>
@@ -157,7 +157,7 @@ function Modes() {
   if (q.isPending) return <PageSkeleton />;
   if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return (
-    <div className="max-w-xl space-y-3">
+    <div className="max-w-xl space-y-3 min-[1800px]:max-w-5xl">
       <Card className="grid grid-cols-2 items-end gap-2 p-3 sm:grid-cols-[minmax(0,1fr)_140px_auto]">
         <Field label={t('org.name')}>
           <Input
@@ -217,7 +217,7 @@ function Vendors() {
   if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   const name = new Map((parties.data ?? []).map((p) => [p.id, p.name]));
   return (
-    <div className="max-w-2xl space-y-3">
+    <div className="max-w-2xl space-y-3 min-[1800px]:max-w-5xl">
       <p className="text-sm text-muted-foreground">{t('money.vendors.intro')}</p>
       {q.data.length === 0 && <p className="text-sm text-muted-foreground">{t('money.vendors.none')}</p>}
       <ul className="space-y-2">
@@ -274,7 +274,7 @@ function Tally() {
   if (q.isPending) return <PageSkeleton />;
   if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return (
-    <div className="max-w-xl space-y-3">
+    <div className="max-w-xl space-y-3 min-[1800px]:max-w-5xl">
       <p className="text-sm text-muted-foreground">{t('money.tally.intro')}</p>
       {q.data.length === 0 && <p className="text-sm text-muted-foreground">{t('money.tally.none')}</p>}
       <ul className="space-y-2">

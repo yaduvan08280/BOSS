@@ -51,7 +51,7 @@ export function DayCloseOverview({
   const sum = (s: Sheet, k: 'expected' | 'counted' | 'difference') =>
     s.modes.reduce((n, m) => n + (m[k] ?? 0), 0);
   return (
-    <div className="max-w-3xl space-y-4">
+    <div className="max-w-3xl space-y-4 min-[1800px]:max-w-5xl">
       {days.map((day) => (
         <section key={day} className="space-y-2">
           <DayHeading day={day} today={today} />

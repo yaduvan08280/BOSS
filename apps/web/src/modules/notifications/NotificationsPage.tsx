@@ -11,7 +11,7 @@ export function NotificationsPage() {
   const q = useNotifications(100);
   const read = useMarkRead();
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-2xl min-[1800px]:max-w-5xl">
       <PageHeader
         title={t('shell.notifications')}
         subtitle={q.data ? t('notify.inbox.unread', { count: q.data.unread }) : undefined}

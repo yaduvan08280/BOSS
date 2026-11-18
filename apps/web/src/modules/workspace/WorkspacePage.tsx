@@ -80,7 +80,7 @@ export function WorkspacePage({ me }: { me: Me }) {
   const slipsWaiting = slips.data?.slips ?? [];
   const total = todo.length + verify.length + due.length + fix.length + slipsWaiting.length;
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
+    <div className="mx-auto max-w-3xl space-y-5 min-[1800px]:max-w-5xl">
       <PageHeader title={t('nav.myWorkspace')} subtitle={t('ws.subtitle', { count: total })} />
       {total === 0 ? (
         <EmptyState icon={CheckCheck} title={t('ws.emptyTitle')} body={t('ws.emptyBody')} />

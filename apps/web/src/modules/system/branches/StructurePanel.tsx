@@ -83,7 +83,7 @@ export function StructurePanel() {
   const shared = { structure: s, people, onClose: close };
 
   return (
-    <div className="max-w-3xl space-y-7">
+    <div className="max-w-3xl space-y-7 min-[1800px]:max-w-5xl">
       <Section
         title={t('branches.entity.many')}
         hint={t('branches.entity.hint')}

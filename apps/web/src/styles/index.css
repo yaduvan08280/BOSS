@@ -72,8 +72,15 @@
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
   }
+  /*
+   * Wide monitors (decision 247): from 1728 px the whole interface grows with the screen, up to 12.5 % at
+   * 2560 px (a 27" monitor), so it is neither tiny nor a narrow strip. Everything sized in rem follows.
+   */
+  html {
+    font-size: clamp(100%, calc(100% + (100vw - 1728px) * 0.0024), 112.5%);
+  }
   html[data-text='large'] {
-    font-size: 112.5%;
+    font-size: clamp(112.5%, calc(112.5% + (100vw - 1728px) * 0.0024), 125%);
   }
   body {
     background: var(--background, #f2efe7);
@@ -187,5 +194,21 @@ table td.font-mono {
   .text-\[10px\],
   .text-\[11px\] {
     font-size: 12px;
+  }
+}
+
+/*
+ * Very wide screens: a list of cards, one to a row, would stretch each card across the whole monitor with
+ * its name at one end and its amount at the other. Such lists run in two columns instead.
+ */
+@media (min-width: 1800px) {
+  main ul:where(.space-y-2, .space-y-3):has(> li > [data-slot='card']) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem 0.75rem;
+    align-items: start;
+  }
+  main ul:where(.space-y-2, .space-y-3):has(> li > [data-slot='card']) > li {
+    margin: 0;
   }
 }

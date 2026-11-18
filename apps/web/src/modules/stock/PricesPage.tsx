@@ -215,7 +215,7 @@ function Board({ canSet }: { canSet: boolean }) {
   if (q.isPending) return <PageSkeleton />;
   if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return (
-    <div className="max-w-2xl space-y-3">
+    <div className="max-w-2xl space-y-3 min-[1800px]:max-w-5xl">
       <p className="text-sm text-muted-foreground">{t('stock.prices.boardIntro')}</p>
       {canSet && (
         <Card className="grid grid-cols-2 items-end gap-2 p-3 sm:grid-cols-[minmax(0,1fr)_140px_90px_auto]">

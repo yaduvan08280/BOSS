@@ -88,7 +88,7 @@ export function DayClosePage({ me }: { me: Me }) {
       ) : q.data.modes.length === 0 ? (
         <EmptyState icon={Landmark} title={t('money.close.noModes')} body={t('money.close.noModesBody')} />
       ) : (
-        <div className="max-w-2xl space-y-2">
+        <div className="max-w-2xl space-y-2 min-[1800px]:max-w-5xl">
           {q.data.modes.map((m) => (
             <Card key={m.modeId} className="flex flex-wrap items-center gap-3 p-3">
               <div className="min-w-0 flex-1 basis-40">

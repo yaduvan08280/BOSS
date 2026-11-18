@@ -17,3 +17,4 @@ data/
 # Parallel checkouts made by coding agents
 .claude/worktrees/
 ui-audit-out/
+dist-b/

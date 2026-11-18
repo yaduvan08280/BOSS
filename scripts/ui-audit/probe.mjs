@@ -156,11 +156,13 @@ export function probe() {
     const inner = [...main.querySelectorAll(':scope > * > *, :scope > *')]
       .filter(shown)
       .map((e) => e.getBoundingClientRect());
-    const used = Math.max(0, ...inner.map((r) => r.right)) - Math.min(m.right, ...inner.map((r) => r.left));
-    const side2 = (W - m.width) / 2;
-    if (used < m.width * 0.6 && inner.length)
+    const left = Math.min(m.right, ...inner.map((r) => r.left));
+    const right = Math.max(0, ...inner.map((r) => r.right));
+    const used = right - left;
+    // A column centred on purpose (a search page, a letter, a guide) is a reading width, not wasted space.
+    const centred = Math.abs(left - m.left - (m.right - right)) < 24;
+    if (used < m.width * 0.6 && inner.length && !centred)
       add('narrow-strip', `content uses ${Math.round(used)} of ${Math.round(m.width)}px`);
-    void side2;
   }
   return {
     problems: out,
