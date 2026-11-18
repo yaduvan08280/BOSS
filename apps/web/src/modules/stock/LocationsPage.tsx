@@ -10,10 +10,11 @@ import { Input } from '@/components/ui/input';
 import { qty, rupees, useExpiry, useStock, useValuation, type StockRow } from './api';
 import { EntryDialog } from './EntryDialog';
 import { ItemKeepDialog } from './ItemKeepDialog';
+import { ParTab } from './ParTab';
 import { usePlaceName } from './place-name';
 import { PlaceSelect, Seg } from './ui';
 
-const TABS = ['stock', 'expiry', 'value'] as const;
+const TABS = ['stock', 'par', 'expiry', 'value'] as const;
 
 /** Stock by location (phase 13): what each store, kitchen and bar holds, batch by batch; what expires; what it is worth. */
 export function LocationsPage({ me }: { me: Me }) {
@@ -55,6 +56,7 @@ export function LocationsPage({ me }: { me: Me }) {
         onChange={setTab}
         options={TABS.map((k) => ({ key: k, label: t(`stock.locations.${k}`) }))}
       />
+      {tab === 'par' && <ParTab places={places} canEdit={hasPermission(me.user.permissions, 'ims.edit')} />}
       {tab === 'stock' && (
         <>
           <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-[260px_minmax(0,1fr)]">

@@ -58,7 +58,8 @@
       "expiry": "Expiring",
       "value": "Value",
       "emptyTitle": "Nothing here yet",
-      "emptyBody": "Receive goods or make a stock entry to see stock at a location."
+      "emptyBody": "Receive goods or make a stock entry to see stock at a location.",
+      "par": "Par levels"
     },
     "value": {
       "total": "Stock value",
@@ -286,6 +287,25 @@
       "rateKeyHint": "e.g. GOLD24 — priced from the day's rate",
       "rateFactor": "Factor on the rate (purity)",
       "shelfLife": "Shelf life (days)"
+    },
+    "par": {
+      "hint": "Set how much of each item this location should hold. What falls under its level is listed to ask for.",
+      "summary_one": "{{count}} of {{of}} items is under its level",
+      "summary_other": "{{count}} of {{of}} items are under their level",
+      "item": "Item",
+      "level": "Level",
+      "min": "Ask below",
+      "add": "Add",
+      "emptyTitle": "No levels at this location yet",
+      "has": "{{stock}} {{unit}} here",
+      "coming": "{{qty}} coming",
+      "minIs": "ask below {{qty}}",
+      "ask": "Ask for {{qty}} {{unit}}",
+      "fromStore": "from {{from}}",
+      "fromVendor": "buy from {{vendor}}",
+      "buy": "buy",
+      "enough": "Enough",
+      "levelOf": "Level of {{name}}"
     }
   }
 }
