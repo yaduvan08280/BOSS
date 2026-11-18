@@ -138,6 +138,8 @@ export function probe() {
   if (phone) {
     const small = controls.filter((e) => {
       const r = e.getBoundingClientRect();
+      // Something the person has zoomed out themselves (the org chart, a flow chart) is small by their choice.
+      if (e.closest('[style*="scale("], .react-flow')) return false;
       if (cs(e).display === 'inline' || e.type === 'checkbox' || e.type === 'radio' || e.type === 'hidden')
         return false;
       // A bare box inside a search field: the field (its label) is what the thumb hits.

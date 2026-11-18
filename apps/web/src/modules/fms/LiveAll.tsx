@@ -57,8 +57,9 @@ export function LiveAll({
           />
         ))}
       </div>
-      <div className="scroll-hint overflow-x-auto rounded-card border">
-        <table className="w-full min-w-[520px] text-sm">
+      <div className="scroll-hint @container overflow-x-auto rounded-card border">
+        {/* A narrow card keeps running, late and closed; due today and on hold return with room. */}
+        <table className="w-full text-sm @max-md:[&_:is(td,th):is(:nth-child(4),:nth-child(5))]:hidden @max-md:[&_:is(td,th)]:px-2">
           <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
             <tr>
               <th className="px-3 py-2.5 font-medium">{t('fms.flow')}</th>

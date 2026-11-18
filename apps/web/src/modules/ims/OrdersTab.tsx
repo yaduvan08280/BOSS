@@ -145,8 +145,9 @@ function PoDialog({ po, canOrder, onClose }: { po: Po; canOrder: boolean; onClos
         )
       }
     >
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[520px] text-sm">
+      <div className="scroll-hint @container overflow-x-auto">
+        {/* On a phone: item, ordered and amount (and what is coming in now); received returns with room. */}
+        <table className="w-full text-sm [&_td]:pr-2 [&_th]:pr-2 @max-md:[&_:is(td,th):nth-child(3)]:hidden">
           <thead className="text-left text-xs text-muted-foreground">
             <tr>
               <th className="py-2 font-medium">{t('ims.m.item')}</th>
@@ -160,15 +161,17 @@ function PoDialog({ po, canOrder, onClose }: { po: Po; canOrder: boolean; onClos
             {po.lines.map((l) => (
               <tr key={l.id} className="border-t">
                 <td className="py-2">
-                  {l.item.name} <span className="font-mono text-xs text-muted-foreground">{l.item.code}</span>
+                  {l.item.name}{' '}
+                  <span className="font-mono text-xs text-muted-foreground @max-md:block">{l.item.code}</span>
                 </td>
                 <td className="py-2 tabular-nums">
-                  {qty(l.qty)} {l.item.unit} × {formatINR(l.ratePaise)}
+                  {qty(l.qty)} {l.item.unit}{' '}
+                  <span className="@max-md:hidden">× {formatINR(l.ratePaise)}</span>
                 </td>
                 <td className="py-2 tabular-nums">{qty(l.receivedQty)}</td>
                 <td className="py-2 text-right tabular-nums">{formatINR(l.amountPaise)}</td>
                 {receiving && (
-                  <td className="py-1 pl-3">
+                  <td className="py-1 pl-1 @md:pl-3">
                     {l.receivedQty < l.qty && (
                       <Input
                         aria-label={t('ims.p.nowInFor', { name: l.item.name })}
@@ -176,7 +179,7 @@ function PoDialog({ po, canOrder, onClose }: { po: Po; canOrder: boolean; onClos
                         placeholder={qty(l.qty - l.receivedQty)}
                         value={got[l.id] ?? ''}
                         onChange={(e) => setGot({ ...got, [l.id]: e.target.value })}
-                        className="w-24 tabular-nums"
+                        className="w-[4.5rem] tabular-nums @md:w-24"
                       />
                     )}
                   </td>

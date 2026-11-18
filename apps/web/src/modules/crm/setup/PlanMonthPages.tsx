@@ -230,8 +230,9 @@ export function WeeksPage({ plan }: { plan: PlanData }) {
           </button>
         ))}
       </div>
-      <div className="overflow-x-auto rounded-card border">
-        <table className="w-full min-w-[560px] text-sm">
+      <div className="scroll-hint @container overflow-x-auto rounded-card border">
+        {/* A narrow card keeps the week, its target and the row's button; the day-by-day dialog has the rest. */}
+        <table className="w-full text-sm @max-md:[&_:is(td,th):nth-child(n+3):not(:last-child)]:hidden @max-md:[&_:is(td,th)]:px-2">
           <thead className="bg-muted/60 text-left text-xs text-muted-foreground">
             <tr>
               {['week', 'target', 'gp', 'working', 'holidays', 'perDay', ''].map((h) => (
