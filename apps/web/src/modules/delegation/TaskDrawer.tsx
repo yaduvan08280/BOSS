@@ -2,7 +2,7 @@ import { FileText } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { OrgPerson, TaskAction } from '@mono/shared';
-import { PageSkeleton } from '@/components/page';
+import { ErrorState, PageSkeleton } from '@/components/page';
 import { TabStrip } from '@/components/work';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -48,7 +48,8 @@ export function TaskDrawer({
       >
         {!task ? (
           <div className="p-5">
-            <PageSkeleton />
+            {/* Gone or not theirs (an old link, a deleted record): say so — never a skeleton that waits for ever. */}
+            {q.isError ? <ErrorState error={q.error} onRetry={() => void q.refetch()} /> : <PageSkeleton />}
           </div>
         ) : (
           <>

@@ -1,6 +1,8 @@
 {
   "common": {
     "noAccess": "This is not open to you",
+    "gone": "This is no longer here",
+    "goneBody": "It was removed, or the link is an old one.",
     "scrollLeft": "Show earlier options",
     "scrollRight": "Show more options",
     "loading": "Loading…",

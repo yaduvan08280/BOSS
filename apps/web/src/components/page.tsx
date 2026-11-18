@@ -114,6 +114,9 @@ export function ErrorState({ onRetry, error }: { onRetry?: () => void; error?: u
   const { t } = useTranslation();
   if (error instanceof ApiError && error.status === 403)
     return <EmptyState icon={Lock} title={t('common.noAccess')} body={error.message} />;
+  // Deleted, or an old link to something that is no longer there: nothing to retry.
+  if (error instanceof ApiError && error.status === 404)
+    return <EmptyState icon={CircleAlert} title={t('common.gone')} body={t('common.goneBody')} />;
   return (
     <EmptyState
       icon={CircleAlert}

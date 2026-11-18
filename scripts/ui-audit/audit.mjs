@@ -59,12 +59,13 @@ async function look(page, path, state, errs) {
   await page.waitForTimeout(120);
   const seen = await page.evaluate(probe).catch(() => null);
   if (!seen) return;
-  // A refusal (403) is not a fault of the screen: this person typed the address of something that is not
-  // theirs. It is listed, and the screen must then say so in words — "Something went wrong" still counts.
+  // A refusal (403) or a record that is gone (404 on a read: an old notification, a deleted row) is not a
+  // fault of the screen. Both are listed, and the screen must then say so in words — "Something went wrong"
+  // or a page that loads for ever still counts.
   const problems = [
     ...seen.problems,
     ...[...new Set(errs.splice(0))].map((e) => ({
-      kind: e.startsWith('403 ') ? 'no-access' : 'error',
+      kind: e.startsWith('403 ') ? 'no-access' : e.startsWith('404 GET') ? 'gone' : 'error',
       detail: e,
     })),
   ];

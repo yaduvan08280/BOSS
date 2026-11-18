@@ -5,7 +5,7 @@ import { join } from 'node:path';
  * Listed, not counted as failures: a table scrolling inside its own card, and a refusal for a screen that is
  * not this person's.
  */
-export const LISTED = new Set(['table-scrolls', 'no-access']);
+export const LISTED = new Set(['table-scrolls', 'no-access', 'gone']);
 
 /** Reads a run's states and writes report.md beside them; returns a one-line summary. */
 export function writeReport(dir, meta) {

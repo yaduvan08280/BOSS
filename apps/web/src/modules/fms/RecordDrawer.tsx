@@ -2,7 +2,7 @@ import { FileDown, FileText, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { OrgPerson } from '@mono/shared';
-import { PageSkeleton } from '@/components/page';
+import { ErrorState, PageSkeleton } from '@/components/page';
 import { StatusChip } from '@/components/status-chip';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
@@ -60,7 +60,8 @@ export function RecordDrawer({
       >
         {!r ? (
           <div className="p-5">
-            <PageSkeleton />
+            {/* Gone or not theirs (an old link, a deleted record): say so — never a skeleton that waits for ever. */}
+            {q.isError ? <ErrorState error={q.error} onRetry={() => void q.refetch()} /> : <PageSkeleton />}
           </div>
         ) : (
           <>

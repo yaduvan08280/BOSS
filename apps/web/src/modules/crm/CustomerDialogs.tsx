@@ -10,7 +10,7 @@ import {
   type CrmConfig,
   type Me,
 } from '@mono/shared';
-import { PageSkeleton } from '@/components/page';
+import { ErrorState, PageSkeleton } from '@/components/page';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Checkbox, Field, Select, Switch } from '@/components/ui/form';
@@ -70,7 +70,11 @@ export function CustomerSheet({
       }
     >
       {!c ? (
-        <PageSkeleton />
+        q.isError ? (
+          <ErrorState error={q.error} onRetry={() => void q.refetch()} />
+        ) : (
+          <PageSkeleton />
+        )
       ) : (
         <div className="space-y-4 text-sm">
           <TagChips auto={c.autoTags} own={c.tags} defs={defs} />

@@ -2,7 +2,7 @@ import { Camera, Check, Loader2, Mic, Square } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { PageSkeleton } from '@/components/page';
+import { ErrorState, PageSkeleton } from '@/components/page';
 import { StatusChip } from '@/components/status-chip';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
@@ -183,7 +183,8 @@ export function RunSheet({
       >
         {!run ? (
           <div className="p-5">
-            <PageSkeleton />
+            {/* Gone or not theirs (an old link, a deleted record): say so — never a skeleton that waits for ever. */}
+            {q.isError ? <ErrorState error={q.error} onRetry={() => void q.refetch()} /> : <PageSkeleton />}
           </div>
         ) : (
           <>

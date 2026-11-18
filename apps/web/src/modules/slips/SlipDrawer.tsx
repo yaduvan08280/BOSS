@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import type { OrgPerson, SlipAction } from '@mono/shared';
-import { PageSkeleton } from '@/components/page';
+import { ErrorState, PageSkeleton } from '@/components/page';
 import { StatusChip } from '@/components/status-chip';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -45,7 +45,8 @@ export function SlipDrawer({
       >
         {!slip ? (
           <div className="p-5">
-            <PageSkeleton />
+            {/* Gone or not theirs (an old link, a deleted record): say so — never a skeleton that waits for ever. */}
+            {q.isError ? <ErrorState error={q.error} onRetry={() => void q.refetch()} /> : <PageSkeleton />}
           </div>
         ) : (
           <>

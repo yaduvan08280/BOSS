@@ -5,7 +5,7 @@ import type { OrgPerson, TicketAction, TicketActionInput } from '@mono/shared';
 import { personLabel } from '@/lib/people';
 import { DateTimeInput } from '@/components/ui/date-input';
 import { FileDrop } from '@/components/file-drop';
-import { PageSkeleton } from '@/components/page';
+import { ErrorState, PageSkeleton } from '@/components/page';
 import { StatusChip } from '@/components/status-chip';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
@@ -57,7 +57,8 @@ export function TicketDrawer({
       >
         {!tk ? (
           <div className="p-5">
-            <PageSkeleton />
+            {/* Gone or not theirs (an old link, a deleted record): say so — never a skeleton that waits for ever. */}
+            {q.isError ? <ErrorState error={q.error} onRetry={() => void q.refetch()} /> : <PageSkeleton />}
           </div>
         ) : (
           <>
