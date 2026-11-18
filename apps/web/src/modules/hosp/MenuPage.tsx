@@ -1,4 +1,4 @@
-import { Plus, Upload, UtensilsCrossed } from 'lucide-react';
+import { Clock, ListPlus, Plus, Upload, UtensilsCrossed } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { hasPermission, type Me } from '@mono/shared';
@@ -13,7 +13,9 @@ import { ApiError } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { rupees } from '@/modules/stock/api';
 import { send, useHospMutation, useMenu, type MenuItem } from './api';
+import { ItemExtrasDialog } from './ItemExtrasDialog';
 import { MenuItemDialog } from './MenuItemDialog';
+import { ModGroupsDialog } from './ModGroupsDialog';
 
 const DIET_TONE = { VEG: 'ok', NONVEG: 'bad', EGG: 'warn' } as const;
 
@@ -26,6 +28,8 @@ export function MenuPage({ me }: { me: Me }) {
   const [edit, setEdit] = useState<Partial<MenuItem> | null>(null);
   const [newCat, setNewCat] = useState(false);
   const [paste, setPaste] = useState(false);
+  const [addons, setAddons] = useState(false);
+  const [extras, setExtras] = useState<MenuItem | null>(null);
   const canEdit = hasPermission(me.user.permissions, 'hosp.edit');
   const off = useHospMutation((a: { id: string; off: boolean }) =>
     send('POST', `/api/hosp/menu/items/${a.id}/86`, { off: a.off }),
@@ -45,6 +49,9 @@ export function MenuPage({ me }: { me: Me }) {
             <>
               <Button variant="secondary" onClick={() => setPaste(true)}>
                 <Upload /> {t('hosp.menu.paste')}
+              </Button>
+              <Button variant="secondary" onClick={() => setAddons(true)}>
+                <ListPlus /> {t('hosp.addons.title')}
               </Button>
               <Button variant="secondary" onClick={() => setNewCat(true)}>
                 <Plus /> {t('hosp.menu.category')}
@@ -122,6 +129,12 @@ export function MenuPage({ me }: { me: Me }) {
                       {i.combo.length > 0 && ` · ${t('hosp.menu.combo')}`}
                     </div>
                   </button>
+                  {canEdit && (
+                    <Button size="sm" variant="ghost" onClick={() => setExtras(i)}>
+                      <Clock /> {t('hosp.extras.open')}
+                      {i.prices.length + i.windows.length > 0 && ` · ${i.prices.length + i.windows.length}`}
+                    </Button>
+                  )}
                   <StatusChip tone={DIET_TONE[i.diet]}>{t(`hosp.menu.diet.${i.diet}`)}</StatusChip>
                   <label className="flex items-center gap-2 text-sm">
                     <Switch
@@ -139,6 +152,8 @@ export function MenuPage({ me }: { me: Me }) {
       )}
       {edit && <MenuItemDialog item={edit} setup={q.data} onClose={() => setEdit(null)} />}
       {newCat && <CategoryDialog onClose={() => setNewCat(false)} />}
+      {addons && <ModGroupsDialog setup={q.data} onClose={() => setAddons(false)} />}
+      {extras && <ItemExtrasDialog item={extras} setup={q.data} onClose={() => setExtras(null)} />}
       {paste && <PasteDialog onClose={() => setPaste(false)} />}
     </div>
   );

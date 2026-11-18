@@ -229,6 +229,42 @@
       "factorHint": "Share is how much of the recipe a variant uses: half = 0.5.",
       "addVariant": "Add a variant",
       "groups": "Add-on groups"
+    },
+    "addons": {
+      "title": "Add-ons",
+      "hint": "Groups of choices a guest adds to a dish — extras, choice of bread. Tick the groups an item uses in the item itself.",
+      "add": "Add a group",
+      "none": "No add-on groups yet.",
+      "pick": "pick {{min}}–{{max}}",
+      "min": "Must pick at least",
+      "minHint": "0 = the guest may skip it",
+      "max": "May pick at most",
+      "options": "Options",
+      "option": "Option",
+      "extra": "Extra ₹",
+      "addOption": "Add an option"
+    },
+    "extras": {
+      "open": "Hours & prices",
+      "title": "{{name}} — hours, prices, combo",
+      "hours": "When it can be ordered",
+      "hoursHint": "No hours = all day. Pick no weekday for every day. Hours may cross midnight.",
+      "addHours": "Add hours",
+      "from": "From",
+      "to": "To",
+      "prices": "Special prices",
+      "pricesHint": "A different price at one outlet, or in a time band such as happy hour. Leave the time empty for all day.",
+      "addPrice": "Add a price",
+      "label": "Name (Happy hour)",
+      "outlet": "Outlet",
+      "everyOutlet": "Every outlet",
+      "variant": "Variant",
+      "noVariant": "The item itself",
+      "combo": "Combo",
+      "comboHint": "Menu items sold together at this item's price. Leave empty if this is not a combo.",
+      "comboItem": "Menu item",
+      "qty": "Quantity",
+      "addCombo": "Add an item"
     }
   }
 }
