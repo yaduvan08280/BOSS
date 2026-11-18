@@ -1,4 +1,4 @@
-import { PackageCheck, Plus, Trash2 } from 'lucide-react';
+import { PackageCheck, Plus, Trash2, Undo2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatLocalDate, hasPermission, type Me } from '@mono/shared';
@@ -10,7 +10,8 @@ import { DateInput } from '@/components/ui/date-input';
 import { Dialog } from '@/components/ui/dialog';
 import { Checkbox, Field } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { post, qty, rupees, toPaise, useGrns, useItems, useStock, useStockMutation } from './api';
+import { post, qty, rupees, toPaise, useGrns, useItems, useStock, useStockMutation, type Grn } from './api';
+import { ReturnDialog } from './ReturnDialog';
 import { ItemSelect, PlaceSelect } from './ui';
 
 /** Goods receipts (phase 13): what really came, at what rate, in which batch, what was turned back at the gate. */
@@ -18,6 +19,8 @@ export function ReceiptsPage({ me }: { me: Me }) {
   const { t } = useTranslation();
   const q = useGrns();
   const [make, setMake] = useState(false);
+  const [back, setBack] = useState<Grn | null>(null);
+  const canReturn = hasPermission(me.user.permissions, 'ims.edit');
   return (
     <div>
       <PageHeader
@@ -53,6 +56,11 @@ export function ReceiptsPage({ me }: { me: Me }) {
                     </div>
                   </div>
                   {g.billId && <StatusChip tone="ok">{t('stock.grn.billed')}</StatusChip>}
+                  {canReturn && g.lines.some((l) => l.received > l.returned) && (
+                    <Button size="sm" variant="ghost" onClick={() => setBack(g)}>
+                      <Undo2 /> {t('stock.return.open')}
+                    </Button>
+                  )}
                 </div>
                 <ul className="mt-2 space-y-1 text-sm">
                   {g.lines.map((l) => (
@@ -75,6 +83,11 @@ export function ReceiptsPage({ me }: { me: Me }) {
                           {t('stock.grn.rejected', { qty: qty(l.rejected) })}
                         </StatusChip>
                       )}
+                      {l.returned > 0 && (
+                        <StatusChip tone="neutral">
+                          {t('stock.return.returned', { qty: qty(l.returned) })}
+                        </StatusChip>
+                      )}
                       <span className="tabular">
                         {qty(l.received)} {l.stockUnit} × {rupees(l.rate)}
                       </span>
@@ -87,6 +100,7 @@ export function ReceiptsPage({ me }: { me: Me }) {
         </ul>
       )}
       {make && <ReceiptDialog onClose={() => setMake(false)} />}
+      {back && <ReturnDialog grn={back} onClose={() => setBack(null)} />}
     </div>
   );
 }

@@ -330,6 +330,17 @@
       "list": "Price list",
       "save": "Save the route",
       "replace": "A route for the same branch and category replaces the old one."
+    },
+    "return": {
+      "open": "Return to vendor",
+      "title": "Return against {{number}}",
+      "send": "Send back",
+      "done": "Sent back; the stock is out and the vendor's bill is credited",
+      "nothing": "Everything on this receipt has already been returned.",
+      "canReturn": "up to {{qty}} {{unit}} can go back",
+      "qtyOf": "Quantity of {{name}} to return",
+      "reason": "Why is it going back?",
+      "returned": "{{qty}} returned"
     }
   }
 }
