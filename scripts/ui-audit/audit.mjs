@@ -109,7 +109,14 @@ async function dropdowns(page, path, state) {
         return r.right > innerWidth + 2 || r.left < -2 || r.bottom > innerHeight + 2 || r.top < -2;
       });
       const problems = [];
-      if (!options) problems.push({ kind: 'dropdown-empty', detail: name });
+      // A list that opens and says it has nothing (an empty master) is data, not a fault; one that does not
+      // open at all, or opens blank, is.
+      const says = options
+        ? false
+        : await page.evaluate(() =>
+            Boolean(document.querySelector('[role=listbox] li')?.textContent?.trim()),
+          );
+      if (!options) problems.push({ kind: says ? 'dropdown-no-data' : 'dropdown-empty', detail: name });
       if (off) problems.push({ kind: 'dropdown-off-screen', detail: name });
       record({ path, state: `${state} ▾ ${name}`, dropdown: true, options, problems });
       await page.keyboard.press('Escape');

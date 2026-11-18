@@ -2,10 +2,10 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
- * Listed, not counted as failures: a table scrolling inside its own card, and a refusal for a screen that is
- * not this person's.
+ * Listed, not counted as failures: a table scrolling inside its own card, a refusal for a screen that is not
+ * this person's, a record that is gone, and a dropdown that says it has nothing to offer.
  */
-export const LISTED = new Set(['table-scrolls', 'no-access', 'gone']);
+export const LISTED = new Set(['table-scrolls', 'no-access', 'gone', 'dropdown-no-data']);
 
 /** Reads a run's states and writes report.md beside them; returns a one-line summary. */
 export function writeReport(dir, meta) {
