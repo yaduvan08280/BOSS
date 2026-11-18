@@ -218,6 +218,13 @@ function BillDrawer({
                     {t('money.creditNote')}
                   </Button>
                 )}
+              {b.status !== 'DRAFT' && (
+                <Button asChild variant="secondary">
+                  <a href={`/api/money/bills/${b.id}/pdf`} target="_blank" rel="noreferrer">
+                    <FileText /> {t('money.pdf')}
+                  </a>
+                </Button>
+              )}
               {canEdit && <EinvoiceButton bill={b} />}
               {b.due > 0 && canMake && (
                 <Button
