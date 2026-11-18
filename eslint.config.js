@@ -12,6 +12,8 @@ export default tseslint.config(
       '.claude/**',
       '**/node_modules/**',
       '**/dist/**',
+      '**/dist-b/**',
+      'ui-audit-out/**',
       '**/dev-dist/**',
       'packages/db/src/generated/**',
       'prisma/migrations/**',
