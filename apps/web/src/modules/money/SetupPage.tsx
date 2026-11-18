@@ -102,7 +102,7 @@ function Rates() {
             onChange={(e) => setD({ ...d, percent: e.target.value })}
           />
         </Field>
-        <Field label={t('money.rates.from')}>
+        <Field label={t('money.rates.from')} className="max-sm:col-span-2">
           <DateInput
             value={d.from}
             onChange={(from) => setD({ ...d, from })}
@@ -110,6 +110,7 @@ function Rates() {
           />
         </Field>
         <Button
+          className="max-sm:col-span-2"
           variant="primary"
           disabled={
             !/^[A-Z0-9_-]{1,20}$/.test(d.code) ||

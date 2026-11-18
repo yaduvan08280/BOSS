@@ -29,9 +29,17 @@ export function DataList<T>({
     ) : null;
   const head = columns.find((c) => c.head) ?? columns[0]!;
   const rest = columns.filter((c) => c !== head);
+  // The table needs room for its columns; the cards take over whenever its own box is narrower than that —
+  // a phone, a laptop with the menu open, a zoomed-in screen (decision 247).
+  const [table, cards] =
+    columns.length >= 8
+      ? ['hidden @5xl:block', '@5xl:hidden']
+      : columns.length >= 6
+        ? ['hidden @4xl:block', '@4xl:hidden']
+        : ['hidden @2xl:block', '@2xl:hidden'];
   return (
-    <>
-      <div className="hidden scroll-hint overflow-x-auto rounded-card border md:block">
+    <div className="@container">
+      <div className={cn('scroll-hint overflow-x-auto rounded-card border', table)}>
         <table className="w-full text-sm">
           <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
             <tr>
@@ -61,7 +69,7 @@ export function DataList<T>({
           </tbody>
         </table>
       </div>
-      <ul className="space-y-2 md:hidden">
+      <ul className={cn('space-y-2', cards)}>
         {rows.map((r, i) => (
           <li key={rowKey(r, i)} className="rounded-card border bg-card p-3.5 text-sm">
             <div className="font-semibold">{head.cell(r)}</div>
@@ -76,7 +84,7 @@ export function DataList<T>({
           </li>
         ))}
       </ul>
-    </>
+    </div>
   );
 }
 

@@ -115,7 +115,7 @@ export function TemplatesTab() {
         <EmptyState icon={Search} title={t('notify.tpl.none')} />
       ) : (
         <div className="scroll-hint @container overflow-x-auto rounded-card border">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm [&_td]:px-2 [&_th]:px-2 @md:[&_td]:px-3 @md:[&_th]:px-3">
             <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
               <tr>
                 {[
@@ -135,6 +135,7 @@ export function TemplatesTab() {
                       'whitespace-nowrap px-3 py-2.5 font-medium',
                       ['category', 'quality', 'sentRead'].includes(h) && LOW,
                       ['language', 'status'].includes(h) && LOWER,
+                      h === 'channel' && 'hidden @md:table-cell',
                     )}
                   >
                     {h && t(`notify.tpl.col.${h}`)}
@@ -146,12 +147,12 @@ export function TemplatesTab() {
               {rows.slice(0, 300).map((x) => (
                 <tr key={x.id} className="hover:bg-muted/40">
                   <td className="px-3 py-2">
-                    <div className="font-mono text-xs">{x.code}</div>
+                    <div className="break-all font-mono text-xs">{x.code}</div>
                     <div className="max-w-[11rem] truncate text-xs text-muted-foreground @5xl:max-w-xs">
                       {x.event ? eventLabel(t, x.event) : x.body}
                     </div>
                   </td>
-                  <td className="px-3">{t(`notify.channel.${x.channel}`)}</td>
+                  <td className="hidden px-3 @md:table-cell">{t(`notify.channel.${x.channel}`)}</td>
                   <td className={cn('px-3 text-xs', LOW)}>{t(`notify.tpl.cat.${x.category}`)}</td>
                   <td className={cn('px-3 text-xs uppercase', LOWER)}>{x.language}</td>
                   <td className={cn('px-3', LOWER)}>
@@ -171,7 +172,7 @@ export function TemplatesTab() {
                     />
                   </td>
                   <td className="px-3">
-                    <div className="flex">
+                    <div className="flex flex-col @md:flex-row">
                       {x.channel === 'whatsapp' && x.status !== 'APPROVED' && (
                         <Button
                           variant="ghost"

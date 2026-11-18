@@ -96,7 +96,7 @@ export function RulesTab() {
         />
       ) : (
         <div className="scroll-hint @container overflow-x-auto rounded-card border">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm [&_td]:px-2 [&_th]:px-2 @md:[&_td]:px-3 @md:[&_th]:px-3">
             <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
               <tr>
                 {['when', 'for', 'sendTo', 'channels', 'wait', 'noReply', 'status', 'added', ''].map((h) => (
@@ -106,6 +106,7 @@ export function RulesTab() {
                       'whitespace-nowrap px-3 py-2.5 font-medium',
                       ['for', 'wait', 'added'].includes(h) && LOW,
                       ['sendTo', 'noReply'].includes(h) && LOWER,
+                      h === 'channels' && 'hidden @md:table-cell',
                     )}
                   >
                     {h && t(`notify.rule.col.${h}`)}
@@ -118,13 +119,13 @@ export function RulesTab() {
                 <tr key={r.id} className={cn('hover:bg-muted/40', !r.active && 'opacity-55')}>
                   <td className="px-3 py-2.5">
                     <div className="font-medium">{eventLabel(t, r.event)}</div>
-                    <div className="font-mono text-[11px] text-muted-foreground">{r.event}</div>
+                    <div className="break-all font-mono text-[11px] text-muted-foreground">{r.event}</div>
                   </td>
                   <td className={cn('px-3 text-xs', LOW)}>{t(`notify.aud.${r.audience}`)}</td>
                   <td className={cn('px-3 text-xs', LOWER)}>
                     {r.recipients.map((x) => recipientLabel(t, x, names)).join(', ')}
                   </td>
-                  <td className="px-3">
+                  <td className="hidden px-3 @md:table-cell">
                     <div className="flex flex-wrap gap-1">
                       {r.channels.map((c) => (
                         <span key={c} className="rounded-pill bg-muted px-2 py-0.5 text-[11px] font-medium">
@@ -155,7 +156,7 @@ export function RulesTab() {
                     {r.isDefault ? t('notify.rule.default') : formatDate(r.createdAt)}
                   </td>
                   <td className="px-3">
-                    <div className="flex">
+                    <div className="flex flex-col @md:flex-row">
                       <Button
                         variant="ghost"
                         size="icon-sm"

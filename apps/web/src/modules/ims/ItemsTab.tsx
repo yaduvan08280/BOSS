@@ -68,7 +68,7 @@ export function ItemsTab({ canEdit }: { canEdit: boolean }) {
                   className={cn(
                     'px-3 py-2 font-medium',
                     ['unit', 'lead', 'sf', 'min', 'vendor'].includes(h) && LOW,
-                    h === 'max' && 'hidden @md:table-cell',
+                    ['max', 'rate'].includes(h) && 'hidden @md:table-cell',
                   )}
                 >
                   {t(`ims.i.col.${h}`)}
@@ -96,7 +96,7 @@ export function ItemsTab({ canEdit }: { canEdit: boolean }) {
                 <td className={cn('px-3 py-2 tabular-nums', LOW)}>
                   {i.minQty === null ? '—' : qty(i.minQty)}
                 </td>
-                <td className="px-3 py-2 tabular-nums">{formatINR(i.ratePaise)}</td>
+                <td className="hidden px-3 py-2 tabular-nums @md:table-cell">{formatINR(i.ratePaise)}</td>
                 <td className={cn('px-3 py-2', LOW)}>{i.vendor ?? '—'}</td>
                 <td className="whitespace-nowrap px-2 py-1 text-right">
                   {canEdit && (
