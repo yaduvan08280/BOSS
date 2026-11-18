@@ -93,8 +93,10 @@ async function dropdowns(page, path, state) {
       await box.click({ timeout: 1200 });
       await page.waitForTimeout(100);
       let options = await page.locator('[role=option]:visible').count();
-      if (!options) {
-        // Something else was open (a calendar, another list) and took the click: close it and ask once more.
+      const opened = () => page.evaluate(() => Boolean(document.querySelector('[role=listbox]')));
+      if (!options && !(await opened())) {
+        // Nothing opened: something else (a calendar, another list) took the click. Close that and ask once more.
+        // (When a list did open and is empty, Escape is not pressed: it would close the dialog around it.)
         await page.keyboard.press('Escape');
         await page.waitForTimeout(120);
         await box.click({ timeout: 1200 }).catch(() => {});
