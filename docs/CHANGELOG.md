@@ -1,5 +1,13 @@
 # Changelog
 
+## 18/11/2026 — Every screen at every size
+
+A new tool, `npm run ui:audit`, signs in and looks at every screen, tab, dialog and dropdown at one screen size and lists what is wrong; `npm run ui:audit:all` does it from a 360 px phone to a 27" monitor. What it found and what changed:
+
+- **Phones**: every button, tab and box is at least 44 px to touch and no text is under 12 px; tables that scrolled sideways (item master, scorecard, R/Y/G, movement, rules, templates, rights) now fit; the stock "Turns & NOS" report no longer pushes the page sideways; the assistant button moved into the top bar so it no longer covers the page; error rows, record titles, menu rows and long amounts fit.
+- **Laptops and zoom**: rows of six tiles form only when there is room; figures in tiles never wrap or get cut; the Punch in button no longer hangs out of its card.
+- **Wide monitors**: from 1728 px the interface grows with the screen and uses its width (it was a 1440 px strip on a 27" monitor); card lists run in two columns.
+
 ## 18/11/2026 — Laptop widths and zoom, a PDF of a bill, advances on restaurant bills
 
 - **Screens**: a sweep of about 100 screens at phone, tablet, laptop and desktop widths. Fixed: the Roles screen ran off the page at 1024; the page title in the top bar was cut to one letter between 768 and 1280; the task, Weekly MIS and checklist tables hid their last columns — they now turn into cards whenever the table would not fit (also when the browser is zoomed in). Tables that still scroll sideways show a shadow on the edge that has more. Seven notification modules had no label on the rules screen.
