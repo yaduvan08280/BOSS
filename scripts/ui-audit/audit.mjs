@@ -39,6 +39,8 @@ const done = new Set(
         .map((r) => r.path)
     : [],
 );
+// (The file exists even when nothing matched --only, so the report can always be written.)
+appendFileSync(LOG, '');
 const record = (row) => appendFileSync(LOG, `${JSON.stringify(row)}\n`);
 const slug = (s) =>
   s
