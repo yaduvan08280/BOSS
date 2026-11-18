@@ -139,7 +139,9 @@ export function UsersTable({
                       <span className="whitespace-nowrap">
                         {p.branchName}
                         {(p.alsoBranchIds?.length ?? 0) > 0 && (
-                          <span className="ml-1 text-xs text-muted-foreground">+{p.alsoBranchIds!.length}</span>
+                          <span className="ml-1 text-xs text-muted-foreground">
+                            +{p.alsoBranchIds!.length}
+                          </span>
                         )}
                       </span>
                     ) : (

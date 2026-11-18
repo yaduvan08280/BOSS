@@ -142,7 +142,11 @@ export function MyStepsPage({ me }: { me: Me }) {
                       <div className="flex flex-col items-start gap-1 md:items-end">
                         <StatusChip tone={RECORD_TONE[r.status]}>{t(`fms.status.${r.status}`)}</StatusChip>
                         {s?.doerId && (
-                          <Who id={s.doerId} name={names.get(s.doerId)} className="text-xs text-muted-foreground" />
+                          <Who
+                            id={s.doerId}
+                            name={names.get(s.doerId)}
+                            className="text-xs text-muted-foreground"
+                          />
                         )}
                       </div>
                     </button>

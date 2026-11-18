@@ -51,7 +51,10 @@ export function AfterOrderPage({ progress, canEdit }: { progress: Progress; canE
       )}
       <div className="space-y-2">
         {steps.map((s, i) => (
-          <div key={s.key} className="grid gap-2 rounded-control border p-3 sm:grid-cols-[1.4fr_minmax(0,1fr)_auto]">
+          <div
+            key={s.key}
+            className="grid gap-2 rounded-control border p-3 sm:grid-cols-[1.4fr_minmax(0,1fr)_auto]"
+          >
             <Input
               aria-label={t('crm.s.stepName')}
               value={s.name}

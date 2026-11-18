@@ -66,7 +66,10 @@ function TypeQuotas({ type, saved }: { type: LeaveType; saved: Quota[] }) {
       </CardHeader>
       <CardContent className="space-y-2">
         {rows.map((r, i) => (
-          <div key={i} className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:grid-cols-[150px_minmax(0,1fr)_110px_auto]">
+          <div
+            key={i}
+            className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:grid-cols-[150px_minmax(0,1fr)_110px_auto]"
+          >
             <Select
               value={r.scope}
               aria-label={t('hr.w.scope')}
