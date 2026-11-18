@@ -153,6 +153,8 @@ describe('POS: orders, kitchen tickets, kitchen display, voids, table operations
     // One item ready, then the other: the ticket is ready by itself.
     const [naan, dal] = kitchen.tickets[0]!.items;
     await ok(s.post(`/api/pos/items/${naan!.id}/ready`, { ready: true }));
+    // A second press (two cooks, a double tap) is not an error.
+    await ok(s.post(`/api/pos/items/${naan!.id}/ready`, { ready: true }));
     expect((await kds(`?stationId=${r.stations.kitchen}`)).tickets[0]!.status).toBe('NEW');
     await ok(s.post(`/api/pos/items/${dal!.id}/ready`, { ready: true }));
     expect((await kds(`?stationId=${r.stations.kitchen}`)).tickets[0]!.status).toBe('READY');

@@ -174,6 +174,9 @@ export async function itemReady(db: Db, actor: Actor, itemId: string, ready: boo
   const item = await db.posOrderItem.findFirst({ where: { id: itemId, companyId: actor.companyId } });
   if (!item || !item.kotId) throw notFound('Item');
   const kot = await kotOf(db, actor, item.kotId);
+  // A second press on a screen that has not refreshed yet (two cooks, a double tap) asks for what already is.
+  if ((ready && item.status === 'READY') || (!ready && item.status === 'FIRED'))
+    return { id: itemId, status: item.status };
   const to = transition(orderItemMachine, {
     from: item.status as ItemStatus,
     action: ready ? 'ready' : 'recall',
