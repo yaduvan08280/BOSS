@@ -83,9 +83,25 @@ export function probe() {
       cs(e).position !== 'fixed' &&
       e.getAttribute('data-ui') !== 'scroll-arrow',
   );
+  // Only the part of a control that is really shown: what a scrolling box hides (a field that has slid under
+  // a dialog's footer) is not on top of anything.
+  const shownPart = (e) => {
+    const r = e.getBoundingClientRect();
+    const box = { left: r.left, right: r.right, top: r.top, bottom: r.bottom };
+    for (let p = e.parentElement; p && p !== document.body; p = p.parentElement) {
+      const s = cs(p);
+      if (s.overflowX === 'visible' && s.overflowY === 'visible') continue;
+      const c = p.getBoundingClientRect();
+      box.left = Math.max(box.left, c.left);
+      box.right = Math.min(box.right, c.right);
+      box.top = Math.max(box.top, c.top);
+      box.bottom = Math.min(box.bottom, c.bottom);
+    }
+    return box;
+  };
   const boxes = controls
-    .map((e) => [e, e.getBoundingClientRect()])
-    .filter(([, r]) => r.bottom > 0 && r.top < H);
+    .map((e) => [e, shownPart(e)])
+    .filter(([, r]) => r.bottom > 0 && r.top < H && r.right - r.left > 4 && r.bottom - r.top > 4);
   const over = [];
   for (let i = 0; i < boxes.length && over.length < 2; i++)
     for (let j = i + 1; j < boxes.length && over.length < 2; j++) {
@@ -128,6 +144,8 @@ export function probe() {
   }
   const tiny = all.filter(
     (e) =>
+      // (Initials inside a small round avatar are a picture, not text to read.)
+      e.getAttribute('aria-hidden') !== 'true' &&
       [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) &&
       parseFloat(cs(e).fontSize) < (phone ? 12 : 10),
   );

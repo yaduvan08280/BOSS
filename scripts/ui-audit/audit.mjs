@@ -24,7 +24,7 @@ const OUT = join(arg('out', 'ui-audit-out'), LABEL, `${W}x${H}${VARIANT ? `-${VA
 const WAIT = Number(arg('wait', 1200));
 // Buttons the crawler never presses: they change or send something.
 const SKIP =
-  /delete|remove|void|cancel|close|sign out|log ?out|reset|archive|discard|revoke|reject|approve|decline|punch|install|apply|print|download|import|save|submit|refresh|sync|send|verify|accept|mark|undo|clear|fire|pay|settle|issue|confirm|check ?out|check ?in|run|generate|recalc|reopen|unlock|lock|stop|disconnect|connect|switch|load|collapse|copy|bump|ready|serve|recall|start|capture|dictate|link|^×$|^x$/i;
+  /delete|remove|void|cancel|close|sign out|log ?out|reset|archive|discard|revoke|reject|approve|decline|punch|install|apply|print|download|import|save|submit|refresh|sync|send|verify|accept|mark|undo|clear|fire|pay|settle|issue|confirm|check ?out|check ?in|run|generate|recalc|reopen|unlock|lock|stop|disconnect|connect|switch|load|collapse|copy|bump|ready|serve|recall|start|capture|dictate|link|get my code|check all|move (up|down)|^×$|^x$/i;
 
 mkdirSync(join(OUT, 'shots'), { recursive: true });
 const LOG = join(OUT, 'states.jsonl');
