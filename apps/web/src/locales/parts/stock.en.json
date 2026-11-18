@@ -306,6 +306,30 @@
       "buy": "buy",
       "enough": "Enough",
       "levelOf": "Level of {{name}}"
+    },
+    "routes": {
+      "title": "Supply routes",
+      "hint": "Which store or kitchen supplies a branch, and at what price the goods move. An indent with no supplier named follows these.",
+      "none": "No supply routes yet: an indent must name who supplies it.",
+      "branch": "Branch",
+      "gone": "a location that was removed",
+      "everything": "everything else",
+      "from": "from {{from}}",
+      "plus": "cost + {{percent}}%",
+      "rule": {
+        "COST": "At cost",
+        "COST_PLUS": "Cost plus a percent",
+        "LIST": "By a price list"
+      },
+      "to": "Branch that receives",
+      "fromPlace": "Supplied from",
+      "category": "Item category",
+      "categoryHint": "Leave empty for everything that has no route of its own",
+      "price": "Price",
+      "percent": "Percent over cost",
+      "list": "Price list",
+      "save": "Save the route",
+      "replace": "A route for the same branch and category replaces the old one."
     }
   }
 }

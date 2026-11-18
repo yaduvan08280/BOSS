@@ -11,6 +11,7 @@ import { Field, Select } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { post, qty, rupees, useItems, useStock, useStockMutation, useTransfers, type Transfer } from './api';
 import { usePlaceName } from './place-name';
+import { RoutesDialog } from './RoutesDialog';
 import { ItemSelect, PlaceSelect, Seg } from './ui';
 
 const TONE: Record<Transfer['status'], 'neutral' | 'info' | 'warn' | 'ok' | 'bad'> = {
@@ -30,6 +31,8 @@ export function TransfersPage({ me }: { me: Me }) {
   const q = useTransfers();
   const [tab, setTab] = useState<(typeof TABS)[number]>('open');
   const [ask, setAsk] = useState(false);
+  const [routes, setRoutes] = useState(false);
+  const admin = hasPermission(me.user.permissions, 'ims.admin');
   const [open, setOpen] = useState<string | null>(null);
   const name = usePlaceName();
   const rows = (q.data ?? []).filter((r) =>
@@ -46,13 +49,19 @@ export function TransfersPage({ me }: { me: Me }) {
         title={t('stock.transfers.title')}
         subtitle={t('stock.transfers.subtitle')}
         actions={
-          hasPermission(me.user.permissions, 'ims.create') && (
-            <Button variant="primary" onClick={() => setAsk(true)}>
-              <Plus /> {t('stock.transfers.ask')}
+          <>
+            <Button variant="secondary" onClick={() => setRoutes(true)}>
+              {t('stock.routes.title')}
             </Button>
-          )
+            {hasPermission(me.user.permissions, 'ims.create') && (
+              <Button variant="primary" onClick={() => setAsk(true)}>
+                <Plus /> {t('stock.transfers.ask')}
+              </Button>
+            )}
+          </>
         }
       />
+      {routes && <RoutesDialog canEdit={admin} onClose={() => setRoutes(false)} />}
       <Seg
         value={tab}
         onChange={setTab}
