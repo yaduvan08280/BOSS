@@ -94,8 +94,9 @@ export function DocumentsPage({ me }: { me: Me }) {
       ) : !q.data?.documents.length ? (
         <EmptyState icon={FileText} title={t('fms.doc.none')} body={t('fms.doc.noneBody')} />
       ) : (
-        <div className="scroll-hint overflow-x-auto rounded-card border">
-          <table className="w-full min-w-[760px] text-sm">
+        <div className="scroll-hint @container overflow-x-auto rounded-card border">
+          {/* A narrow card keeps the number, the party and the total; the paper itself shows the rest. */}
+          <table className="w-full text-sm @max-2xl:[&_:is(td,th):is(:nth-child(2),:nth-child(3),:nth-child(5),:nth-child(7))]:hidden">
             <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
               <tr>
                 {['no', 'type', 'date', 'party', 'from', 'total', 'status'].map((h) => (

@@ -149,8 +149,10 @@ export function ScotPage({ me }: { me: Me }) {
       {!d.rows.length ? (
         <EmptyState icon={Repeat} title={t('crm.sc.none')} body={t('crm.sc.noneBody')} />
       ) : (
-        <div className="scroll-hint overflow-x-auto rounded-card border">
-          <table className="w-full min-w-[880px] text-sm">
+        <div className="scroll-hint @container overflow-x-auto rounded-card border">
+          {/* Narrow: customer, next call, average order. Wider: + how often, order due, rhythm. All from 1024 px.
+              A row opens the customer's card with everything. */}
+          <table className="w-full text-sm @max-2xl:[&_:is(td,th):nth-child(n+4)]:hidden @max-5xl:[&_:is(td,th):is(:nth-child(5),:nth-child(6),:nth-child(9),:nth-child(10))]:hidden">
             <thead className="bg-muted/60 text-left text-xs text-muted-foreground">
               <tr>
                 {[
