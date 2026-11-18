@@ -197,6 +197,12 @@ Database migrations run automatically (`migrate` service) before the new `api` s
 
 - Every night at **02:30 India time**, the `backup` container saves the database (`mono-db-*.dump`) and uploaded files
   (`mono-uploads-*.tar.gz`) to `/srv/mono/backups`, keeping **14 days** (`BACKUP_CRON`, `BACKUP_KEEP_DAYS` in `.env`).
+- During the day a **database snapshot is taken every 15 minutes** (`mono-db-<date>-<time>-q.dump`, kept 48 hours;
+  `BACKUP_QUICK_CRON`, `BACKUP_QUICK_KEEP_HOURS`; `BACKUP_QUICK_CRON=off` switches it off). With the off-machine copy
+  below, each snapshot and every newly uploaded file (folder `uploads-live`) is copied off the machine too — so a dead
+  disk costs at most about 15 minutes of work, not a day. Restore one like any backup:
+  `./deploy/restore.sh 20261105-1415-q`. On a new machine also copy `uploads-live` into `/srv/mono/backups/` first
+  (the rclone line in "Restore on a new machine" with `gdrive:mono-backups/uploads-live /backups/uploads-live`).
 - Run one now to check:
   ```bash
   ./deploy/compose.sh exec backup backup.sh

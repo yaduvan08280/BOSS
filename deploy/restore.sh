@@ -2,6 +2,8 @@
 # Restore MONO from a nightly backup (deploy/INSTALL.md → "Restore from a backup").
 #   ./deploy/restore.sh                    list the backups that can be restored
 #   ./deploy/restore.sh 20261105-0230      restore that night's database and uploaded files
+#   ./deploy/restore.sh 20261105-1415-q    restore a daytime snapshot (database of that minute; uploaded files from the
+#                                          last nightly archive before it, plus any copied back into backups/uploads-live)
 # It REPLACES the database. Run it from the repo, as the user who runs MONO, with the same .env (APP_SECRET!).
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -24,7 +26,16 @@ STAMP="$(basename "$1" | sed -e 's/^mono-db-//' -e 's/\.dump$//')"
 DUMP="$B/mono-db-$STAMP.dump"
 FILES="$B/mono-uploads-$STAMP.tar.gz"
 [ -f "$DUMP" ] || { echo "Not found: $DUMP  (copy the backup files into $B first)"; exit 1; }
-[ -f "$FILES" ] || echo "Note: no uploads archive for $STAMP; only the database will be restored."
+if [ ! -f "$FILES" ]; then
+  # A daytime snapshot has no archive of its own: take the newest nightly archive that is not newer than it.
+  FILES=""
+  for f in $(ls -1 "$B" 2>/dev/null | sed -n 's/^mono-uploads-\(.*\)\.tar\.gz$/\1/p' | sort); do
+    [ "$(printf '%s\n%s\n' "$f" "$STAMP" | sort | head -1)" = "$f" ] && FILES="$B/mono-uploads-$f.tar.gz"
+  done
+  if [ -n "$FILES" ]; then echo "Uploaded files will come from $(basename "$FILES")."
+  else FILES="$B/none"; echo "Note: no uploads archive at or before $STAMP; only the database will be restored."; fi
+fi
+LIVE="$B/uploads-live"
 
 if [ "${RESTORE_YES:-}" != "1" ]; then
   printf 'This REPLACES the MONO database with the backup from %s. Type yes to go on: ' "$STAMP"
@@ -46,9 +57,14 @@ echo "==> 3/5 Restoring the database from $DUMP"
 if [ -f "$FILES" ]; then
   echo "==> 4/5 Restoring uploaded files"
   docker run --rm --entrypoint sh -v "$DATA_DIR/uploads:/u" -v "$B:/b:ro" mono-backup:latest \
-    -c "tar -xzf /b/mono-uploads-$STAMP.tar.gz -C /u && chown -R 1000:1000 /u"
+    -c "tar -xzf /b/$(basename "$FILES") -C /u && chown -R 1000:1000 /u"
 else
   echo "==> 4/5 No uploaded files to restore"
+fi
+if [ -d "$LIVE" ]; then
+  echo "    plus the files copied off the machine since that archive ($LIVE)"
+  docker run --rm --entrypoint sh -v "$DATA_DIR/uploads:/u" -v "$B:/b:ro" mono-backup:latest \
+    -c "cp -Rn /b/uploads-live/. /u/ && chown -R 1000:1000 /u"
 fi
 
 echo "==> 5/5 Starting MONO (newer migrations are applied first)"

@@ -1,5 +1,9 @@
 # Changelog
 
+## 18/11/2026 — A database snapshot every 15 minutes
+
+The backup container now also saves the database every 15 minutes during the day (kept 48 hours) and, when the off-machine copy is set up, copies each snapshot and every newly uploaded file off the machine. `./deploy/restore.sh <date>-<time>-q` restores one. A dead disk now costs about 15 minutes of work instead of a day. Tested here with the scripts against a local database; not yet run inside the Docker stack.
+
 ## 18/11/2026 — Background jobs reach every row
 
 Reminder and follow-up jobs used to read a fixed first batch (200 – 5,000 rows) in no order; in a busy company the rows after that batch could go without their reminder for good. They now page through everything, 500 at a time: overdue and unaccepted tasks, checklist reminders and misses, late slips, ticket escalation, reservation reminders and no-shows, group blocks to give back, Form C reminders, licence reminders. The print sweep now reads only the server's own printers, so jobs waiting for a site agent cannot hold kitchen tickets back.

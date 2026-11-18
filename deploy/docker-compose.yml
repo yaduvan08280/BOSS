@@ -115,6 +115,8 @@ services:
       TZ: ${BACKUP_TZ:-Asia/Kolkata}
       BACKUP_CRON: ${BACKUP_CRON:-30 2 * * *}
       BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
+      BACKUP_QUICK_CRON: ${BACKUP_QUICK_CRON:-*/15 * * * *}
+      BACKUP_QUICK_KEEP_HOURS: ${BACKUP_QUICK_KEEP_HOURS:-48}
       RCLONE_REMOTE: ${RCLONE_REMOTE:-}
     volumes:
       - ${DATA_DIR:-/srv/mono}/backups:/backups
