@@ -147,4 +147,22 @@ test('whisky: received by the case, moved to the bar, a recipe, breakage and a b
   await page.goto('/ims/receipts');
   await settled(page);
   await expectNoSideScroll(page);
+
+  // Decision 246: a par level for the bar — the whisky is under it and is listed to ask for; and the routes dialog.
+  await page.goto('/ims/locations');
+  await settled(page);
+  await page.getByRole('tab', { name: 'Par levels' }).click();
+  await choose(page, page.getByRole('combobox', { name: 'Location', exact: true }), n.bar);
+  await choose(page, page.getByRole('combobox', { name: 'Item', exact: true }), n.whisky);
+  await page.getByLabel('Level', { exact: true }).fill('3000');
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
+  await expect(page.locator('li', { hasText: n.whisky }).getByText(/Ask for \d+ ml/)).toBeVisible();
+  await expectNoSideScroll(page);
+  await snap('par');
+  await page.goto('/ims/transfers');
+  await settled(page);
+  await page.getByRole('button', { name: 'Supply routes' }).click();
+  await expect(dialog.getByText('Which store or kitchen supplies a branch')).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Save the route' })).toBeDisabled();
+  await expectNoSideScroll(page);
 });
