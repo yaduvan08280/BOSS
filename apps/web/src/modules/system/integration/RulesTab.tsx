@@ -90,7 +90,7 @@ export function RulesTab() {
           action={<Button onClick={() => load.mutate(undefined)}>{t('notify.rule.loadDefaults')}</Button>}
         />
       ) : (
-        <div className="overflow-x-auto rounded-card border bg-card">
+        <div className="scroll-hint overflow-x-auto rounded-card border">
           <table className="w-full min-w-[1000px] text-sm">
             <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
               <tr>

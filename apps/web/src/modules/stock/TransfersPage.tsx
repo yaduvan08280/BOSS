@@ -179,7 +179,7 @@ function AskDialog({ onClose }: { onClose: () => void }) {
       </div>
       <div className="mt-4 space-y-2">
         {lines.map((l, i) => (
-          <div key={i} className="grid grid-cols-[1fr_auto] gap-2 sm:grid-cols-[1fr_110px_110px_auto]">
+          <div key={i} className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:grid-cols-[minmax(0,1fr)_110px_110px_auto]">
             <ItemSelect
               label={t('stock.item')}
               value={l.itemId}

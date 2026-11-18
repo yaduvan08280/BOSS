@@ -142,7 +142,7 @@ export function PacksCard({ canAdmin }: { canAdmin: boolean }) {
         </ul>
       )}
       {canAdmin && (
-        <div className="grid gap-3 border-t pt-3 sm:grid-cols-[1fr_auto_auto] sm:items-end">
+        <div className="grid gap-3 border-t pt-3 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-end">
           <Field label={t('packs.saveAs')}>
             <Input value={name} onChange={(e) => setName(e.target.value)} />
           </Field>

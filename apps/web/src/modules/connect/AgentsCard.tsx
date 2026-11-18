@@ -76,7 +76,7 @@ export function AgentsCard({ health, canAdmin, me }: { health: Health; canAdmin:
           )}
         </ul>
         {canAdmin && (
-          <div className="grid gap-3 border-t pt-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+          <div className="grid gap-3 border-t pt-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
             <Field label={t('connect.branch')}>
               <Select
                 aria-label={t('connect.branch')}

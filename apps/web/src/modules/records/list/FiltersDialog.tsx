@@ -153,7 +153,7 @@ export function FiltersDialog({
             return (
               <div
                 key={i}
-                className="grid grid-cols-[1fr_auto] gap-2 rounded-control border bg-card p-2.5 sm:grid-cols-[1fr_150px_1fr_auto]"
+                className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 rounded-control border bg-card p-2.5 sm:grid-cols-[minmax(0,1fr)_150px_minmax(0,1fr)_auto]"
               >
                 <Select
                   aria-label={t('records.filter.field')}

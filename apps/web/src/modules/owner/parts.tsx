@@ -31,7 +31,7 @@ export function DataList<T>({
   const rest = columns.filter((c) => c !== head);
   return (
     <>
-      <div className="hidden overflow-x-auto rounded-card border bg-card md:block">
+      <div className="hidden scroll-hint overflow-x-auto rounded-card border md:block">
         <table className="w-full text-sm">
           <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
             <tr>

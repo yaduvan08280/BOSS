@@ -82,7 +82,7 @@ export function UsersTable({
     </th>
   );
   return (
-    <div className="overflow-x-auto rounded-card border bg-card">
+    <div className="scroll-hint overflow-x-auto rounded-card border">
       <table className="w-full min-w-[1240px] text-sm">
         <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
           <tr>

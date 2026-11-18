@@ -44,7 +44,7 @@ function Table({ result }: { result: ReportResult }) {
   const totals = result.totals && result.grouped ? [t('reports.total'), ...result.totals] : null;
   return (
     <>
-      <div className={cn('overflow-x-auto rounded-card border bg-card', wide && 'hidden md:block')}>
+      <div className={cn('scroll-hint overflow-x-auto rounded-card border', wide && 'hidden md:block')}>
         <table className="w-full text-sm">
           <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
             <tr>
@@ -88,7 +88,7 @@ function Table({ result }: { result: ReportResult }) {
           {result.rows.map((r, i) => (
             <li key={result.ids?.[i] ?? i} className="rounded-card border bg-card p-3 text-sm">
               <div className="font-semibold">{cell(r[0] ?? null)}</div>
-              <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
+              <dl className="mt-1 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5">
                 {r.slice(1).map((v, j) => (
                   <div key={j} className="contents">
                     <dt className="text-muted-foreground">{result.columns[j + 1]!.label}</dt>
@@ -208,7 +208,7 @@ function Chart({ result, look }: { result: ReportResult; look: 'bar' | 'line' | 
     };
   });
   return (
-    <div className="grid grid-cols-1 items-center gap-4 rounded-card border bg-card p-4 sm:grid-cols-[12rem_1fr]">
+    <div className="grid grid-cols-1 items-center gap-4 rounded-card border bg-card p-4 sm:grid-cols-[12rem_minmax(0,1fr)]">
       <svg viewBox="0 0 100 100" role="img" aria-label={summary} className="mx-auto h-44 w-44">
         {arcs.map((a, i) => (
           <path

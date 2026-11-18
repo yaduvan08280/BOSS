@@ -116,7 +116,7 @@ export function MyStepsPage({ me }: { me: Me }) {
                 return (
                   <li key={r.id}>
                     <button
-                      className="grid w-full gap-2 p-4 text-left hover:bg-muted/40 md:grid-cols-[1.4fr_1fr_auto] md:items-center"
+                      className="grid w-full gap-2 p-4 text-left hover:bg-muted/40 md:grid-cols-[1.4fr_minmax(0,1fr)_auto] md:items-center"
                       onClick={() => set({ record: r.id })}
                     >
                       <div className="min-w-0">

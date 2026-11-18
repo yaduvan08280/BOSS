@@ -37,7 +37,7 @@ export function FloorsPanel() {
   const floor = floors.find((f) => f.id === floorId) ?? floors[0];
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[240px_1fr_auto]">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[240px_minmax(0,1fr)_auto]">
         <Select
           aria-label={t('hosp.outlet.one')}
           value={current}

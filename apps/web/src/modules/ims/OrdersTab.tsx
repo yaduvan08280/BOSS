@@ -244,7 +244,7 @@ function NewPo({ onClose }: { onClose: () => void }) {
           </Field>
         </div>
         {lines.map((l, i) => (
-          <div key={i} className="grid grid-cols-[1fr_96px_auto] items-center gap-2">
+          <div key={i} className="grid grid-cols-[minmax(0,1fr)_96px_auto] items-center gap-2">
             <Select
               value={l.itemId}
               aria-label={t('ims.m.item')}

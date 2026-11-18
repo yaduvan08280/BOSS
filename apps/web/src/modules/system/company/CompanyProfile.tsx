@@ -97,7 +97,7 @@ function ProfileForm({ profile, contacts }: { profile: Profile; contacts: Contac
   );
 
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_380px]">
+    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
       <div className="space-y-4">
         <Card>
           <CardHeader>
@@ -192,7 +192,7 @@ function Contacts({ contacts }: { contacts: Contact[] }) {
       </CardHeader>
       <CardContent className="space-y-3">
         {contacts.map((c) => (
-          <div key={c.id} className="grid grid-cols-[1fr_auto] gap-2 rounded-control border p-3">
+          <div key={c.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 rounded-control border p-3">
             <div className="grid grid-cols-2 gap-2">
               <Input
                 defaultValue={c.role}

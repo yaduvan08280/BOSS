@@ -90,16 +90,21 @@ export function TopBar({ me, title, subtitle, inSystem, onOpenMenu, ...menu }: P
           <Menu className="size-5" />
         </button>
         <BrandMark appName={me.company.appName} logoUrl={me.company.logoUrl} className="size-8 lg:hidden" />
-        <div className="min-w-0 flex-1">
+        <div className="min-w-24 flex-1">
           <div className="truncate text-[15px] font-semibold leading-tight lg:text-base">{title}</div>
           {subtitle && (
             <div className="hidden truncate text-xs text-muted-foreground sm:block">{subtitle}</div>
           )}
         </div>
-        <BranchSwitcher className="hidden w-52 md:flex" />
+        <BranchSwitcher className="hidden w-40 md:flex xl:w-52" />
         {showSwitch && <WorkspaceSwitch inSystem={inSystem} className="hidden md:inline-flex" />}
         <div className="flex items-center">
-          <Button asChild variant="ghost" size="icon" className="hidden text-muted-foreground sm:inline-flex">
+          <Button
+            asChild
+            variant="ghost"
+            size="icon"
+            className="hidden text-muted-foreground sm:inline-flex md:hidden xl:inline-flex"
+          >
             <Link to="/support" aria-label={t('shell.support')} title={t('shell.support')}>
               <LifeBuoy className="size-[18px]" />
             </Link>
@@ -116,7 +121,7 @@ export function TopBar({ me, title, subtitle, inSystem, onOpenMenu, ...menu }: P
           <Button
             variant="ghost"
             size="icon"
-            className="hidden text-muted-foreground sm:inline-flex"
+            className="hidden text-muted-foreground sm:inline-flex md:hidden xl:inline-flex"
             onClick={() => void qc.invalidateQueries()}
             aria-label={t('shell.refresh')}
             title={t('shell.refresh')}

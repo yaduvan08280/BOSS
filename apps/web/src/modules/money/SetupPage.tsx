@@ -76,7 +76,7 @@ function Rates() {
   return (
     <div className="max-w-2xl space-y-3">
       <p className="text-sm text-muted-foreground">{t('money.rates.intro')}</p>
-      <Card className="grid grid-cols-2 items-end gap-2 p-3 sm:grid-cols-[1fr_100px_150px_auto]">
+      <Card className="grid grid-cols-2 items-end gap-2 p-3 sm:grid-cols-[minmax(0,1fr)_100px_150px_auto]">
         <Field label={t('money.rates.code')}>
           <Input
             value={d.code}
@@ -148,7 +148,7 @@ function Modes() {
   if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return (
     <div className="max-w-xl space-y-3">
-      <Card className="grid grid-cols-2 items-end gap-2 p-3 sm:grid-cols-[1fr_140px_auto]">
+      <Card className="grid grid-cols-2 items-end gap-2 p-3 sm:grid-cols-[minmax(0,1fr)_140px_auto]">
         <Field label={t('org.name')}>
           <Input
             value={d.name}

@@ -225,7 +225,7 @@ export function EventDialog({
               ))}
             </section>
             {canSell && (
-              <div className="grid gap-2 rounded-control bg-muted p-3 sm:grid-cols-[1fr_auto]">
+              <div className="grid gap-2 rounded-control bg-muted p-3 sm:grid-cols-[minmax(0,1fr)_auto]">
                 <Field label={t('bq.actual')}>
                   <Input inputMode="numeric" value={f.actual} onChange={set('actual')} />
                 </Field>
@@ -243,7 +243,7 @@ export function EventDialog({
           </>
         )}
         {e.status === 'COMPLETED' && canSell && (
-          <div className="grid gap-2 rounded-control bg-muted p-3 sm:grid-cols-[1fr_auto]">
+          <div className="grid gap-2 rounded-control bg-muted p-3 sm:grid-cols-[minmax(0,1fr)_auto]">
             <Field label={t('res.deposit.mode')}>
               <Select value={f.modeId} onChange={set('modeId')}>
                 <option value="">{t('res.deposit.chooseMode')}</option>
@@ -266,7 +266,7 @@ export function EventDialog({
           </div>
         )}
         {canSell && ['ENQUIRY', 'QUOTED', 'CONFIRMED'].includes(e.status) && (
-          <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+          <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
             <Field label={t('res.reason')}>
               <Input value={f.reason} onChange={set('reason')} />
             </Field>

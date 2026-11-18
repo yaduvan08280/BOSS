@@ -165,7 +165,7 @@ function RecipeDialog({ recipe, onClose }: { recipe: Partial<Recipe>; onClose: (
         </Button>
       }
     >
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_160px]">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_160px]">
         <Field label={t('stock.kitchen.makesItem')}>
           <ItemSelect label={t('stock.kitchen.makesItem')} value={itemId} items={all} onChange={setItemId} />
         </Field>

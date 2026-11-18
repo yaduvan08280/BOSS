@@ -103,7 +103,7 @@ export function CashFlowTab() {
             {d.days.map((x) => (
               <li
                 key={x.day}
-                className="grid grid-cols-[5.5rem_1fr] gap-3 px-4 py-3 text-sm sm:grid-cols-[6.5rem_1fr_9rem]"
+                className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3 px-4 py-3 text-sm sm:grid-cols-[6.5rem_minmax(0,1fr)_9rem]"
               >
                 <div>
                   <div className="tabular font-semibold">{dmy(x.day)}</div>

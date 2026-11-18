@@ -183,7 +183,7 @@ export function BillDialog({
               {pays.map((p, i) => (
                 <div
                   key={i}
-                  className="grid grid-cols-[1fr_110px_auto] gap-2 sm:grid-cols-[1fr_110px_1fr_auto]"
+                  className="grid grid-cols-[minmax(0,1fr)_110px_auto] gap-2 sm:grid-cols-[minmax(0,1fr)_110px_minmax(0,1fr)_auto]"
                 >
                   <Select
                     aria-label={t('money.mode')}

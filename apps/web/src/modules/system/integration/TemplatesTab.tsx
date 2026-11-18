@@ -109,7 +109,7 @@ export function TemplatesTab() {
       {rows.length === 0 ? (
         <EmptyState icon={Search} title={t('notify.tpl.none')} />
       ) : (
-        <div className="overflow-x-auto rounded-card border bg-card">
+        <div className="scroll-hint overflow-x-auto rounded-card border">
           <table className="w-full min-w-[980px] text-sm">
             <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
               <tr>

@@ -174,7 +174,7 @@ export function MenuItemDialog({
       <div className="mt-5 space-y-2">
         <div className="text-sm font-medium">{t('hosp.menu.variants')}</div>
         {variants.map((v, i) => (
-          <div key={i} className="grid grid-cols-[1fr_100px_80px_auto] gap-2">
+          <div key={i} className="grid grid-cols-[minmax(0,1fr)_100px_80px_auto] gap-2">
             <Input
               aria-label={t('hosp.menu.variantName')}
               placeholder={t('hosp.menu.variantName')}

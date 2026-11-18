@@ -47,7 +47,7 @@ export function RolesTab() {
   const dirty = !isOwner && [...perms].sort().join() !== [...role.permissions].sort().join();
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[280px_1fr]">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
       <div className="space-y-3">
         <Card className="p-2">
           {/* A phone gets a dropdown: a long list would push the role's settings off the screen. */}

@@ -49,7 +49,7 @@ export function ApplyLeave({ me, today, onDone }: { me: Me; today: string; onDon
     type && from && (to || from) >= from && reason.trim().length >= 3 && (preview.data?.days ?? 0) > 0;
 
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_420px]">
+    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
       <Card>
         <CardHeader>
           <CardTitle>{t('hr.l.apply')}</CardTitle>

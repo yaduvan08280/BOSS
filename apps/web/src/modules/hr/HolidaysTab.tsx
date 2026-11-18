@@ -71,14 +71,14 @@ export function HolidaysTab({ me }: { me: Me }) {
   if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return (
     <div className="@container">
-      <div className="grid grid-cols-1 gap-4 @5xl:grid-cols-[1fr_380px]">
+      <div className="grid grid-cols-1 gap-4 @5xl:grid-cols-[minmax(0,1fr)_380px]">
         <Card>
           <CardHeader>
             <CardTitle>{t('hr.h.title', { fy: fy.label })}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {admin && (
-              <div className="grid grid-cols-1 gap-2 rounded-control border p-3 @xl:grid-cols-[160px_1fr_140px_auto_auto] @xl:items-end">
+              <div className="grid grid-cols-1 gap-2 rounded-control border p-3 @xl:grid-cols-[160px_minmax(0,1fr)_140px_auto_auto] @xl:items-end">
                 <Field label={t('hr.h.date')}>
                   <DateInput value={h.date} onChange={(v) => setH({ ...h, date: v })} />
                 </Field>

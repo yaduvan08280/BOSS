@@ -153,7 +153,7 @@ export function DashboardPage({ me }: { me: Me }) {
           })}
         />
       </div>
-      <div className="grid gap-4 lg:grid-cols-[1fr_auto]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto]">
         <Card>
           <CardHeader>
             <CardTitle>{t('crm.d.vsTarget')}</CardTitle>

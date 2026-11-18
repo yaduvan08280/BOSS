@@ -17,7 +17,7 @@ export function OrderForm({ value: o, onChange }: { value: OrderDraft; onChange:
   return (
     <div className="space-y-3">
       {o.items.map((l, i) => (
-        <div key={i} className="grid grid-cols-[1fr_72px_96px_auto] items-center gap-1.5">
+        <div key={i} className="grid grid-cols-[minmax(0,1fr)_72px_96px_auto] items-center gap-1.5">
           <Input
             aria-label={t('fms.item')}
             placeholder={t('fms.item')}

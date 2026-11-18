@@ -172,7 +172,7 @@ function ListDialog({ list, onClose }: { list: Partial<PriceList>; onClose: () =
       </div>
       <div className="mt-4 space-y-2">
         {lines.map((l, i) => (
-          <div key={i} className="grid grid-cols-[1fr_110px_auto] gap-2">
+          <div key={i} className="grid grid-cols-[minmax(0,1fr)_110px_auto] gap-2">
             <ItemSelect
               label={t('stock.item')}
               value={l.itemId}
@@ -218,7 +218,7 @@ function Board({ canSet }: { canSet: boolean }) {
     <div className="max-w-2xl space-y-3">
       <p className="text-sm text-muted-foreground">{t('stock.prices.boardIntro')}</p>
       {canSet && (
-        <Card className="grid grid-cols-2 items-end gap-2 p-3 sm:grid-cols-[1fr_140px_90px_auto]">
+        <Card className="grid grid-cols-2 items-end gap-2 p-3 sm:grid-cols-[minmax(0,1fr)_140px_90px_auto]">
           <Field label={t('stock.prices.rateKey')}>
             <Input
               value={d.key}

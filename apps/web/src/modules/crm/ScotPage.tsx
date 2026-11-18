@@ -65,7 +65,7 @@ export function ScotPage({ me }: { me: Me }) {
         <KpiTile label={t('crm.sc.next7')} value={d.tiles.next7} />
         <KpiTile label={t('crm.sc.expected30')} value={inr(d.tiles.expected30, true)} />
       </div>
-      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
         <Card>
           <CardHeader>
             <CardTitle>{t('crm.sc.perDay')}</CardTitle>
@@ -149,7 +149,7 @@ export function ScotPage({ me }: { me: Me }) {
       {!d.rows.length ? (
         <EmptyState icon={Repeat} title={t('crm.sc.none')} body={t('crm.sc.noneBody')} />
       ) : (
-        <div className="overflow-x-auto rounded-card border bg-card">
+        <div className="scroll-hint overflow-x-auto rounded-card border">
           <table className="w-full min-w-[880px] text-sm">
             <thead className="bg-muted/60 text-left text-xs text-muted-foreground">
               <tr>

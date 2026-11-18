@@ -94,7 +94,7 @@ export function DocumentsPage({ me }: { me: Me }) {
       ) : !q.data?.documents.length ? (
         <EmptyState icon={FileText} title={t('fms.doc.none')} body={t('fms.doc.noneBody')} />
       ) : (
-        <div className="overflow-x-auto rounded-card border bg-card">
+        <div className="scroll-hint overflow-x-auto rounded-card border">
           <table className="w-full min-w-[760px] text-sm">
             <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
               <tr>

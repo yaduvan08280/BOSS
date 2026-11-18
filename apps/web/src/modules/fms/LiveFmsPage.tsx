@@ -179,7 +179,7 @@ export function LiveFmsPage({ me }: { me: Me }) {
                   <li key={r.id}>
                     <button
                       onClick={() => set({ record: r.id })}
-                      className="grid w-full gap-2 p-4 text-left hover:bg-muted/40 md:grid-cols-[1.4fr_1fr_1fr_auto] md:items-center md:gap-4"
+                      className="grid w-full gap-2 p-4 text-left hover:bg-muted/40 md:grid-cols-[1.4fr_minmax(0,1fr)_minmax(0,1fr)_auto] md:items-center md:gap-4"
                     >
                       <div className="min-w-0">
                         <div className="truncate text-sm font-semibold">{r.title}</div>
@@ -271,8 +271,8 @@ function FlowReport({ flowId, names }: { flowId: string; names: Map<string, stri
     </span>
   );
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
-      <div className="overflow-x-auto rounded-card border bg-card">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_minmax(0,1fr)]">
+      <div className="scroll-hint overflow-x-auto rounded-card border">
         <table className="w-full min-w-[560px] text-sm">
           <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
             <tr>

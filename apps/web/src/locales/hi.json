@@ -839,7 +839,14 @@
       "crm": "ग्राहक/विक्रेता",
       "ai": "AI",
       "record": "रिकॉर्ड",
-      "report": "रिपोर्ट"
+      "report": "रिपोर्ट",
+      "mis": "साप्ताहिक MIS",
+      "franchise": "फ़्रैंचाइज़ी",
+      "banquet": "बैंक्वेट",
+      "compliance": "अनुपालन",
+      "hotel": "होटल",
+      "hosp": "हॉस्पिटैलिटी",
+      "reservation": "रिज़र्वेशन"
     },
     "tab": {
       "whatsapp": "WhatsApp API",

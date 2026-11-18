@@ -257,7 +257,7 @@ export function StayDialog({
           </div>
         )}
         {pane === 'request' && (
-          <div className="grid gap-2 rounded-control bg-muted p-3 sm:grid-cols-[1fr_auto]">
+          <div className="grid gap-2 rounded-control bg-muted p-3 sm:grid-cols-[minmax(0,1fr)_auto]">
             <Field label={t('hotel.requestWhat')}>
               <Input value={f.text} onChange={set('text')} />
             </Field>
@@ -273,7 +273,7 @@ export function StayDialog({
           </div>
         )}
         {pane === 'cancel' && (
-          <div className="grid gap-2 rounded-control bg-muted p-3 sm:grid-cols-[1fr_auto]">
+          <div className="grid gap-2 rounded-control bg-muted p-3 sm:grid-cols-[minmax(0,1fr)_auto]">
             <Field label={t('res.reason')}>
               <Input value={f.reason} onChange={set('reason')} />
             </Field>

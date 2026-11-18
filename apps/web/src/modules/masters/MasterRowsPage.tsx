@@ -88,7 +88,7 @@ export function MasterRowsPage({ me }: { me: Me }) {
       ) : !filtered.length ? (
         <p className="text-sm text-muted-foreground">{t('common.noMatch')}</p>
       ) : (
-        <div className="overflow-x-auto rounded-card border bg-card">
+        <div className="scroll-hint overflow-x-auto rounded-card border">
           <table className="w-full min-w-[560px] text-sm">
             <thead className="bg-muted/60 text-left text-xs text-muted-foreground">
               <tr>

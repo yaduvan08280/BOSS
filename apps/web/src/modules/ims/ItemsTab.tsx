@@ -54,7 +54,7 @@ export function ItemsTab({ canEdit }: { canEdit: boolean }) {
           {q.data.items.length ? t('common.noMatch') : t('ims.s.emptyBody')}
         </p>
       )}
-      <div className="overflow-x-auto rounded-card border bg-card">
+      <div className="scroll-hint overflow-x-auto rounded-card border">
         <table className="w-full min-w-[720px] text-sm">
           <thead className="bg-muted/60 text-left text-xs text-muted-foreground">
             <tr>

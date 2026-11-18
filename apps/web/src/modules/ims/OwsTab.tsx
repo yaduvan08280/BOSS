@@ -61,7 +61,7 @@ export function OwsTab({ canOrder, onOrdered }: { canOrder: boolean; onOrdered: 
             {d.lines.map((l) => (
               <li
                 key={l.item.id}
-                className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-2 px-4 py-3 text-sm sm:grid-cols-[auto_1fr_auto]"
+                className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-4 py-3 text-sm sm:grid-cols-[auto_minmax(0,1fr)_auto]"
               >
                 <Checkbox
                   aria-label={l.item.name}

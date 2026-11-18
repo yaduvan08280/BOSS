@@ -72,7 +72,7 @@ export function TelegramTab() {
         <KpiTile label={t('notify.tg.expired')} value={stats.expired} note={t('notify.tg.expiredNote')} />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_360px]">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
         <Card>
           <CardHeader>
             <CardTitle>{t('notify.tg.people')}</CardTitle>

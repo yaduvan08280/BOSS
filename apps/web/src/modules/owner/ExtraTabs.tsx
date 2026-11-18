@@ -249,7 +249,7 @@ export function CopyBest({ branches }: { branches: LeagueRow[] }) {
   );
   return (
     <Section title={t('owner.l.copyTitle')} hint={t('owner.l.copyHint')}>
-      <div className="grid grid-cols-1 items-end gap-3 rounded-card border bg-card p-4 sm:grid-cols-[1fr_1fr_auto]">
+      <div className="grid grid-cols-1 items-end gap-3 rounded-card border bg-card p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
         {pick(from, setFrom, t('owner.l.copyFrom'))}
         {pick(to, setTo, t('owner.l.copyTo'), from)}
         <Button variant="primary" disabled={!from || !to || copy.isPending} onClick={() => copy.mutate()}>

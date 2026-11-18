@@ -36,7 +36,7 @@ export function KdsPage() {
   return (
     <div>
       <PageHeader title={t('pos.kds.title')} subtitle={t('pos.kds.subtitle')} />
-      <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-[240px_240px_1fr]">
+      <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-[240px_240px_minmax(0,1fr)]">
         <Select
           aria-label={t('hosp.outlet.one')}
           value={current}

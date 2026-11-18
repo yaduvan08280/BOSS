@@ -27,7 +27,7 @@ export function PermissionsTab({ draft, set, roles }: TabProps & { roles: RoleOp
   return (
     <div className="max-w-3xl space-y-3">
       <p className="text-sm text-muted-foreground">{t('records.perm.hint')}</p>
-      <div className="overflow-x-auto rounded-card border bg-card">
+      <div className="scroll-hint overflow-x-auto rounded-card border">
         <table className="w-full text-sm">
           <thead className="bg-muted/60 text-xs text-muted-foreground">
             <tr>

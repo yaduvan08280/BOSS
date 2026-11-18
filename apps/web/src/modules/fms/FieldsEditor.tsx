@@ -33,7 +33,7 @@ export function FieldsEditor({
     <div className="space-y-2">
       {fields.map((f, i) => (
         <div key={f.key} className="space-y-2 rounded-control border bg-card p-3">
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_170px_auto]">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_170px_auto]">
             <Input
               aria-label={t('fms.b.fieldLabel')}
               placeholder={t('fms.b.fieldLabel')}

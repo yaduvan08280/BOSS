@@ -110,7 +110,7 @@ export function FiltersPart({ def, fields, set }: PartProps) {
         return (
           <div
             key={i}
-            className="grid grid-cols-1 gap-2 rounded-control border p-2 sm:grid-cols-[1fr_1fr_1.4fr_auto] sm:items-start"
+            className="grid grid-cols-1 gap-2 rounded-control border p-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_1.4fr_auto] sm:items-start"
           >
             <Select
               aria-label={t('reports.b.filterField')}
@@ -236,7 +236,7 @@ export function MeasuresPart({ def, fields, set }: PartProps) {
   return (
     <Block title={t('reports.b.totals')} hint={t('reports.b.totalsHint')}>
       {def.measures.map((m, i) => (
-        <div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-2">
+        <div key={i} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-2">
           <Select
             aria-label={t('reports.b.totalFn')}
             value={m.fn}

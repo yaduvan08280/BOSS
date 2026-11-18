@@ -14,6 +14,7 @@ import {
 import { EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/components/page';
 import { Button } from '@/components/ui/button';
 import { useIsPhone } from '@/components/ui/dialog';
+import { useTooNarrow } from '@/lib/use-room';
 import { useParamState } from '@/lib/work';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -42,7 +43,9 @@ function Pct({ p, strong }: { p: MisPart | number | null; strong?: boolean }) {
 export function MisPage({ me }: { me: Me }) {
   const { t } = useTranslation();
   const tz = me.company.timezone;
-  const phone = useIsPhone();
+  const small = useIsPhone();
+  const tight = useTooNarrow(900);
+  const phone = small || tight;
   const { params } = useParamState('tab', ['mis'] as const, 'mis');
   const [offset, setOffset] = useState(0);
   const base = params.get('at') ? new Date(params.get('at')!) : new Date();
@@ -155,7 +158,7 @@ export function MisPage({ me }: { me: Me }) {
           ))}
         </ul>
       ) : (
-        <div className="overflow-x-auto rounded-card border bg-card">
+        <div className="scroll-hint overflow-x-auto rounded-card border">
           <table className="w-full min-w-[900px] text-sm">
             <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
               <tr>

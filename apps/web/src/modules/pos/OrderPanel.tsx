@@ -254,7 +254,7 @@ export function OrderPanel({
                       </Button>
                       <span className="tabular w-20 text-right">{rupees(priceOf(l) * l.qty)}</span>
                     </div>
-                    <div className="mt-2 grid grid-cols-[1fr_120px] gap-2">
+                    <div className="mt-2 grid grid-cols-[minmax(0,1fr)_120px] gap-2">
                       <Input
                         aria-label={t('pos.noteFor', { name: l.item.name })}
                         placeholder={t('pos.note')}

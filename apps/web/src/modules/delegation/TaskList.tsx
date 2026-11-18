@@ -20,6 +20,7 @@ import { Avatar } from '@/components/brand';
 import { EmptyState, ErrorState, PageSkeleton } from '@/components/page';
 import { Button } from '@/components/ui/button';
 import { useIsPhone } from '@/components/ui/dialog';
+import { useTooNarrow } from '@/lib/use-room';
 import { Select } from '@/components/ui/form';
 import { cn } from '@/lib/utils';
 import { formatShortDateTime, relative } from '@/lib/when';
@@ -66,7 +67,9 @@ export function TaskList({
   defaultRange?: 'week' | 'all';
 }) {
   const { t } = useTranslation();
-  const phone = useIsPhone();
+  const small = useIsPhone();
+  const tight = useTooNarrow(1000);
+  const phone = small || tight;
   const names = useMemo(() => new Map(people.map((p) => [p.id, p.name])), [people]);
   const [q, setQ] = useState('');
   const [range, setRange] = useState<'week' | 'all' | 'custom'>(defaultRange);
@@ -269,7 +272,7 @@ export function TaskList({
           ))}
         </ul>
       ) : (
-        <div className="overflow-x-auto rounded-card border bg-card">
+        <div className="scroll-hint overflow-x-auto rounded-card border">
           <table className="w-full min-w-[1000px] text-sm">
             <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
               <tr>

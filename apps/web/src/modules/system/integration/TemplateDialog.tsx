@@ -97,7 +97,7 @@ export function TemplateDialog({ template, onClose }: { template: Template | 'ne
         </Button>
       }
     >
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_280px]">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_280px]">
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <Field label={t('notify.tpl.code')} className="col-span-2 sm:col-span-1">

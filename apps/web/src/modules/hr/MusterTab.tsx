@@ -205,7 +205,7 @@ function MusterGrid({
   const { t } = useTranslation();
   const totals = ['present', 'late', 'halfDays', 'absent', 'leave', 'weeklyOffs', 'holidays'] as const;
   return (
-    <div className="overflow-x-auto rounded-card border bg-card">
+    <div className="scroll-hint overflow-x-auto rounded-card border">
       <table className="min-w-max border-collapse text-xs tabular-nums">
         <thead>
           <tr className="border-b bg-muted/60 text-muted-foreground">
@@ -335,7 +335,7 @@ function DayPunches({
             <li key={p.id}>
               <button
                 onClick={() => onOpen(p, c)}
-                className="grid w-full grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 px-4 py-3 text-left text-sm hover:bg-muted/40 sm:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,0.6fr))_auto]"
+                className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 px-4 py-3 text-left text-sm hover:bg-muted/40 sm:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,0.6fr))_auto]"
               >
                 <div className="min-w-0">
                   <div className="truncate font-medium">{p.name}</div>

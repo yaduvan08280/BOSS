@@ -127,3 +127,15 @@
     height: 36px;
   }
 }
+
+/* A table that is wider than its card scrolls sideways; a soft shadow on the edge that has more says so. */
+.scroll-hint {
+  background:
+    linear-gradient(to right, var(--card) 40%, transparent) left center / 36px 100% no-repeat local,
+    linear-gradient(to left, var(--card) 40%, transparent) right center / 36px 100% no-repeat local,
+    linear-gradient(to right, color-mix(in oklab, var(--foreground) 16%, transparent), transparent) left
+      center / 12px 100% no-repeat scroll,
+    linear-gradient(to left, color-mix(in oklab, var(--foreground) 16%, transparent), transparent) right
+      center / 12px 100% no-repeat scroll,
+    var(--card);
+}

@@ -230,7 +230,7 @@ function KpiEditor({ flow, def }: { flow: FlowDetail; def: FlowDefinition }) {
         {cards.map((c, i) => (
           <div
             key={i}
-            className="grid grid-cols-1 gap-2 rounded-control border bg-card p-3 sm:grid-cols-[1fr_1.3fr_120px_120px_auto]"
+            className="grid grid-cols-1 gap-2 rounded-control border bg-card p-3 sm:grid-cols-[minmax(0,1fr)_1.3fr_120px_120px_auto]"
           >
             <Input
               aria-label={t('fms.k.label')}

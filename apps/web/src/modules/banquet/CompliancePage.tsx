@@ -230,7 +230,7 @@ export function CompliancePage({ me }: { me: Me }) {
                       </StatusChip>
                     )}
                     {canWork && (
-                      <div className="grid gap-2 sm:grid-cols-[90px_1fr_auto]">
+                      <div className="grid gap-2 sm:grid-cols-[90px_minmax(0,1fr)_auto]">
                         <Field label={t('cmp.reading')}>
                           <Input
                             inputMode="decimal"

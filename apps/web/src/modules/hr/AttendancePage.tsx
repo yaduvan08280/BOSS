@@ -44,7 +44,7 @@ export function AttendancePage({ me }: { me: Me }) {
         ) : q.isError ? (
           <ErrorState onRetry={() => void q.refetch()} error={q.error} />
         ) : (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_380px]">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
             <PunchCard month={q.data} tz={tz} />
             <Card className="lg:row-span-2">
               <CardContent className="pt-5">

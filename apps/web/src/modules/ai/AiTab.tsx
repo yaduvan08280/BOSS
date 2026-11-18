@@ -26,7 +26,7 @@ export function AiTab() {
   if (q.isPending) return <PageSkeleton />;
   if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_360px]">
+    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
       <AiForm key={JSON.stringify(q.data)} saved={q.data} />
       <Usage />
     </div>

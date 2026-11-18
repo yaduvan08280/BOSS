@@ -108,7 +108,7 @@ export function WeekGrid({
           })}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-card border bg-card">
+        <div className="scroll-hint overflow-x-auto rounded-card border">
           <div className="grid min-w-[880px] grid-cols-[56px_repeat(7,1fr)]">
             <div className="border-b" />
             {days.map((d) => (

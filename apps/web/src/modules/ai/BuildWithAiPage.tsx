@@ -104,7 +104,7 @@ export function BuildWithAiPage({ me }: { me: Me }) {
             )}
           </CardContent>
         </Card>
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_380px]">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
           <FmsChart
             def={result.definition}
             names={names}
@@ -195,7 +195,7 @@ export function BuildWithAiPage({ me }: { me: Me }) {
       >
         <ArrowLeft className="size-4" /> {t('ai.build.back')}
       </Link>
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_340px]">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
         <Card>
           <CardHeader>
             <CardTitle>{t('ai.build.how')}</CardTitle>

@@ -177,7 +177,7 @@ export function MasterEditor({
   };
 
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_360px]">
+    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
       <Card>
         <CardHeader>
           <CardTitle>{master ? `${master.code} · ${master.name}` : t('chk.newMaster')}</CardTitle>

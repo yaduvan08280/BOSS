@@ -39,7 +39,7 @@ export function RecordTable({
   return (
     <div className={cn('space-y-3', busy && 'opacity-60')} aria-busy={busy}>
       {/* Wide screens: a table whose headings sort. */}
-      <div className="hidden overflow-x-auto rounded-card border bg-card md:block">
+      <div className="hidden scroll-hint overflow-x-auto rounded-card border md:block">
         <table className="w-full text-sm">
           <thead className="bg-muted/60 text-left text-xs text-muted-foreground">
             <tr>

@@ -107,7 +107,7 @@ export function SetupPage({ me }: { me: Me }) {
           )}
         </div>
       </div>
-      <div className="grid gap-4 lg:grid-cols-[240px_1fr]">
+      <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
         <nav
           aria-label={t('crm.s.journey')}
           className="flex gap-1 overflow-x-auto pb-1 lg:block lg:space-y-4 lg:overflow-visible"
@@ -225,7 +225,7 @@ function Overview({ plan, progress, go }: { plan: PlanData; progress: Progress; 
           sub={plan.approvedBy ? t('crm.s.approvedBy', { name: plan.approvedBy }) : undefined}
         />
       </div>
-      <div className="grid gap-4 md:grid-cols-[1fr_auto]">
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto]">
         <ul className="divide-y rounded-card border bg-card">
           {GROUPS.flatMap((g) => g.pages).map((x) => {
             const done = progress.config.done.includes(x);

@@ -37,7 +37,7 @@ export function RulesPanel({ rules }: { rules: HospRules }) {
       <section className="space-y-3">
         <h3 className="text-sm font-semibold">{t('hosp.rules.discounts')}</h3>
         {d.discounts.map((x, i) => (
-          <div key={i} className="grid grid-cols-2 gap-2 sm:grid-cols-[1fr_130px_130px_110px_auto]">
+          <div key={i} className="grid grid-cols-2 gap-2 sm:grid-cols-[minmax(0,1fr)_130px_130px_110px_auto]">
             <Input
               aria-label={t('hosp.rules.discountName')}
               placeholder={t('hosp.rules.discountName')}
@@ -110,7 +110,7 @@ export function RulesPanel({ rules }: { rules: HospRules }) {
           {(roles.data?.roles ?? []).map((r) => (
             <li
               key={r.id}
-              className="grid grid-cols-2 items-center gap-2 sm:grid-cols-[1fr_110px_120px_130px_auto]"
+              className="grid grid-cols-2 items-center gap-2 sm:grid-cols-[minmax(0,1fr)_110px_120px_130px_auto]"
             >
               <span className="text-sm font-medium">{r.name}</span>
               <Input
@@ -240,7 +240,7 @@ function Modes() {
   return (
     <section className="space-y-3 border-t pt-5">
       <h3 className="text-sm font-semibold">{t('hosp.modes.title')}</h3>
-      <Card className="grid max-w-2xl grid-cols-2 items-end gap-2 p-3 sm:grid-cols-[1fr_170px_auto_auto]">
+      <Card className="grid max-w-2xl grid-cols-2 items-end gap-2 p-3 sm:grid-cols-[minmax(0,1fr)_170px_auto_auto]">
         <Field label={t('org.name')}>
           <Input value={m.name} onChange={(e) => setM({ ...m, name: e.target.value })} />
         </Field>

@@ -249,7 +249,7 @@ function OutletDialog({ outlet, onClose }: { outlet: Partial<Outlet>; onClose: (
               </li>
             ))}
           </ul>
-          <div className="grid grid-cols-[1fr_140px_auto] items-end gap-2">
+          <div className="grid grid-cols-[minmax(0,1fr)_140px_auto] items-end gap-2">
             <Input
               aria-label={t('hosp.station.name')}
               placeholder={t('hosp.station.name')}

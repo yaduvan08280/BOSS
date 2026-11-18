@@ -169,7 +169,7 @@ function FillMap({
     <div className="space-y-1">
       <div className="text-xs font-medium">{t('links.e.fill')}</div>
       {pairs.map(([target, column], i) => (
-        <div key={target} className="grid grid-cols-[1fr_1fr_auto] items-center gap-1.5">
+        <div key={target} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-1.5">
           <Select
             aria-label={t('links.e.fillColumn')}
             value={column}

@@ -113,7 +113,7 @@ function SlipItem({
     <li>
       <button
         onClick={onOpen}
-        className="grid w-full gap-2 p-4 text-left hover:bg-muted/40 md:grid-cols-[1fr_auto] md:items-center md:gap-6"
+        className="grid w-full gap-2 p-4 text-left hover:bg-muted/40 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:gap-6"
       >
         <div className="min-w-0">
           <div className="text-xs text-muted-foreground">

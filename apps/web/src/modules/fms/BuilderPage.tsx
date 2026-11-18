@@ -121,7 +121,7 @@ function FlowRow({
     .filter(([, ok]) => !ok)
     .map(([k]) => t(`fms.ready.${k}`));
   return (
-    <li className="grid gap-3 p-4 md:grid-cols-[1.6fr_1fr_auto] md:items-center">
+    <li className="grid gap-3 p-4 md:grid-cols-[1.6fr_minmax(0,1fr)_auto] md:items-center">
       <button className="min-w-0 text-left" onClick={onOpen}>
         <div className="text-xs text-muted-foreground">
           <span className="font-mono">{f.code}</span> · {t('fms.b.nSteps', { count: f.steps })} ·{' '}

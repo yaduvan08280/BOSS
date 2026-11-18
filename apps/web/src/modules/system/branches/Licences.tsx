@@ -16,7 +16,7 @@ export function Licences({ value, onChange }: { value: Licence[]; onChange: (v: 
       {value.map((l, i) => (
         <div
           key={i}
-          className="grid grid-cols-[1fr_1fr_auto] gap-2 rounded-control border p-2 sm:grid-cols-[1fr_1fr_150px_auto]"
+          className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-2 rounded-control border p-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_150px_auto]"
         >
           <Input
             aria-label={t('branches.lic.name')}

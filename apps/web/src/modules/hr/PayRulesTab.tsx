@@ -54,7 +54,7 @@ function RulesForm({ saved }: { saved: PayRules }) {
         <CardContent className="space-y-3">
           {overrides.map((o, i) => (
             <div key={i} className="space-y-2 rounded-control border p-3">
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-[160px_1fr_auto]">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-[160px_minmax(0,1fr)_auto]">
                 <Select
                   value={o.scope}
                   aria-label={t('hr.w.scope')}

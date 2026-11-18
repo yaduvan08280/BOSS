@@ -57,7 +57,7 @@ export function LocationsPage({ me }: { me: Me }) {
       />
       {tab === 'stock' && (
         <>
-          <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-[260px_1fr]">
+          <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-[260px_minmax(0,1fr)]">
             <PlaceSelect all label={t('stock.location')} value={where} places={places} onChange={setWhere} />
             <Input
               aria-label={t('stock.search')}

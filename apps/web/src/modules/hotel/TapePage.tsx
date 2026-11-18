@@ -89,7 +89,7 @@ function TapeBody({ me }: { me: Me }) {
             </Card>
           )}
           {/* The chart scrolls inside itself, so the page never scrolls sideways on a phone. */}
-          <div className="overflow-x-auto rounded-card border bg-card">
+          <div className="scroll-hint overflow-x-auto rounded-card border">
             <table className="w-max min-w-full border-collapse text-xs">
               <thead>
                 <tr>

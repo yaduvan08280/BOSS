@@ -83,7 +83,7 @@ export function StockToday({ canMove, canAdjust }: { canMove: boolean; canAdjust
             {rows.map((i) => (
               <li
                 key={i.id}
-                className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-2 px-4 py-3 text-sm sm:grid-cols-[minmax(0,2fr)_7rem_minmax(0,1.4fr)_auto]"
+                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-4 py-3 text-sm sm:grid-cols-[minmax(0,2fr)_7rem_minmax(0,1.4fr)_auto]"
               >
                 <div className="min-w-0">
                   <div className="truncate font-medium">{i.name}</div>

@@ -145,7 +145,7 @@ function Overrides({ rules, set }: Props) {
       {list.map((o, i) => (
         <div
           key={i}
-          className="grid grid-cols-1 gap-2 rounded-control border p-3 sm:grid-cols-[140px_1fr_auto]"
+          className="grid grid-cols-1 gap-2 rounded-control border p-3 sm:grid-cols-[140px_minmax(0,1fr)_auto]"
         >
           <Select
             value={o.scope}

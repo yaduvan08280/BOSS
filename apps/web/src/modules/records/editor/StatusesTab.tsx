@@ -42,7 +42,7 @@ export function StatusesTab({
         </div>
         {def.statuses.map((s, i) => (
           <div key={s.key} className="space-y-2 rounded-control border bg-card p-3">
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_220px_auto] sm:items-center">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_220px_auto] sm:items-center">
               <Input
                 aria-label={t('records.ed.statusName')}
                 placeholder={t('records.ed.statusName')}
@@ -127,7 +127,7 @@ export function StatusesTab({
         </div>
         {def.moves.map((m, i) => (
           <div key={i} className="space-y-3 rounded-control border bg-card p-3">
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_1fr_auto] sm:items-end">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto] sm:items-end">
               <Field label={t('records.ed.moveFrom')}>
                 <Select
                   value={m.from}

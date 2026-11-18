@@ -839,7 +839,14 @@
       "crm": "Client/Vendor",
       "ai": "AI",
       "record": "Records",
-      "report": "Reports"
+      "report": "Reports",
+      "mis": "Weekly MIS",
+      "franchise": "Franchises",
+      "banquet": "Banquets",
+      "compliance": "Compliance",
+      "hotel": "Hotel",
+      "hosp": "Hospitality",
+      "reservation": "Reservations"
     },
     "tab": {
       "whatsapp": "WhatsApp API",

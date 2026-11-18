@@ -10,6 +10,7 @@ import { StatusChip } from '@/components/status-chip';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useIsPhone } from '@/components/ui/dialog';
+import { useTooNarrow } from '@/lib/use-room';
 import { Switch } from '@/components/ui/form';
 import { useModuleSettings } from '@/lib/work';
 import { api } from '@/lib/api';
@@ -38,7 +39,9 @@ function RunList({
   onOpen: (id: string) => void;
 }) {
   const { t } = useTranslation();
-  const phone = useIsPhone();
+  const small = useIsPhone();
+  const tight = useTooNarrow(860);
+  const phone = small || tight;
   const q = useRuns(scope);
   if (q.isPending) return <PageSkeleton />;
   if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
@@ -113,7 +116,7 @@ function RunList({
           ))}
         </ul>
       ) : (
-        <div className="overflow-x-auto rounded-card border bg-card">
+        <div className="scroll-hint overflow-x-auto rounded-card border">
           <table className="w-full min-w-[860px] text-sm">
             <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
               <tr>
