@@ -2,10 +2,12 @@ import type { Db, Tx } from '@mono/db';
 import {
   checkMachine,
   explode,
+  kotMachine,
   orderMachine,
   paymentSchema,
   transition,
   type CheckStatus,
+  type KotStatus,
   type OrderStatus,
   stockPlaceFor,
 } from '@mono/shared';
@@ -117,6 +119,23 @@ export async function settleOrder(tx: Tx, actor: Actor, outlet: PosOutlet, order
       where: { orderId, status: { in: ['FIRED', 'READY'] } },
       data: { status: 'SERVED' },
     });
+    // The food has gone and the bill is paid: tickets the kitchen never bumped leave its "to make" list too.
+    const kotIds = [...new Set(order.items.map((i) => i.kotId).filter((id): id is string => Boolean(id)))];
+    const now = new Date();
+    for (const k of await tx.kot.findMany({
+      where: { id: { in: kotIds }, status: { in: ['NEW', 'READY'] } },
+    })) {
+      const bumped = transition(kotMachine, {
+        from: k.status as KotStatus,
+        action: 'bump',
+        roles: ['system'],
+        ctx: {},
+      }).to;
+      await tx.kot.update({
+        where: { id: k.id },
+        data: { status: bumped, bumpedAt: now, readyAt: k.readyAt ?? now },
+      });
+    }
     await consumeOrder(tx, actor, outlet, order);
     if (order.reservationId) await finishForOrder(tx, ctxOf(actor), order.reservationId);
     await emitEvent(tx, ctxOf(actor), {

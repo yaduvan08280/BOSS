@@ -84,7 +84,15 @@ async function dropdowns(page, path, state) {
       const name = ((await box.getAttribute('aria-label')) || (await box.innerText()) || '').slice(0, 30);
       await box.click({ timeout: 1200 });
       await page.waitForTimeout(100);
-      const options = await page.locator('[role=option]:visible').count();
+      let options = await page.locator('[role=option]:visible').count();
+      if (!options) {
+        // Something else was open (a calendar, another list) and took the click: close it and ask once more.
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(120);
+        await box.click({ timeout: 1200 }).catch(() => {});
+        await page.waitForTimeout(250);
+        options = await page.locator('[role=option]:visible').count();
+      }
       /* global innerWidth, innerHeight */
       const off = await page.evaluate(() => {
         const l = document.querySelector('[role=listbox]');

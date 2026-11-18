@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { makeApp } from '../../test/helpers';
 import { at } from '../ims/stock-kit';
 import { world } from '../records/testkit';
-import { add, ok, open, order, post, restaurant } from './pos-kit';
+import { add, bill, ok, open, order, pay, post, restaurant } from './pos-kit';
 
 let ctx: Awaited<ReturnType<typeof makeApp>>;
 beforeAll(async () => {
@@ -172,6 +172,16 @@ describe('POS: orders, kitchen tickets, kitchen display, voids, table operations
     // A ticket can be bumped in one go.
     await ok(s.post(`/api/pos/kots/${back.tickets[1]!.id}/bump`));
     expect((await order(s, o2.id)).items[0]!.status).toBe('READY');
+    // A paid order's tickets that nobody bumped leave "to make" by themselves; a served dish is not tapped again.
+    const before = new Set((await kds()).tickets.map((t) => t.id));
+    const o3 = await open(s, r, 'T3');
+    await add(s, o3.id, [{ menuItemId: r.m.dal }]);
+    const fresh = (await kds()).tickets.find((t) => !before.has(t.id));
+    expect(fresh).toMatchObject({ status: 'NEW' });
+    const c3 = await bill(s, o3.id);
+    await pay(s, c3.id, [{ modeId: r.modes.cash, amount: c3.total }]);
+    expect((await kds()).tickets.map((t) => t.id)).not.toContain(fresh!.id);
+    expect((await kds('?show=bumped')).tickets.map((t) => t.id)).toContain(fresh!.id);
   });
 
   it('P7: voids — nothing asked before firing; a reason after; above the limit an approval; a cooked dish is written off; the void report', async () => {

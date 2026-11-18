@@ -70,6 +70,10 @@ export async function kitchenDisplay(
     ).map((t) => [t.id, t.name]),
   );
   const order = new Map(orders.map((o) => [o.id, o]));
+  // A ticket with nothing left to make (every dish served or voided — an order paid before this rule existed)
+  // is not shown as work to do.
+  const live = new Set(items.filter((i) => i.status === 'FIRED' || i.status === 'READY').map((i) => i.kotId));
+  const shown = show === 'open' ? kots.filter((k) => live.has(k.id)) : kots;
   const now = Date.now();
   const allDay = new Map<string, number>();
   for (const i of items)
@@ -77,7 +81,7 @@ export async function kitchenDisplay(
   return {
     outlet: { id: outlet.id, name: outlet.name },
     stations: stations.filter((s) => s.display).map((s) => ({ id: s.id, name: s.name, kind: s.kind })),
-    tickets: kots.map((k) => {
+    tickets: shown.map((k) => {
       const o = order.get(k.orderId);
       return {
         id: k.id,

@@ -104,7 +104,9 @@ export function KdsPage() {
                     <li key={i.id}>
                       <button
                         type="button"
-                        disabled={show === 'bumped' || i.status === 'VOID' || ready.isPending}
+                        disabled={
+                          show === 'bumped' || i.status === 'VOID' || i.status === 'SERVED' || ready.isPending
+                        }
                         aria-pressed={i.status === 'READY'}
                         onClick={() => ready.mutate({ id: i.id, ready: i.status !== 'READY' })}
                         className={cn(

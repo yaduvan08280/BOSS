@@ -74,7 +74,8 @@ export const kotMachine = defineMachine<KotStatus, KotAction, 'kitchen' | 'manag
   terminal: ['CANCELLED'],
   rules: [
     { from: 'NEW', action: 'ready', to: 'READY', roles: ['kitchen', 'manager'] },
-    { from: ['NEW', 'READY'], action: 'bump', to: 'BUMPED', roles: ['kitchen', 'manager'] },
+    // (The system bumps what is left when the order is paid.)
+    { from: ['NEW', 'READY'], action: 'bump', to: 'BUMPED', roles: ['kitchen', 'manager', 'system'] },
     { from: ['BUMPED', 'READY'], action: 'recall', to: 'NEW', roles: ['kitchen', 'manager'] },
     // Every item on it was voided.
     { from: ['NEW', 'READY'], action: 'cancel', to: 'CANCELLED', roles: ['system', 'manager'] },
