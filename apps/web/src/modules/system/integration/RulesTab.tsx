@@ -12,6 +12,9 @@ import { useRules, type Rule } from './api';
 import { eventLabel, moduleOf, recipientLabel } from './labels';
 import { RuleDialog } from './RuleDialog';
 
+/** Columns that give way first when the table's card is narrow (a laptop, a zoomed-in screen). */
+const LOW = 'hidden @4xl:table-cell';
+
 export function RulesTab() {
   const { t } = useTranslation();
   const q = useRules();
@@ -90,12 +93,18 @@ export function RulesTab() {
           action={<Button onClick={() => load.mutate(undefined)}>{t('notify.rule.loadDefaults')}</Button>}
         />
       ) : (
-        <div className="scroll-hint overflow-x-auto rounded-card border">
-          <table className="w-full min-w-[1000px] text-sm">
+        <div className="scroll-hint @container overflow-x-auto rounded-card border">
+          <table className="w-full min-w-[640px] text-sm">
             <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
               <tr>
                 {['when', 'for', 'sendTo', 'channels', 'wait', 'noReply', 'status', 'added', ''].map((h) => (
-                  <th key={h} className="whitespace-nowrap px-3 py-2.5 font-medium">
+                  <th
+                    key={h}
+                    className={cn(
+                      'whitespace-nowrap px-3 py-2.5 font-medium',
+                      ['for', 'wait', 'added'].includes(h) && LOW,
+                    )}
+                  >
                     {h && t(`notify.rule.col.${h}`)}
                   </th>
                 ))}
@@ -108,7 +117,7 @@ export function RulesTab() {
                     <div className="font-medium">{eventLabel(t, r.event)}</div>
                     <div className="font-mono text-[11px] text-muted-foreground">{r.event}</div>
                   </td>
-                  <td className="px-3 text-xs">{t(`notify.aud.${r.audience}`)}</td>
+                  <td className={cn('px-3 text-xs', LOW)}>{t(`notify.aud.${r.audience}`)}</td>
                   <td className="px-3 text-xs">
                     {r.recipients.map((x) => recipientLabel(t, x, names)).join(', ')}
                   </td>
@@ -121,7 +130,7 @@ export function RulesTab() {
                       ))}
                     </div>
                   </td>
-                  <td className="tabular px-3 text-xs">
+                  <td className={cn('tabular px-3 text-xs', LOW)}>
                     {r.waitMinutes ? t('notify.rule.min', { count: r.waitMinutes }) : '—'}
                   </td>
                   <td className="px-3 text-xs">
@@ -139,7 +148,7 @@ export function RulesTab() {
                       aria-label={t('notify.rule.col.status')}
                     />
                   </td>
-                  <td className="px-3 text-xs text-muted-foreground">
+                  <td className={cn('px-3 text-xs text-muted-foreground', LOW)}>
                     {r.isDefault ? t('notify.rule.default') : formatDate(r.createdAt)}
                   </td>
                   <td className="px-3">

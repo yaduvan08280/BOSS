@@ -47,12 +47,12 @@ export function RolesTab() {
   const dirty = !isOwner && [...perms].sort().join() !== [...role.permissions].sort().join();
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
+    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[280px_minmax(0,1fr)]">
       <div className="space-y-3">
         <Card className="p-2">
           {/* A phone gets a dropdown: a long list would push the role's settings off the screen. */}
           <Select
-            className="mb-1 lg:hidden"
+            className="mb-1 xl:hidden"
             aria-label={t('rolereach.pick')}
             value={role.id}
             onChange={(e) => setSelectedId(e.target.value)}
@@ -68,7 +68,7 @@ export function RolesTab() {
               key={r.id}
               onClick={() => setSelectedId(r.id)}
               className={cn(
-                'hidden w-full items-center gap-3 rounded-control px-3 py-2.5 text-left text-sm lg:flex',
+                'hidden w-full items-center gap-3 rounded-control px-3 py-2.5 text-left text-sm xl:flex',
                 r.id === role.id ? 'bg-muted font-semibold' : 'hover:bg-muted/60',
               )}
             >

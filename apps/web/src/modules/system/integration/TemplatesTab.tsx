@@ -14,6 +14,9 @@ import { TemplateDialog } from './TemplateDialog';
 const TONE = { APPROVED: 'ok', DRAFT: 'neutral', PENDING: 'warn', REJECTED: 'bad' } as const;
 const CHANNELS = ['all', 'whatsapp', 'email', 'telegram'] as const;
 
+/** Columns that give way first when the table's card is narrow (a laptop, a zoomed-in screen). */
+const LOW = 'hidden @4xl:table-cell';
+
 export function TemplatesTab() {
   const { t } = useTranslation();
   const q = useTemplates();
@@ -109,8 +112,8 @@ export function TemplatesTab() {
       {rows.length === 0 ? (
         <EmptyState icon={Search} title={t('notify.tpl.none')} />
       ) : (
-        <div className="scroll-hint overflow-x-auto rounded-card border">
-          <table className="w-full min-w-[980px] text-sm">
+        <div className="scroll-hint @container overflow-x-auto rounded-card border">
+          <table className="w-full min-w-[560px] text-sm">
             <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
               <tr>
                 {[
@@ -124,7 +127,13 @@ export function TemplatesTab() {
                   'active',
                   '',
                 ].map((h) => (
-                  <th key={h} className="whitespace-nowrap px-3 py-2.5 font-medium">
+                  <th
+                    key={h}
+                    className={cn(
+                      'whitespace-nowrap px-3 py-2.5 font-medium',
+                      ['category', 'quality', 'sentRead'].includes(h) && LOW,
+                    )}
+                  >
                     {h && t(`notify.tpl.col.${h}`)}
                   </th>
                 ))}
@@ -135,20 +144,20 @@ export function TemplatesTab() {
                 <tr key={x.id} className="hover:bg-muted/40">
                   <td className="px-3 py-2">
                     <div className="font-mono text-xs">{x.code}</div>
-                    <div className="max-w-xs truncate text-xs text-muted-foreground">
+                    <div className="max-w-[11rem] truncate text-xs text-muted-foreground @4xl:max-w-xs">
                       {x.event ? eventLabel(t, x.event) : x.body}
                     </div>
                   </td>
                   <td className="px-3">{t(`notify.channel.${x.channel}`)}</td>
-                  <td className="px-3 text-xs">{t(`notify.tpl.cat.${x.category}`)}</td>
+                  <td className={cn('px-3 text-xs', LOW)}>{t(`notify.tpl.cat.${x.category}`)}</td>
                   <td className="px-3 text-xs uppercase">{x.language}</td>
                   <td className="px-3">
                     <StatusChip tone={TONE[x.status as keyof typeof TONE] ?? 'neutral'}>
                       {t(`notify.tpl.status.${x.status}`)}
                     </StatusChip>
                   </td>
-                  <td className="px-3 text-xs">{x.quality ?? '—'}</td>
-                  <td className="tabular px-3 text-xs">
+                  <td className={cn('px-3 text-xs', LOW)}>{x.quality ?? '—'}</td>
+                  <td className={cn('tabular px-3 text-xs', LOW)}>
                     {x.sentCount} · {x.readCount}
                   </td>
                   <td className="px-3">
@@ -164,9 +173,11 @@ export function TemplatesTab() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          aria-label={t('notify.tpl.submit')}
+                          title={t('notify.tpl.submit')}
                           onClick={() => submit.mutate(x.id, { onError: () => undefined })}
                         >
-                          <CloudUpload /> {t('notify.tpl.submit')}
+                          <CloudUpload /> <span className="hidden @4xl:inline">{t('notify.tpl.submit')}</span>
                         </Button>
                       )}
                       <Button
