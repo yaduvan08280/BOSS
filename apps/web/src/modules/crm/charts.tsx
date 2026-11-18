@@ -66,6 +66,8 @@ export function Bars({
 }
 
 export function Spark({ values, className }: { values: number[]; className?: string }) {
+  // Nothing sold yet: no line at all, rather than a flat rule under the tile.
+  if (!values.some((v) => v > 0)) return null;
   const max = Math.max(1, ...values);
   const pts = values
     .map((v, i) => `${(i / Math.max(1, values.length - 1)) * 100},${28 - (v / max) * 26}`)

@@ -110,7 +110,7 @@ export function DashboardPage({ me }: { me: Me }) {
         </Button>
       </div>
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
-        <div className="space-y-1">
+        <div className="flex flex-col gap-1 [&>div:first-child]:flex-1">
           <KpiTile
             label={t('crm.d.revenue')}
             value={inr(d.tiles.revenue.value, true)}
@@ -123,7 +123,7 @@ export function DashboardPage({ me }: { me: Me }) {
           />
           <Spark values={d.tiles.revenue.spark.map(Number)} />
         </div>
-        <div className="space-y-1">
+        <div className="flex flex-col gap-1 [&>div:first-child]:flex-1">
           <KpiTile
             label={t('crm.d.gp')}
             value={inr(d.tiles.gp.value, true)}
@@ -187,9 +187,10 @@ export function DashboardPage({ me }: { me: Me }) {
             </div>
           </CardContent>
         </Card>
-        <Card className="flex flex-col items-center justify-center gap-2 p-5">
+        <Card className="flex min-w-0 flex-col items-center justify-center gap-2 p-5">
           <Ring pct={d.year.donePct} label={t('crm.d.yearDone')} sub={t('crm.d.yearDone')} />
           <StatusChip
+            className="h-auto whitespace-normal py-1 text-center"
             tone={d.year.achievedPct !== null && d.year.achievedPct >= d.year.donePct ? 'ok' : 'warn'}
           >
             {t('crm.d.yearAchieved', {

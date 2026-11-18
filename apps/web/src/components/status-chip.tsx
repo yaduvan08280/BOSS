@@ -34,13 +34,16 @@ export function StatusChip({
   return (
     <span
       className={cn(
-        'inline-flex h-6 items-center gap-1 whitespace-nowrap rounded-pill px-2.5 text-xs font-medium',
+        // Never wider than its place: a long chip is cut with "…" (the whole text shows on hover) instead of
+        // running out of its card.
+        'inline-flex h-6 max-w-full items-center gap-1 whitespace-nowrap rounded-pill px-2.5 text-xs font-medium',
         TONES[tone],
         className,
       )}
+      title={children}
     >
-      <Icon className="size-3.5" aria-hidden />
-      {children}
+      <Icon className="size-3.5 shrink-0" aria-hidden />
+      <span className="min-w-0 truncate [white-space:inherit]">{children}</span>
     </span>
   );
 }
