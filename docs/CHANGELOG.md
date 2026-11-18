@@ -2,6 +2,8 @@
 
 ## 18/11/2026 — Every screen at every size
 
+Result: two full audit rounds in a row found nothing (each: 14 sizes and 6 variants as the owner, the four key sizes as a kitchen staff member and on the demo company, every tab, dialog and dropdown at 390, 1024, 1440 and 2560). The only tables that still scroll sideways are the ones meant to (decision 247c). A ticket the system clears when its order is paid gets no made-up ready time.
+
 A new tool, `npm run ui:audit`, signs in and looks at every screen, tab, dialog and dropdown at one screen size and lists what is wrong; `npm run ui:audit:all` does it from a 360 px phone to a 27" monitor. What it found and what changed:
 
 - **Phones**: every button, tab and box is at least 44 px to touch and no text is under 12 px; tables that scrolled sideways (item master, scorecard, R/Y/G, movement, rules, templates, rights) now fit; the stock "Turns & NOS" report no longer pushes the page sideways; the assistant button moved into the top bar so it no longer covers the page; error rows, record titles, menu rows and long amounts fit.
