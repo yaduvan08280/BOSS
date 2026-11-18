@@ -66,7 +66,7 @@ export function ApiKeysTab() {
             placeholder={t('keys.search')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="min-w-0 flex-1 sm:max-w-60"
+            className="min-w-0 flex-1 max-sm:basis-full sm:max-w-60"
           />
           <Button onClick={() => setMaking(true)}>
             <Plus /> {t('keys.generate')}

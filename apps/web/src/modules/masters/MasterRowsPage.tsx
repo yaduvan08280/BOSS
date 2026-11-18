@@ -69,7 +69,7 @@ export function MasterRowsPage({ me }: { me: Me }) {
           placeholder={t('masters.search')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="min-w-0 flex-1 sm:max-w-72"
+          className="min-w-0 flex-1 max-sm:basis-full sm:max-w-72"
         />
         <span className="text-sm text-muted-foreground">{t('masters.count', { count: q.data.total })}</span>
         {canEdit && (

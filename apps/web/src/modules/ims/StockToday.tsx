@@ -51,7 +51,7 @@ export function StockToday({ canMove, canAdjust }: { canMove: boolean; canAdjust
               placeholder={t('ims.s.search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="min-w-0 flex-1 sm:max-w-72"
+              className="min-w-0 flex-1 max-sm:basis-full sm:max-w-72"
             />
             <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t('ims.s.byBand')}>
               {(['all', ...BANDS] as const).map((b) => (

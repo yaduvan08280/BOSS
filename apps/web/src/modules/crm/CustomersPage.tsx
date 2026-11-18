@@ -54,7 +54,7 @@ export function CustomersPage({ me }: { me: Me }) {
           placeholder={t('crm.c.search')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="min-w-0 flex-1 sm:max-w-72"
+          className="min-w-0 flex-1 max-sm:basis-full sm:max-w-72"
         />
         {hasPermission(perms, 'crm.admin') && (
           <Button variant="secondary" onClick={() => setTagsOpen(true)}>
