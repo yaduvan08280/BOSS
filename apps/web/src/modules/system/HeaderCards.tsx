@@ -142,11 +142,11 @@ export function HeaderCards({ summary }: { summary: SystemSummary | undefined })
 
         <CardShell>
           <Head icon={Users} label={t('system.cardPeople')} />
-          <div className="mt-3 grid grid-cols-4 gap-1 text-center">
+          <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1">
             {(['heavy', 'balanced', 'light', 'free'] as const).map((k) => (
-              <div key={k}>
+              <div key={k} className="flex min-w-0 items-baseline gap-1.5">
                 <div className="tabular text-xl font-semibold">{people[k]}</div>
-                <div className="text-[11px] text-muted-foreground">{t(`system.load.${k}`)}</div>
+                <div className="truncate text-[11px] text-muted-foreground">{t(`system.load.${k}`)}</div>
               </div>
             ))}
           </div>

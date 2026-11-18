@@ -139,3 +139,8 @@
       center / 12px 100% no-repeat scroll,
     var(--card);
 }
+
+/* A code or record number in a table cell stays on one line ("EMP-001", never "EMP-" over "001"). */
+table td.font-mono {
+  white-space: nowrap;
+}

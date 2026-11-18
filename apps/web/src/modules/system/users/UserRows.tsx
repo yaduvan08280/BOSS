@@ -117,7 +117,7 @@ export function UsersTable({
                 />
               </td>
               <td className="tabular px-3 text-muted-foreground">{i + 1}</td>
-              <td className="px-3 font-mono text-xs">{p.code}</td>
+              <td className="whitespace-nowrap px-3 font-mono text-xs">{p.code}</td>
               <td className="px-3 py-2">
                 <button onClick={() => a.open(p)} className="flex items-center gap-2.5 text-left">
                   <Avatar name={p.name} url={p.avatarUrl} className="size-8" />
