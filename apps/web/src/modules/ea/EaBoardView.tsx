@@ -59,7 +59,7 @@ export function EaBoardView({
   return (
     <DndContext sensors={sensors} onDragEnd={onDragEnd}>
       <div className="-mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
-        <div className="flex w-max gap-3">
+        <div className="flex w-max min-w-full gap-3">
           {columns.map((c) => (
             <Column
               key={c}
@@ -99,7 +99,7 @@ function Column({
       ref={setNodeRef}
       aria-label={t(`ea.stage.${stage}`)}
       className={cn(
-        'flex w-[264px] shrink-0 flex-col rounded-card bg-muted/60 p-2 transition-colors',
+        'flex w-[264px] shrink-0 grow flex-col rounded-card bg-muted/60 p-2 transition-colors',
         isOver && 'bg-primary/15 ring-2 ring-primary',
       )}
     >
