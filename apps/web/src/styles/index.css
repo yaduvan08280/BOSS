@@ -144,3 +144,48 @@
 table td.font-mono {
   white-space: nowrap;
 }
+
+/*
+ * Phones (decision 247). Nothing a thumb must hit is under 44 px, and no text is under 12 px — set here once,
+ * so a small chip or an icon button written for a desktop cannot slip through. Switches and tick boxes keep
+ * their shape (they carry their own larger hit area); `data-tap="off"` opts a control out.
+ */
+@media (max-width: 767px) {
+  :where(main, [role='dialog'])
+    :where(
+      button,
+      [role='tab'],
+      a[role='button'],
+      a.inline-flex,
+      a[class*='rounded-pill'],
+      a[class*='rounded-control']
+    ):not([role='switch'], [role='checkbox'], [data-tap='off']) {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  :where(main, [role='dialog']) a.inline-flex {
+    align-items: center;
+  }
+  /* Boxes to type in, pick a file or a colour: the same floor (a bare box inside a search field is that field's). */
+  :where(main, [role='dialog'])
+    :where(input, select):not(
+      [type='checkbox'],
+      [type='radio'],
+      [type='range'],
+      [type='hidden'],
+      .bg-transparent,
+      .sr-only
+    ) {
+    min-height: 44px;
+  }
+  :where(main, [role='dialog']) input[type='color'] {
+    min-width: 44px;
+  }
+  .react-flow__attribution a {
+    font-size: 12px;
+  }
+  .text-\[10px\],
+  .text-\[11px\] {
+    font-size: 12px;
+  }
+}

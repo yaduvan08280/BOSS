@@ -16,6 +16,8 @@ const CHANNELS = ['all', 'whatsapp', 'email', 'telegram'] as const;
 
 /** Columns that give way first when the table's card is narrow (a laptop, a zoomed-in screen). */
 const LOW = 'hidden @5xl:table-cell';
+/** … and these go as well on a phone; the template's dialog shows everything. */
+const LOWER = 'hidden @2xl:table-cell';
 
 export function TemplatesTab() {
   const { t } = useTranslation();
@@ -113,7 +115,7 @@ export function TemplatesTab() {
         <EmptyState icon={Search} title={t('notify.tpl.none')} />
       ) : (
         <div className="scroll-hint @container overflow-x-auto rounded-card border">
-          <table className="w-full min-w-[560px] text-sm">
+          <table className="w-full text-sm">
             <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
               <tr>
                 {[
@@ -132,6 +134,7 @@ export function TemplatesTab() {
                     className={cn(
                       'whitespace-nowrap px-3 py-2.5 font-medium',
                       ['category', 'quality', 'sentRead'].includes(h) && LOW,
+                      ['language', 'status'].includes(h) && LOWER,
                     )}
                   >
                     {h && t(`notify.tpl.col.${h}`)}
@@ -150,8 +153,8 @@ export function TemplatesTab() {
                   </td>
                   <td className="px-3">{t(`notify.channel.${x.channel}`)}</td>
                   <td className={cn('px-3 text-xs', LOW)}>{t(`notify.tpl.cat.${x.category}`)}</td>
-                  <td className="px-3 text-xs uppercase">{x.language}</td>
-                  <td className="px-3">
+                  <td className={cn('px-3 text-xs uppercase', LOWER)}>{x.language}</td>
+                  <td className={cn('px-3', LOWER)}>
                     <StatusChip tone={TONE[x.status as keyof typeof TONE] ?? 'neutral'}>
                       {t(`notify.tpl.status.${x.status}`)}
                     </StatusChip>

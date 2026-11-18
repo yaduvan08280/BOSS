@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatINR } from '@mono/shared';
 import { ErrorState, PageSkeleton } from '@/components/page';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Confirm, Dialog } from '@/components/ui/dialog';
 import { Field, Switch } from '@/components/ui/form';
@@ -12,6 +13,9 @@ import { imsApi, qty, useImsMutation, useItems, type ItemRow } from './api';
 import { ImportItems } from './ImportItems';
 
 /** Item master (§10.3): code, name, unit, category, location, lead time, safety factor, MAX, min, rate, vendor. */
+/** Columns that give way first when the table's card is narrow (a phone, a zoomed-in laptop). */
+const LOW = 'hidden @3xl:table-cell';
+
 export function ItemsTab({ canEdit }: { canEdit: boolean }) {
   const { t } = useTranslation();
   const q = useItems(true);
@@ -54,12 +58,19 @@ export function ItemsTab({ canEdit }: { canEdit: boolean }) {
           {q.data.items.length ? t('common.noMatch') : t('ims.s.emptyBody')}
         </p>
       )}
-      <div className="scroll-hint overflow-x-auto rounded-card border">
-        <table className="w-full min-w-[720px] text-sm">
+      <div className="scroll-hint @container overflow-x-auto rounded-card border">
+        <table className="w-full text-sm">
           <thead className="bg-muted/60 text-left text-xs text-muted-foreground">
             <tr>
               {['code', 'name', 'unit', 'lead', 'sf', 'max', 'min', 'rate', 'vendor'].map((h) => (
-                <th key={h} className="px-3 py-2 font-medium">
+                <th
+                  key={h}
+                  className={cn(
+                    'px-3 py-2 font-medium',
+                    ['unit', 'lead', 'sf', 'min', 'vendor'].includes(h) && LOW,
+                    h === 'max' && 'hidden @md:table-cell',
+                  )}
+                >
                   {t(`ims.i.col.${h}`)}
                 </th>
               ))}
@@ -74,13 +85,19 @@ export function ItemsTab({ canEdit }: { canEdit: boolean }) {
                   {i.name}
                   {!i.active && ` · ${t('ims.i.off')}`}
                 </td>
-                <td className="px-3 py-2">{i.unit}</td>
-                <td className="px-3 py-2 tabular-nums">{t('ims.i.days', { count: i.leadTimeDays })}</td>
-                <td className="px-3 py-2 tabular-nums">{i.safetyFactor}</td>
-                <td className="px-3 py-2 tabular-nums">{i.maxQty === null ? '—' : qty(i.maxQty)}</td>
-                <td className="px-3 py-2 tabular-nums">{i.minQty === null ? '—' : qty(i.minQty)}</td>
+                <td className={cn('px-3 py-2', LOW)}>{i.unit}</td>
+                <td className={cn('px-3 py-2 tabular-nums', LOW)}>
+                  {t('ims.i.days', { count: i.leadTimeDays })}
+                </td>
+                <td className={cn('px-3 py-2 tabular-nums', LOW)}>{i.safetyFactor}</td>
+                <td className="hidden px-3 py-2 tabular-nums @md:table-cell">
+                  {i.maxQty === null ? '—' : qty(i.maxQty)}
+                </td>
+                <td className={cn('px-3 py-2 tabular-nums', LOW)}>
+                  {i.minQty === null ? '—' : qty(i.minQty)}
+                </td>
                 <td className="px-3 py-2 tabular-nums">{formatINR(i.ratePaise)}</td>
-                <td className="px-3 py-2">{i.vendor ?? '—'}</td>
+                <td className={cn('px-3 py-2', LOW)}>{i.vendor ?? '—'}</td>
                 <td className="whitespace-nowrap px-2 py-1 text-right">
                   {canEdit && (
                     <>

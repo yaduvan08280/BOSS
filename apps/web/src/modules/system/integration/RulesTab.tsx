@@ -14,6 +14,8 @@ import { RuleDialog } from './RuleDialog';
 
 /** Columns that give way first when the table's card is narrow (a laptop, a zoomed-in screen). */
 const LOW = 'hidden @5xl:table-cell';
+/** … and these go as well on a phone; the rule's dialog shows everything. */
+const LOWER = 'hidden @2xl:table-cell';
 
 export function RulesTab() {
   const { t } = useTranslation();
@@ -62,7 +64,7 @@ export function RulesTab() {
         <KpiTile label={t('notify.rule.tile.ai')} value={active.filter((r) => r.aiFollowUp).length} />
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <div className="-mx-4 flex flex-1 gap-2 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0">
+        <div className="-mx-4 flex min-w-0 gap-2 overflow-x-auto px-4 [scrollbar-width:none] max-sm:basis-full sm:mx-0 sm:flex-1 sm:flex-wrap sm:px-0">
           {['all', ...NOTIFY_MODULES].map((m) => (
             <button
               key={m}
@@ -94,7 +96,7 @@ export function RulesTab() {
         />
       ) : (
         <div className="scroll-hint @container overflow-x-auto rounded-card border">
-          <table className="w-full min-w-[640px] text-sm">
+          <table className="w-full text-sm">
             <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
               <tr>
                 {['when', 'for', 'sendTo', 'channels', 'wait', 'noReply', 'status', 'added', ''].map((h) => (
@@ -103,6 +105,7 @@ export function RulesTab() {
                     className={cn(
                       'whitespace-nowrap px-3 py-2.5 font-medium',
                       ['for', 'wait', 'added'].includes(h) && LOW,
+                      ['sendTo', 'noReply'].includes(h) && LOWER,
                     )}
                   >
                     {h && t(`notify.rule.col.${h}`)}
@@ -118,7 +121,7 @@ export function RulesTab() {
                     <div className="font-mono text-[11px] text-muted-foreground">{r.event}</div>
                   </td>
                   <td className={cn('px-3 text-xs', LOW)}>{t(`notify.aud.${r.audience}`)}</td>
-                  <td className="px-3 text-xs">
+                  <td className={cn('px-3 text-xs', LOWER)}>
                     {r.recipients.map((x) => recipientLabel(t, x, names)).join(', ')}
                   </td>
                   <td className="px-3">
@@ -133,7 +136,7 @@ export function RulesTab() {
                   <td className={cn('tabular px-3 text-xs', LOW)}>
                     {r.waitMinutes ? t('notify.rule.min', { count: r.waitMinutes }) : '—'}
                   </td>
-                  <td className="px-3 text-xs">
+                  <td className={cn('px-3 text-xs', LOWER)}>
                     {r.escalateTo
                       ? t('notify.rule.escalateText', {
                           to: recipientLabel(t, r.escalateTo, names),

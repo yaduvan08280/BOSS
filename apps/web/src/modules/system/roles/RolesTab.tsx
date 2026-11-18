@@ -160,12 +160,12 @@ export function RolesTab() {
           <RoleReach key={role.id} roleId={role.id} reach={role.reach} locked={isOwner} />
         </CardContent>
         <CardContent className="overflow-x-auto">
-          <table className="w-full min-w-[520px] text-sm">
+          <table className="w-full text-sm">
             <thead>
               <tr className="text-xs text-muted-foreground">
                 <th className="py-2 text-left font-medium">{t('org.roles.module')}</th>
                 {actions.map((a) => (
-                  <th key={a} className="w-20 py-2 font-medium">
+                  <th key={a} className="w-11 py-2 text-[11px] font-medium sm:w-20 sm:text-xs">
                     {t(`org.roles.action.${a}`)}
                   </th>
                 ))}

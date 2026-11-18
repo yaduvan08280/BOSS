@@ -272,12 +272,12 @@ function FlowReport({ flowId, names }: { flowId: string; names: Map<string, stri
   );
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_minmax(0,1fr)]">
-      <div className="scroll-hint overflow-x-auto rounded-card border">
-        <table className="w-full min-w-[560px] text-sm">
+      <div className="scroll-hint @container overflow-x-auto rounded-card border">
+        <table className="w-full text-sm [&_td]:px-2 [&_th]:px-2 @lg:[&_td]:px-3 @lg:[&_th]:px-3">
           <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
             <tr>
               <th className="px-3 py-2.5">{t('fms.step')}</th>
-              <th className="px-3">{t('fms.passed')}</th>
+              <th className="hidden px-3 @md:table-cell">{t('fms.passed')}</th>
               <th className="px-3">{t('fms.plannedH')}</th>
               <th className="px-3">{t('fms.actualH')}</th>
               <th className="px-3">{t('fms.onTimePct')}</th>
@@ -290,7 +290,7 @@ function FlowReport({ flowId, names }: { flowId: string; names: Map<string, stri
                 className={cn(q.data.worst.includes(s.key) && s.onTimePct < 90 && 'bg-status-bad-bg/30')}
               >
                 <td className="px-3 py-2">{s.name}</td>
-                <td className="tabular px-3">{s.passed}</td>
+                <td className="tabular hidden px-3 @md:table-cell">{s.passed}</td>
                 <td className="tabular px-3">{s.plannedHours}</td>
                 <td className="tabular px-3">{s.actualHours}</td>
                 <td className="px-3">{pct(s.onTimePct)}</td>

@@ -68,8 +68,9 @@ export function probe() {
     const s = cs(e);
     // Text for screen readers only (a 1px box) is not text a person sees cut.
     if (e.clientWidth <= 2 || s.clip !== 'auto' || s.clipPath !== 'none') return false;
-    if (s.overflowX === 'visible' || s.textOverflow === 'ellipsis' || s.webkitLineClamp !== 'none')
-      return false;
+    // Cut means hidden with no sign: a box that scrolls, or ends in "…", is not cut.
+    if (s.overflowX !== 'hidden' && s.overflowX !== 'clip') return false;
+    if (s.textOverflow === 'ellipsis' || s.webkitLineClamp !== 'none') return false;
     return e.scrollWidth > e.clientWidth + 2 && !/INPUT|TEXTAREA|SELECT/.test(e.tagName);
   });
   if (cut.length) add('text-cut', cut.slice(0, 3).map(name).join(' | '));
@@ -112,12 +113,16 @@ export function probe() {
       const r = e.getBoundingClientRect();
       if (cs(e).display === 'inline' || e.type === 'checkbox' || e.type === 'radio' || e.type === 'hidden')
         return false;
-      // A larger invisible hit area (::after) counts.
-      const pad = parseFloat(getComputedStyle(e, '::after').height) || 0;
-      return (
-        Math.max(r.height, pad) < 40 ||
-        Math.max(r.width, parseFloat(getComputedStyle(e, '::after').width) || 0) < 40
-      );
+      // A bare box inside a search field: the field (its label) is what the thumb hits.
+      const field = e.tagName === 'INPUT' ? e.closest('label') : null;
+      if (field && field.getBoundingClientRect().height >= 40) return false;
+      // A larger invisible hit area (::before or ::after) counts.
+      const area = (side) =>
+        Math.max(
+          parseFloat(getComputedStyle(e, '::before')[side]) || 0,
+          parseFloat(getComputedStyle(e, '::after')[side]) || 0,
+        );
+      return Math.max(r.height, area('height')) < 40 || Math.max(r.width, area('width')) < 40;
     });
     if (small.length) add('tap-small', `${small.length}: ${small.slice(0, 3).map(name).join(' | ')}`);
   }
