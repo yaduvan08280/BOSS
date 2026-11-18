@@ -5,6 +5,7 @@ import { billInputSchema, BILL_TYPES } from '@mono/shared';
 import { actorOf } from '../delegation/routes';
 import { homeBranchOf } from '../branches/reach';
 import { createBill, issueBill, updateDraft, voidBill, workOutBill } from './bills';
+import { billPdf } from './bill-pdf';
 import { billOut, getBill, listBills, setPromise } from './bills-read';
 import { closeDay, dayClose, listModes, modeSchema, saveMode } from './cash';
 import { outstanding, statement } from './ledger';
@@ -107,6 +108,13 @@ export async function moneyRoutes(app: FastifyInstance) {
   r.get('/api/money/bills/:id', { ...view(), schema: { tags, params: idParam } }, async (q) =>
     getBill(db, actorOf(q), q.params.id),
   );
+  r.get('/api/money/bills/:id/pdf', { ...view(), schema: { tags, params: idParam } }, async (q, reply) => {
+    const { pdf, name } = await billPdf(db, actorOf(q), q.params.id);
+    return reply
+      .header('Content-Type', 'application/pdf')
+      .header('Content-Disposition', `inline; filename="${name}"`)
+      .send(pdf);
+  });
   const billBody = billInputSchema.extend({
     /** Issue at once instead of keeping a draft. */
     issue: z.boolean().optional(),

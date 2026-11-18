@@ -82,5 +82,7 @@ export async function renderPdf(doc: Record<string, unknown>): Promise<Buffer> {
     ready = true;
   }
   const body = deva ? (withFonts(doc) as Record<string, unknown>) : doc;
-  return pdfmake.createPdf({ defaultStyle: { font: 'Helvetica', fontSize: 9 }, ...body }).getBuffer();
+  // A document's own default style (a size) is laid over MONO's, so the font is never lost.
+  const style = { font: 'Helvetica', fontSize: 9, ...((body.defaultStyle as object | undefined) ?? {}) };
+  return pdfmake.createPdf({ ...body, defaultStyle: style }).getBuffer();
 }

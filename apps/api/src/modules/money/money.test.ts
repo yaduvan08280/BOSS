@@ -119,6 +119,21 @@ describe('the money core (phase 12M)', () => {
       'SGST 2.5% 1600',
       'SGST 9% 1620',
     ]);
+    // The issued invoice as a PDF; a draft has no number and is not printed.
+    const pdf = await w.api.raw(`/api/money/bills/${inv.id}/pdf`);
+    expect([pdf.statusCode, pdf.headers['content-type'], pdf.rawPayload.subarray(0, 5).toString()]).toEqual([
+      200,
+      'application/pdf',
+      '%PDF-',
+    ]);
+    expect(pdf.rawPayload.length).toBeGreaterThan(1500);
+    const draft2 = await b.bill(w.api, {
+      type: 'INVOICE',
+      partyId: b.sharma.id,
+      date: '2031-01-10',
+      lines: meal,
+    });
+    expect((await w.api.raw(`/api/money/bills/${draft2.id}/pdf`)).statusCode).toBe(400);
     // Issued: no edits, no second issue, no discard.
     const edit = await w.api.put(`/api/money/bills/${inv.id}`, {
       type: 'INVOICE',
