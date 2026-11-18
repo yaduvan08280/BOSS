@@ -54,7 +54,7 @@ async function look(page, path, state, errs) {
   await page.waitForLoadState('networkidle', { timeout: WAIT }).catch(() => {});
   // The grey loading shapes must be gone: a page is judged with its content, not while it loads.
   await page
-    .waitForFunction(() => !document.querySelector('main [aria-busy]'), null, { timeout: 4000 })
+    .waitForFunction(() => !document.querySelector('main [aria-busy="true"]'), null, { timeout: 4000 })
     .catch(() => {});
   await page.waitForTimeout(120);
   const seen = await page.evaluate(probe).catch(() => null);
