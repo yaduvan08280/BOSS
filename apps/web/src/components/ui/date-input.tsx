@@ -50,7 +50,7 @@ export function DateInput({
   };
 
   return (
-    <div className={cn('relative', className)}>
+    <div className={cn('relative', className, 'max-sm:min-w-[9.75rem]')}>
       <input
         className={cn(box, 'pr-10')}
         inputMode="numeric"
