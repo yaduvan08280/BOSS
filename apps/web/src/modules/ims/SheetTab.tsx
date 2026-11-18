@@ -82,7 +82,9 @@ function MoveLine({ m, tz, actions }: { m: MoveRow; tz: string; actions?: React.
           {[
             formatDateTime(m.at, tz),
             t(`ims.type.${m.type}`),
-            m.reason && t(`ims.reason.${m.reason}`),
+            // A reason with no label yet reads as its own word, never as a key.
+            m.reason &&
+              t(`ims.reason.${m.reason}`, { defaultValue: m.reason.toLowerCase().replace(/_/g, ' ') }),
             m.type === 'TRANSFER' && `${m.fromLocation ?? '—'} → ${m.toLocation}`,
             m.by,
             m.note,

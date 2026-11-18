@@ -3145,7 +3145,19 @@
       "EXPIRED": "Expired",
       "LOST": "Lost",
       "FOUND": "Found",
-      "COUNT": "Audit count"
+      "COUNT": "Audit count",
+      "SPOILED": "Spoiled",
+      "OVER_PRODUCTION": "Over-production",
+      "RETURNED_DISH": "Returned dish",
+      "BREAKAGE": "Breakage",
+      "STAFF_MEAL": "Staff meal",
+      "COMPLIMENTARY": "Complimentary",
+      "RECIPE": "Used in a dish",
+      "PRODUCTION": "Production",
+      "SALE": "Sale",
+      "VENDOR_RETURN": "Returned to vendor",
+      "HOUSEKEEPING": "Housekeeping",
+      "MINIBAR": "Minibar"
     },
     "mstatus": {
       "APPLIED": "Done",

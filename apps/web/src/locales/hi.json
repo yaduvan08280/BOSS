@@ -3145,7 +3145,19 @@
       "EXPIRED": "एक्सपायर",
       "LOST": "खोया",
       "FOUND": "मिला",
-      "COUNT": "ऑडिट गिनती"
+      "COUNT": "ऑडिट गिनती",
+      "SPOILED": "खराब हुआ",
+      "OVER_PRODUCTION": "ज़्यादा बना",
+      "RETURNED_DISH": "लौटाई गई डिश",
+      "BREAKAGE": "टूट-फूट",
+      "STAFF_MEAL": "स्टाफ़ भोजन",
+      "COMPLIMENTARY": "कॉम्प्लिमेंटरी",
+      "RECIPE": "डिश में लगा",
+      "PRODUCTION": "प्रोडक्शन",
+      "SALE": "बिक्री",
+      "VENDOR_RETURN": "विक्रेता को वापस",
+      "HOUSEKEEPING": "हाउसकीपिंग",
+      "MINIBAR": "मिनीबार"
     },
     "mstatus": {
       "APPLIED": "हो गया",

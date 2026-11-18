@@ -113,6 +113,28 @@ test('hospitality is set up from the screens: outlet, tables, rooms, rules and a
   await expect(dialog).toHaveCount(0);
   const dish = page.locator('li', { hasText: n.dish });
   await expect(dish.getByText('Half ₹180.00')).toBeVisible();
+  // Decision 245: an add-on group, and a happy-hour price on the soup.
+  await page.getByRole('button', { name: 'Add-ons' }).click();
+  await dialog.getByRole('button', { name: 'Add a group' }).click();
+  await dialog.getByLabel('Name', { exact: true }).fill(`Extras ${t}`);
+  await dialog.getByLabel('Option').first().fill('Extra cheese');
+  await dialog.getByLabel('Extra ₹').first().fill('40');
+  await dialog.getByRole('button', { name: 'Save' }).click();
+  await expect(dialog.getByText('Extra cheese +₹40.00').first()).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  const soup = page.locator('li', { hasText: `Soup ${t}` });
+  await soup.getByRole('button', { name: /Hours & prices/ }).click();
+  await dialog.getByRole('button', { name: 'Add a price' }).click();
+  await dialog.getByLabel('Name (Happy hour)').fill('Happy hour');
+  await dialog.getByLabel('Price (₹)').fill('99');
+  await dialog.getByLabel('From').fill('17:00');
+  await dialog.getByLabel('To', { exact: true }).fill('19:00');
+  await dialog.getByLabel('To', { exact: true }).blur();
+  await expectNoSideScroll(page);
+  await dialog.getByRole('button', { name: 'Save' }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(soup.getByRole('button', { name: /Hours & prices · 1/ })).toBeVisible();
   // S15: 86 by hand.
   await dish.getByRole('switch').click();
   await expect(dish.getByText('86 — off')).toBeVisible();
