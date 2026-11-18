@@ -118,6 +118,9 @@ export function probe() {
       const inside = (p, q) =>
         p.left >= q.left - 1 && p.right <= q.right + 1 && p.top >= q.top - 1 && p.bottom <= q.bottom + 1;
       if (inside(ra, rb) || inside(rb, ra)) continue;
+      // A control placed on top on purpose (a meeting drawn across the hours of a week calendar) is layered,
+      // not colliding.
+      if (cs(a).position === 'absolute' || cs(b).position === 'absolute') continue;
       const x = Math.min(ra.right, rb.right) - Math.max(ra.left, rb.left);
       const y = Math.min(ra.bottom, rb.bottom) - Math.max(ra.top, rb.top);
       if (
