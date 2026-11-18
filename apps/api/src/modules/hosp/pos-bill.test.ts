@@ -275,6 +275,28 @@ describe('POS: bills, discounts, splits, payments, stock, cancellation (phase 15
       w.api.get('/api/money/outstanding?side=receivable'),
     );
     expect(owed.rows.find((x) => x.party.id === firm.id)?.due).toBe(cc.total);
+    // P28: the firm paid ₹100 ahead (an advance in Money); it is set against its next bill, the rest in cash.
+    await post(w.api, '/api/money/bills', {
+      type: 'ADVANCE',
+      partyId: firm.id,
+      date: new Date().toISOString().slice(0, 10),
+      amount: 100_00,
+      modeId: r.modes.cash,
+      issue: true,
+    });
+    expect(await ok(s.get(`/api/pos/orders/${walk.id}/advance`))).toMatchObject({ advance: null });
+    const co2 = await open(s, r, 'T3', { partyId: firm.id });
+    await add(s, co2.id, [{ menuItemId: r.m.dal }]);
+    const c2 = await bill(s, co2.id);
+    expect(await ok(s.get(`/api/pos/orders/${co2.id}/advance`))).toMatchObject({ advance: { left: 100_00 } });
+    const ahead = await post<CheckOut>(s, `/api/pos/checks/${c2.id}/advance`);
+    expect(ahead).toMatchObject({ status: 'OPEN', due: c2.total - 100_00 });
+    expect(ahead.payments).toMatchObject([{ kind: 'ADVANCE', mode: 'Advance', amount: 100_00 }]);
+    expect((await s.post(`/api/pos/checks/${c2.id}/advance`, {})).status).toBe(409);
+    expect(await pay(s, c2.id, [{ modeId: r.modes.cash, amount: ahead.due }])).toMatchObject({
+      status: 'PAID',
+      orderStatus: 'PAID',
+    });
     // Stock that is short never blocks a payment: it is noted on the item.
     await ok(
       w.api.post('/api/ims/stock/entry', {

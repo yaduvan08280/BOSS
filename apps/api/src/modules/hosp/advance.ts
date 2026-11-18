@@ -10,17 +10,48 @@ import { settleOrder } from './payments';
 import { loadOrder, needOpenDay } from './pos-core';
 
 /**
- * Phase 16 — a table deposit against the dinner's bill. The booking's ADVANCE paper is set against the check's
- * invoice (as much as both allow); the rest of the bill is paid as usual, and anything left of the deposit stays
- * the guest's unused advance.
+ * An advance against a restaurant bill (P28). First the booking's own deposit (phase 16); else any plain advance
+ * the order's party paid earlier (Money → an ADVANCE paper not tied to a booking, stay or event), oldest first.
+ * The advance is set against the check's invoice (as much as both allow); the rest of the bill is paid as usual,
+ * and anything left of the advance stays the party's unused credit.
  */
 export async function advanceFor(db: Db, companyId: string, orderId: string) {
   const order = await db.posOrder.findFirst({ where: { id: orderId, companyId } });
-  if (!order?.reservationId) return null;
-  const r = await db.reservation.findFirst({ where: { id: order.reservationId, companyId } });
-  if (!r?.depositBillId || !['PAID', 'USED'].includes(r.depositState ?? '')) return null;
-  const left = await db.$transaction((tx) => creditLeft(tx, companyId, r.depositBillId!));
-  return left > 0 ? { reservationId: r.id, advanceId: r.depositBillId, left } : null;
+  if (!order) return null;
+  if (order.reservationId) {
+    const r = await db.reservation.findFirst({ where: { id: order.reservationId, companyId } });
+    if (r?.depositBillId && ['PAID', 'USED'].includes(r.depositState ?? '')) {
+      const left = await db.$transaction((tx) => creditLeft(tx, companyId, r.depositBillId!));
+      if (left > 0) return { reservationId: r.id as string | null, advanceId: r.depositBillId, left };
+    }
+  }
+  if (!order.partyId) return null;
+  const papers = await db.bill.findMany({
+    where: {
+      companyId,
+      partyId: order.partyId,
+      type: 'ADVANCE',
+      sourceType: null,
+      status: { notIn: ['DRAFT', 'CANCELLED'] },
+    },
+    orderBy: [{ date: 'asc' }, { createdAt: 'asc' }],
+    take: 50,
+  });
+  // A deposit taken for a booking is that booking's: it is never spent on another visit by this rule.
+  const deposits = new Set(
+    (
+      await db.reservation.findMany({
+        where: { companyId, depositBillId: { in: papers.map((b) => b.id) } },
+        select: { depositBillId: true },
+      })
+    ).map((r) => r.depositBillId),
+  );
+  for (const paper of papers) {
+    if (deposits.has(paper.id)) continue;
+    const left = Number(paper.total - paper.settled);
+    if (left > 0) return { reservationId: null as string | null, advanceId: paper.id, left };
+  }
+  return null;
 }
 
 export async function useAdvance(db: Db, actor: Actor, checkId: string) {
@@ -31,7 +62,7 @@ export async function useAdvance(db: Db, actor: Actor, checkId: string) {
   if (check.status !== 'OPEN') throw new AppError(409, 'CONFLICT', 'This bill is not open');
   await needOpenDay(db, outlet, check.businessDay);
   const advance = await advanceFor(db, actor.companyId, order.id);
-  if (!advance) throw new AppError(409, 'CONFLICT', 'There is no deposit to use on this bill');
+  if (!advance) throw new AppError(409, 'CONFLICT', 'There is no deposit or advance to use on this bill');
   return db.$transaction(async (tx) => {
     const bill = await tx.bill.findUniqueOrThrow({ where: { id: check.billId } });
     const due = Number(bill.total - bill.credited - bill.settled) - creditOf(check.payments);
@@ -47,7 +78,7 @@ export async function useAdvance(db: Db, actor: Actor, checkId: string) {
       ...((check.payments as Payment[] | null) ?? []),
       {
         modeId: '',
-        mode: 'Deposit',
+        mode: advance.reservationId ? 'Deposit' : 'Advance',
         kind: 'ADVANCE',
         amount: used,
         reference: null,
@@ -68,7 +99,8 @@ export async function useAdvance(db: Db, actor: Actor, checkId: string) {
       where: { id: check.id },
       data: { payments: taken, status, ...(status === 'PAID' ? { paidAt: new Date() } : {}) },
     });
-    await tx.reservation.update({ where: { id: advance.reservationId }, data: { depositState: 'USED' } });
+    if (advance.reservationId)
+      await tx.reservation.update({ where: { id: advance.reservationId }, data: { depositState: 'USED' } });
     await writeAudit(tx, ctxOf(actor), {
       action: 'pos.check_advance_used',
       entityType: 'pos_check',
