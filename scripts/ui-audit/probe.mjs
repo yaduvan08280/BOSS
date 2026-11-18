@@ -101,7 +101,13 @@ export function probe() {
   };
   const boxes = controls
     .map((e) => [e, shownPart(e)])
-    .filter(([, r]) => r.bottom > 0 && r.top < H && r.right - r.left > 4 && r.bottom - r.top > 4);
+    .filter(([, r]) => r.bottom > 0 && r.top < H && r.right - r.left > 4 && r.bottom - r.top > 4)
+    // …and only what is really on top there: a control lying under an overlay (a full-screen chart, a sheet)
+    // is covered, not overlapping.
+    .filter(([e, r]) => {
+      const top = document.elementFromPoint((r.left + r.right) / 2, (r.top + r.bottom) / 2);
+      return top && (top === e || e.contains(top) || top.contains(e));
+    });
   const over = [];
   for (let i = 0; i < boxes.length && over.length < 2; i++)
     for (let j = i + 1; j < boxes.length && over.length < 2; j++) {
