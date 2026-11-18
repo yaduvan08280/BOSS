@@ -3,6 +3,7 @@
 ## 18/11/2026 — Laptop widths and zoom, a PDF of a bill, advances on restaurant bills
 
 - **Screens**: a sweep of about 100 screens at phone, tablet, laptop and desktop widths. Fixed: the Roles screen ran off the page at 1024; the page title in the top bar was cut to one letter between 768 and 1280; the task, Weekly MIS and checklist tables hid their last columns — they now turn into cards whenever the table would not fit (also when the browser is zoomed in). Tables that still scroll sideways show a shadow on the edge that has more. Seven notification modules had no label on the rules screen.
+- **Menu**: screens for add-on groups (Menu → Add-ons) and, on each item, **Hours & prices** — when it can be ordered, a different price at an outlet or in a time band (happy hour), and what a combo holds.
 - **Money**: an issued bill opens as a PDF (`/api/money/bills/:id/pdf`).
 - **POS**: an advance a company or guest paid earlier (Money → Advance) can be used on their restaurant bill, not only a booking's deposit.
 
