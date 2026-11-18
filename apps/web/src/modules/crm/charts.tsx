@@ -109,9 +109,10 @@ export function Ring({ pct, label, sub }: { pct: number; label: string; sub?: st
           className="stroke-primary"
         />
       </svg>
-      <div className="text-center">
+      {/* The words stay well inside the ring: narrower than its hole, on two lines when they need it. */}
+      <div className="max-w-[4.25rem] text-center">
         <div className="text-2xl font-semibold tabular-nums">{p}%</div>
-        {sub && <div className="text-[11px] text-muted-foreground">{sub}</div>}
+        {sub && <div className="text-[10px] leading-tight text-muted-foreground">{sub}</div>}
       </div>
     </div>
   );
