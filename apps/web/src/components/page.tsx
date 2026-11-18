@@ -47,7 +47,7 @@ export function KpiTile({
   return (
     <div
       className={cn(
-        'flex min-h-24 min-w-0 flex-col justify-between rounded-card border p-3.5 sm:min-h-28 sm:p-5',
+        '@container flex min-h-24 min-w-0 flex-col justify-between rounded-card border p-3.5 sm:min-h-28 sm:p-5',
         hero ? 'border-ink bg-ink text-ink-foreground' : 'bg-card',
       )}
     >
@@ -61,9 +61,12 @@ export function KpiTile({
         <span
           data-ui="kpi"
           className={cn(
-            // A long amount (₹12,60,933.33) takes a smaller size so it never runs into the tile's edge.
-            'tabular font-semibold tracking-tight [overflow-wrap:anywhere]',
-            typeof value === 'string' && value.length > 9 ? 'text-lg sm:text-2xl' : 'text-2xl sm:text-3xl',
+            // The figure is sized by the tile's own width and its length, and never wraps: a long amount
+            // (₹12,60,933.33) in a narrow tile takes a smaller size instead of running into the edge.
+            'tabular whitespace-nowrap font-semibold tracking-tight',
+            typeof value === 'string' && value.length > 9
+              ? 'text-lg @[12rem]:text-2xl @[16rem]:text-3xl'
+              : 'text-2xl @[13rem]:text-3xl',
             tone === 'bad' && 'text-status-bad',
           )}
         >

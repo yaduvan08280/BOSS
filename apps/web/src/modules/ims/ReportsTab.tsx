@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { addDays, formatINR } from '@mono/shared';
 import { ErrorState, KpiTile, PageSkeleton } from '@/components/page';
@@ -118,12 +119,15 @@ function MovementReport({ period }: { period: string }) {
             <KpiTile label={t('ims.r.in')} value={inr(d.inPaise)} />
             <KpiTile label={t('ims.r.out')} value={inr(d.outPaise)} hero />
           </div>
-          <div className="scroll-hint overflow-x-auto rounded-card border">
-            <table className="w-full min-w-[520px] text-sm">
+          <div className="scroll-hint @container overflow-x-auto rounded-card border">
+            <table className="w-full text-sm [&_td]:px-2 [&_th]:px-2 @md:[&_td]:px-3 @md:[&_th]:px-3">
               <thead className="bg-muted/60 text-left text-xs text-muted-foreground">
                 <tr>
                   {['item', 'in', 'out', 'adjust', 'outValue'].map((h) => (
-                    <th key={h} className="px-3 py-2 font-medium">
+                    <th
+                      key={h}
+                      className={cn('px-3 py-2 font-medium', h === 'adjust' && 'hidden @md:table-cell')}
+                    >
                       {t(`ims.r.col.${h}`)}
                     </th>
                   ))}
@@ -137,7 +141,7 @@ function MovementReport({ period }: { period: string }) {
                     </td>
                     <td className="px-3 py-2 tabular-nums">{qty(x.in)}</td>
                     <td className="px-3 py-2 tabular-nums">{qty(x.out)}</td>
-                    <td className="px-3 py-2 tabular-nums">{qty(x.adjust)}</td>
+                    <td className="hidden px-3 py-2 tabular-nums @md:table-cell">{qty(x.adjust)}</td>
                     <td className="px-3 py-2 tabular-nums">{inr(x.outValuePaise)}</td>
                   </tr>
                 ))}
@@ -184,10 +188,10 @@ function TurnsReport() {
             <ul className="divide-y rounded-card border bg-card text-sm">
               {d.items.map((x) => (
                 <li key={x.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5">
-                  <span>
+                  <span className="min-w-0">
                     {x.name} <span className="font-mono text-xs text-muted-foreground">{x.code}</span>
                   </span>
-                  <span className="flex items-center gap-2">
+                  <span className="flex min-w-0 flex-wrap items-center justify-end gap-2">
                     {stop.has(x.id) && <StatusChip tone="bad">{t('ims.r.offerStop')}</StatusChip>}
                     {x.nos && <StatusChip tone="warn">{t('ims.r.nos')}</StatusChip>}
                     <span className="text-muted-foreground tabular-nums">{inr(x.valuePaise)}</span>

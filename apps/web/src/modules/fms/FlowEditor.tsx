@@ -151,7 +151,7 @@ function Editor({ flow }: { flow: FlowDetail; me: Me }) {
             </div>
             <Input
               aria-label={t('fms.b.name')}
-              className="mt-1 h-auto border-transparent bg-transparent px-0 text-xl font-semibold focus-visible:border-input sm:h-auto"
+              className="mt-1 h-auto min-h-11 border-transparent bg-transparent px-0 text-xl font-semibold focus-visible:border-input sm:h-auto sm:min-h-0"
               defaultValue={flow.name}
               onChange={(e) => (setMeta({ ...meta, name: e.target.value }), setChanged(true))}
             />

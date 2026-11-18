@@ -40,6 +40,9 @@ export function Reports({ tz }: { tz: string }) {
   );
 }
 
+/** Columns that give way first when the table's card is narrow. */
+const LOW = 'hidden @2xl:table-cell';
+
 function Scorecard({ tz }: { tz: string }) {
   const { t } = useTranslation();
   const [offset, setOffset] = useState(0);
@@ -100,13 +103,20 @@ function Scorecard({ tz }: { tz: string }) {
           <Download /> {t('task.rep.export')}
         </Button>
       </div>
-      <div className="scroll-hint overflow-x-auto rounded-card border">
-        <table className="w-full min-w-[860px] text-sm">
+      <div className="scroll-hint @container overflow-x-auto rounded-card border">
+        <table className="w-full text-sm [&_td]:px-2 [&_th]:px-2 @2xl:[&_td]:px-3 @2xl:[&_th]:px-3">
           <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
             <tr>
               {['person', 'kpi', 'benchmark', 'lastWeek', 'planned', 'actual', 'actualPct', 'target'].map(
                 (h) => (
-                  <th key={h} className="whitespace-nowrap px-3 py-2.5 font-medium">
+                  <th
+                    key={h}
+                    className={cn(
+                      'px-3 py-2.5 font-medium @2xl:whitespace-nowrap',
+                      // A narrow card keeps who, what and how it went; the rest returns with room.
+                      ['benchmark', 'lastWeek', 'planned', 'target'].includes(h) && LOW,
+                    )}
+                  >
                     {t(`task.rep.col.${h}`)}
                   </th>
                 ),
@@ -123,9 +133,9 @@ function Scorecard({ tz }: { tz: string }) {
                     </td>
                   )}
                   <td className="px-3 py-2">{t(`task.kpi.${l.kpi}`)}</td>
-                  <td className="tabular px-3 py-2">{l.benchmark}%</td>
-                  <td className="tabular px-3 py-2">{pct(l.lastWeekPct)}</td>
-                  <td className="tabular px-3 py-2">{l.planned}</td>
+                  <td className={cn('tabular px-3 py-2', LOW)}>{l.benchmark}%</td>
+                  <td className={cn('tabular px-3 py-2', LOW)}>{pct(l.lastWeekPct)}</td>
+                  <td className={cn('tabular px-3 py-2', LOW)}>{l.planned}</td>
                   <td className="tabular px-3 py-2">{l.actual}</td>
                   <td className="px-3 py-2">
                     <span
@@ -134,7 +144,7 @@ function Scorecard({ tz }: { tz: string }) {
                       {pct(l.actualPct)}
                     </span>
                   </td>
-                  <td className="tabular px-3 py-2">{l.nextTarget}%</td>
+                  <td className={cn('tabular px-3 py-2', LOW)}>{l.nextTarget}%</td>
                 </tr>
               )),
             )}
@@ -229,8 +239,8 @@ function Ryg({ tz }: { tz: string }) {
         <KpiTile label={t('task.rep.red')} value={sum('red')} tone="bad" />
         <KpiTile label={t('task.rep.open')} value={sum('open')} />
       </div>
-      <div className="scroll-hint overflow-x-auto rounded-card border">
-        <table className="w-full min-w-[720px] text-sm">
+      <div className="scroll-hint @container overflow-x-auto rounded-card border">
+        <table className="w-full text-sm [&_td]:px-2 [&_th]:px-2 @2xl:[&_td]:px-3 @2xl:[&_th]:px-3">
           <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
             <tr>
               {['person', 'total', 'g', 'y', 'r', 'open', 'split'].map((h) => (
@@ -249,13 +259,13 @@ function Ryg({ tz }: { tz: string }) {
                 <td className="tabular px-3 py-2">{r.yellow}</td>
                 <td className="tabular px-3 py-2">{r.red}</td>
                 <td className="tabular px-3 py-2">{r.open}</td>
-                <td className="w-64 px-3 py-2">
+                <td className="w-24 px-3 py-2 @2xl:w-64">
                   <div className="flex h-2.5 overflow-hidden rounded-pill bg-muted">
                     <span className="bg-status-ok" style={{ width: `${r.pctGreen}%` }} />
                     <span className="bg-status-warn" style={{ width: `${r.pctYellow}%` }} />
                     <span className="bg-status-bad" style={{ width: `${r.pctRed}%` }} />
                   </div>
-                  <div className="tabular mt-1 text-[11px] text-muted-foreground">
+                  <div className="tabular mt-1 hidden text-[11px] text-muted-foreground @2xl:block">
                     G {r.pctGreen}% · Y {r.pctYellow}% · R {r.pctRed}%
                   </div>
                 </td>

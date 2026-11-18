@@ -68,7 +68,7 @@ export function TaskList({
 }) {
   const { t } = useTranslation();
   const small = useIsPhone();
-  const tight = useTooNarrow(1000);
+  const tight = useTooNarrow(1040);
   const phone = small || tight;
   const names = useMemo(() => new Map(people.map((p) => [p.id, p.name])), [people]);
   const [q, setQ] = useState('');
@@ -273,7 +273,7 @@ export function TaskList({
         </ul>
       ) : (
         <div className="scroll-hint overflow-x-auto rounded-card border">
-          <table className="w-full min-w-[1000px] text-sm">
+          <table className="w-full min-w-[1040px] text-sm">
             <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
               <tr>
                 <th className="w-10 px-3" />
@@ -304,7 +304,7 @@ export function TaskList({
                       aria-label={`#${task.number}`}
                     />
                   </td>
-                  <td className="px-3 py-3">
+                  <td className="min-w-48 px-3 py-3">
                     <div className="flex items-center gap-2">
                       <Avatar id={task.doerId} name={names.get(task.doerId) ?? '?'} className="size-8" />
                       <div>
