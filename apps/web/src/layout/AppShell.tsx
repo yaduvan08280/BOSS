@@ -120,7 +120,7 @@ export function AppShell({ me }: { me: Me }) {
 
       <button
         onClick={() => setAssistant(true)}
-        className="fixed bottom-24 right-4 z-30 grid size-12 place-items-center rounded-full bg-ink text-ink-foreground shadow-xl transition-transform hover:scale-105 active:scale-95 lg:bottom-6 lg:right-6 lg:size-14"
+        className="fixed bottom-[5.25rem] right-3 z-30 grid size-11 place-items-center rounded-full bg-ink text-ink-foreground opacity-85 shadow-lg transition-[transform,opacity] hover:scale-105 hover:opacity-100 active:scale-95 lg:bottom-6 lg:right-6 lg:size-14 lg:opacity-100 lg:shadow-xl"
         aria-label={t('shell.assistant')}
         title={t('shell.assistant')}
       >
