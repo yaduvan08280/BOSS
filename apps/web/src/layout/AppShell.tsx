@@ -45,8 +45,15 @@ export function AppShell({ me }: { me: Me }) {
   const recordPage = useRecordPageTitle(pathname);
   const sections = inSystem && canOpenSystemMaster(me.user.permissions) ? SYSTEM_NAV : workspace;
   const item = findNavItem(pathname);
+  // Pages reached from the top bar, not the menu, still say where the person is.
+  const own = pathname.startsWith('/account')
+    ? t('shell.profile')
+    : pathname.startsWith('/notifications')
+      ? t('shell.notifications')
+      : undefined;
   const title =
-    recordPage?.title ?? (item ? t(`nav.${item.key}`) : inSystem ? t('system.title') : t(`nav.home`));
+    recordPage?.title ??
+    (item ? t(`nav.${item.key}`) : (own ?? (inSystem ? t('system.title') : t(`nav.home`))));
   const subtitle =
     recordPage?.subtitle ?? (item ? t(`navDesc.${item.key}`) : inSystem ? t('system.subtitle') : undefined);
 
@@ -120,11 +127,11 @@ export function AppShell({ me }: { me: Me }) {
 
       <button
         onClick={() => setAssistant(true)}
-        className="fixed bottom-[5.25rem] right-3 z-30 grid size-11 place-items-center rounded-full bg-ink text-ink-foreground opacity-85 shadow-lg transition-[transform,opacity] hover:scale-105 hover:opacity-100 active:scale-95 lg:bottom-6 lg:right-6 lg:size-14 lg:opacity-100 lg:shadow-xl"
+        className="fixed bottom-6 right-6 z-30 hidden size-14 place-items-center rounded-full bg-ink text-ink-foreground shadow-xl transition-transform hover:scale-105 active:scale-95 lg:grid"
         aria-label={t('shell.assistant')}
         title={t('shell.assistant')}
       >
-        <Bot className="size-5 lg:size-6" />
+        <Bot className="size-6" />
       </button>
 
       <BottomTabs

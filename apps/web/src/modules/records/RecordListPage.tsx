@@ -93,7 +93,7 @@ function TypeList({ type, me }: { type: RecordTypeView; me: Me }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 max-sm:basis-full">
           <h1 className="truncate text-[22px] font-semibold leading-tight tracking-tight sm:text-[26px]">
             {type.pluralName}
           </h1>

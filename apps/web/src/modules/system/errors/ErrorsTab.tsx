@@ -74,7 +74,7 @@ export function ErrorsTab() {
                 <StatusChip tone={r.resolvedAt ? 'neutral' : r.count >= 10 ? 'bad' : 'warn'}>
                   {t(`errors.src.${r.source}`)}
                 </StatusChip>
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 basis-56">
                   <div className="font-medium break-words">{r.message}</div>
                   <div className="text-xs text-muted-foreground">
                     {[

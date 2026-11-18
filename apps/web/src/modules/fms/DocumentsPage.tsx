@@ -68,7 +68,7 @@ export function DocumentsPage({ me }: { me: Me }) {
             placeholder={t('fms.doc.search')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="min-w-0 flex-1 sm:w-56 sm:flex-none"
+            className="min-w-0 flex-1 max-sm:basis-full sm:w-56 sm:flex-none"
           />
           <Button onClick={() => setEditing({ active: true })}>
             <Plus /> {t('fms.doc.newType')}

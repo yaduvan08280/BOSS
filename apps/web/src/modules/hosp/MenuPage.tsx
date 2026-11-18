@@ -142,7 +142,9 @@ export function MenuPage({ me }: { me: Me }) {
                       checked={!i.off}
                       onCheckedChange={(v) => off.mutate({ id: i.id, off: !v })}
                     />
-                    {i.off ? t('hosp.menu.is86') : t('hosp.menu.selling')}
+                    <span className={i.off ? undefined : 'max-sm:hidden'}>
+                      {i.off ? t('hosp.menu.is86') : t('hosp.menu.selling')}
+                    </span>
                   </label>
                 </Card>
               </li>

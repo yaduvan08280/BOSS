@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // UI audit: every route → every tab → (deep) every dialog, drawer and dropdown, at one screen size.
 // See README.md. Usage: node scripts/ui-audit/audit.mjs --size 390x844 [--deep] [--label tora-owner] …
+/* global document */
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { chromium } from 'playwright';
@@ -51,6 +52,10 @@ const filled = new Set();
 
 async function look(page, path, state, errs) {
   await page.waitForLoadState('networkidle', { timeout: WAIT }).catch(() => {});
+  // The grey loading shapes must be gone: a page is judged with its content, not while it loads.
+  await page
+    .waitForFunction(() => !document.querySelector('main [aria-busy]'), null, { timeout: 4000 })
+    .catch(() => {});
   await page.waitForTimeout(120);
   const seen = await page.evaluate(probe).catch(() => null);
   if (!seen) return;
@@ -75,7 +80,7 @@ async function dropdowns(page, path, state) {
       await box.click({ timeout: 1200 });
       await page.waitForTimeout(100);
       const options = await page.locator('[role=option]:visible').count();
-      /* global document, innerWidth, innerHeight */
+      /* global innerWidth, innerHeight */
       const off = await page.evaluate(() => {
         const l = document.querySelector('[role=listbox]');
         if (!l) return false;

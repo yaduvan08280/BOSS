@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { LifeBuoy, ListChecks, Menu, RefreshCw, type LucideIcon } from 'lucide-react';
+import { Bot, LifeBuoy, ListChecks, Menu, RefreshCw, type LucideIcon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { canOpenSystemMaster, type Language, type Me, type ThemeMode } from '@mono/shared';
@@ -117,6 +117,17 @@ export function TopBar({ me, title, subtitle, inSystem, onOpenMenu, ...menu }: P
               to="/workspace"
             />
           </span>
+          {/* Phones and tablets: the assistant lives here, so no floating button covers the page. */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-muted-foreground lg:hidden"
+            onClick={menu.onAssistant}
+            aria-label={t('shell.assistant')}
+            title={t('shell.assistant')}
+          >
+            <Bot className="size-[18px]" />
+          </Button>
           <NotificationBell unread={me.counters.unreadNotifications} />
           <Button
             variant="ghost"
