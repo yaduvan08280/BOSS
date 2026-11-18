@@ -105,76 +105,78 @@ export function PunchCard({ month, tz }: { month: MonthView; tz: string }) {
   const today = month.today;
   return (
     <Card>
-      <CardContent className="flex flex-col gap-4 pt-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            {today &&
-              (today.final ? (
-                <StatusChip tone={STATUS_TONE[today.status]}>{t(`hr.status.${today.status}`)}</StatusChip>
-              ) : (
-                // Mid-shift the day isn't settled: show where the person is, not what the day will count as.
-                <StatusChip tone={today.inAt && !today.outAt ? 'ok' : 'neutral'}>
-                  {today.inAt && !today.outAt
-                    ? t('hr.a.atWork')
-                    : today.inAt
-                      ? t('hr.a.leftWork')
-                      : t('hr.a.notInYet')}
-                </StatusChip>
-              ))}
-            {queued > 0 && (
-              <span className="inline-flex items-center gap-1 text-xs text-status-warn-fg">
-                <WifiOff className="size-3.5" /> {t('hr.a.queued', { count: queued })}
-              </span>
+      <CardContent className="@container pt-5">
+        <div className="flex flex-col gap-4 @md:flex-row @md:items-center @md:justify-between">
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              {today &&
+                (today.final ? (
+                  <StatusChip tone={STATUS_TONE[today.status]}>{t(`hr.status.${today.status}`)}</StatusChip>
+                ) : (
+                  // Mid-shift the day isn't settled: show where the person is, not what the day will count as.
+                  <StatusChip tone={today.inAt && !today.outAt ? 'ok' : 'neutral'}>
+                    {today.inAt && !today.outAt
+                      ? t('hr.a.atWork')
+                      : today.inAt
+                        ? t('hr.a.leftWork')
+                        : t('hr.a.notInYet')}
+                  </StatusChip>
+                ))}
+              {queued > 0 && (
+                <span className="inline-flex items-center gap-1 text-xs text-status-warn-fg">
+                  <WifiOff className="size-3.5" /> {t('hr.a.queued', { count: queued })}
+                </span>
+              )}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {month.punches.length
+                ? month.punches
+                    .map(
+                      (p) =>
+                        `${p.type === 'IN' ? t('hr.a.in') : t('hr.a.out')} ${formatDateTime(p.at, tz).slice(-5)}`,
+                    )
+                    .join(' · ')
+                : t('hr.a.noPunch')}
+            </div>
+            {today && today.workedMinutes > 0 && (
+              <div className="text-xs text-muted-foreground">
+                {t('hr.a.worked', { h: hm(today.workedMinutes) })}
+                {today.lateMinutes > 0 && ` · ${t('hr.a.late', { m: today.lateMinutes })}`}
+              </div>
             )}
           </div>
-          <div className="text-sm text-muted-foreground">
-            {month.punches.length
-              ? month.punches
-                  .map(
-                    (p) =>
-                      `${p.type === 'IN' ? t('hr.a.in') : t('hr.a.out')} ${formatDateTime(p.at, tz).slice(-5)}`,
-                  )
-                  .join(' · ')
-              : t('hr.a.noPunch')}
-          </div>
-          {today && today.workedMinutes > 0 && (
-            <div className="text-xs text-muted-foreground">
-              {t('hr.a.worked', { h: hm(today.workedMinutes) })}
-              {today.lateMinutes > 0 && ` · ${t('hr.a.late', { m: today.lateMinutes })}`}
-            </div>
-          )}
+          <input
+            ref={selfieInput}
+            type="file"
+            accept="image/*"
+            capture="user"
+            className="hidden"
+            aria-label={t('hr.a.selfie')}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              e.target.value = '';
+              if (f) void doPunch(f);
+            }}
+          />
+          <Button
+            variant="primary"
+            size="lg"
+            className="h-14 min-w-48 text-base"
+            disabled={busy}
+            onClick={() => (month.selfie ? selfieInput.current?.click() : void doPunch())}
+          >
+            {busy ? (
+              <Loader2 className="animate-spin" />
+            ) : month.selfie ? (
+              <Camera />
+            ) : next === 'IN' ? (
+              <LogIn />
+            ) : (
+              <LogOut />
+            )}
+            {next === 'IN' ? t('hr.a.punchIn') : t('hr.a.punchOut')}
+          </Button>
         </div>
-        <input
-          ref={selfieInput}
-          type="file"
-          accept="image/*"
-          capture="user"
-          className="hidden"
-          aria-label={t('hr.a.selfie')}
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            e.target.value = '';
-            if (f) void doPunch(f);
-          }}
-        />
-        <Button
-          variant="primary"
-          size="lg"
-          className="h-14 min-w-48 text-base"
-          disabled={busy}
-          onClick={() => (month.selfie ? selfieInput.current?.click() : void doPunch())}
-        >
-          {busy ? (
-            <Loader2 className="animate-spin" />
-          ) : month.selfie ? (
-            <Camera />
-          ) : next === 'IN' ? (
-            <LogIn />
-          ) : (
-            <LogOut />
-          )}
-          {next === 'IN' ? t('hr.a.punchIn') : t('hr.a.punchOut')}
-        </Button>
       </CardContent>
     </Card>
   );

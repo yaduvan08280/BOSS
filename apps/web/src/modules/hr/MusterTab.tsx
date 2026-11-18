@@ -156,7 +156,7 @@ export function MusterTab({ tz, today }: { tz: string; today: string }) {
         <EmptyState icon={Users} title={t('muster.nobody')} />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
             <KpiTile hero label={t('muster.kpi.people')} value={people.length} />
             <KpiTile label={t('muster.kpi.present')} value={sum('present')} unit={t('muster.days')} />
             <KpiTile

@@ -123,6 +123,17 @@ export function probe() {
     }
   if (over.length) add('overlap', over.join(' | '));
 
+  // A control or a figure sticking out of the card it belongs to.
+  const spill = controls.concat(all.filter((e) => e.getAttribute('data-ui') === 'kpi')).filter((e) => {
+    const card = e.closest('[data-slot=card], [role=dialog]');
+    if (!card || card === e) return false;
+    for (let p = e.parentElement; p && p !== card; p = p.parentElement) if (scrolls(p)) return false;
+    const r = e.getBoundingClientRect();
+    const c = card.getBoundingClientRect();
+    return r.width > 0 && (r.right > c.right + 3 || r.left < c.left - 3);
+  });
+  if (spill.length) add('outside-card', spill.slice(0, 3).map(name).join(' | '));
+
   // Phones: small touch targets and tiny text.
   if (phone) {
     const small = controls.filter((e) => {

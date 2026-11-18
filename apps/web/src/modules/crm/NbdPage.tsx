@@ -32,7 +32,7 @@ export function NbdPage({ me }: { me: Me }) {
   return (
     <div className="space-y-5">
       <PageHeader title={t('nav.nbd')} subtitle={t('navDesc.nbd')} />
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
         <KpiTile label={t('crm.n.toQualify')} value={d.tiles.toQualify} hero />
         <KpiTile label={t('crm.n.open')} value={d.tiles.open} note={inr(d.tiles.inFunnel, true)} />
         <KpiTile label={t('crm.n.stuck')} value={d.tiles.stuck} tone={d.tiles.stuck ? 'bad' : undefined} />

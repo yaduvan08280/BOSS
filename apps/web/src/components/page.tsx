@@ -65,8 +65,8 @@ export function KpiTile({
             // (₹12,60,933.33) in a narrow tile takes a smaller size instead of running into the edge.
             'tabular whitespace-nowrap font-semibold tracking-tight',
             typeof value === 'string' && value.length > 9
-              ? 'text-lg @[12rem]:text-2xl @[16rem]:text-3xl'
-              : 'text-2xl @[13rem]:text-3xl',
+              ? 'text-base @[9rem]:text-lg @[12rem]:text-2xl @[16rem]:text-3xl'
+              : 'text-xl @[8rem]:text-2xl @[13rem]:text-3xl',
             tone === 'bad' && 'text-status-bad',
           )}
         >

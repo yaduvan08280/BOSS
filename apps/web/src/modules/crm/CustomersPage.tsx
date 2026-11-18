@@ -40,7 +40,7 @@ export function CustomersPage({ me }: { me: Me }) {
   return (
     <div className="space-y-5">
       <PageHeader title={t('nav.customers')} subtitle={t('navDesc.customers')} />
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
         <KpiTile label={t('crm.c.customers')} value={tl.customers} hero />
         <KpiTile label={t('crm.c.top20Share')} value={`${tl.top20GpSharePct}%`} note={t('crm.c.top20Note')} />
         <KpiTile label={t('crm.c.withOwner')} value={inr(tl.withOwner, true)} />
