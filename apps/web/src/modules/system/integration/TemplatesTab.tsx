@@ -15,7 +15,7 @@ const TONE = { APPROVED: 'ok', DRAFT: 'neutral', PENDING: 'warn', REJECTED: 'bad
 const CHANNELS = ['all', 'whatsapp', 'email', 'telegram'] as const;
 
 /** Columns that give way first when the table's card is narrow (a laptop, a zoomed-in screen). */
-const LOW = 'hidden @4xl:table-cell';
+const LOW = 'hidden @5xl:table-cell';
 
 export function TemplatesTab() {
   const { t } = useTranslation();
@@ -144,7 +144,7 @@ export function TemplatesTab() {
                 <tr key={x.id} className="hover:bg-muted/40">
                   <td className="px-3 py-2">
                     <div className="font-mono text-xs">{x.code}</div>
-                    <div className="max-w-[11rem] truncate text-xs text-muted-foreground @4xl:max-w-xs">
+                    <div className="max-w-[11rem] truncate text-xs text-muted-foreground @5xl:max-w-xs">
                       {x.event ? eventLabel(t, x.event) : x.body}
                     </div>
                   </td>
@@ -177,7 +177,7 @@ export function TemplatesTab() {
                           title={t('notify.tpl.submit')}
                           onClick={() => submit.mutate(x.id, { onError: () => undefined })}
                         >
-                          <CloudUpload /> <span className="hidden @4xl:inline">{t('notify.tpl.submit')}</span>
+                          <CloudUpload /> <span className="hidden @5xl:inline">{t('notify.tpl.submit')}</span>
                         </Button>
                       )}
                       <Button

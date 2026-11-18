@@ -13,7 +13,7 @@ import { eventLabel, moduleOf, recipientLabel } from './labels';
 import { RuleDialog } from './RuleDialog';
 
 /** Columns that give way first when the table's card is narrow (a laptop, a zoomed-in screen). */
-const LOW = 'hidden @4xl:table-cell';
+const LOW = 'hidden @5xl:table-cell';
 
 export function RulesTab() {
   const { t } = useTranslation();
