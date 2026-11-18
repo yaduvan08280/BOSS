@@ -20,7 +20,12 @@ export function LeaveQuotas() {
   const quotas = useQuotas();
   if (types.isPending || quotas.isPending) return <PageSkeleton />;
   if (types.isError || quotas.isError)
-    return <ErrorState onRetry={() => void (types.refetch(), quotas.refetch())} />;
+    return (
+      <ErrorState
+        onRetry={() => void (types.refetch(), quotas.refetch())}
+        error={types.error ?? quotas.error}
+      />
+    );
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">{t('hr.p.q2.hint')}</p>

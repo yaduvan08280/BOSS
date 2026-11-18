@@ -44,7 +44,12 @@ export function SetupPage({ me }: { me: Me }) {
   );
   if (plan.isPending || progress.isPending) return <PageSkeleton />;
   if (plan.isError || progress.isError)
-    return <ErrorState onRetry={() => void (plan.refetch(), progress.refetch())} />;
+    return (
+      <ErrorState
+        onRetry={() => void (plan.refetch(), progress.refetch())}
+        error={plan.error ?? progress.error}
+      />
+    );
   const p = plan.data;
   const pr = progress.data;
   const admin = hasPermission(me.user.permissions, 'crm.admin');

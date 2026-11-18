@@ -49,7 +49,12 @@ export function DepartmentsTab() {
 
   if (depts.isPending || users.isPending) return <PageSkeleton />;
   if (depts.isError || users.isError)
-    return <ErrorState onRetry={() => void (depts.refetch(), users.refetch())} />;
+    return (
+      <ErrorState
+        onRetry={() => void (depts.refetch(), users.refetch())}
+        error={depts.error ?? users.error}
+      />
+    );
   const all = depts.data;
   const people = users.data;
   const top = childrenOf(all, null);

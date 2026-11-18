@@ -61,3 +61,25 @@ describe('recommended access', () => {
     expect((await w.api.get('/api/org/roles/recommended')).body).toEqual({ roles: [], moves: [] });
   }, 90_000);
 });
+
+describe('names for everyone (decision 248)', () => {
+  it('a role without the people right still reads names, departments and branches — without contact details', async () => {
+    const w = await world(ctx.app);
+    const role = (
+      await w.api.post('/api/org/roles', { name: 'Kitchen hand', permissions: ['delegation.view'] })
+    ).body as { id: string };
+    const cook = await w.person('Mohit Cook', role.id);
+    const full = (await w.api.get('/api/org/users')).body as { id: string; mobile: string | null }[];
+    expect(full.find((p) => p.id === cook.id)?.mobile).toMatch(/^\+91/);
+    const seen = await cook.api.get('/api/org/users');
+    expect(seen.status).toBe(200);
+    const rows = seen.body as { id: string; name: string; mobile: string | null; email: string | null }[];
+    expect(rows.map((p) => p.name)).toContain('Mohit Cook');
+    expect(rows.every((p) => p.mobile === null && p.email === null)).toBe(true);
+    expect((await cook.api.get('/api/org/departments')).status).toBe(200);
+    expect((await cook.api.get('/api/org/branches')).status).toBe(200);
+    // Changing people still needs the right.
+    expect((await cook.api.post('/api/org/users', { name: 'Nobody' })).status).toBe(403);
+    expect((await cook.api.post('/api/org/departments', { name: 'Nowhere' })).status).toBe(403);
+  });
+});

@@ -73,11 +73,13 @@ function Wait<T>({
   q,
   children,
 }: {
-  q: { isPending: boolean; isError: boolean; data?: T; refetch: () => unknown };
+  q: { isPending: boolean; isError: boolean; error?: unknown; data?: T; refetch: () => unknown };
   children: (d: T) => React.ReactNode;
 }) {
   if (q.isPending) return <PageSkeleton />;
-  if (q.isError || !q.data) return <ErrorState onRetry={() => void q.refetch()} />;
+  if (q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
+  // No answer yet (a slow line, a request still on its way) is waiting, not a failure.
+  if (!q.data) return <PageSkeleton />;
   return <>{children(q.data)}</>;
 }
 

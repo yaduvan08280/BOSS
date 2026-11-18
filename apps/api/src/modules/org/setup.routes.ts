@@ -104,13 +104,17 @@ export async function setupRoutes(app: FastifyInstance) {
   );
 
   // ---- Branches ----
-  r.get('/api/org/branches', { ...view, schema: { tags: ['org'] } }, async (request) => {
-    const rows = await request.db.branch.findMany({
-      orderBy: [{ isDefault: 'desc' }, { name: 'asc' }],
-      include: { _count: { select: { users: { where: { deletedAt: null } } } } },
-    });
-    return rows.map(({ _count, ...b }) => ({ ...b, people: _count.users }));
-  });
+  r.get(
+    '/api/org/branches',
+    { onRequest: [app.authenticate], schema: { tags: ['org'] } },
+    async (request) => {
+      const rows = await request.db.branch.findMany({
+        orderBy: [{ isDefault: 'desc' }, { name: 'asc' }],
+        include: { _count: { select: { users: { where: { deletedAt: null } } } } },
+      });
+      return rows.map(({ _count, ...b }) => ({ ...b, people: _count.users }));
+    },
+  );
 
   async function checkParent(
     tx: Parameters<Parameters<typeof inCompanyTx>[1]>[0],

@@ -101,11 +101,13 @@ async function ensureMember(
 
 export async function departmentRoutes(app: FastifyInstance) {
   const r = app.withTypeProvider<ZodTypeProvider>();
-  const view = { onRequest: [app.requirePermission('org.view')] };
   const edit = { onRequest: [app.requirePermission('org.edit')] };
 
-  r.get('/api/org/departments', { ...view, schema: { tags: ['org'] } }, async (request) =>
-    listDepartments(request.db as unknown as Tx),
+  // Names of departments are part of everyone's screens (decision 248); changing them still needs the right.
+  r.get(
+    '/api/org/departments',
+    { onRequest: [app.authenticate], schema: { tags: ['org'] } },
+    async (request) => listDepartments(request.db as unknown as Tx),
   );
 
   r.post(

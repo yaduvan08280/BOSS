@@ -1,9 +1,9 @@
-import { ArrowLeft, CircleAlert, CircleCheck, Loader2, Sparkles } from 'lucide-react';
+import { ArrowLeft, CircleAlert, CircleCheck, Loader2, Lock, Sparkles } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import { hasPermission, type Me, type RecordTypeInput } from '@mono/shared';
-import { ErrorState, PageSkeleton } from '@/components/page';
+import { EmptyState, ErrorState, PageSkeleton } from '@/components/page';
 import { StatusChip } from '@/components/status-chip';
 import { Button } from '@/modules/records/ui';
 import { TabStrip } from '@/components/work';
@@ -26,7 +26,9 @@ type Tab = (typeof TABS)[number];
 export function TypeEditorPage({ me }: { me: Me }) {
   const { id } = useParams();
   const q = useRecordType(id ?? '', Boolean(id));
-  if (!hasPermission(me.user.permissions, 'records.admin')) return <ErrorState />;
+  const { t } = useTranslation();
+  if (!hasPermission(me.user.permissions, 'records.admin'))
+    return <EmptyState icon={Lock} title={t('common.noAccess')} />;
   if (id && q.isPending) return <PageSkeleton />;
   if (id && q.isError) return <ErrorState onRetry={() => void q.refetch()} error={q.error} />;
   // A fresh editor for every saved version, so the draft never mixes two versions.

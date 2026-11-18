@@ -59,9 +59,14 @@ async function look(page, path, state, errs) {
   await page.waitForTimeout(120);
   const seen = await page.evaluate(probe).catch(() => null);
   if (!seen) return;
+  // A refusal (403) is not a fault of the screen: this person typed the address of something that is not
+  // theirs. It is listed, and the screen must then say so in words — "Something went wrong" still counts.
   const problems = [
     ...seen.problems,
-    ...[...new Set(errs.splice(0))].map((e) => ({ kind: 'error', detail: e })),
+    ...[...new Set(errs.splice(0))].map((e) => ({
+      kind: e.startsWith('403 ') ? 'no-access' : 'error',
+      detail: e,
+    })),
   ];
   const file = `${slug(`${path}__${state}`)}.jpg`;
   if (SHOTS)

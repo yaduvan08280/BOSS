@@ -69,15 +69,21 @@ async function enableLogin(
 
 export async function userRoutes(app: FastifyInstance) {
   const r = app.withTypeProvider<ZodTypeProvider>();
-  const view = { onRequest: [app.requirePermission('org.view')] };
   const create = { onRequest: [app.requirePermission('org.create')] };
   const edit = { onRequest: [app.requirePermission('org.edit')] };
   const admin = { onRequest: [app.requirePermission('org.admin')] };
 
-  r.get('/api/org/users', { ...view, schema: { tags: ['org'] } }, async (request) => {
+  // Everyone signed in needs their colleagues' names: who gave a task, who verifies, who to ask. People whose
+  // role has no `org.view` (an older pack's role) get the same list without contact details, instead of a
+  // refusal on every screen of their daily work (decision 248).
+  r.get('/api/org/users', { onRequest: [app.authenticate], schema: { tags: ['org'] } }, async (request) => {
     const rows = await request.db.user.findMany({ include: personInclude, orderBy: { code: 'asc' } });
     const place = await placesOf(app.prisma, request.auth!.companyId);
-    return rows.map((u) => place(toPerson(u, canHr(request))));
+    const full = hasPermission(request.auth!.permissions, 'org.view');
+    return rows.map((u) => {
+      const person = place(toPerson(u, full && canHr(request)));
+      return full ? person : { ...person, mobile: null, email: null, telegramLinked: false };
+    });
   });
 
   r.post(
