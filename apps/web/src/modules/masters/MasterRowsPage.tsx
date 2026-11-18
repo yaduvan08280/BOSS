@@ -88,8 +88,9 @@ export function MasterRowsPage({ me }: { me: Me }) {
       ) : !filtered.length ? (
         <p className="text-sm text-muted-foreground">{t('common.noMatch')}</p>
       ) : (
-        <div className="scroll-hint overflow-x-auto rounded-card border">
-          <table className="w-full min-w-[560px] text-sm">
+        <div className="scroll-hint @container overflow-x-auto rounded-card border">
+          {/* A narrow card keeps the first two columns and the row's buttons; the row's dialog shows the rest. */}
+          <table className="w-full text-sm @max-md:[&_td:nth-child(n+3):not(:last-child)]:hidden @max-md:[&_th:nth-child(n+3):not(:last-child)]:hidden">
             <thead className="bg-muted/60 text-left text-xs text-muted-foreground">
               <tr>
                 {shown.map((f) => (
