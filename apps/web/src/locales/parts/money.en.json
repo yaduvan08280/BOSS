@@ -187,7 +187,11 @@
         "UPI": "UPI",
         "CARD": "Card",
         "BANK": "Bank",
-        "CREDIT": "Credit"
+        "CREDIT": "Credit",
+        "WALLET": "Wallet",
+        "ROOM": "Charge to a room",
+        "COMPANY": "Company credit",
+        "COMPLIMENTARY": "Complimentary"
       }
     },
     "vendors": {

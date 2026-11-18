@@ -187,7 +187,11 @@
         "UPI": "UPI",
         "CARD": "कार्ड",
         "BANK": "बैंक",
-        "CREDIT": "उधार"
+        "CREDIT": "उधार",
+        "WALLET": "वॉलेट",
+        "ROOM": "कमरे के खाते में",
+        "COMPANY": "कंपनी क्रेडिट",
+        "COMPLIMENTARY": "कॉम्प्लिमेंटरी"
       }
     },
     "vendors": {

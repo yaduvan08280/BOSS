@@ -14,7 +14,17 @@ import { cn } from '@/lib/utils';
 import { useModes, useMoneyMutation, useParties, useTaxRates, useToday } from './api';
 
 const PARTS = ['rates', 'modes', 'vendors', 'tally'] as const;
-const MODE_KINDS = ['CASH', 'UPI', 'CARD', 'BANK', 'CREDIT'] as const;
+const MODE_KINDS = [
+  'CASH',
+  'UPI',
+  'CARD',
+  'BANK',
+  'CREDIT',
+  'WALLET',
+  'ROOM',
+  'COMPANY',
+  'COMPLIMENTARY',
+] as const;
 
 /** Money set-up for the accounts admin: tax rates by date, payment modes, vendor matching, the Tally map. */
 export function MoneySetupPage() {
