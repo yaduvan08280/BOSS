@@ -285,8 +285,9 @@ export function AddPeopleDialog({
             aria-label={t('org.users.pasteList')}
           />
           {rows.length > 0 && (
-            <div className="overflow-x-auto rounded-control border">
-              <table className="w-full min-w-[560px] text-sm">
+            <div className="@container overflow-x-auto rounded-control border">
+              {/* Narrow (a phone sheet): name with what is wrong, mobile and department; the rest returns with room. */}
+              <table className="w-full text-sm [overflow-wrap:anywhere] @max-md:[&_:is(td,th):is(:nth-child(1),:nth-child(4),:nth-child(6))]:hidden">
                 <thead className="bg-muted/60 text-left text-xs text-muted-foreground">
                   <tr>
                     {[

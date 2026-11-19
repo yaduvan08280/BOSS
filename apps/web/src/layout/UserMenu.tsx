@@ -1,4 +1,4 @@
-import { Bot, CircleHelp, Languages, LogOut, Monitor, Moon, Sun, Type, UserRound } from 'lucide-react';
+import { Bot, CircleHelp, Languages, LogOut, Monitor, Moon, Rows3, Sun, Type, UserRound } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import type { Language, Me, ThemeMode } from '@mono/shared';
@@ -17,6 +17,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useDensity } from './useDensity';
 import { useLargeText } from './useLargeText';
 
 type Props = {
@@ -31,6 +32,7 @@ export function UserMenu({ me, onLanguage, onTheme, onAssistant, onSignOut }: Pr
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [largeText, setLargeText] = useLargeText();
+  const [compact, setCompact] = useDensity();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="rounded-full outline-offset-2" aria-label={t('shell.profile')}>
@@ -72,6 +74,9 @@ export function UserMenu({ me, onLanguage, onTheme, onAssistant, onSignOut }: Pr
             <DropdownMenuSeparator />
             <DropdownMenuCheckboxItem checked={largeText} onCheckedChange={(v) => setLargeText(Boolean(v))}>
               <Type /> {t('shell.largerText')}
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem checked={compact} onCheckedChange={(v) => setCompact(Boolean(v))}>
+              <Rows3 /> {t('shell.compact')}
             </DropdownMenuCheckboxItem>
           </DropdownMenuSubContent>
         </DropdownMenuSub>

@@ -9,7 +9,9 @@ const dbEnv = {
 export default defineConfig({
   test: {
     projects: [
-      { test: { name: 'shared', include: ['packages/shared/src/**/*.test.ts', 'apps/web/src/**/*.test.ts'] } },
+      {
+        test: { name: 'shared', include: ['packages/shared/src/**/*.test.ts', 'apps/web/src/**/*.test.ts'] },
+      },
       {
         test: {
           name: 'server',
@@ -21,6 +23,10 @@ export default defineConfig({
           env: dbEnv,
           globalSetup: ['test/global-setup.ts'],
           fileParallelism: false,
+          // These are integration tests on a real database (argon2 sign-ins, whole workflows): five seconds
+          // is enough on a quiet machine and not while something else is using it.
+          testTimeout: 20_000,
+          hookTimeout: 30_000,
         },
       },
     ],

@@ -73,8 +73,9 @@ export function ImportItems({ open, onClose }: { open: boolean; onClose: () => v
           onChange={(e) => (setText(e.target.value), setTable(splitTable(e.target.value)))}
         />
         {rows.length > 0 && (
-          <div className="max-h-80 overflow-auto rounded-control border">
-            <table className="w-full min-w-[560px] text-sm">
+          <div className="@container max-h-80 overflow-auto rounded-control border">
+            {/* Narrow (a phone sheet): code, name, opening stock and what is wrong; the rest returns with room. */}
+            <table className="w-full text-sm [overflow-wrap:anywhere] @max-md:[&_:is(td,th):is(:nth-child(1),:nth-child(4),:nth-child(5))]:hidden">
               <thead className="sticky top-0 bg-muted text-left text-xs text-muted-foreground">
                 <tr>
                   {[

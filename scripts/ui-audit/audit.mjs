@@ -18,7 +18,9 @@ const BASE = arg('base', process.env.AUDIT_BASE ?? 'http://localhost:5173');
 const LABEL = arg('label', 'run');
 const DEEP = Boolean(arg('deep', false));
 const WORKERS = Number(arg('workers', 3));
-const VARIANT = arg('variant', ''); // dark | hindi | large | collapsed (one at a time)
+// dark | hindi | large | compact | collapsed | navy — one, or several joined by "+" (navy+dark).
+const VARIANT = arg('variant', '');
+const VARIANTS = VARIANT.split('+').filter(Boolean);
 const ONLY = arg('only', '');
 const SHOTS = !arg('no-shots', false);
 const OUT = join(arg('out', 'ui-audit-out'), LABEL, `${W}x${H}${VARIANT ? `-${VARIANT}` : ''}`);
@@ -268,17 +270,28 @@ const browser = await chromium.launch(
 const context = await browser.newContext({
   viewport: { width: W, height: H },
   serviceWorkers: 'block',
-  colorScheme: VARIANT === 'dark' ? 'dark' : 'light',
+  colorScheme: VARIANTS.includes('dark') ? 'dark' : 'light',
 });
-await context.addInitScript((variant) => {
+await context.addInitScript((variants) => {
   try {
-    if (variant === 'hindi') localStorage.setItem('mono.lang', 'hi');
-    if (variant === 'large') localStorage.setItem('mono.largeText', '1');
-    if (variant === 'collapsed') localStorage.setItem('mono.menuCollapsed', '1');
+    if (variants.includes('hindi')) localStorage.setItem('mono.lang', 'hi');
+    if (variants.includes('large')) localStorage.setItem('mono.largeText', '1');
+    if (variants.includes('compact')) localStorage.setItem('mono.density', 'compact');
+    if (variants.includes('collapsed')) localStorage.setItem('mono.menuCollapsed', '1');
   } catch {
     /* a page with no storage */
   }
-}, VARIANT);
+}, VARIANTS);
+// The Navy & Gold look is the company's choice: shown here by changing what the browser is told about the
+// company, so the audit never saves anything.
+if (VARIANTS.includes('navy'))
+  await context.route('**/api/auth/me', async (route) => {
+    const res = await route.fetch();
+    const body = await res.json().catch(() => null);
+    if (body?.company?.theme)
+      body.company.theme = { ...body.company.theme, seed: '#0B204C', warmth: 20, radius: 12, style: 'navy' };
+    await route.fulfill({ response: res, json: body ?? {} });
+  });
 const first = await context.newPage();
 await first.goto(`${BASE}/login`);
 await first

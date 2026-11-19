@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Runs the audit at every screen size (and once each for dark, Hindi, larger text and the folded menu),
+// Runs the audit at every screen size (and once each for dark, Hindi, larger text, compact rows and the folded
+// menu); `--navy` runs the Navy & Gold look instead, at every size in light and dark;
 // then prints one line per run and a total. Flags after the script's name are passed on (--base, --label …).
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -28,13 +29,16 @@ const VARIANTS = [
   ['hindi', '390x844'],
   ['hindi', '1440x900'],
   ['large', '390x844'],
+  ['compact', '390x844'],
+  ['compact', '1440x900'],
   ['collapsed', '1440x900'],
 ];
 
 const audit = fileURLToPath(new URL('./audit.mjs', import.meta.url));
 const pass = process.argv.slice(2);
 const deep = pass.includes('--deep-key');
-const rest = pass.filter((a) => a !== '--deep-key');
+const navy = pass.includes('--navy');
+const rest = pass.filter((a) => a !== '--deep-key' && a !== '--navy');
 let failed = 0;
 const run = (extra) => {
   const r = spawnSync(process.execPath, [audit, ...rest, ...extra], { encoding: 'utf8' });
@@ -44,7 +48,12 @@ const run = (extra) => {
   const m = / — (\d+) problems/.exec(line);
   failed += m ? Number(m[1]) : 1;
 };
-for (const size of SIZES) run(['--size', size, ...(deep && KEY_SIZES.includes(size) ? ['--deep'] : [])]);
-for (const [variant, size] of VARIANTS) run(['--size', size, '--variant', variant]);
+if (navy) {
+  for (const look of ['navy', 'navy+dark'])
+    for (const size of SIZES) run(['--size', size, '--variant', look]);
+} else {
+  for (const size of SIZES) run(['--size', size, ...(deep && KEY_SIZES.includes(size) ? ['--deep'] : [])]);
+  for (const [variant, size] of VARIANTS) run(['--size', size, '--variant', variant]);
+}
 console.log(`TOTAL problems: ${failed}`);
 process.exit(failed ? 1 : 0);

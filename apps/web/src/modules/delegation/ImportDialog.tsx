@@ -112,8 +112,9 @@ export function ImportDialog({
           aria-label={t('task.importMany')}
         />
         {parsed.length > 0 && (
-          <div className="overflow-x-auto rounded-control border">
-            <table className="w-full min-w-[560px] text-sm">
+          <div className="@container overflow-x-auto rounded-control border">
+            {/* Narrow (a phone sheet): doer with what is wrong, when and what; line number and verifier return with room. */}
+            <table className="w-full text-sm [overflow-wrap:anywhere] @max-md:[&_:is(td,th):is(:nth-child(1),:nth-child(5))]:hidden">
               <thead className="bg-muted/60 text-left text-xs text-muted-foreground">
                 <tr>
                   {[

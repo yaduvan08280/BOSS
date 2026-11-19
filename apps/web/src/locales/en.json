@@ -83,6 +83,7 @@
     "dark": "Dark",
     "system": "Same as device",
     "largerText": "Larger text",
+    "compact": "Compact rows",
     "assistant": "AI assistant",
     "ai": {
       "subtitle": "Ask about your company's work in plain words",

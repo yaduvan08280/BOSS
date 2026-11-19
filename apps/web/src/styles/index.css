@@ -82,6 +82,14 @@
   html[data-text='large'] {
     font-size: clamp(112.5%, calc(112.5% + (100vw - 1728px) * 0.0024), 125%);
   }
+  /*
+   * Compact density (§3.1, a person's own choice): every padding, gap and control height comes from one
+   * spacing unit, so shrinking it tightens the whole interface. Text keeps its size, and on a phone the
+   * 44 px touch floor below still holds.
+   */
+  html[data-density='compact'] {
+    --spacing: 0.21875rem;
+  }
   body {
     background: var(--background, #f2efe7);
     color: var(--foreground, #1c1b19);

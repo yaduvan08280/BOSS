@@ -7,6 +7,7 @@ import '@/styles/index.css';
 import '@/lib/i18n';
 import { cachedTheme, applyTheme } from '@/lib/theme';
 import { applyStoredTextSize } from '@/layout/useLargeText';
+import { applyStoredDensity } from '@/layout/useDensity';
 import { router } from '@/app/router';
 import { captureInstallPrompt } from '@/lib/install';
 import { watchErrors } from '@/lib/report-error';
@@ -15,6 +16,7 @@ import { watchErrors } from '@/lib/report-error';
 const cached = cachedTheme();
 applyTheme(cached.settings, cached.mode);
 applyStoredTextSize();
+applyStoredDensity();
 captureInstallPrompt();
 watchErrors();
 
