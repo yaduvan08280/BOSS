@@ -5,11 +5,17 @@ import { afterId, paged } from '../../lib/paged';
 import { moduleSettings } from '../work/settings';
 import { effectiveVerifier } from './service';
 
+/** How many tasks that are still late are told again in one pass, per company (the rest follow in later passes). */
+export const RETELL_PER_PASS = 2000;
+
 /**
  * Overdue detection (every 5 minutes): open tasks past their planned time raise `delegation.overdue`.
- * Then again once a day (local morning) while they stay overdue, so people aren't flooded.
+ * Then again once a day while they stay overdue, so people aren't flooded. A task that has just become late
+ * is always told at once; the daily "still late" round is spread over the passes after midnight, so a company
+ * with tens of thousands of late tasks does not hand the worker all of them in one minute (it did: 58,000
+ * events at 00:03, and everything else on the server slowed while they were worked through).
  */
-export async function flagOverdueTasks(db: Db, now = new Date()): Promise<number> {
+export async function flagOverdueTasks(db: Db, now = new Date(), retell = RETELL_PER_PASS): Promise<number> {
   let flagged = 0;
   // Company by company, and only the tasks not yet told today: a task stays late for weeks, and reading every
   // late task every five minutes to find that each was already told this morning is work for nothing.
@@ -17,61 +23,69 @@ export async function flagOverdueTasks(db: Db, now = new Date()): Promise<number
     where: { deletedAt: null },
     select: { id: true, timezone: true },
   }))
-    flagged += await flagOverdueOf(db, c.id, c.timezone, now);
+    flagged += await flagOverdueOf(db, c.id, c.timezone, now, retell);
   return flagged;
 }
 
-async function flagOverdueOf(db: Db, companyId: string, tz: string, now: Date): Promise<number> {
+async function flagOverdueOf(db: Db, companyId: string, tz: string, now: Date, retell: number) {
   const today = zonedToUtc(localDate(now, tz), 0, tz);
-  const late = paged((after, take) =>
-    db.task.findMany({
-      where: {
-        companyId,
-        deletedAt: null,
-        status: { in: ['OPEN', 'AWAITING_ACCEPTANCE'] },
-        plannedAt: { lt: now },
-        OR: [{ lastOverdueNotifiedAt: null }, { lastOverdueNotifiedAt: { lt: today } }],
-        ...afterId(after),
-      },
-      orderBy: { id: 'asc' },
-      take,
-    }),
-  );
+  const lateWhere = {
+    companyId,
+    deletedAt: null,
+    status: { in: ['OPEN', 'AWAITING_ACCEPTANCE'] },
+    plannedAt: { lt: now },
+  };
+  const pages = (told: object) =>
+    paged((after, take) =>
+      db.task.findMany({ where: { ...lateWhere, ...told, ...afterId(after) }, orderBy: { id: 'asc' }, take }),
+    );
   let flagged = 0;
   let set: Awaited<ReturnType<typeof moduleSettings<'delegation'>>> | undefined;
-  for await (const t of late) {
-    if (t.lastOverdueNotifiedAt && localDate(t.lastOverdueNotifiedAt, tz) === localDate(now, tz)) continue;
+  const tell = async (t: Task) => {
     set ??= await moduleSettings(db, companyId, 'delegation');
-    const settings = set;
-    await db.$transaction(async (tx) => {
-      const res = await tx.task.updateMany({
-        where: { id: t.id, lastOverdueNotifiedAt: t.lastOverdueNotifiedAt },
-        data: { lastOverdueNotifiedAt: now },
-      });
-      if (!res.count) return;
-      await emitEvent(
-        tx,
-        { companyId: t.companyId, actorId: null },
-        {
-          name: 'delegation.overdue',
-          entityType: 'task',
-          entityId: t.id,
-          payload: {
-            doerId: t.doerId,
-            creatorId: t.creatorId,
-            verifierId: effectiveVerifier(t, settings),
-            number: t.number,
-            title: t.description.slice(0, 80),
-            due: t.plannedAt.toISOString(),
-            link: `/delegation?task=${t.id}`,
-            telegramActions: t.status === 'OPEN' ? ['done', 'move'] : ['accept'],
-          },
-        },
-      );
-    });
-    flagged++;
+    flagged += await tellOverdue(db, t, set, now);
+  };
+  for await (const t of pages({ lastOverdueNotifiedAt: null })) await tell(t);
+  let again = 0;
+  for await (const t of pages({ lastOverdueNotifiedAt: { lt: today } })) {
+    if (again++ >= retell) break;
+    await tell(t);
   }
   return flagged;
+}
+
+type Settings = Awaited<ReturnType<typeof moduleSettings<'delegation'>>>;
+
+async function tellOverdue(db: Db, t: Task, settings: Settings, now: Date): Promise<number> {
+  let told = 0;
+  await db.$transaction(async (tx) => {
+    const res = await tx.task.updateMany({
+      where: { id: t.id, lastOverdueNotifiedAt: t.lastOverdueNotifiedAt },
+      data: { lastOverdueNotifiedAt: now },
+    });
+    if (!res.count) return;
+    told = 1;
+    await emitEvent(
+      tx,
+      { companyId: t.companyId, actorId: null },
+      {
+        name: 'delegation.overdue',
+        entityType: 'task',
+        entityId: t.id,
+        payload: {
+          doerId: t.doerId,
+          creatorId: t.creatorId,
+          verifierId: effectiveVerifier(t, settings),
+          number: t.number,
+          title: t.description.slice(0, 80),
+          due: t.plannedAt.toISOString(),
+          link: `/delegation?task=${t.id}`,
+          telegramActions: t.status === 'OPEN' ? ['done', 'move'] : ['accept'],
+        },
+      },
+    );
+  });
+  return told;
 }
 
 /**

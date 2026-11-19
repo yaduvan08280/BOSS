@@ -95,4 +95,41 @@ describe('delegation sweeps ask only for tasks that still need a message', () =>
     await flagOverdueTasks(ctx.prisma, new Date(now.getTime() + 24 * 3_600_000));
     expect(await told()).toBe(2);
   });
+  it('the daily "still late" round is spread over passes; a task that has just become late never waits', async () => {
+    const o = await ownerClient(ctx.app);
+    const doer = (await o.api.post('/api/org/users', { name: 'Many Late', mobile: rnd() })).body.person;
+    const ids: string[] = [];
+    for (const description of ['Old late 1', 'Old late 2', 'Old late 3', 'Just late']) {
+      const made = await o.api.post('/api/tasks', {
+        doerId: doer.id,
+        plannedAt: new Date(Date.now() + 3_600_000).toISOString(),
+        description,
+      });
+      ids.push(made.body.id);
+    }
+    const yesterday = ago(26 * 60);
+    await ctx.prisma.task.updateMany({ where: { id: { in: ids } }, data: { plannedAt: ago(48 * 60) } });
+    await ctx.prisma.task.updateMany({
+      where: { id: { in: ids.slice(0, 3) } },
+      data: { lastOverdueNotifiedAt: yesterday },
+    });
+    const told = async () =>
+      (
+        await ctx.prisma.domainEvent.findMany({
+          where: { companyId: o.company.id, name: 'delegation.overdue' },
+          select: { entityId: true },
+        })
+      ).map((e) => e.entityId);
+    const now = new Date();
+    // At most two re-tells a pass: the new one and two of the three old ones go now…
+    await flagOverdueTasks(ctx.prisma, now, 2);
+    const first = await told();
+    expect(first).toContain(ids[3]);
+    expect(first).toHaveLength(3);
+    // …and the third on the next pass. Nobody is told twice in a day.
+    await flagOverdueTasks(ctx.prisma, now, 2);
+    expect((await told()).sort()).toEqual([...ids].sort());
+    await flagOverdueTasks(ctx.prisma, now, 2);
+    expect(await told()).toHaveLength(4);
+  });
 });
