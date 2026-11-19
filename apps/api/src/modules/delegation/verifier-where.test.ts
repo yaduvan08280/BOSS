@@ -108,9 +108,20 @@ describe('the delegation sheet with years of old tasks', () => {
     expect(pending.tasks.map((t) => t.id)).toContain(made.body.id);
     expect(pending.counts).toMatchObject({ pending: 1, done: 1200 });
     // Finished work: the latest first, a page of it; everything: the latest by planned date, today's included.
-    const done = (await w.api.get('/api/tasks?tab=done')).body as { tasks: { number: number }[] };
+    type Page = { total: number; tasks: { number: number }[] };
+    // A hundred at a time (the screen's "Show 100 more" asks for the next hundred), five hundred at most.
+    const first = (await w.api.get('/api/tasks?tab=done')).body as Page;
+    expect(first.tasks).toHaveLength(100);
+    expect(first.total).toBe(500);
+    expect(first.tasks[0]!.number).toBe(6199);
+    const more = (await w.api.get('/api/tasks?tab=done&take=200')).body as Page;
+    expect(more.tasks.slice(0, 100).map((t) => t.number)).toEqual(first.tasks.map((t) => t.number));
+    expect(more.tasks).toHaveLength(200);
+    const done = (await w.api.get('/api/tasks?tab=done&take=500')).body as Page;
     expect(done.tasks).toHaveLength(500);
     expect(done.tasks[0]!.number).toBe(6199);
+    expect((await w.api.get('/api/tasks?tab=done&take=501')).status).toBe(400);
+    expect(((await w.api.get('/api/tasks?tab=pending')).body as Page).total).toBe(1);
     const all = (await w.api.get('/api/tasks?tab=all')).body as { tasks: { id: string }[] };
     expect(all.tasks.at(-1)!.id).toBe(made.body.id);
   });

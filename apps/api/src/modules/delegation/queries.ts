@@ -65,6 +65,7 @@ export type TaskListQuery = {
   from?: string;
   to?: string;
   doerId?: string;
+  take?: number;
 };
 
 const TAB_STATUS: Record<string, TaskStatus[]> = {
@@ -75,6 +76,8 @@ const TAB_STATUS: Record<string, TaskStatus[]> = {
 
 /** A tab of the delegation sheet shows at most this many tasks; the tab's count says how many there are. */
 export const TASKS_SHOWN = 500;
+/** How many a list sends unless asked for more (`take`). */
+export const TASKS_STEP = 100;
 const COUNT_UP_TO = 10_000;
 
 export async function listTasks(db: Db, actor: Actor, query: TaskListQuery) {
@@ -105,6 +108,9 @@ export async function listTasks(db: Db, actor: Actor, query: TaskListQuery) {
   // Counted and filtered by the database: reading "the first thousand" and choosing the tab afterwards lost
   // every open task once a person could see more than a thousand old ones.
   const tab = query.tab ?? 'pending';
+  // A hundred at a time: five hundred full tasks are 400 KB to make, send and read, and the screen draws a
+  // hundred first in any case.
+  const take = Math.min(Math.max(query.take ?? TASKS_STEP, 1), TASKS_SHOWN);
   const tabWhere: Prisma.TaskWhereInput =
     tab === 'all' ? { status: { not: 'CANCELLED' } } : { status: { in: TAB_STATUS[tab]! } };
   // Pending and waiting work: the oldest due first. Finished work: the latest first. "All": the latest 500
@@ -119,8 +125,14 @@ export async function listTasks(db: Db, actor: Actor, query: TaskListQuery) {
     countOf(TAB_STATUS.pending!),
     countOf(TAB_STATUS.verification!),
     countOf(TAB_STATUS.done!),
-    db.task.findMany({ where: { AND: [where, tabWhere] }, orderBy: order, take: TASKS_SHOWN }),
+    db.task.findMany({ where: { AND: [where, tabWhere] }, orderBy: order, take }),
   ]);
+  // How many the tab can show in all (the screen asks for a hundred more at a time, up to TASKS_SHOWN).
+  const inTab =
+    tab === 'all'
+      ? await db.task.count({ where: { AND: [where, tabWhere] }, take: TASKS_SHOWN })
+      : { pending, verification, done }[tab];
+  const total = Math.min(inTab, TASKS_SHOWN);
   const counts = { pending, verification, done };
   const rows = tab === 'all' ? found.reverse() : found;
   const attachments = await db.attachment.groupBy({
@@ -143,6 +155,7 @@ export async function listTasks(db: Db, actor: Actor, query: TaskListQuery) {
   return {
     scope,
     counts,
+    total,
     tasks: rows.map((t) => {
       const ctx = {
         doerMustAccept: s.doerMustAccept,

@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 
-/** "Showing 100 of 480 — Show 100 more", under a list drawn with useShowMore. */
+/** "Showing 100 of 480 — Show 100 more", under a list that is fetched a part at a time. */
 export function ShowMore({
   shown,
   left,

@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ShowMore } from '@/components/show-more';
-import { useShowMore } from '@/lib/use-show-more';
 import { useTranslation } from 'react-i18next';
 import { weekOf, type OrgPerson, type TaskAction } from '@mono/shared';
 import { personLabel } from '@/lib/people';
@@ -29,6 +28,9 @@ import { formatShortDateTime, relative } from '@/lib/when';
 import { ActionDialog } from './ActionDialog';
 import { DIALOG_ACTIONS, useTaskAction, useTasks, type TaskQuery, type TaskRow } from './api';
 import { TaskStatusChips } from './TaskStatus';
+
+/** How many tasks are asked for at a time. */
+const STEP = 100;
 
 const ICON: Partial<Record<TaskAction, typeof Check>> = {
   accept: Check,
@@ -102,9 +104,19 @@ export function TaskList({
           ? new Date(`${to}T23:59:59`).toISOString()
           : undefined,
   };
-  const list = useTasks(query);
-  // Drawn a hundred at a time (the list itself may hold five hundred).
-  const part = useShowMore(list.data?.tasks ?? [], JSON.stringify(query));
+  // A hundred at a time, asked of the server: "Show 100 more" fetches the next hundred (five hundred full
+  // tasks were 400 KB on every visit). Another tab or filter starts from the first hundred again.
+  const listKey = JSON.stringify(query);
+  const [asked, setAsked] = useState({ key: listKey, take: STEP });
+  const take = asked.key === listKey ? asked.take : STEP;
+  const list = useTasks(query, take);
+  const tasks = list.data?.tasks ?? [];
+  const part = {
+    rows: tasks,
+    left: Math.max(0, (list.data?.total ?? 0) - tasks.length),
+    step: STEP,
+    more: () => setAsked({ key: listKey, take: take + STEP }),
+  };
 
   const run = (task: TaskRow, action: TaskAction) => {
     if (DIALOG_ACTIONS.includes(action)) setDialog({ task, action });

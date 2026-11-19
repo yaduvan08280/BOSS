@@ -36,6 +36,7 @@ export async function delegationRoutes(app: FastifyInstance) {
           from: z.iso.datetime({ offset: true }).optional(),
           to: z.iso.datetime({ offset: true }).optional(),
           doerId: z.string().optional(),
+          take: z.coerce.number().int().min(1).max(500).optional(),
         }),
       },
     },

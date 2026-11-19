@@ -82,15 +82,18 @@ export type RygRow = {
 const qs = (o: Record<string, string | undefined>) =>
   new URLSearchParams(Object.entries(o).filter((e): e is [string, string] => Boolean(e[1]))).toString();
 
-export const useTasks = (q: TaskQuery) =>
+/** The list a hundred at a time: `take` is how many to send (the server stops at five hundred). */
+export const useTasks = (q: TaskQuery, take = 100) =>
   useQuery({
-    queryKey: ['tasks', 'list', q],
+    queryKey: ['tasks', 'list', q, take],
     queryFn: () =>
       api<{
         scope: TaskQuery['scope'];
         counts: Record<'pending' | 'verification' | 'done', number>;
+        /** How many this tab can show in all. */
+        total: number;
         tasks: TaskRow[];
-      }>(`/api/tasks?${qs(q)}`),
+      }>(`/api/tasks?${qs({ ...q, take: String(take) })}`),
     placeholderData: keepPreviousData,
   });
 export const useTiles = () =>

@@ -85,7 +85,7 @@ test('a task goes from given to verified, all from the web', async ({ page, brow
   await page.getByRole('button', { name: 'Submit task' }).click();
   await expect(page.getByText(/given to Sandeep Pal/i)).toBeVisible();
 
-  const tasks = (await (await page.request.get('/api/tasks?scope=all&tab=pending')).json()) as {
+  const tasks = (await (await page.request.get('/api/tasks?scope=all&tab=pending&take=500')).json()) as {
     tasks: { id: string; description: string; status: string }[];
   };
   const task = tasks.tasks.find((x) => x.description === label);
@@ -325,7 +325,7 @@ test('dates are DD/MM/YYYY everywhere and long lists filter as you type', async 
   await page.getByLabel(/^task \*/i).fill(label);
   await page.getByRole('button', { name: 'Submit task' }).click();
   await expect(page.getByText(/given to Sandeep Pal/i)).toBeVisible();
-  const tasks = (await (await page.request.get('/api/tasks?scope=all&tab=pending')).json()) as {
+  const tasks = (await (await page.request.get('/api/tasks?scope=all&tab=pending&take=500')).json()) as {
     tasks: { id: string; description: string }[];
   };
   const task = tasks.tasks.find((x) => x.description === label)!;
