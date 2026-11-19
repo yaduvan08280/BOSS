@@ -1,11 +1,5 @@
 import type { Db, Tx } from '@mono/db';
-import {
-  checkMachine,
-  orderMachine,
-  paymentSchema,
-  transition,
-  type CheckStatus,
-} from '@mono/shared';
+import { checkMachine, orderMachine, paymentSchema, transition, type CheckStatus } from '@mono/shared';
 import { z } from 'zod';
 import { writeAudit } from '../../lib/audit';
 import { AppError, notFound } from '../../lib/errors';
@@ -81,7 +75,7 @@ export async function payCheck(db: Db, actor: Actor, checkId: string, input: z.i
       throw new AppError(409, 'CONFLICT', 'Company credit needs the bill to be in the company’s name');
   }
   const ctx = ctxOf(actor);
-  return db.$transaction(async (tx) => {
+  const orderStatus = await db.$transaction(async (tx) => {
     const taken: Payment[] = [...((check.payments as Payment[] | null) ?? [])];
     // Receipts are made LAST (below): a receipt takes the next number of its series, and that series stays
     // locked until this transaction ends — so everything that does not need the number (the room's folio, the
@@ -179,8 +173,10 @@ export async function payCheck(db: Db, actor: Actor, checkId: string, input: z.i
         throw new AppError(409, 'CONFLICT', 'This bill changed while it was being paid. Try again.');
       await tx.posCheck.update({ where: { id: check.id }, data: { payments: taken } });
     }
-    return { ...(await checkView(tx, outlet, check.id)), orderStatus };
+    return orderStatus;
   });
+  // Read back after the transaction has ended: the receipt series is free again by then.
+  return { ...(await checkView(db, outlet, checkId)), orderStatus };
 }
 
 /** Cancel a bill (in the caller's transaction): its receipts are voided, a credit note undoes the invoice, the table is open again. */
