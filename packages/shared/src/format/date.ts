@@ -1,16 +1,28 @@
 /** All instants are stored in UTC and shown in the company time zone (default Asia/Kolkata). */
 export const DEFAULT_TZ = 'Asia/Kolkata';
 
+// One formatter per time zone, made once: building one costs far more than using it, and a list of dates
+// (a month's muster, a table of tasks) asks thousands of times.
+const formatters = new Map<string, Intl.DateTimeFormat>();
+function formatterFor(tz: string) {
+  let fmt = formatters.get(tz);
+  if (!fmt) {
+    fmt = new Intl.DateTimeFormat('en-GB', {
+      timeZone: tz,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    });
+    formatters.set(tz, fmt);
+  }
+  return fmt;
+}
+
 function parts(date: Date, tz: string) {
-  const fmt = new Intl.DateTimeFormat('en-GB', {
-    timeZone: tz,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
-  });
+  const fmt = formatterFor(tz);
   const map = Object.fromEntries(fmt.formatToParts(date).map((p) => [p.type, p.value]));
   return {
     year: Number(map.year),

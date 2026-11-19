@@ -4,7 +4,7 @@ import { AppError } from '../../lib/errors';
 import { emitEvent } from '../../lib/events';
 import type { Actor } from '../work/actor';
 import { attendanceDate, auditPunchFix, evaluateDay, punchWindow, settleDay } from './attendance';
-import { canDecideFor, decidable, hrPerson, hrRulesOf, hrScope, personRules } from './people';
+import { canDecideFor, decidable, hrPeople, hrPerson, hrRulesOf, hrScope, personRules } from './people';
 import { chainFor } from '../branches/approvals';
 
 const tzOf = async (db: Db, companyId: string) =>
@@ -73,20 +73,67 @@ export async function teamDay(db: Db, actor: Actor, date: string) {
       })
     ).map((d) => [d.userId, d]),
   );
+  // Read once for the whole team: the people's settings, the rules, and the day's flagged punches.
+  const ids = people.map((p) => p.id);
+  const tz = await tzOf(db, actor.companyId);
+  const [persons, rules, flagged] = await Promise.all([
+    hrPeople(
+      db,
+      actor.companyId,
+      ids.filter((id) => !saved.has(id)),
+    ),
+    hrRulesOf(db, actor.companyId),
+    db.punch.findMany({
+      where: {
+        userId: { in: ids },
+        flagged: true,
+        at: { gte: zonedToUtc(date, 0, tz), lt: zonedToUtc(addDays(date, 1), 0, tz) },
+      },
+      select: { userId: true, type: true, at: true, flagReason: true },
+    }),
+  ]);
+  // For the people whose day is not settled yet: their approved leave on the day and their punches around it
+  // (a night shift runs into the next morning), read once for all of them.
+  const open = ids.filter((id) => !saved.has(id));
+  const [leaves, punches] = await Promise.all([
+    db.leaveRequest.findMany({
+      where: {
+        companyId: actor.companyId,
+        userId: { in: open },
+        status: 'APPROVED',
+        from: { lte: date },
+        to: { gte: date },
+      },
+      select: { userId: true, half: true },
+    }),
+    db.punch.findMany({
+      where: {
+        userId: { in: open },
+        at: { gte: zonedToUtc(addDays(date, -1), 0, tz), lt: zonedToUtc(addDays(date, 3), 0, tz) },
+      },
+      orderBy: { at: 'asc' },
+      select: { userId: true, type: true, at: true },
+    }),
+  ]);
+  const leaveOf = new Map(leaves.map((l) => [l.userId, { half: l.half }]));
+  const punchesOf = new Map<string, { type: string; at: Date }[]>();
+  for (const x of punches) {
+    const list = punchesOf.get(x.userId);
+    if (list) list.push(x);
+    else punchesOf.set(x.userId, [x]);
+  }
   const rows = [];
   for (const u of people) {
     const d =
       saved.get(u.id) ??
-      (await evaluateDay(db, actor.companyId, await hrPerson(db, actor.companyId, u.id), date));
-    const tz = await tzOf(db, actor.companyId);
-    const flags = await db.punch.findMany({
-      where: {
-        userId: u.id,
-        flagged: true,
-        at: { gte: zonedToUtc(date, 0, tz), lt: zonedToUtc(addDays(date, 1), 0, tz) },
-      },
-      select: { type: true, at: true, flagReason: true },
-    });
+      (await evaluateDay(db, actor.companyId, persons.get(u.id)!, date, new Date(), undefined, {
+        rules,
+        leave: leaveOf.get(u.id) ?? null,
+        punches: punchesOf.get(u.id) ?? [],
+      }));
+    const flags = flagged
+      .filter((f) => f.userId === u.id)
+      .map((f) => ({ type: f.type, at: f.at, flagReason: f.flagReason }));
     rows.push({
       id: u.id,
       name: u.name,

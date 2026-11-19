@@ -105,7 +105,7 @@ export async function buildApp(opts: BuildOptions) {
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
-  const prisma = opts.prisma ?? createPrisma(env.DATABASE_URL);
+  const prisma = opts.prisma ?? createPrisma(env.DATABASE_URL, { name: 'mono-api' });
   const listener = opts.listener ?? new EventListener(env.DATABASE_URL, app.log);
   app.decorate('prisma', prisma);
   // Every request runs in its own reach slot; `authenticate` fills it once the person is known, and the
@@ -158,7 +158,7 @@ export async function buildApp(opts: BuildOptions) {
   });
   await app.register(swaggerUi, { routePrefix: '/api/docs' });
 
-  await app.register(healthRoutes);
+  await app.register(healthRoutes, { env });
   await app.register(authRoutes, { env });
   await app.register(sseRoutes, { listener });
   const storage =

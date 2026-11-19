@@ -74,3 +74,4 @@ export { letterSweep } from './modules/owner/letter';
 export { spotSweep } from './modules/owner/spot';
 export { aiNetworkOf, setAiNetwork } from './modules/ai/providers';
 export { rotateSecrets } from './lib/rotate-secret';
+export { archiveAudit, KEEP_DAYS, runRetention } from './modules/system/retention';

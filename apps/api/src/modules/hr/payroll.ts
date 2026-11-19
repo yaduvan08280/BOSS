@@ -22,7 +22,7 @@ import { evaluateDay } from './attendance';
 import { branchHistory } from '../branches/history';
 import { currencyOfPeople, inrConverter } from '../branches/money';
 import { companyCalendar, type CompanyCalendar } from './calendar';
-import { hrPerson, hrRulesOf, personRules } from './people';
+import { hrPeople, hrRulesOf, personRules } from './people';
 import { needHr, payRulesOf } from './terms';
 
 export type PayLineOut = PayResult & {
@@ -161,6 +161,11 @@ async function workOut(db: Db, companyId: string, month: string, now: Date, enti
     companyId,
     users.map((u) => u.id),
   );
+  const persons = await hrPeople(
+    db,
+    companyId,
+    users.map((u) => u.id),
+  );
   const lines: PayLineOut[] = [];
   for (const u of users) {
     const t = termsOf.get(u.id);
@@ -168,7 +173,8 @@ async function workOut(db: Db, companyId: string, month: string, now: Date, enti
     const basis = (t?.payBasis ?? 'monthly') as PayBasis;
     const ratePaise = t ? Number(t.rate) : Number(hr.salary ?? 0) * 100;
     if (!t && !ratePaise) continue;
-    const p = await hrPerson(db, companyId, u.id);
+    const p = persons.get(u.id);
+    if (!p) continue;
     const cal = await calendarOf(p.branchId);
     const joined = /^\d{4}-\d{2}-\d{2}$/.test(hr.doj ?? '') ? hr.doj! : localDate(u.createdAt, tz);
     const mine = leaves.filter((l) => l.userId === u.id);

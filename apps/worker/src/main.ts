@@ -42,6 +42,7 @@ import {
   remindChecklists,
   remindUnaccepted,
   runFmsWebhooks,
+  runRetention,
   sendDailySummaries,
   sendWeeklyMis,
   setAiNetwork,
@@ -64,7 +65,8 @@ const log = pino({
   ...(env.NODE_ENV === 'development' ? { transport: { target: 'pino-pretty' } } : {}),
 }).child({ proc: 'worker' });
 
-const prisma = createPrisma(env.DATABASE_URL);
+// Jobs sweep whole tables: a few connections, and two minutes for one statement.
+const prisma = createPrisma(env.DATABASE_URL, { max: 8, statementTimeoutMs: 120_000, name: 'mono-worker' });
 const boss = new PgBoss({ connectionString: env.DATABASE_URL, schema: 'pgboss' });
 /** Log a worker error and keep it in System Master → Errors. */
 const report = (where: string) => (err: unknown) => {
@@ -273,6 +275,19 @@ await boss.schedule(QUEUE_WORK_5MIN, '*/5 * * * *', null, { tz: 'UTC' });
 await boss.schedule(QUEUE_WORK_1MIN, '* * * * *', null, { tz: 'UTC' });
 await boss.send(QUEUE_WORK_5MIN, null).catch(() => undefined);
 
+// Once a day, in the small hours (22:40 UTC = 04:10 in India): old sent messages, delivered events, printed
+// tickets and ended sessions are removed, and audit rows older than three years move to archive files.
+const QUEUE_RETENTION = 'work.retention';
+await boss.createQueue(QUEUE_RETENTION, { policy: 'singleton' });
+await boss.work(
+  QUEUE_RETENTION,
+  watched(QUEUE_RETENTION, async () => {
+    const removed = await runRetention(prisma, { uploadDir: env.UPLOAD_DIR });
+    if (Object.values(removed).some(Boolean)) log.info(removed, 'Old rows cleaned up');
+  }),
+);
+await boss.schedule(QUEUE_RETENTION, '40 22 * * *', null, { tz: 'UTC' });
+
 // React to new events right away.
 const listener = new EventListener(env.DATABASE_URL, log);
 listener.on('event', () => {
@@ -286,14 +301,32 @@ const outboxTimer = setInterval(() => void drainOutbox(), OUTBOX_POLL_MS);
 await bots.sync().catch(report('Telegram bots could not start'));
 
 // Docker healthcheck reads this file's age.
-const beat = () => writeFile(HEARTBEAT_FILE, new Date().toISOString()).catch(() => undefined);
+// …and the API's health check reads this row: "the worker is alive".
+const beat = async () => {
+  await writeFile(HEARTBEAT_FILE, new Date().toISOString()).catch(() => undefined);
+  await prisma.opsMark
+    .upsert({
+      where: { key: 'worker' },
+      create: { key: 'worker', ok: true },
+      update: { ok: true, at: new Date() },
+    })
+    .catch(() => undefined);
+};
 await beat();
 const beatTimer = setInterval(beat, 30_000);
 
 log.info('Worker started');
 
+let closing = false;
 const shutdown = async (signal: string) => {
-  log.info({ signal }, 'Worker shutting down');
+  if (closing) return;
+  closing = true;
+  log.info({ signal }, 'Worker shutting down: finishing the jobs in hand');
+  // Jobs get 20 s to finish (each is safe to run again if it does not); nothing keeps the worker up for ever.
+  setTimeout(() => {
+    log.error('Shutdown took more than 28 s; stopping now');
+    process.exit(1);
+  }, 28_000).unref();
   clearInterval(beatTimer);
   clearInterval(outboxTimer);
   await bots.stop();

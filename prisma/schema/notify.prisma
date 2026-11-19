@@ -118,6 +118,8 @@ model Outbox {
   @@index([status, sendAfter])
   @@index([companyId, createdAt])
   @@index([channel, providerId])
+  /// The daily clean-up: finished messages by age.
+  @@index([status, createdAt])
   @@map("outbox")
 }
 

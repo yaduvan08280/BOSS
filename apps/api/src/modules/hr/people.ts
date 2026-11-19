@@ -33,59 +33,73 @@ export type HrPerson = {
 
 /** A person with what HR needs: their shift (or the default one), branch, department and HOD. */
 export async function hrPerson(db: Db | Tx, companyId: string, userId: string): Promise<HrPerson> {
-  const u = await db.user.findFirst({
-    where: { id: userId, companyId, deletedAt: null },
-    select: {
-      id: true,
-      name: true,
-      branchId: true,
-      branch: { select: { entityId: true, timezone: true } },
-      defaultBuddyId: true,
-      designationId: true,
-      mainDepartmentId: true,
-      shift: { select: { startMin: true, endMin: true, deletedAt: true } },
-      mainDepartment: { select: { hodUserId: true, parent: { select: { hodUserId: true } } } },
-    },
-  });
-  if (!u) throw new AppError(404, 'NOT_FOUND', 'Person not found');
-  const fallback =
-    u.shift && !u.shift.deletedAt
-      ? null
-      : await db.shift.findFirst({
-          where: { companyId, deletedAt: null },
-          orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
-        });
-  const s = u.shift && !u.shift.deletedAt ? u.shift : fallback;
-  const dept = u.mainDepartment;
-  const hod = dept?.hodUserId && dept.hodUserId !== u.id ? dept.hodUserId : (dept?.parent?.hodUserId ?? null);
-  const terms = await db.employeeTerms.findUnique({ where: { userId } });
-  const kind = terms?.pattern === 'daily' || terms?.pattern === 'weekly' ? terms.pattern : 'shift';
-  const pattern: WorkPattern =
-    kind === 'daily'
-      ? { kind, hours: Number(terms?.dailyHours ?? 8) }
-      : kind === 'weekly'
-        ? { kind }
-        : { kind };
-  const fixed = s ? { start: s.startMin, end: s.endMin } : { start: 9 * 60, end: 18 * 60 };
-  return {
-    id: u.id,
-    name: u.name,
-    companyId,
-    designationId: u.designationId,
-    pattern,
-    weeklyHours: kind === 'weekly' ? Number(terms?.weeklyHours ?? 48) : null,
-    latestStartMin: kind === 'shift' ? null : (terms?.latestStartMin ?? null),
-    departmentId: u.mainDepartmentId,
-    branchId: u.branchId,
-    entityId: u.branch?.entityId ?? null,
-    tz:
-      u.branch?.timezone ??
-      (await db.company.findUniqueOrThrow({ where: { id: companyId }, select: { timezone: true } })).timezone,
-    defaultBuddyId: u.defaultBuddyId,
-    hodId: hod && hod !== u.id ? hod : null,
-    // Daily or weekly hours: any time of the day counts.
-    shift: kind === 'shift' ? fixed : { start: 0, end: 24 * 60 },
-  };
+  const p = (await hrPeople(db, companyId, [userId])).get(userId);
+  if (!p) throw new AppError(404, 'NOT_FOUND', 'Person not found');
+  return p;
+}
+
+/**
+ * The same for many people at once (a muster, a pay sheet, a team's day): four queries however many people
+ * there are — asking for each person in turn made those screens slower with every person added.
+ */
+export async function hrPeople(
+  db: Db | Tx,
+  companyId: string,
+  userIds: string[],
+): Promise<Map<string, HrPerson>> {
+  const out = new Map<string, HrPerson>();
+  if (!userIds.length) return out;
+  const [users, fallback, terms, company] = await Promise.all([
+    db.user.findMany({
+      where: { id: { in: userIds }, companyId, deletedAt: null },
+      select: {
+        id: true,
+        name: true,
+        branchId: true,
+        branch: { select: { entityId: true, timezone: true } },
+        defaultBuddyId: true,
+        designationId: true,
+        mainDepartmentId: true,
+        shift: { select: { startMin: true, endMin: true, deletedAt: true } },
+        mainDepartment: { select: { hodUserId: true, parent: { select: { hodUserId: true } } } },
+      },
+    }),
+    db.shift.findFirst({
+      where: { companyId, deletedAt: null },
+      orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
+    }),
+    db.employeeTerms.findMany({ where: { userId: { in: userIds } } }),
+    db.company.findUniqueOrThrow({ where: { id: companyId }, select: { timezone: true } }),
+  ]);
+  const termsOf = new Map(terms.map((t) => [t.userId, t]));
+  for (const u of users) {
+    const s = u.shift && !u.shift.deletedAt ? u.shift : fallback;
+    const dept = u.mainDepartment;
+    const hod =
+      dept?.hodUserId && dept.hodUserId !== u.id ? dept.hodUserId : (dept?.parent?.hodUserId ?? null);
+    const t = termsOf.get(u.id);
+    const kind = t?.pattern === 'daily' || t?.pattern === 'weekly' ? t.pattern : 'shift';
+    const pattern: WorkPattern = kind === 'daily' ? { kind, hours: Number(t?.dailyHours ?? 8) } : { kind };
+    const fixed = s ? { start: s.startMin, end: s.endMin } : { start: 9 * 60, end: 18 * 60 };
+    out.set(u.id, {
+      id: u.id,
+      name: u.name,
+      companyId,
+      designationId: u.designationId,
+      pattern,
+      weeklyHours: kind === 'weekly' ? Number(t?.weeklyHours ?? 48) : null,
+      latestStartMin: kind === 'shift' ? null : (t?.latestStartMin ?? null),
+      departmentId: u.mainDepartmentId,
+      branchId: u.branchId,
+      entityId: u.branch?.entityId ?? null,
+      tz: u.branch?.timezone ?? company.timezone,
+      defaultBuddyId: u.defaultBuddyId,
+      hodId: hod && hod !== u.id ? hod : null,
+      // Daily or weekly hours: any time of the day counts.
+      shift: kind === 'shift' ? fixed : { start: 0, end: 24 * 60 },
+    });
+  }
+  return out;
 }
 
 export const personRules = (rules: HrRules, p: HrPerson) =>

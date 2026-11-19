@@ -21,6 +21,8 @@ x-app: &app
   tmpfs: ['/tmp:size=256m']
   cap_drop: [ALL]
   security_opt: ['no-new-privileges:true']
+  # Time to finish the requests and jobs in hand before the container is stopped.
+  stop_grace_period: 35s
 
 services:
   db:
@@ -31,9 +33,55 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: mono
       TZ: UTC
+    # Settings for one busy machine (the defaults suit 8 GB and up; PG_SHARED_BUFFERS / PG_CACHE raise them —
+    # INSTALL.md). The write-ahead log is archived every minute (deploy/backup/archive-wal.sh): with the nightly
+    # base copy, the database can be rebuilt as it was at any minute (deploy/restore-pitr.sh).
+    command:
+      - postgres
+      - -c
+      - shared_buffers=${PG_SHARED_BUFFERS:-1GB}
+      - -c
+      - effective_cache_size=${PG_CACHE:-3GB}
+      - -c
+      - work_mem=16MB
+      - -c
+      - maintenance_work_mem=256MB
+      - -c
+      - max_connections=100
+      - -c
+      - random_page_cost=1.1
+      - -c
+      - checkpoint_timeout=15min
+      - -c
+      - max_wal_size=2GB
+      # A statement slower than half a second is written to the log (docker compose logs db).
+      - -c
+      - log_min_duration_statement=500
+      - -c
+      - log_lock_waits=on
+      # Tables that change all day are cleaned up and re-measured sooner than the defaults (20 % / 10 %).
+      - -c
+      - autovacuum_vacuum_scale_factor=0.05
+      - -c
+      - autovacuum_analyze_scale_factor=0.02
+      - -c
+      - wal_level=replica
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_timeout=60
+      # A fresh, zero-filled file for each piece: the unused part of a one-minute piece compresses to nothing.
+      - -c
+      - wal_recycle=off
+      - -c
+      - wal_init_zero=on
+      - -c
+      - archive_command=/usr/local/bin/archive-wal.sh %p %f
     volumes:
       - ${DATA_DIR:-/srv/mono}/pg:/var/lib/postgresql/data
-    shm_size: 256mb
+      - ${DATA_DIR:-/srv/mono}/backups/wal:/wal
+      - ./backup/archive-wal.sh:/usr/local/bin/archive-wal.sh:ro
+    shm_size: 1gb
     security_opt: ['no-new-privileges:true']
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U mono -d mono']
@@ -48,11 +96,15 @@ services:
     image: mono-tools:latest
     env_file: ${MONO_ENV_FILE:-../.env}
     environment: *app-env
-    # Also hands the uploads folder to the api user (uid 1000): Docker creates bind folders as root.
+    # Also hands the uploads folder to the api user (uid 1000) and the log archive to the database's user
+    # (uid 70 in the postgres image): Docker creates bind folders as root.
     command:
-      ['sh', '-c', 'chown 1000:1000 /data/uploads && npx prisma migrate deploy && node apps/api/dist/seed.js']
+      - sh
+      - -c
+      - chown 1000:1000 /data/uploads && chown 70:70 /wal && npx prisma migrate deploy && node apps/api/dist/seed.js
     volumes:
       - ${DATA_DIR:-/srv/mono}/uploads:/data/uploads
+      - ${DATA_DIR:-/srv/mono}/backups/wal:/wal
     depends_on:
       db: { condition: service_healthy }
     restart: 'no'
@@ -60,7 +112,11 @@ services:
 
   api:
     <<: *app
-    build: { context: .., dockerfile: deploy/Dockerfile.server, target: runtime }
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.server
+      target: runtime
+      args: { APP_VERSION: '${APP_VERSION:-unknown}' }
     command: ['node', 'apps/api/dist/main.js']
     environment:
       <<: *app-env
@@ -140,10 +196,13 @@ services:
       BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
       BACKUP_QUICK_CRON: ${BACKUP_QUICK_CRON:-*/15 * * * *}
       BACKUP_QUICK_KEEP_HOURS: ${BACKUP_QUICK_KEEP_HOURS:-48}
+      BACKUP_BASE_KEEP: ${BACKUP_BASE_KEEP:-2}
       RCLONE_REMOTE: ${RCLONE_REMOTE:-}
     volumes:
       - ${DATA_DIR:-/srv/mono}/backups:/backups
       - ${DATA_DIR:-/srv/mono}/uploads:/uploads:ro
+      # The database's own files, read-only, for the nightly base copy.
+      - ${DATA_DIR:-/srv/mono}/pg:/pgdata:ro
       - ${DATA_DIR:-/srv/mono}/rclone:/config/rclone
     security_opt: ['no-new-privileges:true']
     depends_on:

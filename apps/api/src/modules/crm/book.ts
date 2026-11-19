@@ -1,9 +1,8 @@
-import type { Db, Tx } from '@mono/db';
+import { Prisma, type Db, type Tx } from '@mono/db';
 import {
   addDays,
   ageBucket,
   autoTags,
-  daysBetween,
   scotOf,
   type AutoTag,
   type CustomerStats,
@@ -44,14 +43,18 @@ export type BookRow = {
 
 /**
  * Every customer with their numbers (§11.2): 12 months' sales and GP, order counts, receivables by age (payments
- * set against the oldest orders first), the automatic tags and the SCOT rhythm. One pass over orders and payments.
+ * set against the oldest orders first), the automatic tags and the SCOT rhythm.
  */
 export async function customerBook(db: Db | Tx, companyId: string, opts: { ids?: string[] } = {}) {
   const config = await crmConfigOf(db, companyId);
   const f = await fyCalendar(db, companyId);
   const today = f.today;
   const since = addDays(today, -365);
-  const [customers, orders, payments, ownerSeat] = await Promise.all([
+  // Years of orders and payments are added up by the database (a customer's counts, what is still unpaid, how
+  // late they pay); only the last 12 months of orders come into memory, for the rhythm and what they buy.
+  const only = opts.ids?.length ? Prisma.sql`AND customer_id IN (${Prisma.join(opts.ids)})` : Prisma.empty;
+  if (opts.ids && !opts.ids.length) return { rows: [] as BookRow[], today, config, f };
+  const [customers, recentOrders, totals, unpaid, delays, ownerSeat] = await Promise.all([
     db.customer.findMany({
       where: { companyId, deletedAt: null, ...(opts.ids ? { id: { in: opts.ids } } : {}) },
       include: { tags: { select: { tag: true } } },
@@ -61,75 +64,95 @@ export async function customerBook(db: Db | Tx, companyId: string, opts: { ids?:
       where: {
         companyId,
         status: { not: 'CANCELLED' },
+        orderDate: { gte: since },
         ...(opts.ids ? { customerId: { in: opts.ids } } : {}),
       },
-      select: { customerId: true, orderDate: true, dueOn: true, amount: true, gp: true, items: true },
+      select: { customerId: true, orderDate: true, amount: true, gp: true, items: true },
       orderBy: { orderDate: 'asc' },
     }),
-    db.payment.findMany({
-      where: { companyId, ...(opts.ids ? { customerId: { in: opts.ids } } : {}) },
-      select: { customerId: true, amount: true, date: true },
-      orderBy: { date: 'asc' },
-    }),
+    db.$queryRaw<{ customer_id: string; orders: number; first: string; last: string }[]>`
+      SELECT customer_id, count(*)::int AS orders, min(order_date) AS first, max(order_date) AS last
+      FROM sales_orders
+      WHERE company_id = ${companyId} AND status <> 'CANCELLED' ${only}
+      GROUP BY customer_id`,
+    // Payments are set against the oldest orders first: an order is unpaid by what its running total
+    // (oldest first) exceeds everything the customer ever paid — never more than the order itself.
+    db.$queryRaw<{ customer_id: string; due_on: string; owed: string }[]>`
+      WITH paid AS (
+        SELECT customer_id, sum(amount) AS total FROM payments
+        WHERE company_id = ${companyId} ${only} GROUP BY customer_id
+      ), o AS (
+        SELECT customer_id, due_on, amount,
+               sum(amount) OVER (PARTITION BY customer_id ORDER BY order_date, id) AS cum
+        FROM sales_orders
+        WHERE company_id = ${companyId} AND status <> 'CANCELLED' ${only}
+      )
+      SELECT o.customer_id, o.due_on, least(o.amount, o.cum - coalesce(paid.total, 0))::text AS owed
+      FROM o LEFT JOIN paid USING (customer_id)
+      WHERE o.cum > coalesce(paid.total, 0)`,
+    // "Pays late": for every order paid off in full, the day the payments reached its running total, against
+    // its due date. Orders and payments are laid on one line by their running totals; walking it from the
+    // top, the earliest payment at or above an order's total is the one that paid it off.
+    db.$queryRaw<{ customer_id: string; delay: number | null }[]>`
+      WITH line AS (
+        SELECT customer_id, due_on, NULL::text AS paid_on, 1 AS kind, amount,
+               sum(amount) OVER (PARTITION BY customer_id ORDER BY order_date, id) AS cum
+        FROM sales_orders
+        WHERE company_id = ${companyId} AND status <> 'CANCELLED' ${only}
+        UNION ALL
+        SELECT customer_id, NULL, date, 0, amount,
+               sum(amount) OVER (PARTITION BY customer_id ORDER BY date, id)
+        FROM payments
+        WHERE company_id = ${companyId} ${only}
+      ), walked AS (
+        SELECT customer_id, kind, due_on, amount,
+               min(paid_on) OVER (PARTITION BY customer_id ORDER BY cum DESC, kind
+                                  ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS paid_on
+        FROM line
+      )
+      SELECT customer_id, avg(greatest(0, paid_on::date - due_on::date))::float8 AS delay
+      FROM walked
+      WHERE kind = 1 AND amount > 0 AND paid_on IS NOT NULL
+      GROUP BY customer_id`,
     seatPeople(db, companyId, 'owner', config),
   ]);
-  const byCustomer = <T extends { customerId: string }>(xs: T[]) => {
-    const m = new Map<string, T[]>();
-    for (const x of xs) m.set(x.customerId, [...(m.get(x.customerId) ?? []), x]);
+  // (Appending to each customer's own list: copying the list for every row made this quadratic.)
+  const byCustomer = <T, K extends keyof T>(xs: T[], key: K) => {
+    const m = new Map<T[K], T[]>();
+    for (const x of xs) {
+      const list = m.get(x[key]);
+      if (list) list.push(x);
+      else m.set(x[key], [x]);
+    }
     return m;
   };
-  const ord = byCustomer(orders);
-  const pay = byCustomer(payments);
+  const ord = byCustomer(recentOrders, 'customerId');
+  const owing = byCustomer(unpaid, 'customer_id');
+  const totalOf = new Map(totals.map((t) => [t.customer_id, t]));
+  const delayOf = new Map(delays.map((d) => [d.customer_id, d.delay]));
   const stats: CustomerStats[] = [];
   const partial = customers.map((c) => {
-    const os = ord.get(c.id) ?? [];
-    const ps = pay.get(c.id) ?? [];
-    const recent = os.filter((o) => o.orderDate >= since);
-    // Payments against the oldest orders first: what is left on each order is still owed.
-    let paid = ps.reduce((a, p) => a + Number(p.amount), 0);
+    const recent = ord.get(c.id) ?? [];
     const ageing = { '0_30': 0, '31_60': 0, '61_90': 0, '90_plus': 0 };
     let overdue = 0;
     let dueToday = 0;
-    let delaySum = 0;
-    let delayN = 0;
-    let payIdx = 0;
-    let payLeft = ps[0] ? Number(ps[0].amount) : 0;
-    for (const o of os) {
-      const amt = Number(o.amount);
-      const settle = Math.min(amt, paid);
-      paid -= settle;
-      // When the order was finally paid off (for "pays late").
-      let need = settle;
-      let paidOn: string | null = null;
-      while (need > 0 && payIdx < ps.length) {
-        const take = Math.min(need, payLeft);
-        need -= take;
-        payLeft -= take;
-        paidOn = ps[payIdx]!.date;
-        if (payLeft <= 0) {
-          payIdx++;
-          payLeft = ps[payIdx] ? Number(ps[payIdx]!.amount) : 0;
-        }
-      }
-      if (settle === amt && paidOn) {
-        delaySum += Math.max(0, daysBetween(o.dueOn, paidOn));
-        delayN++;
-      }
-      const owed = amt - settle;
+    for (const o of owing.get(c.id) ?? []) {
+      const owed = Number(o.owed);
       if (owed <= 0) continue;
-      ageing[ageBucket(o.dueOn, today)] += owed;
-      if (o.dueOn < today) overdue += owed;
-      if (o.dueOn === today) dueToday += owed;
+      ageing[ageBucket(o.due_on, today)] += owed;
+      if (o.due_on < today) overdue += owed;
+      if (o.due_on === today) dueToday += owed;
     }
+    const all = totalOf.get(c.id);
     const s: CustomerStats = {
       id: c.id,
       sales12: recent.reduce((a, o) => a + Number(o.amount), 0),
       gp12: recent.reduce((a, o) => a + Number(o.gp), 0),
-      orders: os.length,
-      firstOrder: os[0]?.orderDate ?? null,
-      lastOrder: os[os.length - 1]?.orderDate ?? null,
+      orders: all?.orders ?? 0,
+      firstOrder: all?.first ?? null,
+      lastOrder: all?.last ?? null,
       createdOn: c.createdAt.toISOString().slice(0, 10),
-      payDelayDays: delayN ? delaySum / delayN : null,
+      payDelayDays: delayOf.get(c.id) ?? null,
       creditDays: c.creditDays,
       lostAt: c.lostAt ? c.lostAt.toISOString().slice(0, 10) : null,
       owners: c.ownerCustomer || (c.handledById !== null && ownerSeat.includes(c.handledById)),

@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import type { Db, Tx } from '@mono/db';
-import { formatNumber, nextCounter } from '@mono/db';
+import { formatNumber, nextCounter, reachSql } from '@mono/db';
 import {
   DOC_SERIES,
   flowDefinitionSchema,
@@ -50,14 +50,17 @@ export async function listFlows(db: Db, actor: Actor) {
       where: { companyId: actor.companyId, status: 'RUNNING', deletedAt: null },
       _count: true,
     }),
-    db.fmsRecordStep.findMany({
-      where: { companyId: actor.companyId, status: 'OPEN', plannedAt: { lt: now } },
-      select: { record: { select: { flowId: true } } },
-    }),
+    // Counted by the database, process by process (reading every late step to count them here grew with
+    // the backlog); inside the person's branches like every other read of process records.
+    db.$queryRaw<{ flow_id: string; n: number }[]>`
+      SELECT r.flow_id, count(*)::int AS n
+      FROM fms_record_steps s JOIN fms_records r ON r.id = s.record_id
+      WHERE s.company_id = ${actor.companyId} AND s.status = 'OPEN' AND s.planned_at < ${now}
+        AND ${reachSql('fms_records')}
+      GROUP BY r.flow_id`,
   ]);
   const runningBy = new Map(running.map((r) => [r.flowId, r._count]));
-  const lateBy = new Map<string, number>();
-  for (const s of late) lateBy.set(s.record.flowId, (lateBy.get(s.record.flowId) ?? 0) + 1);
+  const lateBy = new Map(late.map((l) => [l.flow_id, l.n]));
   return flows.map((f) => {
     const def = parseDefinition(f.draft);
     const r = readiness(def, f, f._count.kpis);

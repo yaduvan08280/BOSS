@@ -34,6 +34,8 @@ const envSchema = z.object({
     .string()
     .default('')
     .transform((v) => /^(1|true|yes)$/i.test(v.trim())),
+  /** What is running (the commit it was built from): shown by /api/health; set when the image is built. */
+  APP_VERSION: z.string().default('dev'),
   /**
    * Let the AI and speech settings name a server inside this network (Ollama or Whisper on this machine).
    * Off by default: an address a company's admin types is otherwise called only on the public internet.

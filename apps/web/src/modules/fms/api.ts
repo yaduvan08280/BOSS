@@ -181,6 +181,8 @@ export const useMyFms = () =>
             flow: { name: string; runName: string };
           };
         })[];
+        /** All my open steps; `steps` holds the most urgent of them. */
+        stepsTotal: number;
         owned: (RecordRow & { flow: { name: string } })[];
         flows: { id: string; name: string; runName: string; running: number }[];
       }>('/api/fms/my'),

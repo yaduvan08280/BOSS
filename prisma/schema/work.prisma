@@ -42,6 +42,8 @@ model Task {
   @@index([companyId, doerId, status])
   @@index([companyId, verifierId, status])
   @@index([companyId, branchId])
+  /// The whole sheet in planned order.
+  @@index([companyId, plannedAt])
   @@map("tasks")
 }
 

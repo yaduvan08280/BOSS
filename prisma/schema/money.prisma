@@ -134,6 +134,9 @@ model Bill {
   @@index([companyId, branchId])
   @@index([companyId, type, date])
   @@index([companyId, sourceType, sourceId])
+  /// The bills list (newest first) and what is still unpaid (receivables, payables, cash flow).
+  @@index([companyId, date(sort: Desc), createdAt(sort: Desc)])
+  @@index([companyId, status, type])
   @@map("bills")
 }
 

@@ -2,6 +2,7 @@ import type { Db } from '@mono/db';
 import { GSTIN, gstinState, stateCode, type BillChargeOut, type BillLineOut, csvCell } from '@mono/shared';
 import { z } from 'zod';
 import { AppError } from '../../lib/errors';
+import { afterId, paged } from '../../lib/paged';
 import { can, type Actor } from '../work/actor';
 
 /**
@@ -35,21 +36,47 @@ export async function gstr1(db: Db, actor: Actor, input: z.input<typeof gstrQuer
   });
   const sellerState =
     gstinState(entity ? entity.taxId : company.gstin) ?? stateCode(entity ? entity.state : company.state);
-  const bills = await db.bill.findMany({
-    where: {
-      companyId: actor.companyId,
-      entityId: q.entityId ?? null,
-      type: { in: ['INVOICE', 'CREDIT_NOTE', 'DEBIT_NOTE'] },
-      status: { in: ['ISSUED', 'PART_PAID', 'PAID'] },
-      date: { gte: `${q.month}-01`, lte: `${q.month}-31` },
-    },
-    orderBy: [{ date: 'asc' }, { number: 'asc' }],
-  });
-  const parties = new Map(
-    (await db.party.findMany({ where: { id: { in: [...new Set(bills.map((b) => b.partyId))] } } })).map(
-      (p) => [p.id, p],
-    ),
+  // A busy month is tens of thousands of bills: they are read a page at a time (never the whole month in
+  // memory), and the server answers other people between pages.
+  const where = {
+    companyId: actor.companyId,
+    entityId: q.entityId ?? null,
+    type: { in: ['INVOICE', 'CREDIT_NOTE', 'DEBIT_NOTE'] },
+    status: { in: ['ISSUED', 'PART_PAID', 'PAID'] },
+    date: { gte: `${q.month}-01`, lte: `${q.month}-31` },
+  };
+  const pages = paged(
+    (after, take) =>
+      db.bill.findMany({
+        where: { ...where, ...afterId(after) },
+        select: {
+          id: true,
+          number: true,
+          type: true,
+          date: true,
+          total: true,
+          partyId: true,
+          lines: true,
+          charges: true,
+        },
+        orderBy: { id: 'asc' },
+        take,
+      }),
+    1000,
   );
+  type BillRow = Awaited<ReturnType<typeof pages.next>>['value'] & object;
+  const parties = new Map<string, { taxId: string | null; name: string; state: string | null } | null>();
+  const partyOf = async (id: string) => {
+    if (!parties.has(id))
+      parties.set(
+        id,
+        await db.party.findFirst({
+          where: { id, companyId: actor.companyId },
+          select: { taxId: true, name: true, state: true },
+        }),
+      );
+    return parties.get(id);
+  };
   type Part = {
     percent: number;
     taxable: number;
@@ -59,7 +86,7 @@ export async function gstr1(db: Db, actor: Actor, input: z.input<typeof gstrQuer
     hsn: string;
     qty: number;
   };
-  const partsOf = (b: (typeof bills)[number]): Part[] => [
+  const partsOf = (b: BillRow): Part[] => [
     ...(b.lines as unknown as BillLineOut[]).map((l) => ({
       percent: l.taxPercent,
       taxable: l.taxable,
@@ -86,9 +113,20 @@ export async function gstr1(db: Db, actor: Actor, input: z.input<typeof gstrQuer
   const b2cs = new Map<string, Row>();
   const cdnr = new Map<string, Row>();
   const hsn = new Map<string, Row>();
-  const problems: string[] = [];
-  for (const b of bills) {
-    const party = parties.get(b.partyId);
+  const problems = new Set<string>();
+  // The documents issued: how many, and the first and last invoice of the month (by date, then number).
+  let invoices = 0;
+  let notes = 0;
+  let first: BillRow | null = null;
+  let last: BillRow | null = null;
+  const earlier = (x: BillRow, y: BillRow) => (x.date === y.date ? x.number! < y.number! : x.date < y.date);
+  for await (const b of pages) {
+    if (b.type === 'INVOICE') {
+      invoices += 1;
+      if (!first || earlier(b, first)) first = b;
+      if (!last || earlier(last, b)) last = b;
+    } else notes += 1;
+    const party = await partyOf(b.partyId);
     const registered = Boolean(party?.taxId && GSTIN.test(party.taxId));
     const pos = (registered ? gstinState(party!.taxId) : stateCode(party?.state)) ?? sellerState ?? '';
     const sign = b.type === 'CREDIT_NOTE' ? -1 : 1;
@@ -140,28 +178,31 @@ export async function gstr1(db: Db, actor: Actor, input: z.input<typeof gstrQuer
           },
         );
       if (b.type === 'INVOICE') {
-        if (!p.hsn && p.taxable > 0 && !problems.includes(`${b.number}: a line has no HSN / SAC code`))
-          problems.push(`${b.number}: a line has no HSN / SAC code`);
+        if (!p.hsn && p.taxable > 0 && problems.size < 200)
+          problems.add(`${b.number}: a line has no HSN / SAC code`);
         add(hsn, `${p.hsn}|${p.percent}`, { hsn: p.hsn, rate: p.percent }, { qty: p.qty, ...sums });
       }
     }
   }
-  const invoices = bills.filter((b) => b.type === 'INVOICE');
   const list = (m: Map<string, Row>) => [...m.values()];
+  // Invoice by invoice in the order they were issued (pages come in id order).
+  const inOrder = (rows: Row[]) =>
+    rows.sort(
+      (x, y) =>
+        String(x.date).localeCompare(String(y.date)) || String(x.number).localeCompare(String(y.number)),
+    );
+  /** Summary rows in a fixed order: by place of supply (or HSN code), then by rate. */
+  const byKey = (rows: Row[], key: string) =>
+    rows.sort((x, y) => String(x[key]).localeCompare(String(y[key])) || Number(x.rate) - Number(y.rate));
   return {
     month: q.month,
     gstin: entity ? entity.taxId : company.gstin,
-    b2b: list(b2b),
-    b2cs: list(b2cs),
-    cdnr: list(cdnr),
-    hsn: list(hsn),
-    docs: {
-      invoices: invoices.length,
-      from: invoices[0]?.number ?? null,
-      to: invoices[invoices.length - 1]?.number ?? null,
-      notes: bills.length - invoices.length,
-    },
-    problems,
+    b2b: inOrder(list(b2b)),
+    b2cs: byKey(list(b2cs), 'pos'),
+    cdnr: inOrder(list(cdnr)),
+    hsn: byKey(list(hsn), 'hsn'),
+    docs: { invoices, from: first?.number ?? null, to: last?.number ?? null, notes },
+    problems: [...problems],
   };
 }
 

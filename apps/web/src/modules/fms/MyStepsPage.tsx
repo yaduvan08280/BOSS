@@ -67,7 +67,7 @@ export function MyStepsPage({ me }: { me: Me }) {
             active={tab}
             onChange={(k) => set({ tab: k })}
             label={(k) => t(`fms.my.${k}`)}
-            counts={{ steps: q.data.steps.length, owned: q.data.owned.length }}
+            counts={{ steps: q.data.stepsTotal, owned: q.data.owned.length }}
           />
           {tab === 'steps' ? (
             !q.data.steps.length ? (
@@ -104,6 +104,11 @@ export function MyStepsPage({ me }: { me: Me }) {
                     )}
                   </li>
                 ))}
+                {q.data.stepsTotal > q.data.steps.length && (
+                  <li className="p-3 text-center text-xs text-muted-foreground">
+                    {t('fms.mostUrgent', { shown: q.data.steps.length, count: q.data.stepsTotal })}
+                  </li>
+                )}
               </ul>
             )
           ) : !q.data.owned.length ? (

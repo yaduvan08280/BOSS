@@ -19,7 +19,7 @@ import { writeAudit } from '../../lib/audit';
 import { AppError } from '../../lib/errors';
 import { emitEvent } from '../../lib/events';
 import type { Actor } from '../work/actor';
-import { companyCalendar } from './calendar';
+import { companyCalendar, type CompanyCalendar } from './calendar';
 import { hrPerson, hrRulesOf, personRules, type HrPerson } from './people';
 
 /** The shift date a punch belongs to: a night shift's morning punches belong to the evening before. */
@@ -61,20 +61,35 @@ export async function evaluateDay(
   now = new Date(),
   /** Rules to try instead of the saved ones (the preview of a rule change). */
   using?: HrRules,
+  /**
+   * Already read by a caller that works many people's days out (a muster, a pay sheet, a team's day): not read
+   * again. `leave` is the person's approved leave on that day (null = none); `punches` are the person's own,
+   * in time order — those outside the day's window are left out here.
+   */
+  pre: {
+    cal?: CompanyCalendar;
+    rules?: HrRules;
+    leave?: { half: string | null } | null;
+    punches?: { type: string; at: Date }[];
+  } = {},
 ): Promise<DayResult & { final: boolean }> {
   const [cal, rules, leave] = await Promise.all([
-    companyCalendar(db, companyId, p.branchId),
-    using ?? hrRulesOf(db, companyId),
-    db.leaveRequest.findFirst({
-      where: { companyId, userId: p.id, status: 'APPROVED', from: { lte: date }, to: { gte: date } },
-      select: { half: true },
-    }),
+    pre.cal ?? companyCalendar(db, companyId, p.branchId),
+    using ?? pre.rules ?? hrRulesOf(db, companyId),
+    pre.leave !== undefined
+      ? pre.leave
+      : db.leaveRequest.findFirst({
+          where: { companyId, userId: p.id, status: 'APPROVED', from: { lte: date }, to: { gte: date } },
+          select: { half: true },
+        }),
   ]);
   const { from, to, end } = punchWindow(date, p, cal.tz);
-  const punches = await db.punch.findMany({
-    where: { userId: p.id, at: { gte: from, lte: to } },
-    orderBy: { at: 'asc' },
-  });
+  const punches = pre.punches
+    ? pre.punches.filter((x) => x.at >= from && x.at <= to)
+    : await db.punch.findMany({
+        where: { userId: p.id, at: { gte: from, lte: to } },
+        orderBy: { at: 'asc' },
+      });
   const kind: DayKind = cal.holidays.has(date)
     ? 'holiday'
     : cal.workingWeekdays.has(weekdayOf(date))

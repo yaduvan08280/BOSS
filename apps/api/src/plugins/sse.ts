@@ -2,6 +2,8 @@ import type { FastifyInstance } from 'fastify';
 import type { EventListener, EventSignal, NotificationSignal } from '../lib/events';
 
 export const SSE_HEARTBEAT_MS = 25_000;
+/** The session behind a stream is checked again every this many heartbeats (5 minutes). */
+export const SSE_RECHECK_BEATS = 12;
 
 /**
  * GET /api/events — Server-Sent Events for in-app notifications and live boards.
@@ -39,7 +41,27 @@ export async function sseRoutes(app: FastifyInstance, opts: { listener: EventLis
       };
       opts.listener.on('event', onEvent);
       opts.listener.on('notification', onNotification);
-      const heartbeat = setInterval(() => res.write(`: ping\n\n`), SSE_HEARTBEAT_MS);
+      // A stream opened before a sign-out, a password change or a disabled login must not outlive it:
+      // every few minutes the session is looked up again, and the stream is ended when it is gone.
+      let beats = 0;
+      const heartbeat = setInterval(() => {
+        res.write(`: ping\n\n`);
+        beats += 1;
+        if (beats % SSE_RECHECK_BEATS !== 0) return;
+        void app.prisma.session
+          .findFirst({
+            where: {
+              id: auth.sessionId,
+              revokedAt: null,
+              user: { deletedAt: null, status: 'ACTIVE', loginEnabled: true },
+            },
+            select: { id: true },
+          })
+          .then((live) => {
+            if (!live) end();
+          })
+          .catch(() => undefined);
+      }, SSE_HEARTBEAT_MS);
 
       const close = () => {
         clearInterval(heartbeat);

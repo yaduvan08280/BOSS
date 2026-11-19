@@ -137,6 +137,13 @@ export class EventListener extends EventEmitter<{
       this.log.warn({ err }, 'Event listener connection lost; reconnecting');
       this.scheduleReconnect();
     });
+    // The database closing the connection cleanly (a restart, a fail-over) ends it without an error.
+    client.on('end', () => {
+      if (!this.stopped && this.client === client) {
+        this.log.warn({}, 'Event listener connection closed; reconnecting');
+        this.scheduleReconnect();
+      }
+    });
     await client.connect();
     await client.query(`LISTEN ${EVENTS_CHANNEL}`);
     await client.query(`LISTEN ${NOTIFICATIONS_CHANNEL}`);

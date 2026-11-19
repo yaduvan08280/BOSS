@@ -31,13 +31,19 @@ const TALLY_TYPE: Record<string, string> = {
 /** Every head the books have used, with its ledger (or none yet). */
 export async function tallyMap(db: Db, actor: Actor) {
   needAdmin(actor);
-  const [maps, vouchers] = await Promise.all([
+  // The heads in use are found by the database (a few names out of every voucher line), over the last 13
+  // months: reading every voucher ever written into memory to find a dozen names does not scale. A head used
+  // only before that is still asked for when a file of that period is made.
+  const since = new Date(Date.now() - 400 * 86_400_000).toISOString().slice(0, 10);
+  const [maps, heads] = await Promise.all([
     db.tallyMap.findMany({ where: { companyId: actor.companyId } }),
-    db.voucher.findMany({ where: { companyId: actor.companyId }, select: { lines: true } }),
+    db.$queryRaw<{ head: string }[]>`
+      SELECT DISTINCT line->>'head' AS head
+      FROM vouchers, jsonb_array_elements(lines) AS line
+      WHERE company_id = ${actor.companyId} AND date >= ${since}`,
   ]);
   const used = new Set<string>();
-  for (const v of vouchers)
-    for (const l of v.lines as VoucherLine[]) if (!PARTY_HEADS.has(l.head)) used.add(l.head);
+  for (const h of heads) if (h.head && !PARTY_HEADS.has(h.head)) used.add(h.head);
   const ledger = new Map(maps.map((m) => [m.head, m.ledger]));
   return [...new Set([...used, ...ledger.keys()])]
     .sort()

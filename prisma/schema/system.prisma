@@ -18,6 +18,18 @@ model Session {
   @@map("sessions")
 }
 
+/// What the parts of the installation last said about themselves (the worker's heartbeat, the last backup,
+/// the weekly restore test, how full the disks are): written by the worker and the backup container, read by
+/// the health check. Not a company's data.
+model OpsMark {
+  key  String   @id
+  ok   Boolean  @default(true)
+  note String?
+  at   DateTime @default(now()) @db.Timestamptz(3)
+
+  @@map("ops_marks")
+}
+
 /// Failed sign-ins per login ID (a hash of it), so one account cannot be guessed at from many addresses.
 /// A row lives only while there are recent failures: a good sign-in deletes it.
 model LoginThrottle {
@@ -45,6 +57,8 @@ model AuditLog {
 
   @@index([companyId, entityType, entityId])
   @@index([companyId, createdAt])
+  /// The archive job reads the oldest rows first.
+  @@index([createdAt])
   @@map("audit_logs")
 }
 
@@ -87,5 +101,8 @@ model Notification {
   user User @relation(fields: [userId], references: [id])
 
   @@index([companyId, userId, readAt])
+  /// A person's notifications, newest first; and the daily clean-up by age.
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([createdAt])
   @@map("notifications")
 }

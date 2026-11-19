@@ -1,8 +1,12 @@
 /** Date-only helpers in a company time zone. Dates are 'YYYY-MM-DD' strings; instants are Date (UTC). */
 
-function tzParts(at: Date, tz: string) {
-  const p = Object.fromEntries(
-    new Intl.DateTimeFormat('en-GB', {
+// One formatter per time zone, made once (building one costs far more than using it; working-time sums and
+// a month of attendance ask tens of thousands of times).
+const formatters = new Map<string, Intl.DateTimeFormat>();
+function formatterFor(tz: string) {
+  let fmt = formatters.get(tz);
+  if (!fmt) {
+    fmt = new Intl.DateTimeFormat('en-GB', {
       timeZone: tz,
       year: 'numeric',
       month: '2-digit',
@@ -11,10 +15,15 @@ function tzParts(at: Date, tz: string) {
       minute: '2-digit',
       second: '2-digit',
       hourCycle: 'h23',
-    })
-      .formatToParts(at)
-      .map((x) => [x.type, x.value]),
-  );
+    });
+    formatters.set(tz, fmt);
+  }
+  return fmt;
+}
+
+function tzParts(at: Date, tz: string) {
+  const p: Record<string, string> = {};
+  for (const x of formatterFor(tz).formatToParts(at)) p[x.type] = x.value;
   return { y: +p.year!, m: +p.month!, d: +p.day!, h: +p.hour!, mi: +p.minute!, s: +p.second! };
 }
 

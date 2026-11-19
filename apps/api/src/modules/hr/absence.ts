@@ -8,7 +8,7 @@ import { absenceMark } from './attendance';
 import { period } from './balance';
 import { companyCalendar } from './calendar';
 import { runCovers, scheduleCovers } from './cover';
-import { hrPerson, hrRulesOf, hrScope, type HrPerson } from './people';
+import { hrPeople, hrPerson, hrRulesOf, hrScope, type HrPerson } from './people';
 import { openWork, suggestionsFor, type WorkItem } from './work';
 
 const tzOf = async (db: Db, companyId: string) =>
@@ -121,13 +121,26 @@ export async function coverBoard(db: Db, actor: Actor, date: string) {
       (u) => [u.id, u.name],
     ),
   );
+  const persons = await hrPeople(
+    db,
+    actor.companyId,
+    people.map((u) => u.id),
+  );
+  // One calendar per branch, not one per person.
+  const calendars = new Map<string | null, Awaited<ReturnType<typeof companyCalendar>>>();
+  const calendarOf = async (branchId: string | null) => {
+    if (!calendars.has(branchId))
+      calendars.set(branchId, await companyCalendar(db, actor.companyId, branchId));
+    return calendars.get(branchId)!;
+  };
   const away = [];
   for (const u of people) {
-    const p = await hrPerson(db, actor.companyId, u.id);
+    const p = persons.get(u.id);
+    if (!p) continue;
     const leave = leaves.find((l) => l.userId === u.id);
     let reason: 'leave' | 'absent' | null = leave ? 'leave' : null;
     if (!reason && (await punchesAtAll(db, p.id, now))) {
-      const cal = await companyCalendar(db, actor.companyId, p.branchId);
+      const cal = await calendarOf(p.branchId);
       // The shift of the day, and a night shift from the evening before that is still running.
       for (const d of [date, addDays(date, -1)]) {
         const working = !cal.holidays.has(d) && cal.workingWeekdays.has(weekdayOf(d));

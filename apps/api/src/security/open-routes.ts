@@ -5,7 +5,7 @@
 
 /** No sign-in at all: these answer a visitor (each protects itself — a token, a key, a signature, a limit). */
 export const PUBLIC: RegExp[] = [
-  /^\/api\/health$/, // is the server up: says nothing about any company
+  /^\/api\/health(\/ready)?$/, // is the server up, and is everything doing its job: one word, no company's data
   /^\/api\/auth\/(login|logout|refresh)$/, // signing in and out; limited per address and per login ID
   /^\/api\/public\//, // a guest's link: the token in the address is the key (forms, bookings, rooms, pulse)
   /^\/api\/hooks\//, // a provider calling back: the token names the connection, the signature proves the sender

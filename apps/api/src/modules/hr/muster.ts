@@ -11,7 +11,7 @@ import { AppError } from '../../lib/errors';
 import type { Actor } from '../work/actor';
 import { evaluateDay, punchWindow } from './attendance';
 import { companyCalendar, type CompanyCalendar } from './calendar';
-import { hrPerson, hrScope } from './people';
+import { hrPeople, hrRulesOf, hrScope } from './people';
 
 /**
  * The month's attendance for many people at once (asked for 14/11/2026): the muster register — one row per person,
@@ -148,13 +148,33 @@ export async function musterMonth(db: Db, actor: Actor, q: MusterQuery, now = ne
     return calendars.get(branchId)!;
   };
 
+  // Everyone's settings in one go, and each person's punches and leaves found by their id — not by reading
+  // the whole month's list again for every person and every day.
+  const [persons, rules] = await Promise.all([
+    hrPeople(db, actor.companyId, userIds),
+    hrRulesOf(db, actor.companyId),
+  ]);
+  const group = <T extends { userId: string }>(rows: T[]) => {
+    const m = new Map<string, T[]>();
+    for (const r of rows) {
+      const list = m.get(r.userId);
+      if (list) list.push(r);
+      else m.set(r.userId, [r]);
+    }
+    return m;
+  };
+  const punchesOf = group(punches);
+  const leavesOf = group(leaves);
+
   const people: MusterPerson[] = [];
   for (const u of users) {
-    const p = await hrPerson(db, actor.companyId, u.id);
+    const p = persons.get(u.id);
+    if (!p) continue;
     const cal = await calendarOf(p.branchId);
     const doj = (u.hr as { doj?: string } | null)?.doj;
     const joined = /^\d{4}-\d{2}-\d{2}$/.test(doj ?? '') ? doj! : localDate(u.createdAt, tz);
-    const mine = punches.filter((x) => x.userId === u.id);
+    const mine = punchesOf.get(u.id) ?? [];
+    const myLeaves = leavesOf.get(u.id) ?? [];
     const totals: MusterTotals = {
       present: 0,
       late: 0,
@@ -175,7 +195,7 @@ export async function musterMonth(db: Db, actor: Actor, q: MusterQuery, now = ne
         .filter((x) => x.at >= win.from && x.at <= win.to)
         .map((x) => ({ type: x.type, at: x.at.toISOString(), flagged: x.flagged, source: x.source }));
       const blank = date < joined || date > today;
-      const leave = leaves.find((l) => l.userId === u.id && l.from <= date && l.to >= date);
+      const leave = myLeaves.find((l) => l.from <= date && l.to >= date);
       const leaveCode = leave ? `${typeCode.get(leave.leaveTypeId) ?? 'L'}${leave.half ? '½' : ''}` : null;
       const kind = cal.holidays.has(date) ? 'H' : cal.workingWeekdays.has(weekdayOf(date)) ? null : 'WO';
       const rec = dayOf.get(`${u.id}|${date}`);
@@ -212,7 +232,12 @@ export async function musterMonth(db: Db, actor: Actor, q: MusterQuery, now = ne
         };
       } else if (date >= addDays(today, -2)) {
         // Not settled yet: as it stands now (payroll does the same for the last two days).
-        const live = await evaluateDay(db, actor.companyId, p, date, now);
+        const live = await evaluateDay(db, actor.companyId, p, date, now, undefined, {
+          cal,
+          rules,
+          leave: leave ? { half: leave.half } : null,
+          punches: mine,
+        });
         cell = {
           ...cell,
           status: live.status,

@@ -119,17 +119,23 @@ export async function liveFms(db: Db, actor: Actor, flowId: string | undefined, 
 const addDaysUtc = (d: Date, n: number) => new Date(d.getTime() + n * 86_400_000);
 
 /** My FMS steps: open steps I do (with their form), records I started, and flows I can start. */
+/** How many of a person's open steps the screen gets at once (the rest are counted). */
+export const MY_STEPS_SHOWN = 300;
+
 export async function myFms(db: Db, actor: Actor) {
   const now = new Date();
-  const [steps, owned, flows] = await Promise.all([
+  const mine = {
+    companyId: actor.companyId,
+    doerId: actor.userId,
+    status: 'OPEN',
+    record: { status: { in: ['RUNNING', 'ON_HOLD'] }, deletedAt: null },
+  };
+  const [steps, stepsTotal, owned, flows] = await Promise.all([
+    // The most urgent first, and never more than a screen can show: a backlog of thousands is counted, not sent.
     db.fmsRecordStep.findMany({
-      where: {
-        companyId: actor.companyId,
-        doerId: actor.userId,
-        status: 'OPEN',
-        record: { status: { in: ['RUNNING', 'ON_HOLD'] }, deletedAt: null },
-      },
+      where: mine,
       orderBy: { plannedAt: 'asc' },
+      take: MY_STEPS_SHOWN,
       include: {
         record: {
           select: {
@@ -142,6 +148,7 @@ export async function myFms(db: Db, actor: Actor) {
         },
       },
     }),
+    db.fmsRecordStep.count({ where: mine }),
     db.fmsRecord.findMany({
       where: {
         companyId: actor.companyId,
@@ -174,6 +181,7 @@ export async function myFms(db: Db, actor: Actor) {
   ]);
   return {
     steps: steps.map((s) => ({ ...s, late: s.plannedAt < now })),
+    stepsTotal,
     owned: owned.map((r) => {
       const { version, ...rest } = r;
       return { ...rest, of: parseDefinition(version.definition).steps.length };
