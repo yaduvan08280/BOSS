@@ -21,6 +21,37 @@ const dmy = (day: string) => day.split('-').reverse().join('/');
 const qty = (n: number) => String(Math.round(n * 1000) / 1000);
 
 /**
+ * The totals block of a printed bill, as amounts in minor units — the very numbers the screen shows and the
+ * voucher books (a test holds the three to each other, to the paisa).
+ */
+export function billSums(
+  bill: {
+    type: string;
+    taxable: number;
+    roundOff: number;
+    total: number;
+    settled: number;
+    credited: number;
+    due: number;
+  },
+  taxes: TaxPart[],
+): [label: string, amount: number, bold: boolean][] {
+  const moneyPaper = MONEY_PAPERS.includes(bill.type as BillType);
+  const sums: [string, number, boolean][] = [];
+  if (!moneyPaper) {
+    sums.push(['Before tax', bill.taxable, false]);
+    for (const t of taxes) sums.push([`${t.name} ${t.percent}%`, t.amount, false]);
+    if (bill.roundOff) sums.push(['Round-off', bill.roundOff, false]);
+  }
+  sums.push([moneyPaper ? 'Amount' : 'Total', bill.total, true]);
+  if (bill.due > 0 || (bill.settled > 0 && !moneyPaper)) {
+    if (bill.settled + bill.credited > 0) sums.push(['Paid / credited', bill.settled + bill.credited, false]);
+    sums.push(['Still due', bill.due, true]);
+  }
+  return sums;
+}
+
+/**
  * A bill as a PDF: who it is from (the branch's letterhead), who it is for, its lines with HSN and tax, the
  * charges, each tax, the total, and what is paid and still due. A draft has no number and is not printed.
  */
@@ -56,18 +87,7 @@ export async function billPdf(db: Db, actor: Actor, id: string): Promise<{ pdf: 
     { text: value, alignment: 'right', bold },
   ];
 
-  const sums: unknown[][] = [];
-  if (!MONEY_PAPERS.includes(type)) {
-    sums.push(total('Before tax', money(bill.taxable)));
-    for (const t of taxes) sums.push(total(`${t.name} ${t.percent}%`, money(t.amount)));
-    if (bill.roundOff) sums.push(total('Round-off', money(bill.roundOff)));
-  }
-  sums.push(total(MONEY_PAPERS.includes(type) ? 'Amount' : 'Total', money(bill.total), true));
-  if (bill.due > 0 || (bill.settled > 0 && !MONEY_PAPERS.includes(type))) {
-    if (bill.settled + bill.credited > 0)
-      sums.push(total('Paid / credited', money(bill.settled + bill.credited)));
-    sums.push(total('Still due', money(bill.due), true));
-  }
+  const sums = billSums(bill, taxes).map(([label, amount, bold]) => total(label, money(amount), bold));
 
   const pdf = await renderPdf({
     pageSize: 'A4',

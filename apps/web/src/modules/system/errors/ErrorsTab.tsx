@@ -12,6 +12,7 @@ import { api } from '@/lib/api';
 import { matchScore } from '@/lib/pick';
 import { useWorkMutation } from '@/lib/work';
 import { useMe } from '@/modules/auth/session';
+import { HealthCard } from './HealthCard';
 
 type ErrorRow = {
   id: string;
@@ -49,6 +50,7 @@ export function ErrorsTab() {
   );
   return (
     <div className="space-y-4">
+      <HealthCard />
       <div className="flex flex-wrap items-center gap-3">
         <p className="mr-auto text-sm text-muted-foreground">{t('errors.subtitle')}</p>
         <Input

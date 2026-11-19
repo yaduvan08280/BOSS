@@ -1,5 +1,33 @@
 # Changelog
 
+## 19/11/2026 — Database stability, health and load
+
+Measured on a copy grown to two years of a busy company (10 million rows); numbers and drills are in
+`docs/database.md` and `docs/production-readiness.md`. **After this update add to `.env` on the 48 GB server:
+`PG_SHARED_BUFFERS=8GB`, `PG_CACHE=24GB`** (see `deploy/RUNBOOK.md`).
+
+- **Fixed — an open task could vanish from the delegation sheet** once a person could see more than 1,000 old
+  tasks (the oldest thousand were read and the tab chosen afterwards). Tabs are now filtered and counted by
+  the database.
+- **Fixed — every screen slowed down as waiting verifications grew**: the top-bar counter read every task
+  waiting for a check, on every screen. It is a database count now (92 ms → 24 ms of server time a call).
+- Service-peak load test (30 POS devices, 10 front desk, 50 office, large data): from failures and a 14 s
+  payment to **zero failures and POS p95 under 0.3 s**. Causes fixed: two missing indexes the worker needed,
+  a payment that read every unpaid bill of the party, order and ticket numbers that made devices wait for
+  each other, and the counter above.
+- CRM dashboard, Customer Master, the monthly muster, My FMS, the Tally map and GSTR-1 no longer freeze or
+  crawl with years of data.
+- The database is archived every minute: it can be rebuilt as it was at any minute (`deploy/restore-pitr.sh`).
+  Every backup is read back; every Sunday one is restored as a test.
+- `/api/health/ready` and System Master → Errors say what is wrong in words; Owners and Admins are told on
+  Telegram and by email when the worker stops, a backup fails, a disk fills or errors jump.
+- Old finished messages, read notifications and logs are cleaned up nightly; the audit log is never deleted
+  (rows older than three years move to files inside the backups).
+- `deploy/update.sh` (update with a way back), `deploy/RUNBOOK.md` (what to do when…), `docs/go-live.md`
+  (what only you can do before going live).
+- A screen that fails shows a message with "Try again" instead of a blank page; a bar says when the device
+  is offline.
+
 ## 19/11/2026 — Security pass
 
 Every API route was walked as a visitor, another company's owner, a member with no rights and a person of

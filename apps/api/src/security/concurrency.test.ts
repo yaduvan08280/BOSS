@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { makeApp } from '../test/helpers';
 import { books, meal, ok, type BillOut } from '../modules/money/money-kit';
 import { world } from '../modules/records/testkit';
+import { restaurant } from '../modules/hosp/pos-kit';
 
 /**
  * Things done at the same moment by many people (a busy evening, a double tap, two cashiers): the database
@@ -98,5 +99,36 @@ describe('at the same moment', () => {
       _sum: { amount: true },
     });
     expect(Number(allocated._sum.amount)).toBe(inv.total);
+  });
+
+  it('20 takeaway orders opened and fired at once at one outlet: every order and every ticket has its own number', async () => {
+    const w = await world(ctx.app);
+    const r = await restaurant(ctx.prisma, w);
+    const opened = await Promise.all(
+      Array.from({ length: 20 }, () =>
+        w.api.post('/api/pos/orders', { outletId: r.outlet, type: 'TAKEAWAY' }),
+      ),
+    );
+    expect(opened.map((x) => x.status).filter((x) => x !== 200)).toEqual([]);
+    const orders = opened.map((x) => x.body.number as number).sort((a, b) => a - b);
+    expect(orders).toEqual(Array.from({ length: 20 }, (_, i) => i + 1));
+    // Each order sends a dish to the kitchen and a drink to the bar: two tickets an order, forty in all.
+    const fired = await Promise.all(
+      opened.map((x) =>
+        w.api.post(`/api/pos/orders/${x.body.id}/items`, {
+          items: [{ menuItemId: r.m.dal }, { menuItemId: r.m.cola }],
+          fire: true,
+        }),
+      ),
+    );
+    expect(fired.map((x) => x.status).filter((x) => x !== 200)).toEqual([]);
+    const tickets = fired.flatMap((x) => (x.body.kots as { number: number }[]).map((k) => k.number));
+    expect(tickets.sort((a, b) => a - b)).toEqual(Array.from({ length: 40 }, (_, i) => i + 1));
+    // A number is taken outside the order's own transaction, so nobody waits for it: no counter row is locked
+    // by a request that is still working.
+    const held = await ctx.prisma.$queryRaw<{ n: bigint }[]>`
+      SELECT count(*) AS n FROM pg_locks l JOIN pg_class c ON c.oid = l.relation
+      WHERE c.relname = 'counters' AND l.mode = 'RowExclusiveLock'`;
+    expect(Number(held[0]!.n)).toBe(0);
   });
 });

@@ -104,5 +104,7 @@ model Notification {
   /// A person's notifications, newest first; and the daily clean-up by age.
   @@index([userId, createdAt(sort: Desc)])
   @@index([createdAt])
+  /// "Was this event already told?" — asked for every event the worker handles.
+  @@index([eventId])
   @@map("notifications")
 }

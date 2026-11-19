@@ -1,0 +1,22 @@
+{
+  "health": {
+    "title": "Is everything running?",
+    "again": "Check again",
+    "state": { "ok": "Fine", "warn": "Look at it", "fail": "Not working" },
+    "keys": {
+      "database": "Database",
+      "migrations": "Database changes",
+      "worker": "Reminders and messages (worker)",
+      "queue": "Waiting messages",
+      "backup": "Nightly backup",
+      "backupQuick": "Daytime snapshots",
+      "base": "Base copy",
+      "logArchive": "Minute-by-minute archive",
+      "restoreTest": "Weekly restore test",
+      "disk": "Disk space",
+      "errors": "Errors in the last hour",
+      "channels": "Telegram, WhatsApp, email"
+    },
+    "foot": "Version {{version}} · running since {{since}}"
+  }
+}

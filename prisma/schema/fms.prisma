@@ -152,6 +152,7 @@ model FmsRecordEvent {
   record FmsRecord @relation(fields: [recordId], references: [id])
 
   @@index([companyId, recordId, createdAt])
+  @@index([recordId, createdAt])
   @@map("fms_record_events")
 }
 

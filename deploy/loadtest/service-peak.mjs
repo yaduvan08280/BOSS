@@ -24,7 +24,7 @@ let stop = false;
 /** One signed-in person: keeps their own cookies. */
 function person() {
   let cookie = '';
-  const call = async (kind, method, path, body) => {
+  const call = async (kind, method, path, body, again = false) => {
     const started = performance.now();
     let status = 0;
     let json = null;
@@ -54,6 +54,11 @@ function person() {
       json = text ? JSON.parse(text) : null;
     } catch {
       // The server could not be reached: counted as a failure (status 0).
+    }
+    // The sign-in runs out after 15 minutes: renew it once and send the request again, as the browser does.
+    if (status === 401 && !again && path !== '/api/auth/refresh' && cookie) {
+      const renewed = await call(null, 'POST', '/api/auth/refresh', {}, true);
+      if (renewed.status === 200) return call(kind, method, path, body, true);
     }
     if (kind) {
       const list = samples.get(kind) ?? [];
@@ -240,6 +245,7 @@ const rows = [...samples].sort().map(([kind, list]) => ({
   requests: list.length,
   p50: Math.round(q(list, 0.5)),
   p95: Math.round(q(list, 0.95)),
+  p99: Math.round(q(list, 0.99)),
   max: Math.round(Math.max(...list)),
 }));
 console.table(rows);

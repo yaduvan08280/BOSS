@@ -83,6 +83,7 @@
     "dark": "Dark",
     "system": "Same as device",
     "largerText": "Larger text",
+    "offline": "No internet. What you see may be old, and changes will not be saved until it is back.",
     "compact": "Compact rows",
     "assistant": "AI assistant",
     "ai": {

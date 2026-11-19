@@ -1,3 +1,4 @@
+import { noteSuccess } from '../auth/throttle';
 import type { Db } from '@mono/db';
 import { AppError } from '../../lib/errors';
 import { recordChange } from '../../lib/events';
@@ -69,6 +70,8 @@ export async function recoverLogin(db: Db, input: { identifier: string; company?
       { event: 'user.password_reset', entityType: 'user', entityId: person.id, payload: { via: 'server' } },
     );
   });
+  // A lock from too many wrong passwords goes with the reset (the login ID as it was typed here).
+  await noteSuccess(db, input.identifier);
   return {
     person: { code: person.code, name: person.name, role: person.role.name },
     company: person.company,

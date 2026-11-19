@@ -111,7 +111,25 @@ describe('readiness and alerts', () => {
         { key: 'disk', ok: true, note: 'pg=41 backups=63 uploads=12', at: at(2) },
       ],
     });
+    // The queue check counts the whole database, and no worker runs during tests: what earlier test files
+    // left waiting is settled first, so this test starts from a known, empty queue.
+    await db.domainEvent.updateMany({ where: { dispatchedAt: null }, data: { dispatchedAt: new Date() } });
+    await db.outbox.updateMany({ where: { status: 'QUEUED' }, data: { status: 'SKIPPED' } });
     const fine = await runChecks(db, { uploadDir: '/nonexistent', production: true, startedAt });
+    expect(fine.find((c) => c.key === 'queue')).toMatchObject({ state: 'ok' });
+    // 201 events nobody handled for ten minutes: the queue is reported as stuck, then handled again.
+    const company = await makeCompany(ctx.app);
+    await db.domainEvent.createMany({
+      data: Array.from({ length: 201 }, () => ({
+        companyId: company.company.id,
+        name: 'test.stuck',
+        occurredAt: at(10),
+      })),
+    });
+    const stuck = await runChecks(db, { uploadDir: '/nonexistent', production: true, startedAt });
+    expect(stuck.find((c) => c.key === 'queue')).toMatchObject({ state: 'fail' });
+    expect(stuck.find((c) => c.key === 'queue')!.message).toMatch(/201 events have waited/);
+    await db.domainEvent.updateMany({ where: { name: 'test.stuck' }, data: { dispatchedAt: new Date() } });
     expect(fine.find((c) => c.key === 'worker')).toMatchObject({ state: 'ok' });
     expect(fine.find((c) => c.key === 'backup')).toMatchObject({ state: 'ok' });
     expect(fine.find((c) => c.key === 'disk')).toMatchObject({ state: 'ok', message: '63% full (backups)' });

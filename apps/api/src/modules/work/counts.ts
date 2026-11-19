@@ -1,6 +1,6 @@
 import type { Db } from '@mono/db';
 import { addDays, localDate, zonedToUtc } from '@mono/shared';
-import { effectiveVerifier } from '../delegation/service';
+import { verifierWhere } from '../delegation/queries';
 import { moduleSettings } from './settings';
 
 /** "My pending work": tasks, checklists due today, slips and tickets waiting on me, and the EA's captures to sort. */
@@ -11,13 +11,12 @@ export async function pendingCounts(db: Db, companyId: string, userId: string) {
   });
   const endOfToday = zonedToUtc(addDays(localDate(new Date(), company.timezone), 1), 0, company.timezone);
   const s = await moduleSettings(db, companyId, 'delegation');
-  const [doing, verifying, runs, runsToVerify] = await Promise.all([
+  const [doing, toVerify, runs, runsToVerify] = await Promise.all([
     db.task.count({
       where: { companyId, deletedAt: null, doerId: userId, status: { in: ['AWAITING_ACCEPTANCE', 'OPEN'] } },
     }),
-    db.task.findMany({
-      where: { companyId, deletedAt: null, status: 'PENDING_VERIFY' },
-      select: { verifierId: true, creatorId: true, doerId: true },
+    db.task.count({
+      where: { companyId, deletedAt: null, status: 'PENDING_VERIFY', ...verifierWhere(userId, s) },
     }),
     db.checklistRun.count({
       where: {
@@ -32,7 +31,6 @@ export async function pendingCounts(db: Db, companyId: string, userId: string) {
       where: { companyId, verifierId: userId, status: 'PENDING_VERIFY', master: { deletedAt: null } },
     }),
   ]);
-  const toVerify = verifying.filter((t) => effectiveVerifier(t, s) === userId).length;
   const [slipS, eaS] = await Promise.all([
     moduleSettings(db, companyId, 'slip'),
     moduleSettings(db, companyId, 'ea'),

@@ -30,7 +30,8 @@
     "seed:demo": "tsx prisma/seed-demo.ts",
     "seed:ggm": "tsx prisma/seed-ggm.ts",
     "reset-password": "tsx --env-file-if-exists=.env prisma/reset-password.ts",
-    "postdb:migrate": "prisma generate"
+    "postdb:migrate": "prisma generate",
+    "test:tz": "for z in Asia/Kolkata America/Los_Angeles Pacific/Kiritimati; do echo \"== server clock: $z\"; TZ=$z vitest run --project shared || exit 1; done"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

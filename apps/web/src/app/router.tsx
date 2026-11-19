@@ -129,10 +129,11 @@ const placeholderRoutes = ALL_ITEMS.filter((i) => i.phase > 0).map((i) => ({
 }));
 
 export const router = createBrowserRouter([
-  { path: '/login', element: <LoginPage /> },
+  { path: '/login', element: <LoginPage />, errorElement: <RouteError /> },
   // Public "share a form" link: no sign-in.
   {
     path: '/f/:token',
+    errorElement: <RouteError />,
     element: (
       <Suspense fallback={null}>
         <PublicFormPage />
@@ -142,6 +143,7 @@ export const router = createBrowserRouter([
   // The guest's booking voucher and the QR page of a room (phase 17) — no sign-in.
   {
     path: '/stay/:token',
+    errorElement: <RouteError />,
     element: (
       <Suspense fallback={null}>
         <StayVoucherPage />
@@ -150,6 +152,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/room/:token',
+    errorElement: <RouteError />,
     element: (
       <Suspense fallback={null}>
         <RoomRequestPage />
@@ -159,6 +162,7 @@ export const router = createBrowserRouter([
   // Public table booking (phase 16): an outlet's page and the guest's own link — no sign-in.
   {
     path: '/book/manage/:token',
+    errorElement: <RouteError />,
     element: (
       <Suspense fallback={null}>
         <PublicManagePage />
@@ -167,6 +171,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/rooms/:token',
+    errorElement: <RouteError />,
     element: (
       <Suspense fallback={null}>
         <PublicRoomsPage />
@@ -175,6 +180,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/pulse/:token',
+    errorElement: <RouteError />,
     element: (
       <Suspense fallback={null}>
         <PublicPulsePage />
@@ -183,6 +189,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/book/:token',
+    errorElement: <RouteError />,
     element: (
       <Suspense fallback={null}>
         <PublicBookPage />

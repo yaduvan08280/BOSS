@@ -44,6 +44,7 @@ model Task {
   @@index([companyId, branchId])
   /// The whole sheet in planned order.
   @@index([companyId, plannedAt])
+  @@index([companyId, status, doneAt])
   @@map("tasks")
 }
 
@@ -68,6 +69,7 @@ model TaskEvent {
 
   @@index([companyId, taskId, createdAt])
   @@index([companyId, fromUserId, type])
+  @@index([taskId, createdAt])
   @@map("task_events")
 }
 

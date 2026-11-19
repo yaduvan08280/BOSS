@@ -15,6 +15,8 @@ export type PoolRule = {
   statementTimeoutMs?: number;
   /** Shown in pg_stat_activity, so "who holds this lock" has an answer. */
   name?: string;
+  /** The pool does not keep the process alive while its connections are idle (side pools). */
+  exitOnIdle?: boolean;
 };
 
 const num = (value: string | undefined, fallback: number) => {
@@ -32,6 +34,7 @@ export function createPrisma(url = process.env.DATABASE_URL, rule: PoolRule = {}
     connectionTimeoutMillis: 10_000,
     idleTimeoutMillis: 30_000,
     application_name: rule.name ?? process.env.DB_APP_NAME ?? 'mono',
+    allowExitOnIdle: rule.exitOnIdle ?? false,
     // Limits the database enforces on every connection of this process: no statement runs for ever, nothing
     // waits on a lock for more than 10 s, and a transaction left open and idle is closed after a minute —
     // so one stuck request cannot hold a lock (or a connection) until somebody restarts the server.

@@ -15,6 +15,8 @@ DATA_DIR="${DATA_DIR:-/srv/mono}"
 WEB_PORT="$(grep -E '^WEB_PORT=' "$ENV_FILE" | tail -1 | cut -d= -f2- | tr -d '"' || true)"
 WEB_PORT="${WEB_PORT:-8080}"
 B="$DATA_DIR/backups"
+# Images are rebuilt from this checkout unless RESTORE_NO_BUILD=1 (the images on the machine are used as they are).
+BUILD="--build"; [ "${RESTORE_NO_BUILD:-}" = "1" ] && BUILD=""
 
 if [ $# -lt 1 ]; then
   echo "Backups in $B:"
@@ -49,7 +51,7 @@ echo "==> 1/5 Stopping the app (the database keeps running)"
 "$C" stop api worker web >/dev/null 2>&1 || true
 
 echo "==> 2/5 Starting the database"
-"$C" up -d --build --wait db backup
+"$C" up -d $BUILD --wait db backup
 
 echo "==> 3/5 Restoring the database from $DUMP"
 "$C" exec -T backup sh -c "dropdb --force --if-exists mono && createdb mono && pg_restore --no-owner --exit-on-error -d mono /backups/mono-db-$STAMP.dump"
@@ -68,7 +70,7 @@ if [ -d "$LIVE" ]; then
 fi
 
 echo "==> 5/5 Starting MONO (newer migrations are applied first)"
-"$C" up -d --build
+"$C" up -d $BUILD
 i=0
 until curl -fsS "http://127.0.0.1:$WEB_PORT/api/health" >/dev/null 2>&1; do
   i=$((i + 1))

@@ -16,6 +16,8 @@ val() { grep -E "^$1=" "$ENV_FILE" | tail -1 | cut -d= -f2- | tr -d '"' || true;
 DATA_DIR="$(val DATA_DIR)"; DATA_DIR="${DATA_DIR:-/srv/mono}"
 WEB_PORT="$(val WEB_PORT)"; WEB_PORT="${WEB_PORT:-8080}"
 B="$DATA_DIR/backups"
+# Images are rebuilt from this checkout unless RESTORE_NO_BUILD=1 (the images on the machine are used as they are).
+BUILD="--build"; [ "${RESTORE_NO_BUILD:-}" = "1" ] && BUILD=""
 
 if [ $# -lt 1 ]; then
   echo "Base copies in $B/base (each can be rolled forward to any minute after it was taken):"
@@ -94,7 +96,7 @@ if [ "${PITR_DB_ONLY:-}" = "1" ]; then
 fi
 
 echo "==> 5/5 Starting MONO (newer migrations are applied first)"
-"$C" up -d --build
+"$C" up -d $BUILD
 i=0
 until curl -fsS "http://127.0.0.1:$WEB_PORT/api/health" >/dev/null 2>&1; do
   i=$((i + 1))

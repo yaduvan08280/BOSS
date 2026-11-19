@@ -1,4 +1,4 @@
-import { nextCounter, type Db, type Tx } from '@mono/db';
+import { takeNumber, type Db, type Tx } from '@mono/db';
 import { businessDay, localDate, type HospRules, type OutletCharges } from '@mono/shared';
 import { AppError, notFound } from '../../lib/errors';
 import { can, type Actor } from '../work/actor';
@@ -57,9 +57,13 @@ export async function needOpenDay(db: Db | Tx, outlet: PosOutlet, day: string) {
       `${outlet.name}'s day ${day.split('-').reverse().join('/')} is closed`,
     );
 }
-/** The next number of a kind (order, ticket) at an outlet that business day. */
-export const dayNumber = (tx: Tx, companyId: string, kind: 'order' | 'kot', outletId: string, day: string) =>
-  nextCounter(tx, companyId, `pos.${kind}:${outletId}`, day);
+/**
+ * The next number of a kind (order, ticket) at an outlet that business day. Taken at once, outside the
+ * caller's transaction (decision 251): thirty devices at one outlet do not wait for each other's orders, and
+ * a number whose order then failed is skipped.
+ */
+export const dayNumber = (companyId: string, kind: 'order' | 'kot', outletId: string, day: string) =>
+  takeNumber(companyId, `pos.${kind}:${outletId}`, day);
 
 export async function isOwner(db: Db | Tx, actor: Actor) {
   if (actor.permissions.includes('*')) return true;

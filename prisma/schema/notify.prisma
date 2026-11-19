@@ -120,6 +120,9 @@ model Outbox {
   @@index([channel, providerId])
   /// The daily clean-up: finished messages by age.
   @@index([status, createdAt])
+  /// "Was this event already queued?" — asked for every event the worker handles.
+  @@index([eventId])
+  @@index([status, updatedAt])
   @@map("outbox")
 }
 

@@ -77,7 +77,8 @@ export const eaMachine = defineMachine<EaStage, EaAction, EaRole, EaContext>({
     // The system marks a delegated item done when its task is done.
     { from: EA_LIVE, action: 'done', to: 'DONE', roles: [...PEOPLE, 'system'] },
     { from: [...EA_LIVE, 'DONE'], action: 'close', to: 'CLOSED', roles: PEOPLE },
-    { from: ['DONE', 'CLOSED'], action: 'reopen', to: 'CAPTURED', roles: PEOPLE },
+    // A done item can be brought back; a closed one is final (it is no longer carried — §5.5).
+    { from: 'DONE', action: 'reopen', to: 'CAPTURED', roles: PEOPLE },
     {
       from: 'SCHEDULED',
       action: 'missDay',

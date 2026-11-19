@@ -6,6 +6,7 @@ import {
   scorecard,
   weekOf,
   weekTiles,
+  type DelegationSettings,
   type TaskStatus,
 } from '@mono/shared';
 import { notFound } from '../../lib/errors';
@@ -37,6 +38,21 @@ export async function visibleWhere(db: Db | Tx, actor: Actor, scope: Scope): Pro
   return { ...base, OR: mine };
 }
 
+/**
+ * `effectiveVerifier(task) === userId` as a database condition, so "what waits for my check" is counted by
+ * the database instead of reading every waiting task of the company on each screen.
+ */
+export function verifierWhere(userId: string, s: DelegationSettings): Prisma.TaskWhereInput {
+  const fallback: Prisma.TaskWhereInput[] = !s.eaVerifies
+    ? []
+    : s.eaUserId
+      ? s.eaUserId === userId
+        ? [{ verifierId: null }]
+        : []
+      : [{ verifierId: null, creatorId: userId }];
+  return { doerId: { not: userId }, OR: [{ verifierId: userId }, ...fallback] };
+}
+
 export async function defaultScope(db: Db | Tx, actor: Actor): Promise<Scope> {
   if (can(actor, 'delegation.admin')) return 'all';
   return (await teamOf(db, actor.companyId, actor.userId)).length ? 'team' : 'mine';
@@ -56,6 +72,10 @@ const TAB_STATUS: Record<string, TaskStatus[]> = {
   verification: ['PENDING_VERIFY'],
   done: ['DONE'],
 };
+
+/** A tab of the delegation sheet shows at most this many tasks; the tab's count says how many there are. */
+export const TASKS_SHOWN = 500;
+const COUNT_UP_TO = 10_000;
 
 export async function listTasks(db: Db, actor: Actor, query: TaskListQuery) {
   const scope = query.scope ?? (await defaultScope(db, actor));
@@ -82,19 +102,27 @@ export async function listTasks(db: Db, actor: Actor, query: TaskListQuery) {
     });
   }
   const s = await moduleSettings(db, actor.companyId, 'delegation');
-  const all = await db.task.findMany({ where, orderBy: [{ plannedAt: 'asc' }], take: 1000 });
-  const counts = { pending: 0, verification: 0, done: 0 };
-  for (const t of all) {
-    if (TAB_STATUS.pending!.includes(t.status as TaskStatus)) counts.pending++;
-    else if (t.status === 'PENDING_VERIFY') counts.verification++;
-    else if (t.status === 'DONE') counts.done++;
-  }
+  // Counted and filtered by the database: reading "the first thousand" and choosing the tab afterwards lost
+  // every open task once a person could see more than a thousand old ones.
   const tab = query.tab ?? 'pending';
-  const rows =
-    tab === 'all'
-      ? all.filter((t) => t.status !== 'CANCELLED')
-      : all.filter((t) => TAB_STATUS[tab]!.includes(t.status as TaskStatus));
-  if (tab === 'done') rows.sort((a, b) => (b.doneAt?.getTime() ?? 0) - (a.doneAt?.getTime() ?? 0));
+  const tabWhere: Prisma.TaskWhereInput =
+    tab === 'all' ? { status: { not: 'CANCELLED' } } : { status: { in: TAB_STATUS[tab]! } };
+  // Pending and waiting work: the oldest due first. Finished work: the latest first. "All": the latest 500
+  // by planned date, shown oldest first as before.
+  const order: Prisma.TaskOrderByWithRelationInput[] =
+    tab === 'done' ? [{ doneAt: 'desc' }] : [{ plannedAt: tab === 'all' ? 'desc' : 'asc' }, { id: 'asc' }];
+  // Each tab's count stops at COUNT_UP_TO: nobody needs the exact number of tasks finished over the years,
+  // and counting half a million rows on every visit took a second.
+  const countOf = (status: TaskStatus[]) =>
+    db.task.count({ where: { AND: [where, { status: { in: status } }] }, take: COUNT_UP_TO });
+  const [pending, verification, done, found] = await Promise.all([
+    countOf(TAB_STATUS.pending!),
+    countOf(TAB_STATUS.verification!),
+    countOf(TAB_STATUS.done!),
+    db.task.findMany({ where: { AND: [where, tabWhere] }, orderBy: order, take: TASKS_SHOWN }),
+  ]);
+  const counts = { pending, verification, done };
+  const rows = tab === 'all' ? found.reverse() : found;
   const attachments = await db.attachment.groupBy({
     by: ['entityId'],
     where: {
@@ -115,7 +143,7 @@ export async function listTasks(db: Db, actor: Actor, query: TaskListQuery) {
   return {
     scope,
     counts,
-    tasks: rows.slice(0, 500).map((t) => {
+    tasks: rows.map((t) => {
       const ctx = {
         doerMustAccept: s.doerMustAccept,
         allowReopen: s.allowReopen,
@@ -191,20 +219,24 @@ export async function myTiles(db: Db, actor: Actor) {
     },
   });
   const live = mine.filter((t) => t.status === 'OPEN' || t.status === 'AWAITING_ACCEPTANCE');
-  // Small companies: read the waiting verifications and keep the ones this person must check.
-  const waiting = await db.task.findMany({
-    where: { companyId: actor.companyId, deletedAt: null, status: 'PENDING_VERIFY' },
-    select: { verifierId: true, creatorId: true, doerId: true, doneAt: true },
-  });
-  const toVerify = waiting.filter((t) => effectiveVerifier(t, s) === actor.userId);
+  const mineToCheck = {
+    companyId: actor.companyId,
+    deletedAt: null,
+    status: 'PENDING_VERIFY',
+    ...verifierWhere(actor.userId, s),
+  } satisfies Prisma.TaskWhereInput;
+  const [toVerify, verifyLate] = await Promise.all([
+    db.task.count({ where: mineToCheck }),
+    db.task.count({
+      where: { ...mineToCheck, doneAt: { lt: new Date(now.getTime() - s.verifyWithinMinutes * 60_000) } },
+    }),
+  ]);
   const tiles = weekTiles(actor.userId, mine, week, now);
   return {
     pending: live.length,
     overdue: live.filter((t) => t.plannedAt < now).length,
-    toVerify: toVerify.length,
-    verifyLate: toVerify.filter(
-      (t) => t.doneAt && now.getTime() - t.doneAt.getTime() > s.verifyWithinMinutes * 60_000,
-    ).length,
+    toVerify,
+    verifyLate,
     verifySlaMinutes: s.verifyWithinMinutes,
     doneThisWeek: tiles.doneThisWeek,
     doneOnTime: tiles.doneOnTime,

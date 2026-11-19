@@ -43,9 +43,8 @@ const rolesOf = (actor: Actor, bill?: { createdById: string | null }): BillRole[
   ...(can(actor, 'money.edit') ? (['accounts'] as const) : []),
   ...(can(actor, 'money.create') && (!bill || bill.createdById === actor.userId) ? (['maker'] as const) : []),
 ];
-/** What a paper still has to be paid. */
-export const dueOf = (b: { total: bigint; credited: bigint; settled: bigint }) =>
-  Number(b.total - b.credited - b.settled);
+export { allocate, dueOf, settle } from './allocate';
+import { allocate, dueOf, settle } from './allocate';
 
 type Seller = { head: Letterhead; regime: TaxRegime; state: string | null };
 /** Who the paper is from: the branch's entity (its regime, state and currency), else the company itself. */
@@ -325,57 +324,6 @@ async function issueIn(tx: Tx, actor: Actor, bill: Bill, opts: Options) {
     },
   );
   return tx.bill.findUniqueOrThrow({ where: { id: bill.id } });
-}
-
-/** Set a receipt against invoices (or a payment against purchase bills): the ones named, else the oldest first. */
-async function allocate(tx: Tx, money: Bill, named?: { billId: string; amount: number }[]) {
-  const owedTypes = money.type === 'RECEIPT' ? ['INVOICE', 'DEBIT_NOTE'] : ['PURCHASE_BILL'];
-  const open = await tx.bill.findMany({
-    where: {
-      companyId: money.companyId,
-      partyId: money.partyId,
-      type: { in: owedTypes },
-      status: { in: ['ISSUED', 'PART_PAID'] },
-    },
-    orderBy: [{ date: 'asc' }, { createdAt: 'asc' }],
-  });
-  let left = Number(money.total);
-  const plan: { bill: Bill; amount: number }[] = [];
-  if (named?.length) {
-    for (const n of named) {
-      const bill = open.find((b) => b.id === n.billId);
-      if (!bill) throw new AppError(400, 'VALIDATION_FAILED', 'That bill is not waiting for money');
-      if (n.amount > dueOf(bill) || n.amount > left)
-        throw new AppError(400, 'VALIDATION_FAILED', 'That is more than is owed on the bill');
-      plan.push({ bill, amount: n.amount });
-      left -= n.amount;
-    }
-  } else {
-    for (const bill of open) {
-      if (left <= 0) break;
-      const amount = Math.min(left, dueOf(bill));
-      if (amount > 0) plan.push({ bill, amount });
-      left -= amount;
-    }
-  }
-  for (const { bill, amount } of plan) await settle(tx, bill, money.id, amount);
-  await tx.bill.update({ where: { id: money.id }, data: { settled: BigInt(Number(money.total) - left) } });
-}
-
-/** One amount set against one paper (negative takes it back): the paper's `settled` and status follow. */
-export async function settle(tx: Tx, bill: Bill, paymentId: string, amount: number) {
-  const settled = bill.settled + BigInt(amount);
-  const to = transition(billMachine, {
-    from: bill.status as 'ISSUED',
-    action: 'settle',
-    roles: ['system'],
-    ctx: { due: dueOf({ ...bill, settled }), total: Number(bill.total - bill.credited), money: false },
-  }).to;
-  await tx.bill.update({ where: { id: bill.id }, data: { settled, status: to } });
-  if (amount > 0)
-    await tx.billAllocation.create({
-      data: { companyId: bill.companyId, billId: bill.id, paymentId, amount: BigInt(amount) },
-    });
 }
 
 /** A receipt or payment entered by mistake: voided with a reason; what it had settled is owed again. */

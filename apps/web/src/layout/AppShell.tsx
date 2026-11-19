@@ -3,6 +3,8 @@ import { Bot } from 'lucide-react';
 import { useState, Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router';
 import { InstallBanner } from './InstallBanner';
+import { OfflineBanner } from './OfflineBanner';
+import { PageBoundary } from '@/app/RouteError';
 import { PageSkeleton } from '@/components/page';
 import { useTranslation } from 'react-i18next';
 import { canOpenSystemMaster, type Me } from '@mono/shared';
@@ -97,6 +99,7 @@ export function AppShell({ me }: { me: Me }) {
 
       <div className={cn('transition-[padding] duration-200', collapsed ? 'lg:pl-[76px]' : 'lg:pl-64')}>
         <ShadowBanner />
+        <OfflineBanner />
         <TopBar
           me={me}
           title={title}
@@ -118,7 +121,9 @@ export function AppShell({ me }: { me: Me }) {
             <Suspense fallback={<PageSkeleton />}>
               <InstallBanner appName={me.company.appName} />
               <SpotCheckCard />
-              <Outlet />
+              <PageBoundary resetKey={pathname}>
+                <Outlet />
+              </PageBoundary>
             </Suspense>
           )}
         </main>

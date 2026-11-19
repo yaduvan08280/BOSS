@@ -1,4 +1,4 @@
-import type { Tx } from './client';
+import { createPrisma, type Db, type Tx } from './client';
 
 /** Atomically take the next human number for (company, key, fy). Safe under concurrency. */
 export async function nextCounter(tx: Tx, companyId: string, key: string, fy = ''): Promise<number> {
@@ -9,6 +9,21 @@ export async function nextCounter(tx: Tx, companyId: string, key: string, fy = '
   const value = rows[0]?.value;
   if (value === undefined) throw new Error('Counter update returned nothing');
   return Number(value);
+}
+
+let side: Db | undefined;
+
+/**
+ * A number taken at once, on a small pool of its own, outside whatever transaction the caller is in.
+ * `nextCounter` keeps its row locked until the caller's transaction ends, so everyone else who needs the
+ * same series waits for all of that transaction's work. Use this where a busy counter is shared by many
+ * people at once and a missing number does no harm (a restaurant's order and kitchen-ticket numbers of the
+ * day): if the caller's transaction fails afterwards the number is simply not used. Never for a paper whose
+ * numbers must have no gaps (invoices, receipts) — those stay with `nextCounter`.
+ */
+export async function takeNumber(companyId: string, key: string, fy = ''): Promise<number> {
+  side ??= createPrisma(undefined, { max: 3, name: 'mono-numbers', exitOnIdle: true });
+  return nextCounter(side, companyId, key, fy);
 }
 
 /** `EMP-001`, `BOP/26-27/0004` style formatting. */

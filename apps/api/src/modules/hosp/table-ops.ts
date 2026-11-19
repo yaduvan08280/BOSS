@@ -94,7 +94,7 @@ export async function tableOp(db: Db, actor: Actor, orderId: string, input: z.in
             companyId: actor.companyId,
             branchId: outlet.branchId,
             outletId: outlet.id,
-            number: await dayNumber(tx, actor.companyId, 'order', outlet.id, order.businessDay),
+            number: await dayNumber(actor.companyId, 'order', outlet.id, order.businessDay),
             businessDay: order.businessDay,
             type: 'DINE_IN',
             tableIds: [op.toTableId],
