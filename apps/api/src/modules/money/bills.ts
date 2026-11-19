@@ -242,17 +242,6 @@ async function issueIn(tx: Tx, actor: Actor, bill: Bill, opts: Options) {
     company.timezone,
     company.fyStartMonth ?? 4,
   ).short;
-  let number = opts.number;
-  if (!number) {
-    // One series per legal entity and kind of paper (a GSTIN's own invoice numbers); the company's own otherwise.
-    const head = await letterheadOf(tx, bill.companyId, bill.branchId);
-    const series = seriesOf('entity', head, `bill:${bill.type}`, BILL_PREFIX[bill.type as BillType], fy);
-    number = series.number(await nextCounter(tx, bill.companyId, series.counterKey, fy));
-  }
-  const issued = await tx.bill.update({
-    where: { id: bill.id },
-    data: { status: to, number, fy, issuedAt: new Date() },
-  });
   const mode = bill.modeId
     ? await tx.paymentMode.findFirst({ where: { id: bill.modeId }, select: { kind: true } })
     : null;
@@ -266,17 +255,6 @@ async function issueIn(tx: Tx, actor: Actor, bill: Bill, opts: Options) {
     total: Number(bill.total),
     mode: mode?.kind.toLowerCase() ?? null,
   });
-  if (lines.length)
-    await tx.voucher.create({
-      data: {
-        companyId: bill.companyId,
-        entityId: bill.entityId,
-        billId: bill.id,
-        date: bill.date,
-        narration: `${issued.number}`,
-        lines: lines as unknown as Prisma.InputJsonValue,
-      },
-    });
   // What the paper does to others: a credit note lowers its bill; money is set against what is owed.
   if (bill.type === 'CREDIT_NOTE' && bill.againstId) {
     const against = await tx.bill.findUniqueOrThrow({ where: { id: bill.againstId } });
@@ -296,7 +274,32 @@ async function issueIn(tx: Tx, actor: Actor, bill: Bill, opts: Options) {
       },
     });
   }
-  if (bill.type === 'RECEIPT' || bill.type === 'VENDOR_PAYMENT') await allocate(tx, issued, opts.allocate);
+  if (bill.type === 'RECEIPT' || bill.type === 'VENDOR_PAYMENT') await allocate(tx, bill, opts.allocate);
+  // The number comes as late as it can. Its series may have no gaps, so whoever takes a number holds the
+  // series until their transaction ends and everyone else issuing the same kind of paper waits: everything
+  // that does not need the number (the voucher's lines, what the paper settles) is therefore done first.
+  let number = opts.number;
+  if (!number) {
+    // One series per legal entity and kind of paper (a GSTIN's own invoice numbers); the company's own otherwise.
+    const head = await letterheadOf(tx, bill.companyId, bill.branchId);
+    const series = seriesOf('entity', head, `bill:${bill.type}`, BILL_PREFIX[bill.type as BillType], fy);
+    number = series.number(await nextCounter(tx, bill.companyId, series.counterKey, fy));
+  }
+  const issued = await tx.bill.update({
+    where: { id: bill.id },
+    data: { status: to, number, fy, issuedAt: new Date() },
+  });
+  if (lines.length)
+    await tx.voucher.create({
+      data: {
+        companyId: bill.companyId,
+        entityId: bill.entityId,
+        billId: bill.id,
+        date: bill.date,
+        narration: `${issued.number}`,
+        lines: lines as unknown as Prisma.InputJsonValue,
+      },
+    });
   await writeAudit(
     tx,
     { companyId: bill.companyId, actorId: actor.userId },
@@ -323,7 +326,7 @@ async function issueIn(tx: Tx, actor: Actor, bill: Bill, opts: Options) {
       },
     },
   );
-  return tx.bill.findUniqueOrThrow({ where: { id: bill.id } });
+  return issued;
 }
 
 /** A receipt or payment entered by mistake: voided with a reason; what it had settled is owed again. */

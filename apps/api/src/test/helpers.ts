@@ -99,11 +99,48 @@ export async function signedIn(app: App, identifier: string, password: string) {
     patch: (url: string, body: unknown) => call('PATCH', url, body),
     del: (url: string) => call('DELETE', url),
     /** A download: the whole response (headers, `body` as text, `rawPayload` as bytes). */
-    raw: (url: string) => app.inject({ method: 'GET', url, headers: { cookie: asHeader(jar), origin: ORIGIN } }),
+    raw: (url: string) =>
+      app.inject({ method: 'GET', url, headers: { cookie: asHeader(jar), origin: ORIGIN } }),
   };
 }
 
 export async function ownerClient(app: App) {
   const c = await makeCompany(app);
   return { ...c, api: await signedIn(app, c.mobile, c.password) };
+}
+
+/**
+ * The same database client, counting what a job asks it: every call on a model (`task.findMany`) and the rows
+ * the reads bring back. For tests that prove a sweep does not read again what it has already dealt with.
+ */
+export function counting<T extends object>(db: T) {
+  const seen = { calls: [] as string[], rows: 0 };
+  const proxy = new Proxy(db, {
+    get(target, model) {
+      const m = (target as Record<string | symbol, unknown>)[model];
+      if (typeof m === 'function') {
+        // Hand-written SQL (`$queryRaw`, `$executeRaw`) is counted under its own name.
+        if (typeof model === 'string' && /^\$(query|execute)/.test(model))
+          return (...args: unknown[]) => {
+            seen.calls.push(model);
+            return (m as (...a: unknown[]) => unknown).apply(target, args);
+          };
+        return m.bind(target);
+      }
+      if (!m || typeof m !== 'object' || typeof model !== 'string' || model.startsWith('$')) return m;
+      return new Proxy(m, {
+        get(delegate, fn) {
+          const f = (delegate as Record<string | symbol, unknown>)[fn];
+          if (typeof f !== 'function') return f;
+          return async (...args: unknown[]) => {
+            seen.calls.push(`${model}.${String(fn)}`);
+            const r = await (f as (...a: unknown[]) => Promise<unknown>).apply(delegate, args);
+            if (Array.isArray(r)) seen.rows += r.length;
+            return r;
+          };
+        },
+      });
+    },
+  });
+  return { db: proxy, seen };
 }

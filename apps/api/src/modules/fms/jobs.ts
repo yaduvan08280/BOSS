@@ -27,6 +27,12 @@ export async function watchFmsSteps(db: Db, now = new Date()) {
         type: { not: 'AUTO' },
         record: { status: 'RUNNING', deletedAt: null },
         plannedAt: { lt: new Date(now.getTime() + HOUR) },
+        // Only steps that still have something to be told: a late step whose notices have all gone out
+        // stays open for days, and need not be read again every five minutes.
+        OR: [
+          { lateNotifiedAt: null },
+          { solverNotifiedAt: null, record: { flow: { solverId: { not: null } } } },
+        ],
         ...(after ? { id: { gt: after } } : {}),
       },
       include: { record: { include: { flow: true } } },

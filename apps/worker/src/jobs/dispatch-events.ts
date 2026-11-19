@@ -8,11 +8,20 @@ export type HandlerRegistry = Partial<Record<DomainEventName | '*', EventHandler
 
 export const MAX_ATTEMPTS = 5;
 
+/** Asked once per batch: the ids of events no rule or webhook is waiting for (their '*' handlers are skipped). */
+export type Unheard = (db: Db, events: DomainEvent[]) => Promise<Set<string>>;
+
 /**
  * Take a batch of undispatched outbox events (row-locked, so several workers never double-send),
  * run their handlers, and mark them dispatched. A failing event is retried later with backoff.
+ * Events that went well are marked in one statement at the end of the batch.
  */
-export async function dispatchPending(db: Db, handlers: HandlerRegistry, batchSize = 50): Promise<number> {
+export async function dispatchPending(
+  db: Db,
+  handlers: HandlerRegistry,
+  batchSize = 50,
+  unheard?: Unheard,
+): Promise<number> {
   return db.$transaction(async (tx) => {
     const rows = await tx.$queryRaw<{ id: string }[]>`
       SELECT id FROM domain_events
@@ -26,11 +35,16 @@ export async function dispatchPending(db: Db, handlers: HandlerRegistry, batchSi
       where: { id: { in: rows.map((r) => r.id) } },
       orderBy: { occurredAt: 'asc' },
     });
+    const quiet = unheard ? await unheard(db, events) : new Set<string>();
+    const done: string[] = [];
     for (const event of events) {
-      const list = [...(handlers[event.name as DomainEventName] ?? []), ...(handlers['*'] ?? [])];
+      const list = [
+        ...(handlers[event.name as DomainEventName] ?? []),
+        ...(quiet.has(event.id) ? [] : (handlers['*'] ?? [])),
+      ];
       try {
         for (const handle of list) await handle(event, db);
-        await tx.domainEvent.update({ where: { id: event.id }, data: { dispatchedAt: new Date() } });
+        done.push(event.id);
       } catch (err) {
         await tx.domainEvent.update({
           where: { id: event.id },
@@ -41,6 +55,8 @@ export async function dispatchPending(db: Db, handlers: HandlerRegistry, batchSi
         });
       }
     }
+    if (done.length)
+      await tx.domainEvent.updateMany({ where: { id: { in: done } }, data: { dispatchedAt: new Date() } });
     return events.length;
   });
 }

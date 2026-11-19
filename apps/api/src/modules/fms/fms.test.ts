@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { makeApp, ownerClient, signedIn } from '../../test/helpers';
+import { counting, makeApp, ownerClient, signedIn } from '../../test/helpers';
 import { documentPdf } from './documents';
 import { runFmsWebhooks, watchFmsSteps } from './jobs';
 
@@ -273,6 +273,11 @@ describe('FMS', () => {
     });
     await watchFmsSteps(ctx.prisma);
     await watchFmsSteps(ctx.prisma);
+    // Everything about this step has been said: the next pass does not read it again (a late step stays
+    // open for days, and a company has thousands of them).
+    const watch = counting(ctx.prisma);
+    await watchFmsSteps(watch.db);
+    expect(watch.seen.rows).toBe(0);
     const ev = await ctx.prisma.domainEvent.findMany({
       where: { companyId: company.id, name: { in: ['fms.step_late', 'fms.step_stuck'] } },
     });

@@ -49,6 +49,7 @@ import {
   sweepChecklists,
   sweepSlips,
   sweepTickets,
+  unheardEvents,
   watchFmsSteps,
 } from '@mono/api/services';
 import { dispatchPending, type HandlerRegistry } from './jobs/dispatch-events';
@@ -186,7 +187,7 @@ await singleQueue(QUEUE_ESCALATIONS);
 await boss.work(
   QUEUE_DISPATCH,
   watched(QUEUE_DISPATCH, async () => {
-    while ((await dispatchPending(prisma, handlers)) > 0) {
+    while ((await dispatchPending(prisma, handlers, 50, unheardEvents)) > 0) {
       // keep draining until the outbox of events is empty
     }
   }),
