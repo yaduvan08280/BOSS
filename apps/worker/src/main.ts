@@ -52,6 +52,7 @@ import {
   unheardEvents,
   watchFmsSteps,
 } from '@mono/api/services';
+import { errorOf } from './error-of';
 import { dispatchPending, type HandlerRegistry } from './jobs/dispatch-events';
 import { notifyForEvent } from './notify/engine';
 import { processEscalations } from './notify/escalations';
@@ -94,7 +95,7 @@ async function singleQueue(name: string) {
 /** Log a worker error and keep it in System Master → Errors. */
 const report = (where: string) => (err: unknown) => {
   log.error({ err }, where);
-  const e = err instanceof Error ? err : new Error(String(err));
+  const e = errorOf(err);
   void recordError(prisma, { source: 'worker', message: e.message, stack: e.stack ?? null, path: where });
 };
 /** A job body whose errors are reported, then passed on so pg-boss retries it. */
