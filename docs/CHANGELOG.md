@@ -1,5 +1,28 @@
 # Changelog
 
+## 19/11/2026 — Kill drills, front-end weight, accessibility, more browser tests, eye review
+
+Numbers are in `docs/production-readiness.md`; decisions 258–261 in `CLAUDE.md`.
+
+- **Fixed — after the worker was killed, nothing went out for 15 minutes.** The queue now notices a dead job
+  in about 20 seconds and carries on; two workers at once never send a message twice.
+- **Fixed — a process step that issues stock said it could, then refused.** The preview now counts what the
+  main store can give, which is where the step takes from.
+- **Fixed — System Master → Errors showed a blank screen** when a health check was failing.
+- A payment at the POS takes its receipt number last, so thirty devices do not wait on each other; a clash
+  between two people is answered "try again" (409), never a server error.
+- The app loads only the language on screen (first load about 375 KB instead of 520 KB); long task lists draw
+  100 rows at a time; the top bar no longer jumps a second after loading.
+- Accessibility: every menu screen is checked by axe at 380 and 1440 px; boxes that scroll sideways can be
+  reached by keyboard; three faint texts were darkened.
+- Server logs no longer hold request headers, bodies or secret links.
+- Five more browser test files (money, stock, hospitality set-up, POS with two people, production and rates).
+- Every screen was read by eye at 1024 and 1440 px: 29 notification events that showed as raw keys
+  (`banquet.beo`) now have names in English and Hindi; "1 nights" / "1 stations" corrected; the count badge on
+  the open menu item is readable; several squeezed or clipped layouts at 1024 px fixed (CRM plan tiles, call
+  cards, My FMS steps, Business Engine chips, Google Drive steps, outlet comparison, templates, org chart
+  search, points of contact).
+
 ## 19/11/2026 — Database stability, health and load
 
 Measured on a copy grown to two years of a busy company (10 million rows); numbers and drills are in
