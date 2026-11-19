@@ -88,9 +88,8 @@ describe('delegation sweeps ask only for tasks that still need a message', () =>
     const watch = counting(ctx.prisma);
     await flagOverdueTasks(watch.db, now);
     expect(await told()).toBe(1);
-    // Companies are listed (one read); not one task row comes back for any of them.
-    const companies = await ctx.prisma.company.count({ where: { deletedAt: null } });
-    expect(watch.seen.rows).toBe(companies);
+    // Not one task of this company is read again (other test files' companies share this database).
+    expect(watch.seen.read.filter((r) => r.companyId === o.company.id)).toEqual([]);
 
     await flagOverdueTasks(ctx.prisma, new Date(now.getTime() + 24 * 3_600_000));
     expect(await told()).toBe(2);

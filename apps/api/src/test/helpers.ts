@@ -111,10 +111,10 @@ export async function ownerClient(app: App) {
 
 /**
  * The same database client, counting what a job asks it: every call on a model (`task.findMany`) and the rows
- * the reads bring back. For tests that prove a sweep does not read again what it has already dealt with.
+ * the reads bring back (`read` keeps the rows, so a test can look at its own company's only). For tests that prove a sweep does not read again what it has already dealt with.
  */
 export function counting<T extends object>(db: T) {
-  const seen = { calls: [] as string[], rows: 0 };
+  const seen = { calls: [] as string[], rows: 0, read: [] as Record<string, unknown>[] };
   const proxy = new Proxy(db, {
     get(target, model) {
       const m = (target as Record<string | symbol, unknown>)[model];
@@ -135,7 +135,10 @@ export function counting<T extends object>(db: T) {
           return async (...args: unknown[]) => {
             seen.calls.push(`${model}.${String(fn)}`);
             const r = await (f as (...a: unknown[]) => Promise<unknown>).apply(delegate, args);
-            if (Array.isArray(r)) seen.rows += r.length;
+            if (Array.isArray(r)) {
+              seen.rows += r.length;
+              seen.read.push(...(r as Record<string, unknown>[]));
+            }
             return r;
           };
         },

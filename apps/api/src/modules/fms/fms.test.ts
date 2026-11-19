@@ -277,7 +277,7 @@ describe('FMS', () => {
     // open for days, and a company has thousands of them).
     const watch = counting(ctx.prisma);
     await watchFmsSteps(watch.db);
-    expect(watch.seen.rows).toBe(0);
+    expect(watch.seen.read.filter((r) => r.companyId === company.id)).toEqual([]);
     const ev = await ctx.prisma.domainEvent.findMany({
       where: { companyId: company.id, name: { in: ['fms.step_late', 'fms.step_stuck'] } },
     });

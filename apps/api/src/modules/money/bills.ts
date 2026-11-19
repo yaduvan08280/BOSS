@@ -52,7 +52,7 @@ async function sellerOf(db: Db | Tx, companyId: string, branchId: string | null)
   const head = await letterheadOf(db, companyId, branchId);
   const from = head.entityId
     ? await db.legalEntity.findFirst({ where: { id: head.entityId }, select: { state: true } })
-    : await db.company.findUnique({ where: { id: companyId }, select: { state: true } });
+    : { state: head.companyState };
   // With no tax profile: a tax number means GST as before; none means nothing is charged.
   const regime = (head.taxRegime as TaxRegime | null) ?? (head.taxId ? 'GST' : 'NONE');
   return { head, regime, state: from?.state ?? null };
@@ -133,11 +133,13 @@ export async function createBillIn(tx: Tx, actor: Actor, input: BillInput, opts:
   const { seller, totals, money } = await workOutBill(tx, actor.companyId, input, branchId);
   if (money && totals.total <= 0) throw new AppError(400, 'VALIDATION_FAILED', 'Enter the amount');
   if (!money && !input.lines.length) throw new AppError(400, 'VALIDATION_FAILED', 'Add at least one line');
-  if (
-    input.modeId &&
-    !(await tx.paymentMode.count({ where: { id: input.modeId, companyId: actor.companyId } }))
-  )
-    throw notFound('Payment mode');
+  const mode = input.modeId
+    ? await tx.paymentMode.findFirst({
+        where: { id: input.modeId, companyId: actor.companyId },
+        select: { kind: true },
+      })
+    : null;
+  if (input.modeId && !mode) throw notFound('Payment mode');
   if (input.type === 'CREDIT_NOTE' || input.type === 'DEBIT_NOTE') {
     const against = input.againstId
       ? await tx.bill.findFirst({ where: { id: input.againstId, companyId: actor.companyId } })
@@ -175,7 +177,10 @@ export async function createBillIn(tx: Tx, actor: Actor, input: BillInput, opts:
       after: { type: input.type, total: totals.total },
     },
   );
-  return money || opts.issue ? issueIn(tx, actor, draft, opts) : draft;
+  // (What was just looked up — the letterhead with the company's clock, the payment mode — is handed on.)
+  return money || opts.issue
+    ? issueIn(tx, actor, draft, opts, { head: seller.head, modeKind: mode?.kind ?? null })
+    : draft;
 }
 
 /** Change a draft. An issued paper is never edited — it is corrected by a credit or debit note. */
@@ -226,7 +231,13 @@ export async function reserveNumbers(
   return out;
 }
 
-async function issueIn(tx: Tx, actor: Actor, bill: Bill, opts: Options) {
+async function issueIn(
+  tx: Tx,
+  actor: Actor,
+  bill: Bill,
+  opts: Options,
+  known?: { head: Letterhead; modeKind: string | null },
+) {
   const money = MONEY_BILLS.includes(bill.type as BillType);
   const ctx = { due: Number(bill.total), total: Number(bill.total), money };
   const to = transition(billMachine, {
@@ -235,18 +246,19 @@ async function issueIn(tx: Tx, actor: Actor, bill: Bill, opts: Options) {
     roles: opts.system ? ['system'] : rolesOf(actor, bill),
     ctx,
   }).to;
-  const company = await tx.company.findUniqueOrThrow({
-    where: { id: bill.companyId },
-    select: { timezone: true, fyStartMonth: true },
-  });
+  const head = known?.head ?? (await letterheadOf(tx, bill.companyId, bill.branchId));
   const fy = financialYear(
     new Date(`${bill.date}T12:00:00Z`),
-    company.timezone,
-    company.fyStartMonth ?? 4,
+    head.clock.timezone,
+    head.clock.fyStartMonth,
   ).short;
-  const mode = bill.modeId
-    ? await tx.paymentMode.findFirst({ where: { id: bill.modeId }, select: { kind: true } })
-    : null;
+  const mode = known
+    ? known.modeKind === null
+      ? null
+      : { kind: known.modeKind }
+    : bill.modeId
+      ? await tx.paymentMode.findFirst({ where: { id: bill.modeId }, select: { kind: true } })
+      : null;
   const lines = voucherFor({
     type: bill.type as BillType,
     partyId: bill.partyId,
@@ -284,6 +296,7 @@ async function issueIn(tx: Tx, actor: Actor, bill: Bill, opts: Options) {
     fy,
     prefix: BILL_PREFIX[bill.type as BillType],
     lines,
+    head,
     number: opts.number,
     beforeNumber: opts.beforeNumber,
   });

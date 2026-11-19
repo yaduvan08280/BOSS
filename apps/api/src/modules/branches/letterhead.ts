@@ -33,6 +33,9 @@ export type Letterhead = {
   /** The entity's currency (INR for the company itself) and its tax profile, when the accountant filled one. */
   currency: string;
   taxRegime: string | null;
+  /** The company's own state and clock, read with the letterhead so a paper need not ask for them again. */
+  companyState: string | null;
+  clock: { timezone: string; fyStartMonth: number };
   invoiceTitle: string | null;
   taxNote: string | null;
   taxRates: { name: string; percent: number }[];
@@ -50,7 +53,16 @@ export async function letterheadOf(
 ): Promise<Letterhead> {
   const company = await db.company.findUniqueOrThrow({
     where: { id: companyId },
-    select: { name: true, legalName: true, city: true, state: true, gstin: true, mobile: true },
+    select: {
+      name: true,
+      legalName: true,
+      city: true,
+      state: true,
+      gstin: true,
+      mobile: true,
+      timezone: true,
+      fyStartMonth: true,
+    },
   });
   const branch = branchId ? await db.branch.findFirst({ where: { id: branchId, companyId } }) : null;
   const entity = branch?.entityId
@@ -82,6 +94,8 @@ export async function letterheadOf(
     branchCode: branch ? (b.seriesCode ?? tail(branch.id)) : null,
     currency: entity?.currency ?? 'INR',
     taxRegime: e.tax?.regime ?? null,
+    companyState: company.state ?? null,
+    clock: { timezone: company.timezone, fyStartMonth: company.fyStartMonth ?? 4 },
     invoiceTitle: e.tax?.invoiceTitle ?? null,
     taxNote: e.tax?.note ?? null,
     taxRates: e.tax?.rates ?? [],

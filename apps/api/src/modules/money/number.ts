@@ -2,7 +2,7 @@ import { createId } from '@paralleldrive/cuid2';
 import type { Bill, Prisma, Tx } from '@mono/db';
 import { writeAudit } from '../../lib/audit';
 import { emitEvent } from '../../lib/events';
-import { letterheadOf, seriesOf } from '../branches/letterhead';
+import { seriesOf, type Letterhead } from '../branches/letterhead';
 import type { Actor } from '../work/actor';
 
 /**
@@ -23,6 +23,7 @@ export async function finishIssue(
     fy: string;
     prefix: string;
     lines: unknown[];
+    head: Letterhead;
     /** Carried over from before the engine: keep this number, take none from the series. */
     number?: string;
     beforeNumber?: (bill: Bill) => Promise<void>;
@@ -73,8 +74,7 @@ export async function finishIssue(
     return issued;
   }
   // One series per legal entity and kind of paper (a GSTIN's own invoice numbers); the company's own otherwise.
-  const head = await letterheadOf(tx, bill.companyId, bill.branchId);
-  const series = seriesOf('entity', head, `bill:${bill.type}`, p.prefix, p.fy);
+  const series = seriesOf('entity', p.head, `bill:${bill.type}`, p.prefix, p.fy);
   // What the paper looks like now (money set against other papers changed its `settled` a moment ago).
   const current = await tx.bill.findUniqueOrThrow({ where: { id: bill.id } });
   await p.beforeNumber?.(current);
