@@ -30,17 +30,17 @@ actions under 300 ms.
 
 | Action | Requests | p50 | p95 | p99 | Slowest |
 |---|---|---|---|---|---|
-| POS: open an order | 3,450 | 33 ms | 122 ms | 200 ms | 465 ms |
-| POS: send to kitchen | 3,450 | 64 ms | 197 ms | 288 ms | 445 ms |
-| POS: read the order | 3,450 | 16 ms | 65 ms | 107 ms | 224 ms |
-| POS: make the bill | 3,450 | 58 ms | 199 ms | 350 ms | 657 ms |
-| POS: take payment | 3,450 | 91 ms | **268 ms** | 482 ms | 1,207 ms |
-| Front desk reads | 4,451 | 22 ms | 84 ms | 141 ms | 297 ms |
-| Office reads | 21,979 | 30 ms | 125 ms | 175 ms | 397 ms |
+| POS: open an order | 3,488 | 25 ms | 77 ms | 122 ms | 251 ms |
+| POS: send to kitchen | 3,488 | 56 ms | 146 ms | 214 ms | 306 ms |
+| POS: read the order | 3,488 | 11 ms | 38 ms | 64 ms | 130 ms |
+| POS: make the bill | 3,488 | 44 ms | 118 ms | 192 ms | 506 ms |
+| POS: take payment | 3,488 | 72 ms | **193 ms** | 276 ms | 428 ms |
+| Front desk reads | 4,451 | 17 ms | 55 ms | 88 ms | 193 ms |
+| Office reads | 22,125 | 23 ms | 96 ms | 138 ms | 316 ms |
 
-43,680 requests in 15 minutes (48 a second), **0 failed**, with the worker running its sweeps on the same
-large company throughout. Target met: the slowest action's p95 is 268 ms against 300. The margin is not large,
-and it is a measurement of this 4-core sandbox with the load generator on the same machine.
+44,016 requests in 15 minutes (49 a second), **0 failed**, with the worker running its sweeps on the same
+large company throughout. Target met with room: the slowest action's p95 is 193 ms against 300. It is still a
+measurement of this 4-core sandbox with the load generator on the same machine.
 
 ### How it got there (the same test, same data, same machine)
 
@@ -54,8 +54,11 @@ and it is a measurement of this 4-core sandbox with the load generator on the sa
 | 6 | 0 errors, POS p95 290 ms over 15 min | — | — |
 | 7 | the same test repeated later: 0 errors, payment p95 **361 ms** (15 min), 454 ms (5 min) — a miss | three of the worker's five-minute sweeps read every waiting task, every late task and every open process step on each pass and asked about each in turn: 51 s of CPU a pass on this company, taken from the same four cores | the sweeps ask the database only for rows still owed a message (under 0.1 s a pass) |
 | 8 | 0 errors, payment p95 430 ms (5 min) | payments queued for the receipt number: about twelve statements followed it inside each transaction | a paper takes its number last — five statements follow it |
-| 9 | 0 errors, payment p95 294 ms (15 min) | two reads of the paid bill were still inside the transaction | read after it ends |
-| 10 | **0 errors, payment p95 268 ms, bill p95 199 ms over 15 min** | — | — |
+| 9 | 0 errors, payment p95 268–326 ms over five 15-minute runs — at the limit, passing or failing by chance | every action's p95 was about 3.3 times its median: requests were queueing behind each other in the one API process, whatever the payment itself did | (the next four rows) |
+| 10 | — | ten cashiers paying one bill each settled it in full, once the number no longer came first (caught by the concurrency test) | money is set against a bill by one transaction at a time (the bill's row is held) |
+| 11 | a run that crossed midnight IST: every action twice as slow | all 97,000 late tasks were told "still overdue" in one pass — 58,000 events at once for the worker | the daily round is spread: 2,000 a pass |
+| 12 | 0 errors, payment p95 295–300 ms | the number still had eight round trips after it; each signed-in request asked three queries to check the person; a receipt read its company five times | the number is one statement and the last; one sign-in query; repeated reads removed (a payment: 58 statements → 50) |
+| 13 | **0 errors, payment p95 193 ms, bill 118 ms, kitchen 146 ms over 15 min** | the office task list sent 500 full tasks (427 KB) on every call — a fifth of the API process | a hundred at a time (86 KB) |
 
 Also found on the way and fixed: an open task vanishing from the delegation sheet behind 1,000 old ones;
 task events, process-record events and failed messages looked up with no index (3–9 s each on this data); the
