@@ -8,12 +8,14 @@ import { api } from '@/lib/api';
 import { useMe } from '@/modules/auth/session';
 
 type Health = {
-  status: 'ok' | 'warn' | 'fail';
+  /** The server's overall word: ok, degraded (something to look at) or failing. */
+  status: 'ok' | 'degraded' | 'failing';
   version: string;
   startedAt: string;
   checks: { key: string; state: 'ok' | 'warn' | 'fail'; message: string }[];
 };
 const TONE = { ok: 'ok', warn: 'warn', fail: 'bad' } as const;
+const OVERALL = { ok: 'ok', degraded: 'warn', failing: 'fail' } as const;
 
 /** System Master → Errors: what the server says about itself (the same checks as /api/health/ready), in words. */
 export function HealthCard() {
@@ -28,6 +30,8 @@ export function HealthCard() {
   // Not open to this person, or the server did not answer: the errors list below still has its own message.
   if (q.isError) return null;
   const h = q.data;
+  // An unknown word from a newer server reads as "look at it", never as a crash.
+  const overall = OVERALL[h.status] ?? 'warn';
   return (
     <section
       className="@container rounded-card border border-border bg-card p-4"
@@ -35,7 +39,7 @@ export function HealthCard() {
     >
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="mr-auto text-sm font-semibold">{t('health.title')}</h2>
-        <StatusChip tone={TONE[h.status]}>{t(`health.state.${h.status}`)}</StatusChip>
+        <StatusChip tone={TONE[overall]}>{t(`health.state.${overall}`)}</StatusChip>
         <Button
           variant="ghost"
           size="sm"
@@ -49,8 +53,8 @@ export function HealthCard() {
       <ul className="mt-3 grid gap-x-6 gap-y-2 @2xl:grid-cols-2">
         {h.checks.map((c) => (
           <li key={c.key} className="flex min-w-0 items-start gap-2 text-sm">
-            <StatusChip tone={TONE[c.state]} className="shrink-0">
-              {t(`health.state.${c.state}`)}
+            <StatusChip tone={TONE[c.state] ?? 'warn'} className="shrink-0">
+              {t(`health.state.${TONE[c.state] ? c.state : 'warn'}`)}
             </StatusChip>
             <span className="min-w-0">
               <span className="font-medium">{t(`health.keys.${c.key}`, { defaultValue: c.key })}</span>

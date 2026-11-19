@@ -57,6 +57,9 @@ test('no screen of the menu has a serious accessibility problem', async ({ page 
   for (const path of SCREENS) {
     await page.goto(path);
     await ready(page);
+    // A screen that crashed shows a tidy message — which axe finds nothing wrong with. It is a failure here.
+    if (await page.getByText(/This screen (hit a problem|stopped working)/).count())
+      problems.push(`${path}: the screen crashed`);
     await check(page, path, problems);
   }
   expect(problems).toEqual([]);
