@@ -57,7 +57,7 @@ export function EnginePage() {
   return (
     <div className="space-y-4">
       <nav aria-label={t('engine.modules')} className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-        <ul className="flex w-max gap-2">
+        <ul className="flex w-max gap-2 sm:w-auto sm:flex-wrap">
           {q.data!.map((m) => {
             const Icon = ICON[m.module];
             return (

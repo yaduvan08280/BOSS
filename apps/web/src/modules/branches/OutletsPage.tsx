@@ -109,7 +109,7 @@ export function OutletsPage() {
                     </div>
                   </div>
                 </div>
-                <div className="grid flex-[2] basis-72 grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-5">
+                <div className="grid flex-[2] basis-72 grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 xl:grid-cols-5">
                   {cell(t('outlets.score'), show(r.score, ''), tone(r.score, 85, 65))}
                   {cell(t('outlets.attendance'), show(r.attendance), tone(r.attendance, 90, 75))}
                   {cell(t('outlets.missed'), show(r.checklistMissed), tone(r.checklistMissed, 95, 85, true))}

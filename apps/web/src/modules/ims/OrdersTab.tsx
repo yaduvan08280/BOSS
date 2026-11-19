@@ -43,7 +43,7 @@ export function OrdersTab({ canOrder }: { canOrder: boolean }) {
           placeholder={t('ims.p.search')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="min-w-0 flex-1 max-sm:basis-full sm:max-w-72"
+          className="min-w-0 flex-1 max-sm:basis-full sm:min-w-48 sm:max-w-72"
         />
         {canOrder && (
           <Button className="ml-auto" onClick={() => setCreating(true)}>

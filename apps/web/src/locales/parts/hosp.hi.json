@@ -42,7 +42,10 @@
       "packaging": "पैकेजिंग चार्ज (₹)",
       "delivery": "डिलीवरी चार्ज (₹)",
       "billPrinter": "बिल प्रिंटर",
-      "summary": "{{stations}} स्टेशन · {{tables}} टेबल",
+      "stationsOf_one": "{{count}} स्टेशन",
+      "stationsOf_other": "{{count}} स्टेशन",
+      "tablesOf_one": "{{count}} टेबल",
+      "tablesOf_other": "{{count}} टेबल",
       "emptyTitle": "अभी कोई आउटलेट नहीं",
       "emptyBody": "बेचने वाला रेस्टोरेंट, बार या काउंटर जोड़ें।"
     },

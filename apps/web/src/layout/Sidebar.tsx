@@ -77,7 +77,7 @@ export function Sidebar({ me, sections, collapsed = false, onToggle, onNavigate,
                         <item.icon className="size-[18px] shrink-0" aria-hidden />
                         {!collapsed && <span className="truncate">{item.label ?? t(`nav.${item.key}`)}</span>}
                         {!collapsed && Boolean(badge[item.key]) && (
-                          <span className="tabular ml-auto rounded-pill bg-sidebar-hover px-1.5 text-[11px] font-semibold">
+                          <span className="tabular ml-auto rounded-pill bg-sidebar-hover px-1.5 text-[11px] font-semibold text-sidebar-foreground">
                             {badge[item.key]}
                           </span>
                         )}

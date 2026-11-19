@@ -58,6 +58,8 @@
     "requestWhat": "What does the guest need?",
     "raise": "Send to the staff",
     "nightsShort": "nights",
+    "nightsOf_one": "{{count}} night",
+    "nightsOf_other": "{{count}} nights",
     "problem": {
       "STOP_SELL": "Those days are closed for sale.",
       "CLOSED_TO_ARRIVAL": "Nobody can arrive on that day.",

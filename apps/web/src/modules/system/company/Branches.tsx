@@ -125,7 +125,7 @@ export function Branches() {
   const blocked = draft?.id ? descendants(all, draft.id) : new Set<string>();
   return (
     <div className="space-y-3">
-      <div className="flex justify-end">
+      <div className="flex max-w-3xl justify-end min-[1800px]:max-w-5xl">
         <Button variant="primary" onClick={() => setDraft(NEW)}>
           <Plus /> {t('org.branches.add')}
         </Button>

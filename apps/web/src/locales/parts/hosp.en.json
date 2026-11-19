@@ -42,7 +42,10 @@
       "packaging": "Packaging charge (₹)",
       "delivery": "Delivery charge (₹)",
       "billPrinter": "Bill printer",
-      "summary": "{{stations}} stations · {{tables}} tables",
+      "stationsOf_one": "{{count}} station",
+      "stationsOf_other": "{{count}} stations",
+      "tablesOf_one": "{{count}} table",
+      "tablesOf_other": "{{count}} tables",
       "emptyTitle": "No outlets yet",
       "emptyBody": "Add the restaurant, bar or counter that sells."
     },

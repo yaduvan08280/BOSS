@@ -34,7 +34,7 @@ export function SupportPage() {
   return (
     <div className="space-y-6">
       <PageHeader title={t('nav.support')} subtitle={t('support.subtitle')} />
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid items-start gap-4 md:grid-cols-2">
         <section className="space-y-3 rounded-card border bg-card p-4">
           <h2 className="font-semibold">{t('support.ask')}</h2>
           <ul className="divide-y">

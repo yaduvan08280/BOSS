@@ -58,6 +58,8 @@
     "requestWhat": "मेहमान को क्या चाहिए?",
     "raise": "स्टाफ़ को भेजें",
     "nightsShort": "रात",
+    "nightsOf_one": "{{count}} रात",
+    "nightsOf_other": "{{count}} रात",
     "problem": {
       "STOP_SELL": "इन दिनों बिक्री बंद है।",
       "CLOSED_TO_ARRIVAL": "उस दिन कोई आ नहीं सकता।",

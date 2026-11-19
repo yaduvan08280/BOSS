@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import enBase from './en.json';
 import hiBase from './hi.json';
+import { NOTIFY_EVENT_NAMES } from '@mono/shared';
 
 /** The main files plus every feature file in ./parts (the same merge the app does at start-up). */
 const partsDir = join(import.meta.dirname, 'parts');
@@ -63,5 +64,10 @@ describe('translations', () => {
       }
     expect(seen, 'the scan found the screens').toBeGreaterThan(500);
     expect(missing).toEqual([]);
+  });
+  it('every event a rule can be made for has a name in words', () => {
+    // The rules and templates screens fall back to the raw key ("banquet.beo") when a name is missing.
+    const names = (en.notify as { event: Record<string, string> }).event;
+    expect(NOTIFY_EVENT_NAMES.filter((e) => !names[e.replace('.', '_')])).toEqual([]);
   });
 });

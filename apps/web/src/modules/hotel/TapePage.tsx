@@ -60,7 +60,7 @@ function TapeBody({ me }: { me: Me }) {
                   return (
                     <li key={id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
                       <span>
-                        {s.guest?.name} · {s.roomType} · {s.nights} {t('hotel.nightsShort')}
+                        {s.guest?.name} · {s.roomType} · {t('hotel.nightsOf', { count: s.nights })}
                       </span>
                       {canDesk && (
                         <div className="w-40">

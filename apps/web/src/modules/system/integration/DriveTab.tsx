@@ -100,7 +100,7 @@ export function DriveTab() {
   const ready = STEPS.every((k) => ticks.includes(k));
   const onDrive = s.status === 'connected';
   return (
-    <div className="grid gap-5 @container lg:grid-cols-[minmax(0,1fr)_20rem]">
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
       <div className="space-y-5">
         <section className="space-y-3 rounded-card border bg-card p-4">
           <div className="flex items-start gap-3">

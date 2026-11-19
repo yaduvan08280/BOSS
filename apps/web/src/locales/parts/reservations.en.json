@@ -41,7 +41,7 @@
     "cancelTitle": "Cancel booking {{number}}?",
     "cancelIt": "Cancel the booking",
     "reason": "Why (optional)",
-    "empty": "No bookings on this day",
+    "empty": "No bookings on these days",
     "emptyBody": "Use New booking, or open the public booking page in the rules.",
     "sources": {
       "PHONE": "Phone",

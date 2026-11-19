@@ -71,7 +71,7 @@ test('a booking from the phone call to the paid bill, the waitlist, guests and t
   await page.goto('/hosp/reservations');
   await settled(page);
   await choose(page, page.getByRole('combobox', { name: 'Outlet', exact: true }), n.outlet);
-  await expect(page.getByText('No bookings on this day')).toBeVisible();
+  await expect(page.getByText('No bookings on these days')).toBeVisible();
   await page.getByRole('button', { name: 'Booking rules' }).click();
   await dialog.getByLabel(/^Deposit from a party of/).fill('4');
   await dialog.getByLabel('Deposit per guest (₹)').fill('100');

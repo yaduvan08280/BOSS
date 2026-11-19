@@ -8,13 +8,21 @@ const shots = process.env.E2E_SCREENSHOTS === '1';
  * hospitality on, adds an outlet with a station, a floor with tables, a room type with rooms, a discount rule,
  * pastes a menu, adds an item with variants and switches one off.
  */
-test('hospitality is set up from the screens: outlet, tables, rooms, rules and a menu', async ({ page }, info) => {
+test('hospitality is set up from the screens: outlet, tables, rooms, rules and a menu', async ({
+  page,
+}, info) => {
   const project = info.project.name;
   const snap = async (name: string) => {
     if (shots) await page.screenshot({ path: `docs/screenshots/phase14/${project}-${name}.png` });
   };
   const t = tag(project);
-  const n = { outlet: `Courtyard ${t}`, floor: `Terrace ${t}`, type: `Deluxe ${t}`, cat: `Starters ${t}`, dish: `Paneer tikka ${t}` };
+  const n = {
+    outlet: `Courtyard ${t}`,
+    floor: `Terrace ${t}`,
+    type: `Deluxe ${t}`,
+    cat: `Starters ${t}`,
+    dish: `Paneer tikka ${t}`,
+  };
   // Room numbers are unique in a branch: a different range on every run.
   const room = 1000 + (Date.now() % 90000);
   const dialog = page.getByRole('dialog');
@@ -40,7 +48,7 @@ test('hospitality is set up from the screens: outlet, tables, rooms, rules and a
   await dialog.getByLabel('Station name').fill('Tandoor');
   await dialog.getByRole('button', { name: 'Add', exact: true }).click();
   await expect(dialog).toHaveCount(0);
-  await expect(outlet.getByText('1 stations · 0 tables')).toBeVisible();
+  await expect(outlet.getByText('1 station · 0 tables')).toBeVisible();
   await expectNoSideScroll(page);
   await snap('outlets');
 
@@ -94,13 +102,21 @@ test('hospitality is set up from the screens: outlet, tables, rooms, rules and a
   await page.goto('/hosp/menu');
   await settled(page);
   await page.getByRole('button', { name: 'Paste a menu' }).click();
-  await dialog.getByLabel('Paste a menu').fill(`${n.cat}, Soup ${t}, 120, veg\n${n.cat}, Wings ${t}, 280, non-veg, Half=160|Full=280\n${n.cat}, Broken ${t}, x`);
+  await dialog
+    .getByLabel('Paste a menu')
+    .fill(
+      `${n.cat}, Soup ${t}, 120, veg\n${n.cat}, Wings ${t}, 280, non-veg, Half=160|Full=280\n${n.cat}, Broken ${t}, x`,
+    );
   await dialog.getByRole('button', { name: 'Import' }).click();
   await expect(dialog.getByText('Line 3: "x" is not a price')).toBeVisible();
-  await dialog.getByLabel('Paste a menu').fill(`${n.cat}, Soup ${t}, 120, veg\n${n.cat}, Wings ${t}, 280, non-veg, Half=160|Full=280`);
+  await dialog
+    .getByLabel('Paste a menu')
+    .fill(`${n.cat}, Soup ${t}, 120, veg\n${n.cat}, Wings ${t}, 280, non-veg, Half=160|Full=280`);
   await dialog.getByRole('button', { name: 'Import' }).click();
   await expect(dialog).toHaveCount(0);
-  await expect(page.locator('li', { hasText: `Wings ${t}` }).getByText('Half ₹160.00 · Full ₹280.00')).toBeVisible();
+  await expect(
+    page.locator('li', { hasText: `Wings ${t}` }).getByText('Half ₹160.00 · Full ₹280.00'),
+  ).toBeVisible();
   await page.getByRole('tab', { name: new RegExp(n.cat) }).click();
   await page.getByRole('button', { name: 'Add an item' }).click();
   await dialog.getByLabel('Name', { exact: true }).fill(n.dish);

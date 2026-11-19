@@ -190,10 +190,10 @@ function Contacts({ contacts }: { contacts: Contact[] }) {
           <p className="mt-1 text-xs text-muted-foreground">{t('org.company.contactsHint')}</p>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="@container space-y-3">
         {contacts.map((c) => (
           <div key={c.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 rounded-control border p-3">
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid gap-2 @sm:grid-cols-2">
               <Input
                 defaultValue={c.role}
                 aria-label={t('org.company.contactRole')}
@@ -232,7 +232,7 @@ function Contacts({ contacts }: { contacts: Contact[] }) {
           </div>
         ))}
         <form
-          className="grid grid-cols-2 gap-2 rounded-control border border-dashed p-3"
+          className="grid gap-2 rounded-control border border-dashed p-3 @sm:grid-cols-2"
           onSubmit={(e) => {
             e.preventDefault();
             if (!draft.role || !draft.name) return;
@@ -261,7 +261,11 @@ function Contacts({ contacts }: { contacts: Contact[] }) {
             value={draft.email}
             onChange={(e) => setDraft({ ...draft, email: e.target.value })}
           />
-          <Button type="submit" className="col-span-2" disabled={!draft.role || !draft.name || add.isPending}>
+          <Button
+            type="submit"
+            className="@sm:col-span-2"
+            disabled={!draft.role || !draft.name || add.isPending}
+          >
             <Plus /> {t('org.company.addContact')}
           </Button>
         </form>

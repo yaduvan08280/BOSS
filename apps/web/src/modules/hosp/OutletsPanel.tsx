@@ -47,7 +47,8 @@ export function OutletsPanel() {
                     </div>
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    {t('hosp.outlet.summary', { stations: o.stations.length, tables: o.tables })}
+                    {t('hosp.outlet.stationsOf', { count: o.stations.length })} ·{' '}
+                    {t('hosp.outlet.tablesOf', { count: o.tables })}
                   </span>
                 </button>
               </Card>
