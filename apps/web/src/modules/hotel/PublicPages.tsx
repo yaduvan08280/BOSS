@@ -34,7 +34,7 @@ export function StayVoucherPage() {
   });
   const v = q.data;
   return (
-    <div className="min-h-dvh bg-background px-4 py-8">
+    <div data-ui="public" className="min-h-dvh bg-background px-4 py-8">
       <div className="mx-auto max-w-md space-y-3 rounded-card border bg-card p-6">
         {q.isError ? (
           <p className="text-center font-semibold">{t('book.notFound')}</p>
@@ -98,7 +98,7 @@ export function RoomRequestPage() {
     }
   };
   return (
-    <div className="min-h-dvh bg-background px-4 py-8">
+    <div data-ui="public" className="min-h-dvh bg-background px-4 py-8">
       <div className="mx-auto max-w-md space-y-4 rounded-card border bg-card p-6">
         {q.isError ? (
           <p className="text-center font-semibold">{t('hotel.qr.notFound')}</p>

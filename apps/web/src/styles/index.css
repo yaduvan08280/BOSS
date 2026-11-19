@@ -84,11 +84,13 @@
   }
   /*
    * Compact density (§3.1, a person's own choice): every padding, gap and control height comes from one
-   * spacing unit, so shrinking it tightens the whole interface. Text keeps its size, and on a phone the
-   * 44 px touch floor below still holds.
+   * spacing unit, so shrinking it tightens the whole interface. Text keeps its size. It is for a mouse:
+   * under 768 px a thumb needs the room, so a phone stays comfortable whatever the switch says.
    */
-  html[data-density='compact'] {
-    --spacing: 0.21875rem;
+  @media (min-width: 768px) {
+    html[data-density='compact'] {
+      --spacing: 0.21875rem;
+    }
   }
   body {
     background: var(--background, #f2efe7);
@@ -163,10 +165,11 @@ table td.font-mono {
 /*
  * Phones (decision 247). Nothing a thumb must hit is under 44 px, and no text is under 12 px — set here once,
  * so a small chip or an icon button written for a desktop cannot slip through. Switches and tick boxes keep
- * their shape (they carry their own larger hit area); `data-tap="off"` opts a control out.
+ * their shape (they carry their own larger hit area); `data-tap="off"` opts a control out. Pages a guest opens
+ * from a link (`data-ui="public"`) and the sign-in page follow the same rule.
  */
 @media (max-width: 767px) {
-  :where(main, [role='dialog'])
+  :where(main, [role='dialog'], [data-ui='public'])
     :where(
       button,
       [role='tab'],
@@ -178,11 +181,11 @@ table td.font-mono {
     min-height: 44px;
     min-width: 44px;
   }
-  :where(main, [role='dialog']) a.inline-flex {
+  :where(main, [role='dialog'], [data-ui='public']) a.inline-flex {
     align-items: center;
   }
   /* Boxes to type in, pick a file or a colour: the same floor (a bare box inside a search field is that field's). */
-  :where(main, [role='dialog'])
+  :where(main, [role='dialog'], [data-ui='public'])
     :where(input, select):not(
       [type='checkbox'],
       [type='radio'],
@@ -193,7 +196,7 @@ table td.font-mono {
     ) {
     min-height: 44px;
   }
-  :where(main, [role='dialog']) input[type='color'] {
+  :where(main, [role='dialog'], [data-ui='public']) input[type='color'] {
     min-width: 44px;
   }
   .react-flow__attribution a {

@@ -83,7 +83,8 @@
 [data-style='navy'] main thead th,
 [data-style='navy'] [role='dialog'] thead th {
   color: #fff;
-  font-size: 11px;
+  /* Small capitals read at 11 px on a desk; a phone keeps the 12 px floor (decision 247b). */
+  font-size: max(11px, min(12px, calc(12px + (767px - 100vw) * 1000)));
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;

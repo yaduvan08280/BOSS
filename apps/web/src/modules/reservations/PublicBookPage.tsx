@@ -85,7 +85,7 @@ export function PublicBookPage() {
     }
   };
   return (
-    <div className="min-h-dvh bg-background px-4 py-8">
+    <div data-ui="public" className="min-h-dvh bg-background px-4 py-8">
       <div className="mx-auto max-w-xl space-y-5">
         {q.isError ? (
           <div className="rounded-card border bg-card p-6 text-center font-semibold">{t('book.closed')}</div>
@@ -124,7 +124,7 @@ export function PublicBookPage() {
                 <h1 className="text-lg font-semibold">{t('book.title', { outlet: page.outlet })}</h1>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2">
               <Field label={t('res.day')}>
                 <DateInput
                   value={page.day}
@@ -262,7 +262,7 @@ export function PublicManagePage() {
     }
   };
   return (
-    <div className="min-h-dvh bg-background px-4 py-8">
+    <div data-ui="public" className="min-h-dvh bg-background px-4 py-8">
       <div className="mx-auto max-w-md space-y-3 rounded-card border bg-card p-6 text-center">
         {q.isError ? (
           <p className="font-semibold">{t('book.notFound')}</p>

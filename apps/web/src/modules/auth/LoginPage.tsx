@@ -47,7 +47,7 @@ export function LoginPage() {
   const chooseCompany = (companyId: string) => void submit({ ...form.getValues(), companyId });
 
   return (
-    <div className="grid min-h-dvh lg:grid-cols-[1.05fr_minmax(0,1fr)]">
+    <div data-ui="public" className="grid min-h-dvh lg:grid-cols-[1.05fr_minmax(0,1fr)]">
       <section className="relative hidden overflow-hidden bg-sidebar p-12 text-sidebar-foreground lg:flex lg:flex-col">
         <div className="flex items-center gap-3">
           <BrandMark appName="MONO" className="size-11 text-lg" />

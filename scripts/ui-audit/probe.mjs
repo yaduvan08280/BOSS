@@ -24,7 +24,9 @@ export function probe() {
   };
   const name = (e) =>
     `${e.tagName.toLowerCase()}${e.getAttribute('data-ui') ? `[${e.getAttribute('data-ui')}]` : ''} "${(e.getAttribute('aria-label') || e.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 32)}"`;
-  const all = [...scope.querySelectorAll('*')].filter(shown);
+  // A honeypot (a box hidden from people on purpose, to catch bots) is not part of what a person sees.
+  const trap = (e) => e.tagName === 'INPUT' && e.tabIndex === -1 && e.getAttribute('aria-hidden') === 'true';
+  const all = [...scope.querySelectorAll('*')].filter((e) => shown(e) && !trap(e));
   const out = [];
   const add = (kind, detail) => out.push({ kind, detail });
 

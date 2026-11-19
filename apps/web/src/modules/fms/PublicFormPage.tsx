@@ -73,7 +73,7 @@ export function PublicFormPage() {
   };
 
   return (
-    <div className="min-h-dvh bg-background px-4 py-8">
+    <div data-ui="public" className="min-h-dvh bg-background px-4 py-8">
       <div className="mx-auto max-w-2xl space-y-5">
         {q.isError ? (
           <div className="rounded-card border bg-card p-6 text-center">
