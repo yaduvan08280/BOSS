@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { addDays, localDate, weekdayOf, zonedToUtc } from '@mono/shared';
 import { makeApp, ownerClient, signedIn } from '../../test/helpers';
 import { settleAttendance } from './attendance';
@@ -423,7 +423,13 @@ describe('leave and Buddy rules', () => {
 });
 
 describe('absence, cover board and the morning report', () => {
+  afterEach(() => vi.useRealTimers());
   it('someone not in by the half-day mark: the HOD is told, the board shows the work, one click covers it', async () => {
+    // The whole story happens at 03:00 today on the company's clock. The cover board reads the server's
+    // clock, so without this the test failed whenever it ran between midnight and 02:30 (the person was,
+    // rightly, not yet absent). Only the clock is set; timers run as usual.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(at(localDate(new Date(), TZ), '03:00'));
     const { api, company, asha, ravi, hod } = await hrTeam();
     const shift = await ctx.prisma.shift.findFirstOrThrow({
       where: { companyId: company.id, isDefault: true },

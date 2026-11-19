@@ -67,6 +67,38 @@ describe('at the same moment', () => {
     expect(balances.reduce((n, x) => n + Number(x.qty), 0)).toBe(0);
   });
 
+  it('receipts that name the bill and receipts that take the oldest first, all at once: the bill is settled once', async () => {
+    const w = await world(ctx.app);
+    const b = await books(w);
+    const draft = await b.bill(w.api, {
+      type: 'INVOICE',
+      partyId: b.sharma.id,
+      date: '2031-03-01',
+      lines: meal,
+    });
+    const inv = await ok<BillOut>(w.api.post(`/api/money/bills/${draft.id}/issue`, {}));
+    const receipt = (named: boolean) =>
+      w.api.post('/api/money/bills', {
+        type: 'RECEIPT',
+        partyId: b.sharma.id,
+        date: '2031-03-02',
+        amount: inv.total,
+        modeId: b.cash.id,
+        ...(named ? { allocate: [{ billId: inv.id, amount: inv.total }] } : {}),
+      });
+    // (A POS payment names its bill; a receipt typed in Money takes the party's oldest bills first.)
+    const pays = await Promise.all(Array.from({ length: 12 }, (_, i) => receipt(i % 2 === 0)));
+    // A named receipt that came too late is refused (the bill no longer waits for money); none fails otherwise.
+    expect(pays.filter((r) => r.status !== 200 && r.status !== 400)).toEqual([]);
+    const allocated = await ctx.prisma.billAllocation.aggregate({
+      where: { billId: inv.id },
+      _sum: { amount: true },
+    });
+    expect(Number(allocated._sum.amount)).toBe(inv.total);
+    const after = await ok<BillOut>(w.api.get(`/api/money/bills/${inv.id}`));
+    expect(after).toMatchObject({ status: 'PAID', due: 0, settled: inv.total });
+  });
+
   it('the same bill paid in full by ten cashiers at once is paid once; the rest stay as money on account', async () => {
     const w = await world(ctx.app);
     const b = await books(w);

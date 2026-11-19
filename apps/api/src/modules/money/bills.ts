@@ -257,6 +257,8 @@ async function issueIn(tx: Tx, actor: Actor, bill: Bill, opts: Options) {
   });
   // What the paper does to others: a credit note lowers its bill; money is set against what is owed.
   if (bill.type === 'CREDIT_NOTE' && bill.againstId) {
+    // Held first: two credit notes (or a credit note and a payment) on the same bill go one after the other.
+    await tx.$queryRaw`SELECT id FROM bills WHERE id = ${bill.againstId} FOR UPDATE`;
     const against = await tx.bill.findUniqueOrThrow({ where: { id: bill.againstId } });
     const credited = against.credited + bill.total;
     // The credit first clears what was still owed; anything beyond that was already paid (a refund is owed).
