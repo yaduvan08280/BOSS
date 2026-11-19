@@ -2,6 +2,7 @@ import type { FastifyError, FastifyInstance } from 'fastify';
 import fp from 'fastify-plugin';
 import { hasZodFastifySchemaValidationErrors, isResponseSerializationError } from 'fastify-type-provider-zod';
 import { z } from 'zod';
+import { OtherCompanyError } from '@mono/db';
 import { TransitionError } from '@mono/shared';
 import { AppError } from '../lib/errors';
 import { recordError } from '../modules/errors/service';
@@ -41,6 +42,10 @@ export default fp(async function errorsPlugin(app: FastifyInstance) {
           details: err.validation.map((v) => ({ path: v.instancePath, message: v.message })),
         },
       });
+    }
+    // A row that is not there — or is another company's, which the company wall makes the same thing.
+    if ((err as { code?: string }).code === 'P2025' || err instanceof OtherCompanyError) {
+      return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Record not found' } });
     }
     if (err.statusCode === 429) {
       return reply

@@ -38,6 +38,7 @@ import { eaRoutes } from './modules/ea/routes';
 import { misRoutes } from './modules/mis/routes';
 import { fmsRoutes } from './modules/fms/routes';
 import { aiRoutes } from './modules/ai/routes';
+import { aiNetworkOf, setAiNetwork } from './modules/ai/providers';
 import { hrRoutes } from './modules/hr/routes';
 import { imsRoutes } from './modules/ims/routes';
 import { stockRoutes } from './modules/ims/stock-routes';
@@ -65,6 +66,13 @@ import { driveEnvOf } from './modules/integrations/drive';
 import { integrationRoutes } from './modules/integrations/routes';
 import { errorRoutes } from './modules/errors/routes';
 
+declare module 'fastify' {
+  interface FastifyInstance {
+    /** Every registered route (not HEAD / OPTIONS), with the schema of the body it takes. */
+    routeList: { method: string; url: string; body?: unknown }[];
+  }
+}
+
 export type BuildOptions = {
   env: Env;
   prisma?: Db;
@@ -86,6 +94,14 @@ export async function buildApp(opts: BuildOptions) {
     trustProxy: true,
     bodyLimit: 2 * 1024 * 1024,
   });
+  // Every route as it is registered (method and address), so the access test can walk all of them.
+  const routeList: { method: string; url: string; body?: unknown }[] = [];
+  app.addHook('onRoute', (route) => {
+    for (const method of [route.method].flat())
+      if (method !== 'HEAD' && method !== 'OPTIONS')
+        routeList.push({ method, url: route.url, body: route.schema?.body });
+  });
+  app.decorate('routeList', routeList);
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
@@ -95,6 +111,11 @@ export async function buildApp(opts: BuildOptions) {
   // Every request runs in its own reach slot; `authenticate` fills it once the person is known, and the
   // database client then limits what that request reads (phase 12, plan §3.3).
   app.addHook('onRequest', (_request, _reply, done) => runWithReachSlot(done));
+  // What the API answers is a person's data: never kept by a browser cache or anything in between, unless
+  // the route says otherwise (files and photos do).
+  app.addHook('onSend', async (_request, reply) => {
+    if (!reply.hasHeader('cache-control')) reply.header('cache-control', 'no-store');
+  });
   app.addHook('onClose', async () => {
     await listener.stop();
     if (!opts.prisma) await prisma.$disconnect();
@@ -113,6 +134,9 @@ export async function buildApp(opts: BuildOptions) {
   });
   await app.register(originPlugin, { allowed: [env.origin] });
   await app.register(authPlugin, { secret: env.APP_SECRET });
+  // AI and speech services at an address an admin typed are called on the public internet only, unless the
+  // operator allowed local ones (tests keep the platform's fetch, which they replace).
+  if (env.NODE_ENV !== 'test') setAiNetwork(aiNetworkOf(env));
 
   // OpenAPI docs at /api/docs. In production only the public API (/api/v1) is shown; the app's own routes are hidden.
   const production = env.NODE_ENV === 'production';

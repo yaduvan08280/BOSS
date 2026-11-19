@@ -1,3 +1,4 @@
+import { csvText } from '@mono/shared';
 import { crc32, deflateRawSync } from 'node:zlib';
 
 /**
@@ -152,11 +153,5 @@ const BOM = String.fromCharCode(0xfeff);
 
 /** CSV with a BOM, so Excel reads Hindi correctly (the way the other exports do). */
 export function toCsv(rows: Cell[][]): string {
-  const cell = (v: Cell) => {
-    let s = v === null || v === undefined ? '' : String(v);
-    // A value starting with = + - @ would run as a formula when the file is opened: keep it as text.
-    if (typeof v === 'string' && /^[=+\-@\t\r]/.test(s)) s = `'${s}`;
-    return `"${s.replace(/"/g, '""')}"`;
-  };
-  return BOM + rows.map((r) => r.map(cell).join(',')).join('\r\n');
+  return BOM + csvText(rows);
 }

@@ -3,6 +3,24 @@ import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod';
 import { z } from 'zod';
 import type { AiProvider } from '@mono/shared';
 import { AppError } from '../../lib/errors';
+import { guardedFetch, type NetRule } from '../platform/safe-url';
+
+/**
+ * How the AI and speech services are called. A company's admin can type the address of the service (an
+ * OpenAI-compatible server, Ollama, a Whisper server), so with a rule set (the API and the worker set it at
+ * start-up) every call goes through `guardedFetch`: public addresses only, unless the server's operator
+ * allowed local ones with AI_ALLOW_PRIVATE. With no rule (unit tests) the platform's fetch is used.
+ */
+let aiRule: NetRule | null = null;
+export function setAiNetwork(rule: NetRule | null) {
+  aiRule = rule;
+}
+/** The rule the server's settings ask for: local addresses (and plain http to them) only when allowed. */
+export const aiNetworkOf = (env: { NODE_ENV: string; AI_ALLOW_PRIVATE: boolean }): NetRule => ({
+  production: env.NODE_ENV === 'production' && !env.AI_ALLOW_PRIVATE,
+  allowPrivate: env.AI_ALLOW_PRIVATE,
+});
+const call: typeof fetch = (input, init) => (aiRule ? guardedFetch(aiRule) : fetch)(input, init);
 
 /** CLAUDE.md §13: `complete` for text, `json` for an answer that must match a zod schema. */
 export type LlmMessage = { role: 'user' | 'assistant'; content: string };
@@ -172,7 +190,7 @@ function withJson(provider: AiProvider, model: string, raw: Raw): Llm {
 async function post(url: string, body: unknown, headers: Record<string, string>, timeoutMs: number) {
   let res: Response;
   try {
-    res = await fetch(url, {
+    res = await call(url, {
       method: 'POST',
       headers: { 'content-type': 'application/json', ...headers },
       body: JSON.stringify(body),
@@ -249,7 +267,7 @@ function ollama(s: LlmSettings): Llm {
   return withJson('ollama', s.model, async (req, schema) => {
     let res: Response;
     try {
-      res = await fetch(`${base}/api/chat`, {
+      res = await call(`${base}/api/chat`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -332,7 +350,7 @@ export async function transcribeAudio(
     const base = (s.baseUrl || 'https://api.openai.com/v1').replace(/\/$/, '');
     let res: Response;
     try {
-      res = await fetch(`${base}/audio/transcriptions`, {
+      res = await call(`${base}/audio/transcriptions`, {
         method: 'POST',
         headers: s.apiKey ? { authorization: `Bearer ${s.apiKey}` } : {},
         body: form,

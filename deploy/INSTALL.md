@@ -154,6 +154,8 @@ that** (it has no speech service). Choose one in System Master → Integration �
         - /srv/mono/whisper:/home/ubuntu/.cache/huggingface/hub
   ```
 
+  Add `AI_ALLOW_PRIVATE=1` to `.env` and restart (an address inside the server's own network is refused
+  without it — the same goes for Ollama on this machine).
   Then set the address to `http://whisper:8000/v1` and the speech model to the one the container serves
   (for example `Systran/faster-whisper-small`). **This container was not tried while MONO was built** (the
   build machine could not download speech models) — MONO's side is tested against a server that speaks the same

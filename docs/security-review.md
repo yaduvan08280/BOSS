@@ -1,104 +1,77 @@
-# Security review — Phase 10 (05/11/2026)
+# Security review — 19/11/2026
 
-Scope: the API (`apps/api`), the worker, the web app, and the Docker deployment (`deploy/`). Checked against the
-OWASP Top 10 (2021), plus file uploads, rate limits and the browser's security headers. Items marked **Fixed** were
-changed in Phase 10; **OK** were already in place and re-checked; **Accepted** are known limits with the reason.
+What was looked at, what was found, what was changed, and the test that proves each change.
+Severity is how bad it would be on a server that several companies share. "Fixed" means there is a test
+that fails without the change. Nothing here was tried on a live server.
 
-## A01 Broken access control — OK
-- Every route signs in through `app.authenticate`, which re-reads the user and session from the database on each
-  request (a disabled person or a revoked session stops at once). Permissions are checked in the services, not only
-  hidden in the screens.
-- Company scoping: every business table has `company_id`; the scoped client and the services filter by it, and a test
-  fails if a new model is missing from the scope lists (`packages/db/src/scope.ts`). Tests in each module check that
-  one company can't read or change another's records.
-- **Fixed:** API keys act as the person who made them, with that person's *current* role; a revoked key, or a maker
-  who is disabled or deleted, stops the key. Keys, webhooks and the error list need `core.admin`; Google Drive needs
-  the owner.
+**How it was done**
 
-## A02 Cryptographic failures — OK
-- Passwords: argon2. Refresh tokens are stored hashed and rotated. JWT access cookies are `HttpOnly; SameSite=Lax;
-  Secure` in production.
-- Saved secrets (bot tokens, WhatsApp keys, AI keys, Drive tokens, webhook secrets) are AES-256-GCM with a key
-  derived from `APP_SECRET`; they are never sent back to the browser.
-- **Fixed:** API keys are stored as sha256 only and compared in constant time; shown once. Webhook bodies are signed
-  with HMAC-SHA256 over `timestamp.body`.
-- **Fixed:** a start-up check warns (log + System Master → Errors) when `APP_SECRET` can't read the saved secrets,
-  e.g. after a restore with a new `.env`.
-- TLS ends at Cloudflare; the tunnel to `cloudflared` is encrypted. **Fixed:** `Strict-Transport-Security` is sent.
+- `apps/api/src/security/access.test.ts` walks **every route the API registers** (753) against the demo
+  company as four people who should get nothing: a visitor, the owner of another company, a member whose
+  role holds no rights, and a person of another branch. It sends bodies that fit each route's schema with
+  the other company's ids in every `…Id` field, and afterwards compares a fingerprint of every row the
+  company holds: not one row may differ. Routes that are open on purpose are listed, each with its reason,
+  in `apps/api/src/security/open-routes.ts` — adding one there is a decision.
+- Every route file, the sign-in code, uploads, exports, outgoing calls, message rendering, the web server's
+  headers, the Docker set-up and the dependencies were read.
 
-## A03 Injection — OK
-- All database access goes through Prisma (parameterised). The only raw SQL is tagged templates (bound values) and
-  two fixed `SET` statements in Ask. Ask never runs model-written SQL: it fills a checked plan over six read-only
-  views, with a 5 s timeout, in a read-only transaction.
-- React escapes everything it renders; there is no `dangerouslySetInnerHTML` and no `eval`.
-- **Fixed:** a Content-Security-Policy on the web app (`script-src 'self'`, no inline scripts, `object-src 'none'`,
-  `frame-ancestors 'none'`). `style-src` allows inline styles because the theme sets CSS variables on elements.
-- PDFs are made by pdfmake with no file or network access.
+## Findings
 
-## A04 Insecure design — OK
-- State changes go through the shared state machines; every change writes an audit row and a domain event.
-- All imports are all-or-nothing with problems named per line. Deletes are soft.
-- The AI only proposes; a person confirms before anything is saved.
+| # | Severity | Where | What | Status | Proof |
+|---|---|---|---|---|---|
+| 1 | **Critical** | `PUT /api/hr/leave/types/:id` | The update named the row by id only: an HR admin of one company could overwrite another company's leave type. | Fixed | access test ("rows of leave_types changed" without the fix) |
+| 2 | **High** | the database client | The bug in #1 is a class: a service that forgets the company on one `update` / `delete` / look-up by id. The walk cannot reach every such line with a valid body. | Fixed for the whole class — **the company wall** (decision 250): inside a signed-in request the database client itself adds the caller's company to every read and write of the 182 models that belong to a company, and refuses a row made in another company's name. | `security/wall.test.ts`, `packages/db/src/wall.test.ts` |
+| 3 | High | Telegram messages | Messages are sent as HTML but people's text in them was not escaped: a `<` in a task made the message fail to send; a typed link tag became a real link in the bot's message. | Fixed | `apps/worker/src/notify/notify.test.ts` |
+| 4 | Medium | `GET /api/money/parties`, `/tax-rates`, `/modes` | Readable by every signed-in person (customers and vendors with tax numbers and credit days). | Fixed: only people who work with money, hospitality, stock or sales. | access test |
+| 5 | Medium | outgoing calls to typed addresses (webhooks, process webhook steps, WhatsApp provider, channel manager / gateway / e-invoice, AI and speech servers) | (a) `[::ffff:7f00:1]` (127.0.0.1 written as IPv6 in hex) passed the private-address check; (b) the address was checked once and resolved again when connecting, so a name could answer "public" then "private"; (c) AI and speech addresses were not checked at all. | Fixed: one `guardedFetch` checks the address the connection really goes to, never follows a redirect, reads at most 5 MB. Local AI servers need `AI_ALLOW_PRIVATE=1` in `.env`. | `platform/safe-url.guard.test.ts` |
+| 6 | Medium | sign-in | Wrong passwords were limited per address only: one account could be guessed at from many addresses. | Fixed: 10 wrong passwords in 15 minutes lock that login ID for 15 minutes (`login_throttles`). | `auth/auth.test.ts` |
+| 7 | Medium | CSV exports (Form C, excise register, GSTR-1, pay sheet, task export) | A cell starting with `=`, `+`, `-`, `@` was written as it is: a name typed on the public booking page could run as a formula on the computer of whoever opens the export. | Fixed: one `csvCell` in the shared package, used by every export. | `packages/shared/src/format/format.test.ts` |
+| 8 | Low | `POST /api/documents/:id/cancel` | Answered 200 `{ ok: false }` for a paper that is not there, and changed the status with no audit row. | Fixed: 404, and an audit row. | access test |
+| 9 | Low | `/api/agent/*` | The request was validated before the agent's key was checked: a caller with no key learned what the body should look like. | Fixed: the key is checked first. | access test (visitor walk) |
+| 10 | Low | `PUT /api/owner/ranges`, `PUT /api/owner/delay`, `POST /api/owner/copy-checklists` | Accepted the id of a branch or process that is not the company's (kept as a dead entry in the company's own settings; nothing of the other company was read). | Fixed: 404. | access test |
+| 11 | Low | changes with a session cookie and no `Origin` | Allowed (only an unknown `Origin` was refused). Browsers always send `Origin` on a change, so this was not exploitable from a browser. | Tightened: a cookie with no `Origin` is refused. | `auth/auth.test.ts` |
+| 12 | Low | files | A file answered with no content policy of its own. | Added `Content-Security-Policy: default-src 'none'; sandbox` on every file that is not a PDF. | read |
+| 13 | Low | API answers | No `Cache-Control` on JSON. | `no-store` on every API answer that sets none. | `health.test.ts` |
 
-## A05 Security misconfiguration — Fixed
-- Caddy: `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy` (camera,
-  microphone, location only for MONO itself), `Cross-Origin-Opener-Policy`, HSTS, CSP; the `Server` header removed.
-- The OpenAPI page in production shows only the public API (`/api/v1`); the app's own routes are hidden.
-- Error answers never include stacks; unexpected errors say "Something went wrong on our side" and are logged.
-- The api and worker containers run as non-root (`node`, uid 1000); the database is not published outside the Docker network; the web
-  port binds to 127.0.0.1 unless `WEB_BIND` is set.
+## Looked at and found sound
 
-## A06 Vulnerable and outdated components — OK
-- Versions are pinned (package-lock), and new packages are pinned to releases at least two weeks old (decision 44).
-  Run `npm audit --omit=dev` before each release; the Docker images pin their base versions.
+- **Sign-in**: argon2id; the same time is spent when the login ID does not exist; cookies are `HttpOnly`,
+  `SameSite=Lax`, `Secure` in production, the refresh cookie only on `/api/auth`; refresh tokens are stored
+  hashed, rotated on every use, and re-using a rotated one signs every device out; a disabled person or a
+  revoked session stops on the next request; password change signs other devices out; an admin reset gives
+  a one-time password that must be changed.
+- **Rights**: 552 routes refuse a member with no rights with 403; 34 answers are open on purpose
+  (`open-routes.ts`).
+- **Other company**: no list and no row by id of company A is shown to company B on any route.
+- **Other branch**: a person of one branch with every "view" right sees none of 600 rows put at another
+  branch, also when the branch switcher is sent that branch.
+- **Hand-written SQL**: all of it is parameterised (`Prisma.sql`). The two builders that put names into SQL
+  (Ask, reports) take names only from a fixed catalog and are tested with hostile names.
+- **Formulas**: parsed and run by MONO's own small interpreter, never `eval`.
+- **Uploads**: type by content (not by name), 10 MB, stored under the company's folder with a generated
+  name, served with `nosniff`; HTML and SVG are refused; non-images download instead of opening.
+- **Browser**: no `dangerouslySetInnerHTML`, `innerHTML` or `eval` anywhere in the web app; email text is
+  escaped; the app is served with a strict content policy (`script-src 'self'`), `X-Frame-Options: DENY`,
+  HSTS, `nosniff`, a referrer and a permissions policy.
+- **Secrets**: provider keys, tokens and passwords are encrypted with `APP_SECRET` and never sent back to
+  the browser or written to the audit log; cookies and authorization headers are removed from logs.
+- **Webhooks in**: the payment gateway's signature is checked over the raw bytes in constant time; a link
+  is paid once, so a replayed call changes nothing; bodies are limited to 1 MB and 300 calls a minute.
+- **Webhooks out**: signed with a timestamp (`X-Mono-Signature`), 10 s, no redirects.
+- **Docker**: the API and worker run as a non-root user; the database publishes no port; the web server
+  listens on 127.0.0.1 unless told otherwise; the tunnel image is pinned.
+- **Dependencies**: `npm audit` — no high or critical finding. 3 moderate in production (glob / minimatch
+  under `@fastify/static`, which serves the API docs' own files with fixed patterns — no pattern comes from
+  a request). Their fixed releases are days old; by the project's rule (releases at least two weeks old)
+  they are taken after 30/11/2026. Licences of the 659 production packages: MIT, ISC, BSD, Apache-2.0 and
+  the like; fonts under OFL-1.1; one EPL-2.0 (elkjs) and one MPL-2.0 used unchanged. Nothing GPL or AGPL.
 
-## A07 Identification and authentication failures — OK
-- Login: 10 tries per IP per 15 minutes (`LOGIN_RATE_LIMIT`); the same for change-password. Behind Caddy the IP is the
-  real client's (`CF-Connecting-IP`, trusted only from private networks).
-- First sign-in after an admin reset must choose a new password (enforced by the API).
-- Logout and password change revoke sessions.
+## Known limits (not fixed, and why)
 
-## A08 Software and data integrity failures — OK
-- Every mutating browser request must carry this site's `Origin` (CSRF guard). API-key requests carry no cookies.
-- The service worker and app shell come only from this server; webhooks out are signed so receivers can check them.
-
-## A09 Security logging and monitoring failures — Fixed
-- Audit log for every change (who, when, before/after, IP, user agent; API-key calls are marked `api-key <prefix>`).
-- **Fixed:** error monitoring. Unexpected errors from the API (5xx), the worker (jobs, outbox, webhooks) and browsers
-  (`window.onerror`, unhandled promises, crashed screens) are grouped by kind and counted in `error_events`, shown in
-  System Master → Errors (owner sees system-wide ones too). A fixed error that happens again reopens.
-
-## A10 Server-side request forgery — Fixed
-- **Fixed:** outgoing webhooks, FMS "call a webhook" steps and the WhatsApp provider address go through
-  `assertPublicUrl`: https only in production, no user name/password in the URL, and every address the host resolves
-  to must be public (private, loopback, link-local, CGNAT, multicast and IPv4-mapped forms are refused). Redirects are
-  not followed. `WEBHOOK_ALLOW_PRIVATE=1` lifts this outside production only (tests, local receivers).
-- Google Sheet import rebuilds the URL from the sheet id on `docs.google.com` only; Google Drive calls fixed Google
-  addresses only.
-- **Accepted:** a DNS answer could change between the check and the call (DNS rebinding). The window is milliseconds,
-  the setting is admin-only, and redirects are refused.
-
-## File uploads — Fixed
-- 10 MB per file, one file per request, a fixed list of types (photos, PDF, Excel/Word/CSV, voice notes, mp4). SVG and
-  HTML are refused.
-- **Fixed:** the content must match the claimed type (magic bytes: PNG, JPEG, WebP, HEIC, `%PDF-`, ZIP for
-  xlsx/docx, OLE for xls, WebM, Ogg, MP3, MP4/M4A; CSV must not contain NUL bytes). A renamed program or web page is
-  refused and deleted.
-- Files are served with `X-Content-Type-Options: nosniff`; anything not an image, audio or PDF downloads as an
-  attachment. Storage keys are generated (no user path) and checked to stay inside the upload folder.
-
-## Rate limits — Fixed
-- Per route (decision 62): login, change-password, public form, Google Sheet import, AI, API key creation, webhook
-  test, Drive connect, error reports (20/min), the public API (120/min per key).
-- **Fixed:** a ceiling for every API call of 600 a minute in production (`API_RATE_LIMIT`), as its own counter
-  so it never switches off a route's stricter limit. Live updates and the health check are not counted.
-- **Changed 12/11/2026 (Phase 11, row A1):** the ceiling is counted **per signed-in person** (read from the signed
-  access cookie, no database call), because a whole office or outlet shares one internet address and a count per
-  address locked people out of each other's allowance. Visitors who are not signed in — or who send a cookie that
-  does not verify — are still counted per address, and one address is held to 20 people's worth in total as a flood
-  guard.
-- Bodies are limited to 2 MB (imports 4–8 MB).
-
-## Left for later
-- Two-factor sign-in for the owner (Telegram code) — Phase 11 candidate.
-- Off-site copy of `.env` is a manual step (INSTALL.md "Keep .env safe").
+| What | Why it is left |
+|---|---|
+| A file's address (`/api/files/<id>`) opens for any signed-in person of the same company who has the id (record files follow their record type's rights). | Ids are 24 random characters and are only shown to people who can see the thing the file belongs to. Checking each file against its parent would need a rule for every kind of parent. |
+| The channel manager's webhook is protected by the token in its address only (no signature). | The contract is MONO's own (decision 201); every real channel manager signs in its own way — the signature belongs to that mapping. A booking is made once per channel reference, so a replay changes nothing. |
+| 26 routes answered a member with no rights with "incomplete" (400) before the rights check could be seen, because the body the test could build from the schema did not satisfy a rule inside it. | They are behind sign-in and the company wall; their rights are checked in the service, after validation. Listed by the test's output. |
+| `postgres:16-alpine` and `node:22-bookworm-slim` are pinned to a major version, not to a digest. | A digest pinned here, without the registry, would be a guess; the runbook shows how to pin to the digests in use on the server. |
+| No second factor at sign-in. | Not in the specification. The Telegram link could carry one later. |

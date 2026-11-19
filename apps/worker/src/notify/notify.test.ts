@@ -57,6 +57,24 @@ async function emit(
 afterAll(async () => db.$disconnect());
 
 describe('engine', () => {
+  it("escapes people's text in Telegram messages (which are read as HTML) and leaves email as typed", async () => {
+    const { company, owner } = await newCompany();
+    const name = 'Ravi <b>Boss</b> & Co <a href="https://evil.example">win</a>';
+    await db.user.update({ where: { id: owner.id }, data: { telegramChatId: '112', name } });
+    const event = await emit(company.id, 'notify.test', { userId: owner.id }, owner.id);
+    await notifyForEvent(event, deps);
+    const rows = await db.outbox.findMany({ where: { eventId: event.id } });
+    const tg = (rows.find((r) => r.channel === 'telegram')!.payload as { text: string }).text;
+    // The template's own bold title stays; nothing a person typed is a tag.
+    expect(tg).toMatch(/^<b>/);
+    expect(tg).toContain(
+      'Ravi &lt;b&gt;Boss&lt;/b&gt; &amp; Co &lt;a href="https://evil.example"&gt;win&lt;/a&gt;',
+    );
+    expect(tg).not.toContain('<a href');
+    const mail = (rows.find((r) => r.channel === 'email')!.payload as { text: string }).text;
+    expect(mail).toContain(name);
+  });
+
   it('creates in-app + queues Telegram and email, skips what cannot be sent, once per event', async () => {
     const { company, owner } = await newCompany();
     await db.user.update({ where: { id: owner.id }, data: { telegramChatId: '111' } });

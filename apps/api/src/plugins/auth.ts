@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
-import { forCompany, setReach, type Db, type Reach, type ScopedDb } from '@mono/db';
+import { forCompany, setCompany, setReach, type Db, type Reach, type ScopedDb } from '@mono/db';
 import { narrowTo, reachFor } from '../modules/branches/reach';
 import { hasPermission, type PermissionKey } from '@mono/shared';
 import type { ActorContext } from '../lib/audit';
@@ -118,6 +118,8 @@ export default fp(async function authPlugin(app: FastifyInstance, opts: { secret
       ...(shadowOf ? { shadowOf } : {}),
     };
     request.db = forCompany(app.prisma, claims.cid);
+    // From here on the database client itself refuses another company's rows (the company wall).
+    setCompany(claims.cid);
     // From here on, everything this request reads is limited to the person's reach (phase 12). The top bar's
     // branch switcher sends the branch it shows; it can only narrow.
     const only = request.headers['x-mono-branch'];

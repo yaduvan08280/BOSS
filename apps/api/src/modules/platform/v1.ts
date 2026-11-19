@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { forCompany, setReach } from '@mono/db';
+import { forCompany, setCompany, setReach } from '@mono/db';
 import { reachFor } from '../branches/reach';
 import { moveSchema } from '@mono/shared';
 import { unauthenticated } from '../../lib/errors';
@@ -56,6 +56,7 @@ export async function v1Routes(app: FastifyInstance) {
       reach: k.reach,
     });
     setReach(q.reach);
+    setCompany(k.companyId);
     q.db = forCompany(db, k.companyId);
   };
   // A fresh hook list and rate-limit config per route (decision 62).

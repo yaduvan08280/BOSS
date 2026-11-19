@@ -18,6 +18,18 @@ model Session {
   @@map("sessions")
 }
 
+/// Failed sign-ins per login ID (a hash of it), so one account cannot be guessed at from many addresses.
+/// A row lives only while there are recent failures: a good sign-in deletes it.
+model LoginThrottle {
+  /// sha256 of the normalised login ID (mobile in E.164 or lower-case email).
+  key         String    @id
+  fails       Int       @default(0)
+  windowAt    DateTime  @map("window_at") @db.Timestamptz(3)
+  lockedUntil DateTime? @map("locked_until") @db.Timestamptz(3)
+
+  @@map("login_throttles")
+}
+
 model AuditLog {
   id         String   @id @default(cuid(2))
   companyId  String   @map("company_id")

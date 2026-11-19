@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { writeAudit } from '../../lib/audit';
 import { AppError, notFound } from '../../lib/errors';
 import { can, type Actor } from '../work/actor';
+import { needPick } from './access';
 
 /**
  * Tax rates as data (phase 12M): each row is a code, a percent (or slabs by the price of one unit) and the day
@@ -48,6 +49,7 @@ const shape = (r: {
 });
 
 export async function listTaxRates(db: Db, actor: Actor) {
+  needPick(actor);
   const rows = await db.taxRate.findMany({
     where: { companyId: actor.companyId },
     orderBy: [{ code: 'asc' }, { from: 'desc' }],

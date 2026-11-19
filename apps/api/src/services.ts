@@ -72,3 +72,5 @@ export { installLibraryPack } from './modules/packs/install';
 export { connectNet } from './modules/connect/core';
 export { letterSweep } from './modules/owner/letter';
 export { spotSweep } from './modules/owner/spot';
+export { aiNetworkOf, setAiNetwork } from './modules/ai/providers';
+export { rotateSecrets } from './lib/rotate-secret';

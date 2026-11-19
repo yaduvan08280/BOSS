@@ -1,3 +1,4 @@
+import { notFound } from '../../lib/errors';
 import type { Db } from '@mono/db';
 import type { Actor } from '../work/actor';
 import { needOwner, num, pct, places, spanOf, type Span } from './core';
@@ -157,6 +158,14 @@ export async function saveRanges(
   input: { branchId?: string | null; ranges: Partial<Record<RangeKey, number>> },
 ) {
   needOwner(actor);
+  if (
+    input.branchId &&
+    !(await db.branch.findFirst({
+      where: { id: input.branchId, companyId: actor.companyId },
+      select: { id: true },
+    }))
+  )
+    throw notFound('Branch');
   const c = await db.company.findUniqueOrThrow({
     where: { id: actor.companyId },
     select: { settings: true },

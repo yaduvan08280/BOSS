@@ -217,6 +217,12 @@ export async function saveLeaveType(
       where: { companyId: actor.companyId, code: input.code, NOT: id ? { id } : undefined },
     });
     if (clash) throw new AppError(409, 'CONFLICT', `There is already a ${input.code}`);
+    // Only a leave type of this company: an id from anywhere else is "not found", never changed.
+    if (
+      id &&
+      !(await tx.leaveType.findFirst({ where: { id, companyId: actor.companyId }, select: { id: true } }))
+    )
+      throw new AppError(404, 'NOT_FOUND', 'Leave type not found');
     const row = id
       ? await tx.leaveType.update({ where: { id }, data: input })
       : await tx.leaveType.create({ data: { ...input, companyId: actor.companyId } });

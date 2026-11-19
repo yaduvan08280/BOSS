@@ -1,5 +1,26 @@
 # Changelog
 
+## 19/11/2026 — Security pass
+
+Every API route was walked as a visitor, another company's owner, a member with no rights and a person of
+another branch (`apps/api/src/security/access.test.ts`); the findings and what is still open are in
+`docs/security-review.md`.
+
+- **Fixed — another company could change a leave type by its id.** The cause is closed for good: the database
+  client now adds the signed-in person's company to every read and write (the "company wall"), so another
+  company's id is simply not found.
+- Telegram messages no longer fail (or show a typed link as a real one) when a task or a name contains `<` or `&`.
+- Parties, tax codes and payment modes are no longer readable by every signed-in person.
+- Ten wrong passwords in 15 minutes lock that login for 15 minutes, whatever address they come from.
+- Addresses typed for webhooks, the WhatsApp provider, integrations and AI servers are called on the public
+  internet only. **If you run Ollama or a Whisper server on the MONO machine, add `AI_ALLOW_PRIVATE=1` to
+  `.env`** — otherwise its address is refused after this update.
+- CSV exports are safe to open in Excel when a name starts with `=`, `+`, `-` or `@`.
+- New server command to change `APP_SECRET` without losing saved keys (`rotate-secret`).
+- Containers run read-only with no extra privileges.
+- Also here: "Compact rows" in the profile menu; import previews fit a phone; the Navy & Gold look and the
+  pages a guest opens from a link are part of the size audit; test runs start on an empty test database.
+
 ## 18/11/2026 — Every screen at every size
 
 Result: two full audit rounds in a row found nothing (each: 14 sizes and 6 variants as the owner, the four key sizes as a kitchen staff member and on the demo company, every tab, dialog and dropdown at 390, 1024, 1440 and 2560). The only tables that still scroll sideways are the ones meant to (decision 247c). A ticket the system clears when its order is paid gets no made-up ready time.

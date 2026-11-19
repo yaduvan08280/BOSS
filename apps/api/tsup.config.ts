@@ -9,5 +9,6 @@ export default defineConfig({
     'seed-demo': '../../prisma/seed-demo.ts',
     'seed-ggm': '../../prisma/seed-ggm.ts',
     'reset-password': '../../prisma/reset-password.ts',
+    'rotate-secret': '../../prisma/rotate-secret.ts',
   },
 });

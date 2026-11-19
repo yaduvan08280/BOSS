@@ -1,4 +1,4 @@
-import { assertPublicUrl } from '../platform/safe-url';
+import { guardedFetch } from '../platform/safe-url';
 import type { Db, Prisma } from '@mono/db';
 import { emitEvent } from '../../lib/events';
 import { parseDefinition, fmsLink } from './engine';
@@ -103,9 +103,11 @@ async function watchPage(db: Db, open: OpenStep[], now: Date) {
 /** AUTO webhook steps: POST the record to the URL; on success (or after 5 failed tries) the record moves on. */
 export async function runFmsWebhooks(
   db: Db,
-  f: typeof fetch = fetch,
-  net?: { production: boolean; allowPrivate?: boolean },
+  f?: typeof fetch,
+  net: { production: boolean; allowPrivate?: boolean } = { production: true },
 ) {
+  // An address a person typed into a step: called only on the public internet, never following a redirect.
+  const call = f ?? guardedFetch(net);
   const steps = await db.fmsRecordStep.findMany({
     where: { status: 'OPEN', type: 'AUTO', record: { status: 'RUNNING', deletedAt: null } },
     include: { record: { include: { version: true, flow: { select: { name: true } } } } },
@@ -124,8 +126,7 @@ export async function runFmsWebhooks(
     });
     try {
       // Never into the server's own network (SSRF); never follow a redirect there either.
-      if (net) await assertPublicUrl(url, net);
-      const res = await f(url, {
+      const res = await call(url, {
         redirect: 'manual',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

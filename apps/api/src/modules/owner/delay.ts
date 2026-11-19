@@ -1,3 +1,4 @@
+import { notFound } from '../../lib/errors';
 import type { Db } from '@mono/db';
 import type { Actor } from '../work/actor';
 import { needOwner, places, spanOf } from './core';
@@ -11,6 +12,13 @@ const valuesOf = async (db: Db, companyId: string) => {
 /** What one day of delay costs for a process (rupees a day, typed by the owner). */
 export async function saveDelayValue(db: Db, actor: Actor, input: { flowId: string; rupeesPerDay: number }) {
   needOwner(actor);
+  if (
+    !(await db.flow.findFirst({
+      where: { id: input.flowId, companyId: actor.companyId },
+      select: { id: true },
+    }))
+  )
+    throw notFound('Process');
   const c = await db.company.findUniqueOrThrow({
     where: { id: actor.companyId },
     select: { settings: true },

@@ -1,5 +1,5 @@
 import type { Db } from '@mono/db';
-import { addDays, bottlesAndMl, isLiquor, type ItemUnit } from '@mono/shared';
+import { addDays, bottlesAndMl, isLiquor, type ItemUnit, csvText } from '@mono/shared';
 import { z } from 'zod';
 import { AppError } from '../../lib/errors';
 import { stockRegister } from '../ims/stock-reports';
@@ -105,8 +105,7 @@ export async function exciseRegister(db: Db, actor: Actor, q: z.infer<typeof exc
   };
 }
 
-const csv = (rows: (string | number)[][]) =>
-  rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+const csv = csvText;
 const bm = (x: Qty) => [x.bottles, x.ml];
 /**
  * The register as a file. RAJASTHAN: a brand-wise daily stock register with bottles and ml side by side and the

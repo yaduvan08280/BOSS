@@ -99,6 +99,10 @@ export async function fileRoutes(app: FastifyInstance, opts: { storage: Storage 
         );
       }
       reply.header('X-Content-Type-Options', 'nosniff');
+      // A file is data, never a page: nothing in it may load or run anything (PDFs are left to the browser's
+      // own viewer, which a sandbox would stop from opening).
+      if (row.mime !== 'application/pdf')
+        reply.header('Content-Security-Policy', "default-src 'none'; sandbox");
       return reply.send(opts.storage.get(row.path));
     },
   );

@@ -48,10 +48,23 @@ export function reachBranch(field = 'branchId', reach = currentReach()): Where |
   return null;
 }
 
-const store = new AsyncLocalStorage<{ reach: Reach | null }>();
+const store = new AsyncLocalStorage<{ reach: Reach | null; companyId?: string | null }>();
 
 /** Run a request inside its own reach slot (set later, once the person is known). */
-export const runWithReachSlot = <T>(fn: () => T): T => store.run({ reach: null }, fn);
+export const runWithReachSlot = <T>(fn: () => T): T => store.run({ reach: null, companyId: null }, fn);
+/** The caller's company is known: from here on this request reads and writes only that company (`wall.ts`). */
+export function setCompany(companyId: string | null) {
+  const slot = store.getStore();
+  if (slot) slot.companyId = companyId;
+}
+export const currentCompany = (): string | null => store.getStore()?.companyId ?? null;
+/**
+ * For the few places that read another company on purpose (the owner's linked companies): `fn` runs without the
+ * company wall, and without the caller's reach — it must name the company in every query itself, and await
+ * its queries inside `fn` (Prisma queries run when awaited).
+ */
+export const acrossCompanies = <T>(fn: () => Promise<T>): Promise<T> =>
+  store.run({ reach: null, companyId: null }, fn);
 /** The person is known: everything this request reads from here on is limited to their reach. */
 export function setReach(reach: Reach | null) {
   const slot = store.getStore();

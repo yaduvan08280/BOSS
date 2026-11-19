@@ -1,4 +1,4 @@
-import type { Db } from '@mono/db';
+import { acrossCompanies, type Db } from '@mono/db';
 import { addDays, localDate } from '@mono/shared';
 import { AppError } from '../../lib/errors';
 import { verifyLogin } from '../auth/service';
@@ -114,23 +114,31 @@ export async function morning(db: Db, actor: Actor) {
   const live = [];
   for (const l of links) {
     // The link holds only while the other login is still an active owner there.
-    const other = await db.user.findFirst({
-      where: {
-        id: l.otherUserId,
-        companyId: l.otherCompanyId,
-        deletedAt: null,
-        status: 'ACTIVE',
-        loginEnabled: true,
-        role: { key: 'OWNER' },
-        company: { deletedAt: null },
-      },
-      select: { id: true },
-    });
+    // (Another company on purpose: outside the company wall, and every query names the company itself.)
+    const other = await acrossCompanies(async () =>
+      db.user.findFirst({
+        where: {
+          id: l.otherUserId,
+          companyId: l.otherCompanyId,
+          deletedAt: null,
+          status: 'ACTIVE',
+          loginEnabled: true,
+          role: { key: 'OWNER' },
+          company: { deletedAt: null },
+        },
+        select: { id: true },
+      }),
+    );
     if (other) live.push(l.otherCompanyId);
   }
   const companies = [];
   for (const id of [actor.companyId, ...live])
-    companies.push({ ...(await morningOf(db, id)), mine: id === actor.companyId });
+    companies.push({
+      ...(id === actor.companyId
+        ? await morningOf(db, id)
+        : await acrossCompanies(async () => await morningOf(db, id))),
+      mine: id === actor.companyId,
+    });
   const worst = companies
     .flatMap((c) => c.flags.map((f) => ({ company: c.name, ...f })))
     .sort((a, b) => b.weight - a.weight)
@@ -150,15 +158,18 @@ export async function linkCompany(
     select: { role: { select: { key: true } } },
   });
   if (me.role.key !== 'OWNER') throw new AppError(403, 'FORBIDDEN', 'Only an Owner links companies');
-  const found = await verifyLogin(db, input.identifier, input.password, input.companyId);
-  const other = await db.user.findFirstOrThrow({
-    where: { id: found.id },
-    select: {
-      id: true,
-      companyId: true,
-      role: { select: { key: true } },
-      company: { select: { name: true } },
-    },
+  // The other company's own sign-in is checked outside the company wall (it is another company on purpose).
+  const other = await acrossCompanies(async () => {
+    const found = await verifyLogin(db, input.identifier, input.password, input.companyId);
+    return await db.user.findFirstOrThrow({
+      where: { id: found.id },
+      select: {
+        id: true,
+        companyId: true,
+        role: { select: { key: true } },
+        company: { select: { name: true } },
+      },
+    });
   });
   if (other.companyId === actor.companyId) throw new AppError(400, 'BAD_REQUEST', 'That is this company');
   if (other.role.key !== 'OWNER')

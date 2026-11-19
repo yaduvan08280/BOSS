@@ -8,7 +8,7 @@ import { decryptJson, encryptJson } from '../../lib/secrets';
 import type { Env } from '../../env';
 import type { Actor } from '../work/actor';
 import { needAdmin } from './keys';
-import { assertPublicUrl } from './safe-url';
+import { assertPublicUrl, guardedFetch } from './safe-url';
 import { reachOfUser } from '../branches/reach';
 
 const ctxOf = (actor: Actor) => ({ ...actor, actorId: actor.userId });
@@ -220,8 +220,8 @@ const bodyOf = (
 
 /** Post one request; never follows redirects (a redirect could point inside the network). */
 async function post(url: string, req: ReturnType<typeof signedRequest>, net: WebhookNet) {
-  await assertPublicUrl(url, net);
-  const res = await (net.fetch ?? fetch)(url, {
+  // Checked again on the address the connection really goes to (guardedFetch).
+  const res = await (net.fetch ?? guardedFetch(net))(url, {
     method: 'POST',
     headers: req.headers,
     body: req.body,

@@ -1,6 +1,7 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from './generated/client';
 import { withReach } from './reach';
+import { withCompanyWall } from './wall';
 
 export type Db = PrismaClient;
 /** Interactive-transaction client (what `$transaction(async (tx) => …)` hands you). */
@@ -10,7 +11,8 @@ export function createPrisma(url = process.env.DATABASE_URL): Db {
   if (!url) throw new Error('DATABASE_URL is not set');
   // Reach (phase 12) is part of the client itself: inside a web request, reads of branch-bearing tables are
   // limited to what the signed-in person may see. Outside one (the worker, seeds) nothing is added.
-  return withReach(new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) }));
+  // The company wall (decision 250) sits under it: a signed-in request cannot touch another company's rows.
+  return withReach(withCompanyWall(new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) })));
 }
 
 let shared: Db | undefined;

@@ -2,6 +2,7 @@ export * from './machines/transition';
 export * from './format/money';
 export * from './format/date';
 export * from './format/phone';
+export * from './format/csv';
 export * from './theme/color';
 export * from './theme/status';
 export * from './theme/generate';

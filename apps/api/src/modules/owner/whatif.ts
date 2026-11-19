@@ -1,3 +1,4 @@
+import { notFound } from '../../lib/errors';
 import { formatNumber, nextCounter, type Db } from '@mono/db';
 import { addDays } from '@mono/shared';
 import type { Actor } from '../work/actor';
@@ -100,7 +101,8 @@ export async function copyChecklists(
       select: { name: true },
     }),
   ]);
-  if (!from || !to || from.id === to.id) return { copied: 0, skipped: 0, reason: 'branch' as const };
+  if (!from || !to) throw notFound('Branch');
+  if (from.id === to.id) return { copied: 0, skipped: 0, reason: 'branch' as const };
   if (!manager) return { copied: 0, skipped: masters.length, reason: 'manager' as const };
   const have = new Set(existing.map((m) => m.name.toLowerCase()));
   let copied = 0;

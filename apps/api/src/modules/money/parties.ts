@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { AppError, notFound } from '../../lib/errors';
 import { recordChange } from '../../lib/events';
 import { can, type Actor } from '../work/actor';
+import { needPick } from './access';
 
 /**
  * Parties (phase 12M): one master for everyone MONO deals with. A party can be several kinds at once (a dealer
@@ -41,6 +42,7 @@ const needEdit = (a: Actor) => {
 };
 
 export async function listParties(db: Db, actor: Actor, q: { q?: string; kind?: string }) {
+  needPick(actor);
   const rows = await db.party.findMany({
     where: {
       companyId: actor.companyId,

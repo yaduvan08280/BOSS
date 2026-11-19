@@ -72,3 +72,23 @@ describe('phone', () => {
     expect(normalizeMobile('12345')).toBeNull();
   });
 });
+
+describe('csv cells', () => {
+  it('keeps text that looks like a formula as text, and numbers as numbers', async () => {
+    const { csvCell, csvText } = await import('./csv');
+    expect(csvCell('=HYPERLINK("http://x","pay")')).toBe(`"'=HYPERLINK(""http://x"",""pay"")"`);
+    expect(csvCell('+91 98290 12345')).toBe("'+91 98290 12345");
+    expect(csvCell('@SUM(A1)')).toBe("'@SUM(A1)");
+    expect(csvCell('-cmd|calc')).toBe("'-cmd|calc");
+    expect(csvCell(-1250.5)).toBe('-1250.5');
+    expect(csvCell('-1250.50')).toBe('-1250.50');
+    expect(csvCell('Sharma, Traders')).toBe('"Sharma, Traders"');
+    expect(csvCell(null)).toBe('');
+    expect(
+      csvText([
+        ['a', '=1+1'],
+        [2, 'b"c'],
+      ]),
+    ).toBe(`"a","'=1+1"\r\n"2","b""c"`);
+  });
+});

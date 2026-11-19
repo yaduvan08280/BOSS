@@ -3,7 +3,7 @@ import type { Connection, Db, Prisma } from '@mono/db';
 import type { ConnectionKind } from '@mono/shared';
 import { AppError } from '../../lib/errors';
 import { decryptJson } from '../../lib/secrets';
-import { assertPublicUrl } from '../platform/safe-url';
+import { guardedFetch } from '../platform/safe-url';
 
 /**
  * Phase 19 — what every integration shares: a connection with its opened secret, one way to call out (logged,
@@ -80,13 +80,12 @@ export async function callOut(db: Db, net: Net, conn: Connection, c: Call) {
   let json: unknown = null;
   let error: string | null = null;
   try {
-    if (!net.fetch)
-      await assertPublicUrl(c.url, { production: net.production ?? false, allowPrivate: net.allowPrivate });
+    const rule = { production: net.production ?? false, allowPrivate: net.allowPrivate };
     const headers: Record<string, string> = { accept: 'application/json', ...(c.headers ?? {}) };
     if (c.basic)
       headers.authorization = `Basic ${Buffer.from(`${c.basic[0]}:${c.basic[1]}`).toString('base64')}`;
     if (c.body !== undefined && !headers['content-type']) headers['content-type'] = 'application/json';
-    const res = await (net.fetch ?? fetch)(c.url, {
+    const res = await (net.fetch ?? guardedFetch(rule))(c.url, {
       method: c.method ?? 'POST',
       headers,
       body: c.body === undefined ? undefined : JSON.stringify(c.body),

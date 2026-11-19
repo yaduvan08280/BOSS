@@ -3,3 +3,5 @@ export * from './client';
 export * from './scope';
 export * from './counters';
 export * from './reach';
+export * from './wall';
+export * from './company-models';

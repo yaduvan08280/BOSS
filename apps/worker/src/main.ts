@@ -37,12 +37,14 @@ import {
   EventListener,
   expireChecklists,
   flagOverdueTasks,
+  aiNetworkOf,
   LocalDiskStorage,
   remindChecklists,
   remindUnaccepted,
   runFmsWebhooks,
   sendDailySummaries,
   sendWeeklyMis,
+  setAiNetwork,
   sweepChecklists,
   sweepSlips,
   sweepTickets,
@@ -55,6 +57,8 @@ import { sendDue } from './notify/outbox';
 import { BotManager } from './notify/telegram-bot';
 
 const env = loadEnv();
+// The same network rule for AI and speech calls as the API (see setAiNetwork).
+setAiNetwork(aiNetworkOf(env));
 const log = pino({
   level: env.LOG_LEVEL,
   ...(env.NODE_ENV === 'development' ? { transport: { target: 'pino-pretty' } } : {}),
@@ -254,7 +258,7 @@ await boss.work(
     const mis = await sendWeeklyMis(prisma);
     const summaries = await sendDailySummaries(prisma, env.APP_SECRET);
     await morningCoverReport(prisma);
-    await runFmsWebhooks(prisma, fetch, net);
+    await runFmsWebhooks(prisma, undefined, net);
     await drainWebhooks();
     const reports = await sendScheduledReports(prisma);
     if (reports) log.info({ reports }, 'Scheduled reports sent');

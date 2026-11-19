@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { CONNECTION_KINDS, connectionSchema, PAY_PURPOSES, payLinkSchema } from '@mono/shared';
 import { z } from 'zod';
@@ -156,28 +156,35 @@ export async function connectRoutes(app: FastifyInstance, opts: { env: Env; fetc
   r.post('/api/connect/tally/retry', signedIn('money.view'), async (q) => tallyRetry(db, actorOf(q)));
 
   // The site agent itself: its key is its only sign-in.
-  const agentLimit = { config: { rateLimit: { max: 240, timeWindow: '1 minute' } } };
-  r.get('/api/agent/print', { ...agentLimit, schema: { tags } }, async (q) =>
-    agentPrintJobs(db, await agentOf(db, q.headers.authorization)),
+  // Checked before anything else about the request, so a caller with no key learns nothing — not even what
+  // the body should look like. (A fresh hook list per route: decision 62.)
+  const agents = new WeakMap<FastifyRequest, Awaited<ReturnType<typeof agentOf>>>();
+  const agent = () => ({
+    config: { rateLimit: { max: 240, timeWindow: '1 minute' } },
+    onRequest: [
+      async (q: FastifyRequest) => {
+        agents.set(q, await agentOf(db, q.headers.authorization));
+      },
+    ],
+  });
+  r.get('/api/agent/print', { ...agent(), schema: { tags } }, async (q) =>
+    agentPrintJobs(db, agents.get(q)!),
   );
   r.post(
     '/api/agent/print/:id',
     {
-      ...agentLimit,
+      ...agent(),
       schema: {
         tags,
         params: idParam,
         body: z.object({ ok: z.boolean(), error: z.string().max(300).nullish() }),
       },
     },
-    async (q) =>
-      agentPrinted(db, await agentOf(db, q.headers.authorization), q.params.id, q.body.ok, q.body.error),
+    async (q) => agentPrinted(db, agents.get(q)!, q.params.id, q.body.ok, q.body.error),
   );
-  r.get('/api/agent/tally', { ...agentLimit, schema: { tags } }, async (q) =>
-    agentVouchers(db, await agentOf(db, q.headers.authorization)),
-  );
-  r.post('/api/agent/tally', { ...agentLimit, schema: { tags, body: ackSchema } }, async (q) =>
-    agentVouchersDone(db, await agentOf(db, q.headers.authorization), q.body),
+  r.get('/api/agent/tally', { ...agent(), schema: { tags } }, async (q) => agentVouchers(db, agents.get(q)!));
+  r.post('/api/agent/tally', { ...agent(), schema: { tags, body: ackSchema } }, async (q) =>
+    agentVouchersDone(db, agents.get(q)!, q.body),
   );
 
   await app.register(roomsPublicRoutes, { env: opts.env });

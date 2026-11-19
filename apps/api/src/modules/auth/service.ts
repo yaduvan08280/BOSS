@@ -10,6 +10,7 @@ import { identifierWhere } from '../../lib/identifier';
 import { recordChange } from '../../lib/events';
 import { hashPassword, verifyPassword } from '../../lib/password';
 import { hashToken, newRefreshToken, REFRESH_TTL_SECONDS } from '../../lib/tokens';
+import { assertNotLocked, noteFailure, noteSuccess } from './throttle';
 
 type ClientInfo = { ip: string | null; userAgent: string | null };
 
@@ -68,7 +69,13 @@ export async function login(
   input: { identifier: string; password: string; companyId?: string },
   client: ClientInfo,
 ) {
-  const user = await verifyLogin(db, input.identifier, input.password, input.companyId);
+  await assertNotLocked(db, input.identifier);
+  const user = await verifyLogin(db, input.identifier, input.password, input.companyId).catch(async (err) => {
+    if (err instanceof AppError && err.code === 'INVALID_CREDENTIALS')
+      await noteFailure(db, input.identifier);
+    throw err;
+  });
+  await noteSuccess(db, input.identifier);
   const { session, refreshToken } = await createSession(db, user.id, user.companyId, client);
   await db.$transaction(async (tx) => {
     await tx.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });

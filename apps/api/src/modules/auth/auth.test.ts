@@ -160,6 +160,28 @@ describe('auth', () => {
     expect(res.statusCode).toBe(403);
   });
 
+  it('refuses a change that carries the session cookie but does not say where it comes from', async () => {
+    const { mobile, password } = await makeCompany(ctx.app);
+    const jar = cookieHeader(await login(mobile, password));
+    const noOrigin = await ctx.app.inject({
+      method: 'PATCH',
+      url: '/api/auth/me/preferences',
+      headers: { cookie: asHeader(jar) },
+      payload: { lang: 'hi' },
+    });
+    expect(noOrigin.statusCode).toBe(403);
+    const fromApp = await ctx.app.inject({
+      method: 'PATCH',
+      url: '/api/auth/me/preferences',
+      headers: { cookie: asHeader(jar), origin: ORIGIN },
+      payload: { lang: 'hi' },
+    });
+    expect(fromApp.statusCode).toBe(200);
+    // Reading needs no Origin (a link opened in a new tab sends none).
+    const read = await ctx.app.inject({ url: '/api/auth/me', headers: { cookie: asHeader(jar) } });
+    expect(read.statusCode).toBe(200);
+  });
+
   it('writes audit rows and outbox events for logins', async () => {
     const { mobile, password, owner, company } = await makeCompany(ctx.app);
     await login(mobile, password);
@@ -188,6 +210,63 @@ describe('login rate limit', () => {
       expect(codes).toEqual([401, 401, 401, 429]);
     } finally {
       await limited.app.close();
+    }
+  });
+});
+
+describe('account lockout (decision 250)', () => {
+  it('locks a login ID after ten wrong passwords, whatever address they come from, then lets it back in', async () => {
+    const open = await makeApp({ LOGIN_RATE_LIMIT: '100000' });
+    try {
+      const { mobile, password } = await makeCompany(open.app);
+      const tryIt = (pw: string, typed = mobile, ip = '10.0.0.1') =>
+        open.app.inject({
+          method: 'POST',
+          url: '/api/auth/login',
+          headers: { origin: ORIGIN, 'cf-connecting-ip': ip },
+          payload: { identifier: typed, password: pw },
+        });
+      // Ten wrong passwords, each from another address, the ID typed in different ways.
+      for (let i = 0; i < 10; i++) {
+        const typed = i % 2 ? `+91 ${mobile.slice(0, 5)} ${mobile.slice(5)}` : mobile;
+        expect((await tryIt(`wrong-${i}`, typed, `10.0.0.${i + 1}`)).statusCode).toBe(401);
+      }
+      // Now even the right password is refused — and says for how long, not whether it was right.
+      const locked = await tryIt(password, mobile, '10.0.9.9');
+      expect(locked.statusCode).toBe(429);
+      expect(locked.json().error).toMatchObject({ code: 'RATE_LIMITED' });
+      expect(locked.json().error.message).toMatch(/Try again in \d+ minute/);
+      // Another person's login is not touched.
+      const other = await makeCompany(open.app);
+      expect((await tryIt(other.password, other.mobile)).statusCode).toBe(200);
+      // When the lock has run out, the right password signs in and the count starts afresh.
+      await open.prisma.loginThrottle.updateMany({ data: { lockedUntil: new Date(Date.now() - 1000) } });
+      expect((await tryIt(password)).statusCode).toBe(200);
+      const { sweepThrottles } = await import('./throttle');
+      await sweepThrottles(open.prisma, new Date(Date.now() + 3_600_000));
+      expect(await open.prisma.loginThrottle.count()).toBe(0);
+    } finally {
+      await open.app.close();
+    }
+  });
+
+  it('nine wrong passwords and then the right one does not lock anybody out', async () => {
+    const open = await makeApp({ LOGIN_RATE_LIMIT: '100000' });
+    try {
+      const { mobile, password } = await makeCompany(open.app);
+      const tryIt = (pw: string) =>
+        open.app.inject({
+          method: 'POST',
+          url: '/api/auth/login',
+          headers: { origin: ORIGIN },
+          payload: { identifier: mobile, password: pw },
+        });
+      for (let i = 0; i < 9; i++) expect((await tryIt('nope')).statusCode).toBe(401);
+      expect((await tryIt(password)).statusCode).toBe(200);
+      for (let i = 0; i < 9; i++) expect((await tryIt('nope')).statusCode).toBe(401);
+      expect((await tryIt(password)).statusCode).toBe(200);
+    } finally {
+      await open.app.close();
     }
   });
 });

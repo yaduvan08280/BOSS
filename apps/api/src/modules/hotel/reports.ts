@@ -1,5 +1,5 @@
 import type { Db } from '@mono/db';
-import { addDays, isForeign, stayNights, type Kyc } from '@mono/shared';
+import { addDays, isForeign, stayNights, type Kyc, csvText } from '@mono/shared';
 import { z } from 'zod';
 import type { Actor } from '../work/actor';
 import type { AuditPack } from './audit';
@@ -75,8 +75,7 @@ export async function guestRegister(db: Db, actor: Actor, q: z.infer<typeof regi
   return registerRows(db, actor.companyId, q);
 }
 
-const csv = (rows: (string | number)[][]) =>
-  rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+const csv = csvText;
 /** The foreign guests of a span as a file to type into (or upload to) the FRRO portal. */
 export async function formCExport(db: Db, actor: Actor, q: z.infer<typeof registerQuery>) {
   seer(actor);

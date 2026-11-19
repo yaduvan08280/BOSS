@@ -1,5 +1,5 @@
 import type { Db } from '@mono/db';
-import { GSTIN, gstinState, stateCode, type BillChargeOut, type BillLineOut } from '@mono/shared';
+import { GSTIN, gstinState, stateCode, type BillChargeOut, type BillLineOut, csvCell } from '@mono/shared';
 import { z } from 'zod';
 import { AppError } from '../../lib/errors';
 import { can, type Actor } from '../work/actor';
@@ -166,10 +166,7 @@ export async function gstr1(db: Db, actor: Actor, input: z.input<typeof gstrQuer
 }
 
 const rs = (minor: unknown) => (Number(minor ?? 0) / 100).toFixed(2);
-const cell = (v: unknown) => {
-  const s = v == null ? '' : String(v);
-  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-};
+const cell = (v: unknown) => csvCell(v);
 /** The same as one CSV file, a section after another, amounts in rupees. */
 export async function gstr1Csv(db: Db, actor: Actor, input: z.input<typeof gstrQuery>) {
   const r = await gstr1(db, actor, input);

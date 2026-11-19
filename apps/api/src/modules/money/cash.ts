@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { writeAudit } from '../../lib/audit';
 import { AppError, notFound } from '../../lib/errors';
 import { can, type Actor } from '../work/actor';
+import { needPick } from './access';
 
 /**
  * Payment modes and cash books (phase 12M): how money comes in and goes out at a branch — cash, UPI, card, bank,
@@ -35,6 +36,7 @@ const needAdmin = (a: Actor) => {
 };
 
 export async function listModes(db: Db, actor: Actor, branchId?: string | null) {
+  needPick(actor);
   return db.paymentMode.findMany({
     where: {
       companyId: actor.companyId,

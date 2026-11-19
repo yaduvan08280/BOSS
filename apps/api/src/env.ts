@@ -34,6 +34,14 @@ const envSchema = z.object({
     .string()
     .default('')
     .transform((v) => /^(1|true|yes)$/i.test(v.trim())),
+  /**
+   * Let the AI and speech settings name a server inside this network (Ollama or Whisper on this machine).
+   * Off by default: an address a company's admin types is otherwise called only on the public internet.
+   */
+  AI_ALLOW_PRIVATE: z
+    .string()
+    .default('')
+    .transform((v) => /^(1|true|yes)$/i.test(v.trim())),
 });
 
 export type Env = z.infer<typeof envSchema> & { cookieSecure: boolean; origin: string };

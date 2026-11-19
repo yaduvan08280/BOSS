@@ -21,6 +21,7 @@ import {
 } from './builder';
 import { documentPdf } from './documents';
 import { completeStep, parseDefinition, startRecord } from './engine';
+import { writeAudit } from '../../lib/audit';
 import { AppError } from '../../lib/errors';
 import { publicFormRoutes } from './public';
 import { fmsPeopleReport } from './people-report';
@@ -363,11 +364,28 @@ export async function fmsRoutes(app: FastifyInstance, opts: { env: Env }) {
     { onRequest: [app.requirePermission('docs.edit')], schema: { tags, params: idParam } },
     async (q) => {
       const actor = actorOf(q);
-      const res = await app.prisma.document.updateMany({
+      // Only a paper of this company, and one the person can see; a paper that is not there is a 404, not "ok: false".
+      const doc = await app.prisma.document.findFirst({
         where: { id: q.params.id, companyId: actor.companyId },
-        data: { status: 'CANCELLED' },
+        select: { id: true, status: true, number: true },
       });
-      return { ok: res.count === 1 };
+      if (!doc) throw new AppError(404, 'NOT_FOUND', 'Document not found');
+      if (doc.status === 'CANCELLED') return { ok: true };
+      await app.prisma.$transaction(async (tx) => {
+        await tx.document.update({ where: { id: doc.id }, data: { status: 'CANCELLED' } });
+        await writeAudit(
+          tx,
+          { companyId: actor.companyId, actorId: actor.userId, ip: q.ip, userAgent: null },
+          {
+            action: 'document.cancelled',
+            entityType: 'document',
+            entityId: doc.id,
+            before: { status: doc.status },
+            after: { status: 'CANCELLED', number: doc.number },
+          },
+        );
+      });
+      return { ok: true };
     },
   );
 

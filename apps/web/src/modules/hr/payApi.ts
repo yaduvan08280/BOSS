@@ -6,6 +6,7 @@ import {
   type PayResult,
   type PayRules,
   type WorkPattern,
+  csvCell,
 } from '@mono/shared';
 import { api } from '@/lib/api';
 
@@ -96,10 +97,7 @@ export const BASES: PayBasis[] = ['monthly', 'daily', 'hourly'];
 /** One CSV of the month: a row a person, a column a line of pay (Excel opens it as it is). */
 export function payCsv(sheet: PaySheet, label: (key: string) => string): string {
   const keys = [...new Set(sheet.lines.flatMap((l) => l.lines.map((x) => x.key)))];
-  const cell = (v: string | number | null) => {
-    const s = v === null ? '' : String(v);
-    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-  };
+  const cell = (v: string | number | null) => csvCell(v);
   const head = [
     label('code'),
     label('name'),

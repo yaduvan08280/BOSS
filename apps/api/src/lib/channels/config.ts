@@ -5,6 +5,7 @@ import { smtpTransport, type SmtpConfig } from './email';
 import type { VapidKeys } from './push';
 import { whatsappProvider, type WhatsAppConfig, type WhatsAppProvider } from './whatsapp';
 import type { Fetch } from './types';
+import { guardedFetch } from '../../modules/platform/safe-url';
 
 export const CHANNEL_KEYS = ['email', 'telegram', 'whatsapp', 'push'] as const;
 export type ChannelKey = (typeof CHANNEL_KEYS)[number];
@@ -150,7 +151,14 @@ export async function channelClients(
         : null;
   let whatsapp: WhatsAppProvider | null;
   try {
-    whatsapp = waCfg ? whatsappProvider(waCfg, f) : null;
+    // The provider's address was typed by an admin: called only on the public internet.
+    const production = env.NODE_ENV === 'production';
+    whatsapp = waCfg
+      ? whatsappProvider(
+          waCfg,
+          f ?? guardedFetch({ production, allowPrivate: env.WEBHOOK_ALLOW_PRIVATE && !production }),
+        )
+      : null;
   } catch {
     // An unsupported provider means "not connected" rather than an error on every send.
     whatsapp = null;

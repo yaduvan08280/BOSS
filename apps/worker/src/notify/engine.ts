@@ -4,6 +4,7 @@ import {
   DEFAULT_QUIET_HOURS,
   nextSendTime,
   notifyEvent,
+  escapeHtml,
   renderText,
   templateCode,
   toNumberedTemplate,
@@ -53,6 +54,10 @@ type Tpl = {
   status: string;
   active: boolean;
 };
+
+/** The same values with <, > and & made harmless, for a channel that reads its text as HTML. */
+const escapeValues = (v: Record<string, unknown>) =>
+  Object.fromEntries(Object.entries(v).map(([k, x]) => [k, typeof x === 'string' ? escapeHtml(x) : x]));
 
 function quietHoursOf(p: Person): QuietHours {
   const q = (p.prefs as { quietHours?: QuietHours } | null)?.quietHours;
@@ -232,9 +237,15 @@ export async function notifyForEvent(event: DomainEvent, deps: EngineDeps): Prom
             continue;
           }
           // WhatsApp keeps its approved template; Telegram and email may carry the AI's words.
+          // Telegram reads its text as HTML (the templates use <b>): whatever comes from people — a task's
+          // words, a name, the AI's sentence — is escaped, so "<" can neither break the message nor become a link.
+          const ai = channel !== 'whatsapp' ? aiTexts.get(`${rule.id}:${p.id}`) : undefined;
           const body =
-            (channel !== 'whatsapp' ? aiTexts.get(`${rule.id}:${p.id}`) : undefined) ??
-            renderText(tpl!.body, v);
+            channel === 'telegram'
+              ? ai !== undefined
+                ? escapeHtml(ai)
+                : renderText(tpl!.body, escapeValues(v))
+              : (ai ?? renderText(tpl!.body, v));
           const message: Record<string, unknown> = { text: body, link: v.link };
           if (channel === 'email')
             message.subject = renderText(tpl!.subject ?? def?.title[lang] ?? deps.appName, v);
