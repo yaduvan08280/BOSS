@@ -52,7 +52,7 @@ export function KpiTile({
       )}
     >
       <div
-        className={cn('flex items-center gap-1.5 text-[13px]', hero ? 'opacity-75' : 'text-muted-foreground')}
+        className={cn('flex items-center gap-1.5 text-[13px]', hero ? 'text-ink-foreground/75' : 'text-muted-foreground')}
       >
         {Icon && <Icon className="size-3.5" aria-hidden />}
         {label}

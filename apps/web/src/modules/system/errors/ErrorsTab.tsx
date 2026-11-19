@@ -107,7 +107,7 @@ export function ErrorsTab() {
                 )}
               </div>
               {open === r.id && r.stack && (
-                <pre className="max-h-64 overflow-auto rounded-control bg-muted p-2 font-mono text-[11px] whitespace-pre-wrap">
+                <pre tabIndex={0} className="max-h-64 overflow-auto rounded-control bg-muted p-2 font-mono text-[11px] whitespace-pre-wrap">
                   {r.stack}
                 </pre>
               )}

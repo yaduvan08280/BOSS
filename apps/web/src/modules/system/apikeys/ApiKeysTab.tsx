@@ -53,7 +53,7 @@ export function ApiKeysTab() {
           <code className="min-w-0 flex-1 truncate font-mono text-sm">{info.data.apiUrl}</code>
           <CopyButton value={info.data.apiUrl} />
         </div>
-        <pre className="overflow-x-auto rounded-control bg-ink p-3 font-mono text-xs text-ink-foreground">
+        <pre tabIndex={0} className="overflow-x-auto rounded-control bg-ink p-3 font-mono text-xs text-ink-foreground">
           {`curl -H "Authorization: Bearer mono_…" ${info.data.apiUrl}/customers`}
         </pre>
       </section>

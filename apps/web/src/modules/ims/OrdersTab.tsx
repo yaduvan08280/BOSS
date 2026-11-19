@@ -145,7 +145,7 @@ function PoDialog({ po, canOrder, onClose }: { po: Po; canOrder: boolean; onClos
         )
       }
     >
-      <div className="scroll-hint @container overflow-x-auto">
+      <div tabIndex={0} className="scroll-hint @container overflow-x-auto">
         {/* On a phone: item, ordered and amount (and what is coming in now); received returns with room. */}
         <table className="w-full text-sm [&_td]:pr-2 [&_th]:pr-2 @max-md:[&_:is(td,th):nth-child(3)]:hidden">
           <thead className="text-left text-xs text-muted-foreground">

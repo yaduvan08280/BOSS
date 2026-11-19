@@ -1,11 +1,19 @@
 import type { Db, FmsRecord, Tx } from '@mono/db';
-import { mergeData, nextStepKey, type FlowDefinition, type FlowStep } from '@mono/shared';
+import {
+  localDate,
+  MAIN_STORE,
+  mergeData,
+  nextStepKey,
+  type FlowDefinition,
+  type FlowStep,
+} from '@mono/shared';
 import { writeAudit } from '../../lib/audit';
 import { AppError, notFound } from '../../lib/errors';
 import { log, mayDo, parseDefinition, recordData } from '../fms/engine-helpers';
 import type { Actor } from '../work/actor';
 import { askApprovers } from './access';
 import { itemResolver, type RawLine } from './item-lines';
+import { canGive } from './ledger';
 import { applyMove, show } from './moves';
 import { reverseStock } from './step-reversal';
 
@@ -72,6 +80,12 @@ export type StockPlan = {
   blocked: boolean;
 };
 
+/** Today on the company's clock (batches expire by it). */
+async function todayOf(db: Db | Tx, companyId: string) {
+  const c = await db.company.findUnique({ where: { id: companyId }, select: { timezone: true } });
+  return localDate(new Date(), c?.timezone ?? 'Asia/Kolkata');
+}
+
 /** What a step would move, for the values so far. Reads only. */
 export async function planStock(
   db: Db | Tx,
@@ -91,6 +105,13 @@ export async function planStock(
   const items = await itemResolver(db, companyId, typed);
   const from = placeOf(spec.from, data);
   const to = placeOf(spec.to, data);
+  // An issue is taken from the main store (applyMove's own place): the preview counts what the main store can
+  // give today — not the company's total, which may sit at other locations or in batches that have expired.
+  const found = typed.map((l) => items.find(l)).filter((i): i is NonNullable<typeof i> => Boolean(i));
+  const give =
+    spec.action === 'ISSUE' && found.length
+      ? await canGive(db, companyId, found, MAIN_STORE, await todayOf(db, companyId))
+      : null;
   const running = new Map<string, number>();
   const lines = typed.map((l): PlanLine => {
     const text = String(l.item).trim();
@@ -102,7 +123,7 @@ export async function planStock(
         ...{ text, itemId: null, code: null, name: text, unit: null, qty, rate, itemRate: null },
         ...{ stock: null, after: null, short: false, shortBy: 0, from, to },
       };
-    const stock = running.get(item.id) ?? Number(item.stock);
+    const stock = running.get(item.id) ?? (give ? (give.get(item.id) ?? 0) : Number(item.stock));
     const short = spec.action === 'ISSUE' && qty > stock;
     const after = spec.action === 'ISSUE' ? (short ? stock : stock - qty) : stock;
     running.set(item.id, spec.action === 'RECEIVE' ? stock + qty : after);

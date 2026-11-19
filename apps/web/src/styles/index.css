@@ -128,6 +128,13 @@
 }
 
 /* Charts: a black dot with a light edge while moving the chart — the system's pale hand is hard to see on the cream page. */
+/* The flowchart library's own credit link is a pale grey on a half-white patch: readable colours instead. */
+.react-flow .react-flow__attribution {
+  background: var(--card);
+}
+.react-flow .react-flow__attribution a {
+  color: var(--muted-foreground);
+}
 .react-flow .react-flow__pane.draggable,
 .react-flow .react-flow__pane.draggable.dragging,
 .react-flow .react-flow__pane {

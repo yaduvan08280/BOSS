@@ -34,6 +34,7 @@
     "test:tz": "for z in Asia/Kolkata America/Los_Angeles Pacific/Kiritimati; do echo \"== server clock: $z\"; TZ=$z vitest run --project shared || exit 1; done"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.11.3",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.64.1",
     "@types/node": "^22.20.5",

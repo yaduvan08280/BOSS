@@ -205,7 +205,7 @@ function MusterGrid({
   const { t } = useTranslation();
   const totals = ['present', 'late', 'halfDays', 'absent', 'leave', 'weeklyOffs', 'holidays'] as const;
   return (
-    <div className="scroll-hint overflow-x-auto rounded-card border">
+    <div tabIndex={0} className="scroll-hint overflow-x-auto rounded-card border">
       <table className="min-w-max border-collapse text-xs tabular-nums">
         <thead>
           <tr className="border-b bg-muted/60 text-muted-foreground">

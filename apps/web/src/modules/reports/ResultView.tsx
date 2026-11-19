@@ -44,7 +44,7 @@ function Table({ result }: { result: ReportResult }) {
   const totals = result.totals && result.grouped ? [t('reports.total'), ...result.totals] : null;
   return (
     <>
-      <div className={cn('scroll-hint overflow-x-auto rounded-card border', wide && 'hidden md:block')}>
+      <div tabIndex={0} className={cn('scroll-hint overflow-x-auto rounded-card border', wide && 'hidden md:block')}>
         <table className="w-full text-sm">
           <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
             <tr>

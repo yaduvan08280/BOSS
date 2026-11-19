@@ -61,6 +61,47 @@ export async function putIn(
 export type Pick_ = { batchId: string; qty: number; value: number; qty2: number };
 
 /**
+ * What a location can give of each item today: what it holds, less batches that have expired. An item that
+ * has never moved since locations came (no balance rows at all) still has its whole stock in the main store.
+ * The same answer `takeOut` would give, for a preview that must not promise more than can be taken.
+ */
+export async function canGive(
+  db: Db | Tx,
+  companyId: string,
+  items: Pick<Item, 'id' | 'stock'>[],
+  locationId: string,
+  today: string,
+): Promise<Map<string, number>> {
+  const ids = [...new Set(items.map((i) => i.id))];
+  const out = new Map<string, number>();
+  if (!ids.length) return out;
+  const rows = await db.stockBalance.findMany({
+    where: { companyId, itemId: { in: ids } },
+    select: { itemId: true, locationId: true, batchId: true, qty: true },
+  });
+  const batchIds = [...new Set(rows.map((r) => r.batchId).filter(Boolean))];
+  const expiry = new Map(
+    batchIds.length
+      ? (
+          await db.stockBatch.findMany({
+            where: { id: { in: batchIds } },
+            select: { id: true, expiry: true },
+          })
+        ).map((b) => [b.id, b.expiry])
+      : [],
+  );
+  const known = new Set(rows.map((r) => r.itemId));
+  for (const i of items) out.set(i.id, known.has(i.id) || locationId !== MAIN_STORE ? 0 : Number(i.stock));
+  for (const r of rows) {
+    if (r.locationId !== locationId) continue;
+    const ends = r.batchId ? expiry.get(r.batchId) : null;
+    if (ends && ends < today) continue;
+    out.set(r.itemId, (out.get(r.itemId) ?? 0) + Number(r.qty));
+  }
+  return out;
+}
+
+/**
  * Take a quantity out of a location. With a batch named, from that batch; otherwise first expired first out
  * over the location's batches (an expired batch is never taken unless `allowExpired`, e.g. to write it off).
  */

@@ -49,7 +49,7 @@ const open = async (page: Page, tab: string) => {
   await page.getByRole('tab', { name: tab }).click();
 };
 
-test('a gateway, a property’s booking page and its channel manager', async ({ page }, info) => {
+test('a gateway, a property’s booking page and its channel manager', async ({ page, request }, info) => {
   const project = info.project.name;
   const snap = async (name: string) => {
     if (shots) await page.screenshot({ path: `docs/screenshots/phase19/${project}-${name}.png` });
@@ -133,7 +133,9 @@ test('a gateway, a property’s booking page and its channel manager', async ({ 
   const today = (mine[0] as unknown as { date: string }).date;
   const plus = (d: string, days: number) =>
     new Date(Date.parse(`${d}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
-  const made = await page.request.post(hook, {
+  // The channel manager is an outside service: it calls the webhook with no MONO session (a request that
+  // carries a session cookie must also say where it comes from — decision 250).
+  const made = await request.post(hook, {
     data: {
       ref: n.ref,
       channel: 'Booking.com',

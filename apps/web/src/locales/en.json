@@ -1,5 +1,7 @@
 {
   "common": {
+    "showingOf": "Showing {{shown}} of {{total}}",
+    "showMore": "Show {{n}} more",
     "noAccess": "This is not open to you",
     "gone": "This is no longer here",
     "goneBody": "It was removed, or the link is an old one.",

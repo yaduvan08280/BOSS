@@ -47,6 +47,9 @@ export function createPrisma(url = process.env.DATABASE_URL, rule: PoolRule = {}
     withCompanyWall(
       new PrismaClient({
         adapter,
+        // In production an error from the database client names what failed, without the values that were
+        // sent (they can be a person's details and would end up in the log and in System Master → Errors).
+        errorFormat: process.env.NODE_ENV === 'production' ? 'minimal' : 'colorless',
         // A transaction may wait 10 s for a connection and run 20 s (Prisma's own 2 s / 5 s are too short for
         // a busy evening); the few long ones (imports, the night audit) set their own.
         transactionOptions: { maxWait: 10_000, timeout: 20_000 },

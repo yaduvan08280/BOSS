@@ -133,7 +133,7 @@ export function LiveFmsPage({ me }: { me: Me }) {
               </Button>
             </div>
           </div>
-          <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0" aria-label={t('fms.stages')}>
+          <div tabIndex={0} role="group" className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0" aria-label={t('fms.stages')}>
             <ol className="flex w-max gap-2">
               {data!.stages.map((s, i) => (
                 <li key={s.key} className="w-32 shrink-0 rounded-card border bg-card p-3 text-center">
@@ -272,7 +272,7 @@ function FlowReport({ flowId, names }: { flowId: string; names: Map<string, stri
   );
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_minmax(0,1fr)]">
-      <div className="scroll-hint @container overflow-x-auto rounded-card border">
+      <div tabIndex={0} className="scroll-hint @container overflow-x-auto rounded-card border">
         <table className="w-full text-sm [&_td]:px-2 [&_th]:px-2 @lg:[&_td]:px-3 @lg:[&_th]:px-3">
           <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
             <tr>

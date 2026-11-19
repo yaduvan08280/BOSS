@@ -117,7 +117,7 @@ function Table({
   return (
     <section className="space-y-2">
       <h3 className="text-sm font-semibold">{title}</h3>
-      <div className="scroll-hint @container overflow-x-auto rounded-card border">
+      <div tabIndex={0} className="scroll-hint @container overflow-x-auto rounded-card border">
         {/* A narrow card keeps the name, the first two figures and the last (the score). */}
         <table className="w-full text-sm @max-md:[&_:is(td,th):nth-child(n+4):not(:last-child)]:hidden @max-md:[&_:is(td,th)]:px-2">
           <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">

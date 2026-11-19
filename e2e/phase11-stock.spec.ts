@@ -138,7 +138,16 @@ test('L14 L15 L16 L17: item lines pick from the item master; a step issues stock
     const got = await call<Item[] | { items: Item[] }>(page, 'GET', '/api/ims/items');
     return Array.isArray(got) ? got : got.items;
   };
-  const item = (await items()).find((x) => Number(x.stock) > 20)!;
+  // An item of its own, with its stock in the main store (where a step's issue is taken from): the demo
+  // company also has items whose whole stock is kept at an outlet's bar or kitchen.
+  const made = await call<{ id: string }>(page, 'POST', '/api/ims/items', {
+    code: `MS-${t}`,
+    name: `Main store part ${t}`,
+    unit: 'pcs',
+    ratePaise: 25_000,
+    openingQty: 50,
+  });
+  const item = (await items()).find((x) => x.id === made.id)!;
   const stockNow = async () => Number((await items()).find((x) => x.id === item.id)!.stock);
   const before = await stockNow();
   const flow = await call<{ id: string }>(page, 'POST', '/api/fms/flows', {
@@ -189,7 +198,7 @@ test('L14 L15 L16 L17: item lines pick from the item master; a step issues stock
 
   // L15: the preview says what will go out; Mark done issues it.
   const good = await startAndOpenStep(`Line 2 repair ${t}`, '2');
-  await expect(good.step.getByText('Goes out of stock')).toBeVisible();
+  await expect(good.step.getByText('Goes out of the main store')).toBeVisible();
   await expect(good.step.getByRole('listitem').filter({ hasText: item.code })).toContainText(
     `2 ${item.unit}`,
   );

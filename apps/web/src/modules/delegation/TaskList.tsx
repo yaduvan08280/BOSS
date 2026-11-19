@@ -12,6 +12,8 @@ import {
   UserRoundCog,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { ShowMore } from '@/components/show-more';
+import { useShowMore } from '@/lib/use-show-more';
 import { useTranslation } from 'react-i18next';
 import { weekOf, type OrgPerson, type TaskAction } from '@mono/shared';
 import { personLabel } from '@/lib/people';
@@ -101,6 +103,8 @@ export function TaskList({
           : undefined,
   };
   const list = useTasks(query);
+  // Drawn a hundred at a time (the list itself may hold five hundred).
+  const part = useShowMore(list.data?.tasks ?? [], JSON.stringify(query));
 
   const run = (task: TaskRow, action: TaskAction) => {
     if (DIALOG_ACTIONS.includes(action)) setDialog({ task, action });
@@ -245,7 +249,7 @@ export function TaskList({
         <EmptyState icon={CheckCheck} title={t(`task.empty.${tab}`)} />
       ) : phone ? (
         <ul className="space-y-2">
-          {list.data.tasks.map((task) => (
+          {part.rows.map((task) => (
             <li
               key={task.id}
               onClick={() => onOpen(task.id)}
@@ -272,7 +276,7 @@ export function TaskList({
           ))}
         </ul>
       ) : (
-        <div className="scroll-hint overflow-x-auto rounded-card border">
+        <div tabIndex={0} className="scroll-hint overflow-x-auto rounded-card border">
           <table className="w-full min-w-[1040px] text-sm">
             <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
               <tr>
@@ -285,7 +289,7 @@ export function TaskList({
               </tr>
             </thead>
             <tbody className="divide-y">
-              {list.data.tasks.map((task) => (
+              {part.rows.map((task) => (
                 <tr
                   key={task.id}
                   onClick={() => onOpen(task.id)}
@@ -338,6 +342,7 @@ export function TaskList({
           </table>
         </div>
       )}
+      <ShowMore shown={part.rows.length} left={part.left} step={part.step} onMore={part.more} />
       {dialog && (
         <ActionDialog
           task={dialog.task}

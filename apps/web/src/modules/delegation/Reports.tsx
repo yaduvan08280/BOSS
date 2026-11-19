@@ -103,7 +103,7 @@ function Scorecard({ tz }: { tz: string }) {
           <Download /> {t('task.rep.export')}
         </Button>
       </div>
-      <div className="scroll-hint @container overflow-x-auto rounded-card border">
+      <div tabIndex={0} className="scroll-hint @container overflow-x-auto rounded-card border">
         <table className="w-full text-sm [&_td]:px-2 [&_th]:px-2 @2xl:[&_td]:px-3 @2xl:[&_th]:px-3">
           <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
             <tr>
@@ -239,7 +239,7 @@ function Ryg({ tz }: { tz: string }) {
         <KpiTile label={t('task.rep.red')} value={sum('red')} tone="bad" />
         <KpiTile label={t('task.rep.open')} value={sum('open')} />
       </div>
-      <div className="scroll-hint @container overflow-x-auto rounded-card border">
+      <div tabIndex={0} className="scroll-hint @container overflow-x-auto rounded-card border">
         <table className="w-full text-sm [&_td]:px-2 [&_th]:px-2 @2xl:[&_td]:px-3 @2xl:[&_th]:px-3">
           <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
             <tr>

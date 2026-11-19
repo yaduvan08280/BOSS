@@ -9,9 +9,50 @@
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <title>MONO</title>
+    <style>
+      /* Shown until the app's scripts arrive (a slow phone line): a quiet mark instead of a blank page. */
+      .boot {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: #f2efe7;
+      }
+      .boot svg {
+        width: 44px;
+        height: 44px;
+        color: #1f1e1b;
+        animation: boot-turn 0.9s linear infinite;
+      }
+      @keyframes boot-turn {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @media (prefers-color-scheme: dark) {
+        .boot {
+          background: #1f1e1b;
+        }
+        .boot svg {
+          color: #efc75e;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .boot svg {
+          animation: none;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="boot" role="status" aria-label="Loading">
+        <svg viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round">
+          <circle cx="22" cy="22" r="18" opacity="0.2" />
+          <path d="M22 4a18 18 0 0 1 18 18" />
+        </svg>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

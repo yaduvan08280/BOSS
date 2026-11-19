@@ -121,7 +121,7 @@ function MovementReport({ period }: { period: string }) {
             <KpiTile label={t('ims.r.in')} value={inr(d.inPaise)} />
             <KpiTile label={t('ims.r.out')} value={inr(d.outPaise)} hero />
           </div>
-          <div className="scroll-hint @container overflow-x-auto rounded-card border">
+          <div tabIndex={0} className="scroll-hint @container overflow-x-auto rounded-card border">
             <table className="w-full text-sm [&_td]:px-2 [&_th]:px-2 @md:[&_td]:px-3 @md:[&_th]:px-3">
               <thead className="bg-muted/60 text-left text-xs text-muted-foreground">
                 <tr>

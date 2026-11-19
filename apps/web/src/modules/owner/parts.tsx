@@ -39,7 +39,7 @@ export function DataList<T>({
         : ['hidden @2xl:block', '@2xl:hidden'];
   return (
     <div className="@container">
-      <div className={cn('scroll-hint overflow-x-auto rounded-card border', table)}>
+      <div tabIndex={0} className={cn('scroll-hint overflow-x-auto rounded-card border', table)}>
         <table className="w-full text-sm">
           <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
             <tr>

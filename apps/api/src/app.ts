@@ -1,3 +1,4 @@
+import { reqForLog } from './lib/log-safe';
 import cookie from '@fastify/cookie';
 import rateLimit from '@fastify/rate-limit';
 import swagger from '@fastify/swagger';
@@ -89,6 +90,9 @@ export async function buildApp(opts: BuildOptions) {
     logger: opts.logger ?? {
       level: env.LOG_LEVEL,
       redact: ['req.headers.cookie', 'req.headers.authorization', 'res.headers["set-cookie"]'],
+      // Every line of a request carries its id (reqId); the request itself is kept without headers or body,
+      // and an address that is a secret (a guest's link, a webhook token) is cut short.
+      serializers: { req: reqForLog },
       ...(env.NODE_ENV === 'development' ? { transport: { target: 'pino-pretty' } } : {}),
     },
     trustProxy: true,

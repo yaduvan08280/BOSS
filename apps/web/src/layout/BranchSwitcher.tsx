@@ -5,8 +5,9 @@ import { useTranslation } from 'react-i18next';
 import { Select } from '@/components/ui/select';
 import { api } from '@/lib/api';
 import { currentBranch, setCurrentBranch } from '@/lib/branch';
-import { cn } from '@/lib/utils';
+import { cn, safeStorage } from '@/lib/utils';
 
+const HAD_KEY = 'mono.branches.switcher';
 type Named = { id: string; name: string };
 type Mine = { branches: Named[]; regions: Named[]; entities: Named[]; wholeGroup: boolean };
 
@@ -43,7 +44,19 @@ export function BranchSwitcher({ className }: { className?: string }) {
     setCurrentBranch('');
     void qc.invalidateQueries();
   }, [gone, qc]);
-  if (list.length < 2) return null;
+  // Whether this person has the switcher is remembered, so its place is kept while the list is on its way:
+  // otherwise the whole page jumped down by its height a second after every load.
+  const has = list.length >= 2;
+  useEffect(() => {
+    if (mine.data) safeStorage.set(HAD_KEY, has ? '1' : '0');
+  }, [mine.data, has]);
+  if (!mine.data && safeStorage.get(HAD_KEY) === '1')
+    return (
+      <div className={cn('flex items-center', className)} aria-hidden>
+        <div className="h-9 flex-1" />
+      </div>
+    );
+  if (!has) return null;
   return (
     <div className={cn('flex items-center gap-1.5', className)}>
       <Building2 className="size-4 shrink-0 text-muted-foreground" aria-hidden />

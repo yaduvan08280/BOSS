@@ -63,7 +63,7 @@ export function MecaPage({ me }: { me: Me }) {
                 </span>
               </div>
               {/* Measures against weeks: a grid that keeps its shape and scrolls sideways on a phone. */}
-              <div className="scroll-hint overflow-x-auto">
+              <div tabIndex={0} className="scroll-hint overflow-x-auto">
                 <table className="w-full min-w-[640px] text-sm">
                   <thead className="text-left text-xs text-muted-foreground">
                     <tr>

@@ -39,7 +39,7 @@
     "preview": {
       "title": "Stock this step will move",
       "action": {
-        "ISSUE": "Goes out of stock",
+        "ISSUE": "Goes out of the main store",
         "RECEIVE": "Comes into stock",
         "TRANSFER": "Moves to another place"
       },

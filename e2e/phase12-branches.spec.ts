@@ -77,7 +77,8 @@ test('the owner sets up branches, decides who approves, and switches to one bran
   await dialog.getByLabel('Goes up after (hours)').first().fill('4');
   await snap('route-editor');
   await save();
-  const saved = page.locator('div.border', { hasText: names.rooftop });
+  // The one card of this branch's ladder (the "Leave" card around it holds every ladder, the demo's own too).
+  const saved = page.locator('div.border', { hasText: names.rooftop }).last();
   await expect(saved.getByText('Branch manager (goes up after 4 hours)')).toBeVisible();
   await expect(saved.getByText('Owner')).toBeVisible();
   await expectNoSideScroll(page);
