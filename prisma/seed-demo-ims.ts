@@ -313,10 +313,17 @@ export async function seedDemoIms(db: Db, companyId: string): Promise<boolean> {
   const pooja = id('Pooja Jain');
   if (pooja) {
     const actor = (await actorFor(db, companyId, pooja))!;
-    const counts = await db.auditCount.findMany({ where: { companyId }, include: { item: true }, take: 2 });
+    // (Always the same two, by item code — and a count is never below zero: with no order, the second row was
+    // sometimes an item holding fewer than three, and the seed stopped there.)
+    const counts = await db.auditCount.findMany({
+      where: { companyId },
+      include: { item: true },
+      orderBy: { item: { code: 'asc' } },
+      take: 2,
+    });
     for (const [k, c] of counts.entries())
       await recordCount(db, { ...actor, permissions: [...actor.permissions, 'ims.edit'] }, c.id, {
-        countedQty: Number(c.item.stock) - (k === 1 ? 3 : 0),
+        countedQty: Math.max(0, Number(c.item.stock) - (k === 1 ? 3 : 0)),
       });
   }
   await proposeReviews(db, companyId);

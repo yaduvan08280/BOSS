@@ -61,19 +61,29 @@ export default fp(async function authPlugin(app: FastifyInstance, opts: { secret
     if (!token) throw unauthenticated();
     const claims = await verifyAccessToken(token, opts.secret);
     if (!claims) throw unauthenticated('Your session expired');
-    let user = await app.prisma.user.findFirst({
-      where: { id: claims.sub, companyId: claims.cid, deletedAt: null, status: 'ACTIVE', loginEnabled: true },
-      select: {
-        id: true,
-        mustChangePassword: true,
-        role: { select: { key: true, permissions: true, reach: true } },
-      },
-    });
-    const session = await app.prisma.session.findFirst({
-      where: { id: claims.sid, userId: claims.sub, revokedAt: null },
-      select: { id: true },
-    });
-    if (!user || !session) throw unauthenticated('Your session expired');
+    // One question for every request: is this person still allowed in (active, sign-in on, not deleted), is
+    // this session still open, and what is their role. (Asked as three queries before; this is the first
+    // thing every call does, so it is asked some fifty times a second in a busy service.)
+    const found = await app.prisma.$queryRaw<
+      { id: string; mustChangePassword: boolean; key: string | null; permissions: string[]; reach: string }[]
+    >`
+      SELECT u.id, u.must_change_password AS "mustChangePassword", r.key, r.permissions, r.reach
+      FROM users u JOIN roles r ON r.id = u.role_id
+      WHERE u.id = ${claims.sub} AND u.company_id = ${claims.cid} AND u.deleted_at IS NULL
+        AND u.status = 'ACTIVE' AND u.login_enabled
+        AND EXISTS (
+          SELECT 1 FROM sessions s
+          WHERE s.id = ${claims.sid} AND s.user_id = u.id AND s.revoked_at IS NULL
+        )`;
+    const row = found[0];
+    let user = row
+      ? {
+          id: row.id,
+          mustChangePassword: row.mustChangePassword,
+          role: { key: row.key, permissions: row.permissions, reach: row.reach },
+        }
+      : null;
+    if (!user) throw unauthenticated('Your session expired');
     // After an admin reset, only the auth routes work until the person picks their own password.
     if (
       user.mustChangePassword &&
