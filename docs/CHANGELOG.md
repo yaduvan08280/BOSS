@@ -6,6 +6,12 @@ Numbers are in `docs/production-readiness.md`; decisions 258–261 in `CLAUDE.md
 
 - **Fixed — after the worker was killed, nothing went out for 15 minutes.** The queue now notices a dead job
   in about 20 seconds and carries on; two workers at once never send a message twice.
+- **Fixed — the worker slowed the whole server on a company with years of work behind it.** Three
+  five-minute sweeps (reminders to accept a task, late tasks, late process steps) read every such row on
+  each pass and asked about each in turn — 51 seconds of processor time a pass on the large test company.
+  They now ask the database only for rows still owed a message. The event dispatcher asks once per batch
+  who is listening. A receipt or invoice takes its number last, so people issuing papers at the same
+  moment wait on each other for less (decision 262).
 - **Fixed — a process step that issues stock said it could, then refused.** The preview now counts what the
   main store can give, which is where the step takes from.
 - **Fixed — System Master → Errors showed a blank screen** when a health check was failing.

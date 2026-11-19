@@ -30,16 +30,17 @@ actions under 300 ms.
 
 | Action | Requests | p50 | p95 | p99 | Slowest |
 |---|---|---|---|---|---|
-| POS: open an order | 3,443 | 31 ms | 129 ms | 254 ms | 477 ms |
-| POS: send to kitchen | 3,443 | 63 ms | 208 ms | 333 ms | 627 ms |
-| POS: read the order | 3,443 | 15 ms | 68 ms | 127 ms | 248 ms |
-| POS: make the bill | 3,443 | 58 ms | 233 ms | 527 ms | 1,908 ms |
-| POS: take payment | 3,443 | 90 ms | **290 ms** | 541 ms | 1,349 ms |
-| Front desk reads | 4,447 | 22 ms | 85 ms | 150 ms | 803 ms |
-| Office reads | 21,998 | 29 ms | 129 ms | 197 ms | 806 ms |
+| POS: open an order | 3,450 | 33 ms | 122 ms | 200 ms | 465 ms |
+| POS: send to kitchen | 3,450 | 64 ms | 197 ms | 288 ms | 445 ms |
+| POS: read the order | 3,450 | 16 ms | 65 ms | 107 ms | 224 ms |
+| POS: make the bill | 3,450 | 58 ms | 199 ms | 350 ms | 657 ms |
+| POS: take payment | 3,450 | 91 ms | **268 ms** | 482 ms | 1,207 ms |
+| Front desk reads | 4,451 | 22 ms | 84 ms | 141 ms | 297 ms |
+| Office reads | 21,979 | 30 ms | 125 ms | 175 ms | 397 ms |
 
-43,660 requests in 15 minutes (48 a second), **0 failed**. Target met — narrowly: the payment's p95 is 290 ms
-against 300.
+43,680 requests in 15 minutes (48 a second), **0 failed**, with the worker running its sweeps on the same
+large company throughout. Target met: the slowest action's p95 is 268 ms against 300. The margin is not large,
+and it is a measurement of this 4-core sandbox with the load generator on the same machine.
 
 ### How it got there (the same test, same data, same machine)
 
@@ -50,7 +51,11 @@ against 300.
 | 3 | 0 errors, POS p95 0.8–2.4 s | the top-bar counter read every task waiting for a check, on every screen — 92 ms of server time a call, ten calls a second | a database count (24 ms) |
 | 4 | 0 errors, POS p95 **287 ms** (5 min) | order and kitchen-ticket numbers were locked for the whole of each order's transaction | numbers taken on a side pool |
 | 5 | 0 errors, POS p95 529 ms over 15 min | receipts took their number first, then did the stock and the order while everyone else waited for the series | receipts are made last |
-| 6 | **0 errors, POS p95 290 ms over 15 min** | — | — |
+| 6 | 0 errors, POS p95 290 ms over 15 min | — | — |
+| 7 | the same test repeated later: 0 errors, payment p95 **361 ms** (15 min), 454 ms (5 min) — a miss | three of the worker's five-minute sweeps read every waiting task, every late task and every open process step on each pass and asked about each in turn: 51 s of CPU a pass on this company, taken from the same four cores | the sweeps ask the database only for rows still owed a message (under 0.1 s a pass) |
+| 8 | 0 errors, payment p95 430 ms (5 min) | payments queued for the receipt number: about twelve statements followed it inside each transaction | a paper takes its number last — five statements follow it |
+| 9 | 0 errors, payment p95 294 ms (15 min) | two reads of the paid bill were still inside the transaction | read after it ends |
+| 10 | **0 errors, payment p95 268 ms, bill p95 199 ms over 15 min** | — | — |
 
 Also found on the way and fixed: an open task vanishing from the delegation sheet behind 1,000 old ones;
 task events, process-record events and failed messages looked up with no index (3–9 s each on this data); the
@@ -68,11 +73,11 @@ rows A2–A10 of `docs/plans/coverage.md` — not built). For one property at th
 
 | Drill | What was done | Result |
 |---|---|---|
-| API killed in service | 10 devices take, send, bill and pay orders without pause, each request sent again unchanged until answered (`deploy/loadtest/kill-drill.mjs`); the API container was killed with `kill -9` at second 15 and second 43, started again each time | 622 orders sent, **622 on the server, 622 bills with 622 different numbers, 622 receipts, none unpaid**; 440 calls went unanswered and were all retried |
-| Worker killed while telling people | 600 tasks given at once (600 events); the worker killed with `kill -9` after about a hundred; two workers started together; one of them killed again | every event handled **once**: one notification a person an event, no message queued twice, none left |
-| Recovery time of the worker | — | **first run: nothing went out for 15 minutes** (the killed job stayed "running" in the queue); after the fix (heartbeat, one waiting job) work resumed **22 s** after the kill |
+| API killed in service | 10 devices take, send, bill and pay orders without pause, each request sent again unchanged until answered (`deploy/loadtest/kill-drill.mjs`); the API container was killed with `kill -9` at second 15 and second 43, started again each time | 855 orders sent, **855 on the server, 855 bills with 855 different numbers, none unpaid**; 140 calls went unanswered and were all retried |
+| Worker killed while telling people | 600 tasks given at once (600 events); the worker killed with `kill -9` while they were coming in; two workers started together; one of them killed again | every event handled **once**: one notification a person an event, no message queued twice, none left |
+| Recovery time of the worker | — | **first run: nothing went out for 15 minutes** (the killed job stayed "running" in the queue); after the fix (heartbeat, one waiting job) everything was caught up **10 s** after the kill |
 | Database wiped | the database's folder deleted; rebuilt from the nightly base copy and the minute-by-minute log (`deploy/restore-pitr.sh`) | back in **17 s**, losing only the last seconds; rolling back to a chosen minute works |
-| Whole stack from a backup | an empty stack, last night's dump and uploads (`deploy/restore.sh`) | **25 s**; sign-in, files and saved keys work |
+| Whole stack from a backup | the test stack backed up (`backup.sh`), its database folder and uploads deleted, then `deploy/restore.sh` on the empty folders | **22 s**; sign-in, a record made before the backup, an uploaded file and the saved keys are back |
 
 Not drilled here (they need the building): pulling the internet, cutting the power, a real printer, a second
 physical machine. Steps in `docs/go-live.md` §8–9.
