@@ -27,6 +27,18 @@ Measured on a copy grown to two years of a busy company (10 million rows); numbe
   (what only you can do before going live).
 - A screen that fails shows a message with "Try again" instead of a blank page; a bar says when the device
   is offline.
+- **Fixed — after a crash or power cut, reminders and messages stopped for 15 minutes.** A worker that was
+  killed is now noticed in about 20 seconds and its work picked up again.
+- **Fixed — a process step that issues stock promised stock it could not take** (the preview showed the
+  company's total; the step takes from the main store). The preview now shows what the main store can give.
+- The first screen is lighter (about 375 KB instead of 520 KB): only the chosen language is loaded at start.
+  The delegation sheet shows 100 tasks at a time; the page no longer jumps down a second after it loads.
+- Accessibility: every screen of the menu is checked by a tool at phone and desktop size; tables that scroll
+  sideways can be scrolled with the keyboard, and three texts that were too faint are now readable.
+- Server logs hold no headers, no typed values and no secret links.
+- More screens are now tested in a browser: purchase bills, credit notes, Tally ledgers, closing a day with
+  counts, goods receipts, wastage, price lists, par levels, supply routes, recipes and production, printers
+  and ticket routing, role limits, add-on groups, a dish's hours, a void approved by a manager, a split bill.
 
 ## 19/11/2026 — Security pass
 

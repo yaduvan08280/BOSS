@@ -29,6 +29,14 @@ const WAIT = Number(arg('wait', 1200));
 const SKIP =
   /delete|remove|void|cancel|close|sign out|log ?out|reset|archive|discard|revoke|reject|approve|decline|punch|install|apply|print|download|import|save|submit|refresh|sync|send|verify|accept|mark|undo|clear|fire|pay|settle|issue|confirm|check ?out|check ?in|run|generate|recalc|reopen|unlock|lock|stop|disconnect|connect|switch|load|collapse|copy|bump|ready|serve|recall|start|capture|dictate|link|get my code|check all|duplicate|pack|publish|ask for|move (up|down)|^×$|^x$/i;
 
+// --press-all (only ever on a throw-away copy of the data): the crawler also presses the buttons that change
+// or send something — approve, mark, run, send, delete … — to see that no screen breaks when they are used.
+// Only what would end the crawl itself is still left alone.
+const PRESS_ALL = Boolean(arg('press-all', false));
+const NEVER = /sign out|log ?out|install|print|download|export|look as|view as|dictate|speak|camera|capture/i;
+const skipped = (label) => (PRESS_ALL ? NEVER.test(label) : SKIP.test(label));
+const MOST = PRESS_ALL ? 40 : 12;
+
 mkdirSync(join(OUT, 'shots'), { recursive: true });
 const LOG = join(OUT, 'states.jsonl');
 const done = new Set(
@@ -175,7 +183,7 @@ async function deep(page, path, state, url, errs) {
   }
   // Every button that opens something (the ones that change or send are skipped).
   const pressed = new Set();
-  for (let round = 0; round < 14; round++) {
+  for (let round = 0; round < (PRESS_ALL ? 44 : 14); round++) {
     const btns = page.locator(
       'main button:visible:not([role=tab]):not([role=switch]):not([role=combobox]):not([role=checkbox]):not([aria-pressed])',
     );
@@ -191,7 +199,7 @@ async function deep(page, path, state, url, errs) {
         .trim()
         .replace(/\s+/g, ' ')
         .slice(0, 40);
-      if (!label || pressed.has(label) || SKIP.test(label) || /^\d+$/.test(label)) continue;
+      if (!label || pressed.has(label) || skipped(label) || /^\d+$/.test(label)) continue;
       if (await b.isDisabled().catch(() => true)) continue;
       pressed.add(label);
       did = true;
@@ -212,7 +220,7 @@ async function deep(page, path, state, url, errs) {
       } else await page.keyboard.press('Escape').catch(() => {});
       break;
     }
-    if (!did || pressed.size > 12) return;
+    if (!did || pressed.size > MOST) return;
   }
 }
 

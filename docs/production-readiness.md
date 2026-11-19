@@ -82,3 +82,53 @@ physical machine. Steps in `docs/go-live.md` §8–9.
 `deploy/loadtest/slow-screens.mjs` reads every list and every "one row" address (247 reads) as the owner:
 median 14 ms; 95 % under 524 ms (it was 1,759 ms, with three screens that froze the whole server). The table
 of what was slow, why, and what is still over 200 ms is in `docs/database.md` §5.
+
+## 4. The front end: weight, a slow phone, staying usable
+
+| | Before | After |
+|---|---|---|
+| Scripts and styles before the first screen (English, compressed) | 520 KB | about 375 KB (296 KB + the language, 79 KB) |
+| Languages loaded at start | both | the one on screen |
+| Delegation sheet with 500 tasks: elements drawn at once | 27,500 | about 5,500 (100 tasks, then "Show 100 more") |
+| The page jumping down a second after it loads (people with several branches) | every load | gone after the first visit on a device |
+
+Lighthouse, phone profile (slow 4G, CPU four times slower), a **first visit with nothing cached**, signed in,
+against the production web image — on this busy sandbox the figures move by a few points from run to run:
+
+| Screen | Performance | Accessibility | First paint | Largest paint |
+|---|---|---|---|---|
+| Home | 35–43 | 100 | 3.3 s | 5.9 s |
+| Delegation sheet | 45 | 100 | 3.3 s | 6.0 s |
+| Checklists | 50–55 | 100 | 3.2 s | 5.8 s |
+| POS | 52 | 100 | 3.2 s | 6.1 s |
+| Attendance | 51–57 | 100 | 3.3 s | 5.9 s |
+| Live FMS | 45–48 | 100 | 3.3 s | 6.2 s |
+
+First paint was about 5 s before. This is the worst case — a first visit on a slow line. The installed app
+keeps its files on the phone (service worker), so later visits do not download them again. What is left:
+the main script is 150 KB compressed and about half of it is not used by the first screen; splitting it
+further is not done.
+
+Also in place: a screen that fails shows "This screen hit a problem — Try again" inside the menu (not a blank
+page), and a bar says when the device is offline (both in `e2e/resilience.spec.ts`); an open tab that meets an
+update's missing files says "A new version is ready — Reload" (in the code, not tried against a real update).
+
+## 5. Accessibility
+
+`e2e/a11y.spec.ts` runs axe (WCAG 2 A and AA) on every screen of the left menu (75 addresses, read from the
+menu itself) and the sign-in page, at 380 and 1440 px. First run: 7 problems — 4 sideways-scrolling boxes a
+keyboard could not reach (fixed for all 26 such boxes), 3 texts too faint (org chart, the flowchart's credit
+link, a label on the dark card). Now: **no serious or critical problem**. Not checked: dark mode, Hindi,
+dialogs and drawers (the size audit opens those; axe does not yet), a screen reader used by a person.
+
+## 6. Browser specs
+
+Every Playwright spec runs at 380 and 1440 px against a fresh demo database with the API, the worker and a
+mail catcher running. Five specs were added for screens that had been proved through the API only (money,
+stock, hospitality set-up, POS with two people, production and exchange rates). Things the full run found:
+
+| Found | What it was | Fix |
+|---|---|---|
+| A process step said "Now 11,250 → 11,248" and then refused with "Only 0 in stock" | the preview counted the company's total; the step takes from the main store | the preview counts what the main store can give (`step-stock-place.test.ts`) |
+| The channel-manager webhook was refused in the spec | the spec sent it with the signed-in browser's cookie, which now must say where it comes from | the spec sends it as an outside service does |
+| Two locators matched more than they meant | the demo data gained an approval ladder and items kept at a bar | the specs name their own card and make their own item |

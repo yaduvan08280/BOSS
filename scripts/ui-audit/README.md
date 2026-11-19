@@ -26,7 +26,7 @@ AUDIT_MOBILE=9000000000 AUDIT_PASSWORD=… npm run ui:audit -- --base http://loc
 AUDIT_MOBILE=… AUDIT_PASSWORD=… npm run ui:audit:all -- --base http://localhost:5173 --label demo-owner --deep-key
 ```
 
-Flags: `--size WxH` · `--deep` · `--label name` · `--workers 4` · `--variant dark|hindi|large|collapsed` ·
+Flags: `--size WxH` · `--deep` · `--label name` · `--workers 4` · `--variant dark|hindi|large|collapsed` · `--press-all` (a throw-away copy of the data only: also presses the buttons that change or send something) ·
 `--only /hosp` (one part of the app) · `--no-shots` · `--out dir` (default `ui-audit-out/`, not committed).
 `AUDIT_CHROMIUM` names a Chrome binary when Playwright's own is not installed.
 

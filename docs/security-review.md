@@ -32,6 +32,8 @@ that fails without the change. Nothing here was tried on a live server.
 | 11 | Low | changes with a session cookie and no `Origin` | Allowed (only an unknown `Origin` was refused). Browsers always send `Origin` on a change, so this was not exploitable from a browser. | Tightened: a cookie with no `Origin` is refused. | `auth/auth.test.ts` |
 | 12 | Low | files | A file answered with no content policy of its own. | Added `Content-Security-Policy: default-src 'none'; sandbox` on every file that is not a PDF. | read |
 | 13 | Low | API answers | No `Cache-Control` on JSON. | `no-store` on every API answer that sets none. | `health.test.ts` |
+| 14 | Medium | server logs | The log line of each request kept its whole address: a guest's booking link, a webhook's token and the code Google sends back after a sign-in are secrets in themselves. In production, the database client's validation errors could quote the values sent (a person's details) into the log and into System Master → Errors. | The request is logged as method, address and caller's IP only — no headers, no body — and a secret part of an address is cut to four characters; the database client's errors carry no values in production. | `lib/log-safe.test.ts`; real log lines read after calling a booking link, the Google callback and a wrong password: none of the secrets appear |
+| 15 | Low | two requests making the same thing at once | A unique-value clash in the database was answered 500 "Something went wrong" and counted as a server error. | Answered 409 with words the person can act on. | `security/concurrency.test.ts` |
 
 ## Looked at and found sound
 
