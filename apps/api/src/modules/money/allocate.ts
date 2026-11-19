@@ -69,18 +69,31 @@ export async function allocate(tx: Tx, money: Bill, named?: { billId: string; am
       if (found.length < OLDEST_PAGE) break;
     }
   }
-  for (const { bill, amount } of plan) await settle(tx, bill, money.id, amount);
+  // (The bills in the plan are already held and were read after that, above.)
+  const latest = new Map<string, Bill>();
+  for (const { bill, amount } of plan)
+    latest.set(bill.id, await settle(tx, latest.get(bill.id) ?? bill, money.id, amount, { held: true }));
   await tx.bill.update({ where: { id: money.id }, data: { settled: BigInt(Number(money.total) - left) } });
 }
 
 /**
  * One amount set against one paper (negative takes it back): the paper's `settled` and status follow.
  * The paper is held and read again first, so whatever another payment, advance or credit did a moment ago is
- * counted — the caller's copy may be older. More than is still owed is refused.
+ * counted — the caller's copy may be older (`held`: the caller already holds it and read it after that).
+ * More than is still owed is refused.
  */
-export async function settle(tx: Tx, stale: Bill, paymentId: string, amount: number) {
-  await tx.$queryRaw`SELECT id FROM bills WHERE id = ${stale.id} FOR UPDATE`;
-  const bill = await tx.bill.findUniqueOrThrow({ where: { id: stale.id } });
+export async function settle(
+  tx: Tx,
+  stale: Bill,
+  paymentId: string,
+  amount: number,
+  opts: { held?: boolean } = {},
+) {
+  let bill = stale;
+  if (!opts.held) {
+    await tx.$queryRaw`SELECT id FROM bills WHERE id = ${stale.id} FOR UPDATE`;
+    bill = await tx.bill.findUniqueOrThrow({ where: { id: stale.id } });
+  }
   if (amount > dueOf(bill))
     throw new AppError(409, 'CONFLICT', 'This bill changed while it was being paid. Try again.');
   const settled = bill.settled + BigInt(amount);
@@ -90,9 +103,10 @@ export async function settle(tx: Tx, stale: Bill, paymentId: string, amount: num
     roles: ['system'],
     ctx: { due: dueOf({ ...bill, settled }), total: Number(bill.total - bill.credited), money: false },
   }).to;
-  await tx.bill.update({ where: { id: bill.id }, data: { settled, status: to } });
+  const updated = await tx.bill.update({ where: { id: bill.id }, data: { settled, status: to } });
   if (amount > 0)
     await tx.billAllocation.create({
       data: { companyId: bill.companyId, billId: bill.id, paymentId, amount: BigInt(amount) },
     });
+  return updated;
 }
