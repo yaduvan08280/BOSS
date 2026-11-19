@@ -16,10 +16,10 @@ import {
 } from '@mono/shared';
 import { writeAudit } from '../../lib/audit';
 import { AppError, notFound } from '../../lib/errors';
-import { emitEvent } from '../../lib/events';
 import { letterheadOf, seriesOf, type Letterhead } from '../branches/letterhead';
 import { homeBranchOf } from '../branches/reach';
 import { can, type Actor } from '../work/actor';
+import { finishIssue } from './number';
 import { taxReader } from './taxes';
 
 /**
@@ -117,6 +117,8 @@ type Options = {
   system?: boolean;
   /** Set this money against these papers; otherwise the party's oldest papers first. */
   allocate?: { billId: string; amount: number }[];
+  /** The caller's own last work, run just before the paper takes its number (see `finishIssue`). */
+  beforeNumber?: (bill: Bill) => Promise<void>;
 };
 
 /** Make a paper: a draft with lines, or a money paper (issued at once). */
@@ -277,58 +279,14 @@ async function issueIn(tx: Tx, actor: Actor, bill: Bill, opts: Options) {
     });
   }
   if (bill.type === 'RECEIPT' || bill.type === 'VENDOR_PAYMENT') await allocate(tx, bill, opts.allocate);
-  // The number comes as late as it can. Its series may have no gaps, so whoever takes a number holds the
-  // series until their transaction ends and everyone else issuing the same kind of paper waits: everything
-  // that does not need the number (the voucher's lines, what the paper settles) is therefore done first.
-  let number = opts.number;
-  if (!number) {
-    // One series per legal entity and kind of paper (a GSTIN's own invoice numbers); the company's own otherwise.
-    const head = await letterheadOf(tx, bill.companyId, bill.branchId);
-    const series = seriesOf('entity', head, `bill:${bill.type}`, BILL_PREFIX[bill.type as BillType], fy);
-    number = series.number(await nextCounter(tx, bill.companyId, series.counterKey, fy));
-  }
-  const issued = await tx.bill.update({
-    where: { id: bill.id },
-    data: { status: to, number, fy, issuedAt: new Date() },
+  return finishIssue(tx, actor, bill, {
+    to,
+    fy,
+    prefix: BILL_PREFIX[bill.type as BillType],
+    lines,
+    number: opts.number,
+    beforeNumber: opts.beforeNumber,
   });
-  if (lines.length)
-    await tx.voucher.create({
-      data: {
-        companyId: bill.companyId,
-        entityId: bill.entityId,
-        billId: bill.id,
-        date: bill.date,
-        narration: `${issued.number}`,
-        lines: lines as unknown as Prisma.InputJsonValue,
-      },
-    });
-  await writeAudit(
-    tx,
-    { companyId: bill.companyId, actorId: actor.userId },
-    {
-      action: 'bill.issued',
-      entityType: 'bill',
-      entityId: bill.id,
-      after: { number, total: Number(bill.total) },
-    },
-  );
-  await emitEvent(
-    tx,
-    { companyId: bill.companyId, actorId: actor.userId },
-    {
-      name: 'bill.issued',
-      entityType: 'bill',
-      entityId: bill.id,
-      payload: {
-        type: bill.type,
-        number,
-        partyId: bill.partyId,
-        total: Number(bill.total),
-        branchId: bill.branchId,
-      },
-    },
-  );
-  return issued;
 }
 
 /** A receipt or payment entered by mistake: voided with a reason; what it had settled is owed again. */

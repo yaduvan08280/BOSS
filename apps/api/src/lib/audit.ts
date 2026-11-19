@@ -11,10 +11,19 @@ export type ActorContext = {
 export async function writeAudit(
   tx: Tx,
   ctx: ActorContext,
-  entry: { action: string; entityType: string; entityId: string; before?: unknown; after?: unknown },
+  entry: {
+    /** The row's id, when the caller needs to know it. */
+    id?: string;
+    action: string;
+    entityType: string;
+    entityId: string;
+    before?: unknown;
+    after?: unknown;
+  },
 ): Promise<void> {
   await tx.auditLog.create({
     data: {
+      ...(entry.id ? { id: entry.id } : {}),
       companyId: ctx.companyId,
       actorId: ctx.actorId,
       action: entry.action,

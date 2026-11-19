@@ -18,7 +18,7 @@ afterAll(async () => ctx.app.close());
  * number — so the number is taken after the money is set against its bills, not before.
  */
 describe('a paper takes its number as late as it can', () => {
-  it('a receipt: the bills it settles are read and updated before the number; only the paper itself after', async () => {
+  it('a receipt: everything is done before the number, which is the last statement and writes itself everywhere', async () => {
     const w = await world(ctx.app);
     const b = await books(w);
     const at = { partyId: b.sharma.id, date: '2031-02-10' };
@@ -53,9 +53,24 @@ describe('a paper takes its number as late as it can', () => {
     const before = calls.slice(0, number);
     const after = calls.slice(number + 1);
     expect(before).toContain('billAllocation.create');
-    // After the number: the paper gets it, its voucher, the audit row and the event. Nothing is read.
-    expect(after.filter((c) => /\.(find|count|aggregate)/.test(c))).toEqual([]);
-    expect(after).not.toContain('billAllocation.create');
-    expect(after.filter((c) => c.startsWith('bill.'))).toEqual(['bill.update']);
+    expect(before).toContain('voucher.create');
+    expect(before).toContain('auditLog.create');
+    expect(before).toContain('domainEvent.create');
+    // The number is the last statement: it writes itself into the paper, the voucher, the audit row and the
+    // event in the same statement, and nothing follows it but the end of the transaction.
+    expect(after).toEqual([]);
+    const voucher = await ctx.prisma.voucher.findFirstOrThrow({ where: { billId: receipt.id } });
+    expect(voucher.narration).toBe(receipt.number);
+    const audit = await ctx.prisma.auditLog.findFirstOrThrow({
+      where: { entityId: receipt.id, action: 'bill.issued' },
+    });
+    expect((audit.after as { number: string }).number).toBe(receipt.number);
+    const event = await ctx.prisma.domainEvent.findFirstOrThrow({
+      where: { entityId: receipt.id, name: 'bill.issued' },
+    });
+    expect((event.payload as { number: string }).number).toBe(receipt.number);
+    // The stored paper is what the caller was handed back.
+    const stored = await ctx.prisma.bill.findUniqueOrThrow({ where: { id: receipt.id } });
+    expect({ ...stored, updatedAt: null }).toEqual({ ...receipt, updatedAt: null });
   });
 });

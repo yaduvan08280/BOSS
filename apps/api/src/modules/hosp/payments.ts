@@ -141,8 +141,11 @@ export async function payCheck(db: Db, actor: Actor, checkId: string, input: z.i
       after: { payments: p.payments, tip: p.tip ?? null, status },
     });
     const orderStatus = status === 'PAID' ? await settleOrder(tx, actor, outlet, order.id) : order.status;
-    for (const r of receipts) {
-      const receipt = await createBillIn(
+    // Each receipt takes its number as the very last thing it does (`finishIssue`); what this payment still
+    // has to do — note the receipt on the check, and make sure the invoice is settled as counted on above —
+    // is handed over to run just before the last receipt's number, so only the commit follows it.
+    for (const [i, r] of receipts.entries()) {
+      await createBillIn(
         tx,
         actor,
         {
@@ -162,16 +165,17 @@ export async function payCheck(db: Db, actor: Actor, checkId: string, input: z.i
           system: true,
           allocate: [{ billId: bill.id, amount: r.amount }],
           source: { type: 'pos_payment', id: check.id },
+          beforeNumber: async (receipt) => {
+            taken[r.at]!.receiptId = receipt.id;
+            if (i < receipts.length - 1) return;
+            // The receipts must have settled exactly what was counted on above; anything else undoes the payment.
+            const after = await tx.bill.findUniqueOrThrow({ where: { id: bill.id } });
+            if (Number(after.total - after.credited - after.settled) - creditOf(taken) !== left)
+              throw new AppError(409, 'CONFLICT', 'This bill changed while it was being paid. Try again.');
+            await tx.posCheck.update({ where: { id: check.id }, data: { payments: taken } });
+          },
         },
       );
-      taken[r.at]!.receiptId = receipt.id;
-    }
-    if (receipts.length) {
-      // The receipts must have settled exactly what was counted on above; anything else undoes the payment.
-      const after = await tx.bill.findUniqueOrThrow({ where: { id: bill.id } });
-      if (Number(after.total - after.credited - after.settled) - creditOf(taken) !== left)
-        throw new AppError(409, 'CONFLICT', 'This bill changed while it was being paid. Try again.');
-      await tx.posCheck.update({ where: { id: check.id }, data: { payments: taken } });
     }
     return orderStatus;
   });
