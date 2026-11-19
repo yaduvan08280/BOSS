@@ -95,8 +95,17 @@ export async function posRoutes(app: FastifyInstance) {
     itemReady(db, actorOf(q), q.params.id, q.body.ready),
   );
 
-  r.get('/api/pos/outlets/:id/checks', dayQuery(), async (q) =>
-    listChecks(db, actorOf(q), q.params.id, q.query.day),
+  r.get(
+    '/api/pos/outlets/:id/checks',
+    {
+      ...view(),
+      schema: {
+        tags,
+        params: idParam,
+        querystring: z.object({ day: day.optional(), orderId: z.string().max(40).optional() }),
+      },
+    },
+    async (q) => listChecks(db, actorOf(q), q.params.id, q.query),
   );
   r.post('/api/pos/checks/:id/pay', withId(paymentSchema), async (q) =>
     payCheck(db, actorOf(q), q.params.id, q.body),

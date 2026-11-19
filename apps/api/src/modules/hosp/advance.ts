@@ -6,7 +6,7 @@ import { applyCredit, creditLeft } from '../money/credit';
 import type { Actor } from '../work/actor';
 import { ctxOf, need } from './access';
 import { checkView, creditOf, type Payment } from './checks-read';
-import { settleOrder } from './payments';
+import { settleOrder } from './settle';
 import { loadOrder, needOpenDay } from './pos-core';
 
 /**

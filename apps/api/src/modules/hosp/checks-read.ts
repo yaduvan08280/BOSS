@@ -40,9 +40,16 @@ export function billLines(
 
 const cashier = (a: Actor) => need(a, 'hosp.create', "You can't make bills");
 
+type CheckRow = Awaited<ReturnType<Db['posCheck']['findUniqueOrThrow']>>;
+type BillRow = Awaited<ReturnType<Db['bill']['findUniqueOrThrow']>>;
+
 export async function checkView(db: Db | Tx, outlet: PosOutlet, id: string) {
   const c = await db.posCheck.findUniqueOrThrow({ where: { id } });
-  const bill = await db.bill.findUniqueOrThrow({ where: { id: c.billId } });
+  return viewOf(outlet, c, await db.bill.findUniqueOrThrow({ where: { id: c.billId } }));
+}
+
+/** A bill as the POS shows it, from its row and its invoice. */
+function viewOf(outlet: PosOutlet, c: CheckRow, bill: BillRow) {
   const due = Math.max(0, Number(bill.total - bill.credited - bill.settled)) - creditOf(c.payments);
   return {
     id: c.id,
@@ -131,16 +138,37 @@ export async function reprintCheck(db: Db, actor: Actor, id: string) {
   });
 }
 
-/** The bills of a business day at an outlet (newest first). */
-export async function listChecks(db: Db, actor: Actor, outletId: string, businessDay?: string) {
+/** A screen shows at most this many bills of a day; one order's bills are asked for by the order. */
+export const CHECKS_SHOWN = 500;
+
+/**
+ * The bills of a business day at an outlet (newest first), or the bills of one order. Read in two queries
+ * whatever the number: this list is polled by every POS screen.
+ */
+export async function listChecks(
+  db: Db,
+  actor: Actor,
+  outletId: string,
+  q: { day?: string; orderId?: string } = {},
+) {
   need(actor, 'hosp.view', "You can't see hospitality");
   const outlet = await posOutlet(db, actor, outletId);
   const rows = await db.posCheck.findMany({
-    where: { companyId: actor.companyId, outletId, businessDay: businessDay ?? dayAt(outlet) },
+    where: {
+      companyId: actor.companyId,
+      outletId,
+      ...(q.orderId ? { orderId: q.orderId } : { businessDay: q.day ?? dayAt(outlet) }),
+    },
     orderBy: { createdAt: 'desc' },
-    take: 500,
+    take: CHECKS_SHOWN,
   });
-  const out = [];
-  for (const r of rows) out.push(await checkView(db, outlet, r.id));
-  return out;
+  const bills = new Map(
+    (
+      await db.bill.findMany({ where: { companyId: actor.companyId, id: { in: rows.map((r) => r.billId) } } })
+    ).map((b) => [b.id, b]),
+  );
+  return rows.flatMap((r) => {
+    const bill = bills.get(r.billId);
+    return bill ? [viewOf(outlet, r, bill)] : [];
+  });
 }

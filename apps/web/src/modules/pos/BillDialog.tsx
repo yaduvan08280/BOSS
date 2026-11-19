@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { useHosp } from '@/modules/hosp/api';
 import { useModes } from '@/modules/money/api';
 import { rupees } from '@/modules/stock/api';
-import { post, useAdvance, useChecks, usePosMutation, type Check, type Order } from './api';
+import { post, useAdvance, useOrderChecks, usePosMutation, type Check, type Order } from './api';
 
 /** Bill an order (service charge, discount, no-charge, split in equal parts) and take the money, by one mode or several. */
 export function BillDialog({
@@ -24,7 +24,7 @@ export function BillDialog({
   onPaid: () => void;
 }) {
   const { t } = useTranslation();
-  const checks = useChecks(outletId);
+  const checks = useOrderChecks(outletId, order.id);
   const hosp = useHosp();
   const modes = useModes();
   const made = (checks.data ?? []).find((c) => c.orderId === order.id && c.status !== 'CANCELLED');

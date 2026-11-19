@@ -1,30 +1,22 @@
 import type { Db, Tx } from '@mono/db';
 import {
   checkMachine,
-  explode,
-  kotMachine,
   orderMachine,
   paymentSchema,
   transition,
   type CheckStatus,
-  type KotStatus,
-  type OrderStatus,
-  stockPlaceFor,
 } from '@mono/shared';
 import { z } from 'zod';
 import { writeAudit } from '../../lib/audit';
 import { AppError, notFound } from '../../lib/errors';
-import { emitEvent } from '../../lib/events';
-import { applyMove } from '../ims/moves';
-import { booksOf } from '../ims/recipes';
 import { createBillIn, voidBill } from '../money/bills';
 import { chargeRoom, roomTarget, unchargeRoom, type RoomTarget } from '../hotel/pos-hook';
 import { releaseCredit } from '../money/credit';
 import type { Actor } from '../work/actor';
 import { ctxOf, need } from './access';
 import { checkView, creditOf, type Payment } from './checks-read';
-import { finishForOrder } from './res-finish';
-import { isApprover, live, loadOrder, needOpenDay, type LoadedOrder, type PosOutlet } from './pos-core';
+import { isApprover, loadOrder, needOpenDay, type PosOutlet } from './pos-core';
+import { settleOrder } from './settle';
 
 /**
  * Phase 15 — taking money, and what follows. A bill may be paid by several modes; a mode that needs a reference
@@ -32,122 +24,6 @@ import { isApprover, live, loadOrder, needOpenDay, type LoadedOrder, type PosOut
  * that company (it shows in receivables). When an order's last check is settled its items take their recipes
  * from the outlet's stock.
  */
-type Mod = { itemId?: string | null; qty?: number | null; name: string };
-
-/** Stock for a paid order: each item's recipe, and add-ons that carry stock. What the location is short of is noted, never blocking. */
-async function consumeOrder(tx: Tx, actor: Actor, outlet: PosOutlet, order: LoadedOrder) {
-  const books = await booksOf(tx, actor.companyId);
-  const ctx = ctxOf(actor);
-  const heldAt = async (itemId: string, locationId: string) =>
-    Number(
-      (
-        await tx.stockBalance.aggregate({
-          where: { itemId, locationId, qty: { gt: 0 } },
-          _sum: { qty: true },
-        })
-      )._sum.qty ?? 0,
-    );
-  for (const i of live(order)) {
-    const needs = new Map<string, number>();
-    if (i.stockItemId) {
-      const qty = Number(i.qty) * Number(i.factor);
-      try {
-        const part =
-          books.items.get(i.stockItemId)?.made === 'DISH'
-            ? explode(books, i.stockItemId, qty)
-            : new Map([[i.stockItemId, qty]]);
-        for (const [id, n] of part) needs.set(id, (needs.get(id) ?? 0) + n);
-      } catch {
-        await tx.posOrderItem.update({
-          where: { id: i.id },
-          data: { stockNote: 'No recipe: stock not taken' },
-        });
-        continue;
-      }
-    }
-    for (const m of (i.modifiers as Mod[] | null) ?? [])
-      if (m.itemId && m.qty) needs.set(m.itemId, (needs.get(m.itemId) ?? 0) + m.qty * Number(i.qty));
-    const short: string[] = [];
-    // A category with a stock route of its own (drinks → the bar) takes from there.
-    const place = stockPlaceFor(outlet, i.category);
-    for (const [itemId, n] of needs) {
-      const qty = Math.round(n * 1000) / 1000;
-      if ((await heldAt(itemId, place)) + 1e-9 < qty) {
-        short.push(itemId);
-        continue;
-      }
-      await applyMove(tx, ctx, {
-        itemId,
-        type: 'OUT',
-        delta: -qty,
-        reason: 'RECIPE',
-        locationId: place,
-        refType: 'pos_order',
-        refId: order.id,
-        note: `Order ${order.number}`,
-      });
-    }
-    if (short.length) {
-      const names = await tx.item.findMany({ where: { id: { in: short } }, select: { name: true } });
-      await tx.posOrderItem.update({
-        where: { id: i.id },
-        data: { stockNote: `Short: ${names.map((x) => x.name).join(', ')}` },
-      });
-    }
-  }
-}
-
-/** After a check changes: the order is paid when every live item is on a paid check. */
-export async function settleOrder(tx: Tx, actor: Actor, outlet: PosOutlet, orderId: string) {
-  const order = await tx.posOrder.findUniqueOrThrow({
-    where: { id: orderId },
-    include: { items: { orderBy: { createdAt: 'asc' } } },
-  });
-  if (order.status !== 'BILLED') return order.status;
-  const checks = await tx.posCheck.findMany({ where: { orderId, status: { not: 'CANCELLED' } } });
-  const paid = new Set(checks.filter((c) => c.status === 'PAID').map((c) => c.checkNo));
-  const allPaid = live(order).every((i) => paid.has(i.checkNo));
-  const to = transition(orderMachine, {
-    from: order.status as OrderStatus,
-    action: 'settle',
-    roles: ['system'],
-    ctx: { fired: true, allPaid },
-  }).to;
-  if (to === 'PAID') {
-    await tx.posOrder.update({ where: { id: orderId }, data: { status: to, closedAt: new Date() } });
-    await tx.posOrderItem.updateMany({
-      where: { orderId, status: { in: ['FIRED', 'READY'] } },
-      data: { status: 'SERVED' },
-    });
-    // The food has gone and the bill is paid: tickets the kitchen never bumped leave its "to make" list too
-    // (no ready time is made up for them, so the kitchen-times report still counts them as never timed).
-    const kotIds = [...new Set(order.items.map((i) => i.kotId).filter((id): id is string => Boolean(id)))];
-    const now = new Date();
-    for (const k of await tx.kot.findMany({
-      where: { id: { in: kotIds }, status: { in: ['NEW', 'READY'] } },
-    })) {
-      const bumped = transition(kotMachine, {
-        from: k.status as KotStatus,
-        action: 'bump',
-        roles: ['system'],
-        ctx: {},
-      }).to;
-      await tx.kot.update({
-        where: { id: k.id },
-        data: { status: bumped, bumpedAt: now },
-      });
-    }
-    await consumeOrder(tx, actor, outlet, order);
-    if (order.reservationId) await finishForOrder(tx, ctxOf(actor), order.reservationId);
-    await emitEvent(tx, ctxOf(actor), {
-      name: 'pos.order_paid',
-      entityType: 'pos_order',
-      entityId: orderId,
-      payload: { outletId: outlet.id, number: order.number, branchId: outlet.branchId },
-    });
-  }
-  return to;
-}
 
 export async function payCheck(db: Db, actor: Actor, checkId: string, input: z.input<typeof paymentSchema>) {
   need(actor, 'hosp.create', "You can't take payments");
@@ -207,9 +83,12 @@ export async function payCheck(db: Db, actor: Actor, checkId: string, input: z.i
   const ctx = ctxOf(actor);
   return db.$transaction(async (tx) => {
     const taken: Payment[] = [...((check.payments as Payment[] | null) ?? [])];
+    // Receipts are made LAST (below): a receipt takes the next number of its series, and that series stays
+    // locked until this transaction ends — so everything that does not need the number (the room's folio, the
+    // order, the stock) is done first and other cashiers wait as briefly as possible.
+    const receipts: { at: number; amount: number; modeId: string; reference: string | null }[] = [];
     for (const x of p.payments) {
       const mode = modes.get(x.modeId)!;
-      let receiptId: string | null = null;
       const room = rooms.get(x);
       const folioLineId = room
         ? await chargeRoom(tx, ctx, room, {
@@ -219,40 +98,18 @@ export async function payCheck(db: Db, actor: Actor, checkId: string, input: z.i
             amount: x.amount,
           })
         : undefined;
+      const reference = x.reference ?? (mode.kind === 'ROOM' ? order.roomNo : null) ?? null;
       // Company credit is not money in: the invoice stays owed by the company (receivables). Nor is a bill sent
       // to a hotel room: it is paid with the folio at check-out.
-      if (mode.kind !== 'COMPANY' && !room) {
-        const receipt = await createBillIn(
-          tx,
-          actor,
-          {
-            type: 'RECEIPT',
-            partyId: bill.partyId,
-            date: check.businessDay,
-            branchId: outlet.branchId,
-            lines: [],
-            charges: [],
-            discount: 0,
-            taxInclusive: false,
-            amount: x.amount,
-            modeId: mode.id,
-            reference: x.reference ?? (mode.kind === 'ROOM' ? order.roomNo : null),
-          },
-          {
-            system: true,
-            allocate: [{ billId: bill.id, amount: x.amount }],
-            source: { type: 'pos_payment', id: check.id },
-          },
-        );
-        receiptId = receipt.id;
-      }
+      if (mode.kind !== 'COMPANY' && !room)
+        receipts.push({ at: taken.length, amount: x.amount, modeId: mode.id, reference });
       taken.push({
         modeId: mode.id,
         mode: mode.name,
         kind: mode.kind,
         amount: x.amount,
-        reference: x.reference ?? (mode.kind === 'ROOM' ? order.roomNo : null) ?? null,
-        receiptId,
+        reference,
+        receiptId: null,
         ...(room ? { stayId: room.stayId, folioLineId } : {}),
         byId: actor.userId,
         at: new Date().toISOString(),
@@ -267,8 +124,12 @@ export async function payCheck(db: Db, actor: Actor, checkId: string, input: z.i
         stewardId: p.tip.stewardId ?? order.stewardId,
         modeId: p.tip.modeId ?? null,
       });
-    const after = await tx.bill.findUniqueOrThrow({ where: { id: bill.id } });
-    const left = Number(after.total - after.credited - after.settled) - creditOf(taken);
+    // What will be left once the receipts below are set against the invoice (checked again after they are).
+    const before = await tx.bill.findUniqueOrThrow({ where: { id: bill.id } });
+    const left =
+      Number(before.total - before.credited - before.settled) -
+      receipts.reduce((n, r) => n + r.amount, 0) -
+      creditOf(taken);
     const status = transition(checkMachine, {
       from: check.status as CheckStatus,
       action: 'settle',
@@ -286,6 +147,38 @@ export async function payCheck(db: Db, actor: Actor, checkId: string, input: z.i
       after: { payments: p.payments, tip: p.tip ?? null, status },
     });
     const orderStatus = status === 'PAID' ? await settleOrder(tx, actor, outlet, order.id) : order.status;
+    for (const r of receipts) {
+      const receipt = await createBillIn(
+        tx,
+        actor,
+        {
+          type: 'RECEIPT',
+          partyId: bill.partyId,
+          date: check.businessDay,
+          branchId: outlet.branchId,
+          lines: [],
+          charges: [],
+          discount: 0,
+          taxInclusive: false,
+          amount: r.amount,
+          modeId: r.modeId,
+          reference: r.reference,
+        },
+        {
+          system: true,
+          allocate: [{ billId: bill.id, amount: r.amount }],
+          source: { type: 'pos_payment', id: check.id },
+        },
+      );
+      taken[r.at]!.receiptId = receipt.id;
+    }
+    if (receipts.length) {
+      // The receipts must have settled exactly what was counted on above; anything else undoes the payment.
+      const after = await tx.bill.findUniqueOrThrow({ where: { id: bill.id } });
+      if (Number(after.total - after.credited - after.settled) - creditOf(taken) !== left)
+        throw new AppError(409, 'CONFLICT', 'This bill changed while it was being paid. Try again.');
+      await tx.posCheck.update({ where: { id: check.id }, data: { payments: taken } });
+    }
     return { ...(await checkView(tx, outlet, check.id)), orderStatus };
   });
 }

@@ -47,6 +47,21 @@ export default fp(async function errorsPlugin(app: FastifyInstance) {
     if ((err as { code?: string }).code === 'P2025' || err instanceof OtherCompanyError) {
       return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Record not found' } });
     }
+    // Two requests made the same thing at the same moment (a unique value already taken), or the database
+    // asked for one of two clashing transactions to be tried again: the person's own doing, not a fault.
+    const dbCode = (err as { code?: string }).code;
+    if (dbCode === 'P2002' || dbCode === 'P2034') {
+      request.log.warn({ err: { code: dbCode, message: err.message } }, 'Conflict in the database');
+      return reply.status(409).send({
+        error: {
+          code: 'CONFLICT',
+          message:
+            dbCode === 'P2002'
+              ? 'This already exists, or was made a moment ago. Refresh and try again.'
+              : 'Somebody changed this at the same moment. Try again.',
+        },
+      });
+    }
     if (err.statusCode === 429) {
       return reply
         .status(429)

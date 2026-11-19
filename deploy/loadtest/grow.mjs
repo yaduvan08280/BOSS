@@ -128,6 +128,19 @@ for (const p of PLAN) {
   );
   console.log(`${p.t}: +${res.rowCount} rows (${((Date.now() - started) / 1000).toFixed(1)} s)`);
 }
+// The copies carry numbers far above the counters: move the counters past them, so new tasks and process
+// records made on the grown data (a drill, a load test) get free numbers.
+await db.query(
+  `update counters c set value = m.top from (select max(number) as top from tasks where company_id = $1) m
+   where c.company_id = $1 and c.key = 'task' and m.top > c.value`,
+  [company.id],
+);
+await db.query(
+  `update counters c set value = m.top
+   from (select 'fms:' || flow_id as key, max(number) as top from fms_records where company_id = $1 group by 1) m
+   where c.company_id = $1 and c.key = m.key and m.top > c.value`,
+  [company.id],
+);
 await db.query("set session_replication_role = 'origin'");
 await db.query('analyze');
 await db.end();

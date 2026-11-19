@@ -131,4 +131,27 @@ describe('at the same moment', () => {
       WHERE c.relname = 'counters' AND l.mode = 'RowExclusiveLock'`;
     expect(Number(held[0]!.n)).toBe(0);
   });
+
+  it('a number somebody else already holds is answered as a conflict, not as a server error', async () => {
+    const w = await world(ctx.app);
+    const due = new Date(Date.now() + 86_400_000).toISOString();
+    const first = await w.api.post('/api/tasks', { doerId: w.owner.id, plannedAt: due, description: 'One' });
+    expect(first.status).toBe(200);
+    // A row put in from outside (an import, a restore) took the next number.
+    await ctx.prisma.task.create({
+      data: {
+        companyId: w.companyId,
+        number: (first.body.number as number) + 1,
+        description: 'Put in from outside',
+        status: 'OPEN',
+        doerId: w.owner.id as string,
+        creatorId: w.owner.id as string,
+        plannedAt: new Date(due),
+        originalPlannedAt: new Date(due),
+      },
+    });
+    const clash = await w.api.post('/api/tasks', { doerId: w.owner.id, plannedAt: due, description: 'Two' });
+    expect(clash.status).toBe(409);
+    expect(clash.body.error.code).toBe('CONFLICT');
+  });
 });

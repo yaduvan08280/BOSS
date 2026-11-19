@@ -67,7 +67,29 @@ const log = pino({
 
 // Jobs sweep whole tables: a few connections, and two minutes for one statement.
 const prisma = createPrisma(env.DATABASE_URL, { max: 8, statementTimeoutMs: 120_000, name: 'mono-worker' });
-const boss = new PgBoss({ connectionString: env.DATABASE_URL, schema: 'pgboss' });
+// The queue looks for jobs whose worker died every 15 s (its own default is a minute).
+const boss = new PgBoss({
+  connectionString: env.DATABASE_URL,
+  schema: 'pgboss',
+  superviseIntervalSeconds: 15,
+  monitorIntervalSeconds: 15,
+});
+/**
+ * A queue with at most one job running and one waiting ("stately"), that notices a dead worker. While a job
+ * runs, the worker says "still here" every few seconds; a job whose worker was killed (power cut, out of
+ * memory) stops saying so and is failed within about half a minute, so the next run can start. Found by the
+ * kill drill: a killed job used to stay "running" for 15 minutes with nothing of its kind running meanwhile
+ * (no reminders, no messages), while thousands of identical jobs piled up behind it.
+ * A queue made by an older version (another policy) is made again: its jobs are only "run this sweep", and
+ * the next tick asks for it anyway.
+ */
+const HEARTBEAT_SECONDS = 15;
+async function singleQueue(name: string) {
+  const old = await boss.getQueue(name);
+  if (old && old.policy !== 'stately') await boss.deleteQueue(name);
+  await boss.createQueue(name, { policy: 'stately' });
+  await boss.updateQueue(name, { heartbeatSeconds: HEARTBEAT_SECONDS });
+}
 /** Log a worker error and keep it in System Master → Errors. */
 const report = (where: string) => (err: unknown) => {
   log.error({ err }, where);
@@ -158,8 +180,8 @@ const handlers: HandlerRegistry = {
 };
 
 await boss.start();
-await boss.createQueue(QUEUE_DISPATCH, { policy: 'singleton' });
-await boss.createQueue(QUEUE_ESCALATIONS, { policy: 'singleton' });
+await singleQueue(QUEUE_DISPATCH);
+await singleQueue(QUEUE_ESCALATIONS);
 
 await boss.work(
   QUEUE_DISPATCH,
@@ -183,8 +205,8 @@ await boss.schedule(QUEUE_ESCALATIONS, '* * * * *', null, { tz: 'UTC' });
 
 // Every 5 minutes: checklist sweep, overdue tasks, late slips, ticket escalations.
 // Every minute: checklist reminders and misses, the EA board's day and briefs, Monday's MIS, the AI summary.
-await boss.createQueue(QUEUE_WORK_5MIN, { policy: 'singleton' });
-await boss.createQueue(QUEUE_WORK_1MIN, { policy: 'singleton' });
+await singleQueue(QUEUE_WORK_5MIN);
+await singleQueue(QUEUE_WORK_1MIN);
 await boss.work(
   QUEUE_WORK_5MIN,
   watched(QUEUE_WORK_5MIN, async () => {
@@ -278,7 +300,7 @@ await boss.send(QUEUE_WORK_5MIN, null).catch(() => undefined);
 // Once a day, in the small hours (22:40 UTC = 04:10 in India): old sent messages, delivered events, printed
 // tickets and ended sessions are removed, and audit rows older than three years move to archive files.
 const QUEUE_RETENTION = 'work.retention';
-await boss.createQueue(QUEUE_RETENTION, { policy: 'singleton' });
+await singleQueue(QUEUE_RETENTION);
 await boss.work(
   QUEUE_RETENTION,
   watched(QUEUE_RETENTION, async () => {

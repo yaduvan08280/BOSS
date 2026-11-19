@@ -165,6 +165,14 @@ export const useKds = (outletId: string, stationId: string, show: 'open' | 'bump
   );
 export const useChecks = (outletId: string) =>
   usePoll<Check[]>(['checks', outletId], `/api/pos/outlets/${outletId}/checks`, Boolean(outletId), 15_000);
+/** The bills of one order (the day's list stops at 500, so an order's own bill is asked for by the order). */
+export const useOrderChecks = (outletId: string, orderId: string) =>
+  usePoll<Check[]>(
+    ['checks', outletId, 'order', orderId],
+    `/api/pos/outlets/${outletId}/checks?orderId=${orderId}`,
+    Boolean(outletId && orderId),
+    15_000,
+  );
 export const useApprovals = (outletId: string) =>
   usePoll<Approval[]>(
     ['approvals', outletId],

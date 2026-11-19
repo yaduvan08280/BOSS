@@ -75,9 +75,9 @@ const dish = ok(
 );
 const cash = ok(await sure('POST', '/api/money/modes', { name: `Drill cash ${tag}`, kind: 'CASH' }), 'Cash');
 
-/** The outlet's bills of today (each with its order). */
-const billsOfOutlet = async () => {
-  const r = ok(await sure('GET', `/api/pos/outlets/${outlet.id}/checks`), 'Bills');
+/** The bills of one order (the day's own list stops at 500 bills). */
+const billsOf = async (orderId) => {
+  const r = ok(await sure('GET', `/api/pos/outlets/${outlet.id}/checks?orderId=${orderId}`), 'Bills');
   return Array.isArray(r) ? r : (r.checks ?? []);
 };
 const sent = [];
@@ -104,7 +104,7 @@ async function device(n) {
     // The bill has no key of its own: asked twice, the second answer is "already billed" and the bill is read back.
     let c = await sure('POST', `/api/pos/orders/${o.json.id}/check`, {});
     if (c.status === 409)
-      c = { status: 200, json: (await billsOfOutlet()).find((x) => x.orderId === o.json.id) };
+      c = { status: 200, json: (await billsOf(o.json.id)).find((x) => x.status !== 'CANCELLED') };
     if (c.status === 200 && c.json?.id) {
       const paid = await sure('POST', `/api/pos/checks/${c.json.id}/pay`, {
         payments: [{ modeId: cash.id, amount: c.json.total }],
@@ -131,9 +131,8 @@ for (const id of ids) {
   lines += o.items.filter((i) => i.status !== 'VOID').length;
   if (o.status !== 'PAID') unpaid++;
 }
-const numbers = (await billsOfOutlet())
-  .filter((c) => ids.has(c.orderId) && c.status !== 'CANCELLED')
-  .map((c) => c.number);
+const numbers = [];
+for (const id of ids) for (const c of await billsOf(id)) if (c.status !== 'CANCELLED') numbers.push(c.number);
 const result = {
   devices: DEVICES,
   ordersSent: sent.length,
