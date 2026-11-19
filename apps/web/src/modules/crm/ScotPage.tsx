@@ -111,7 +111,7 @@ export function ScotPage({ me }: { me: Me }) {
           placeholder={t('crm.c.search')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="min-w-0 flex-1 max-sm:basis-full sm:max-w-64"
+          className="min-w-0 flex-1 max-sm:basis-full sm:min-w-48 sm:max-w-64"
         />
         <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t('crm.sc.show')}>
           {FILTERS.map((f) => (

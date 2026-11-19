@@ -33,7 +33,7 @@ export function SheetTab({ tz, today }: { tz: string; today: string }) {
           placeholder={t('ims.s.search')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="min-w-0 flex-1 max-sm:basis-full sm:max-w-64"
+          className="min-w-0 flex-1 max-sm:basis-full sm:min-w-48 sm:max-w-64"
         />
         <Select
           value={type}

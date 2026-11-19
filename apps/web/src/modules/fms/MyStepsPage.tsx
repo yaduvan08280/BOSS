@@ -42,7 +42,7 @@ export function MyStepsPage({ me }: { me: Me }) {
           {q.data.flows.length > 0 && (
             <section>
               <h2 className="mb-2 text-sm font-semibold text-muted-foreground">{t('fms.startWithYou')}</h2>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,17rem),1fr))] gap-2">
                 {q.data.flows.map((f) => (
                   <div
                     key={f.id}

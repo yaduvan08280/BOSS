@@ -190,19 +190,23 @@ function Actions({ call, onPick }: { call: CallRow; onPick: (r: Result) => void 
   const { t } = useTranslation();
   if (call.status !== 'OPEN') return null;
   return (
-    <div className="flex flex-wrap gap-1.5">
-      <Button size="sm" onClick={() => onPick('ORDER')}>
-        <ShoppingBag /> {t('crm.k.order')}
-      </Button>
-      <Button size="sm" variant="secondary" onClick={() => onPick('LATER')}>
-        <Clock /> {t('crm.k.later')}
-      </Button>
-      <Button size="sm" variant="ghost" onClick={() => onPick('NOT_NOW')}>
-        <X /> {t('crm.k.notNow')}
-      </Button>
-      <Button size="sm" variant="ghost" onClick={() => onPick('LOST')}>
-        <ThumbsDown /> {t('crm.k.lost')}
-      </Button>
+    // Two by two in a narrow card (a fourth button alone on its own line looked like a mistake); one row
+    // where there is room for all four.
+    <div className="@container">
+      <div className="grid grid-cols-2 gap-1.5 @md:flex @md:flex-wrap">
+        <Button size="sm" onClick={() => onPick('ORDER')}>
+          <ShoppingBag /> {t('crm.k.order')}
+        </Button>
+        <Button size="sm" variant="secondary" onClick={() => onPick('LATER')}>
+          <Clock /> {t('crm.k.later')}
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => onPick('NOT_NOW')}>
+          <X /> {t('crm.k.notNow')}
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => onPick('LOST')}>
+          <ThumbsDown /> {t('crm.k.lost')}
+        </Button>
+      </div>
     </div>
   );
 }

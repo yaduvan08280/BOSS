@@ -58,7 +58,7 @@ export function ErrorsTab() {
           placeholder={t('errors.search')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="min-w-0 flex-1 max-sm:basis-full sm:max-w-64"
+          className="min-w-0 flex-1 max-sm:basis-full sm:min-w-48 sm:max-w-64"
         />
         <label className="flex items-center gap-2 text-sm">
           <Switch checked={all} onCheckedChange={setAll} /> {t('errors.showResolved')}

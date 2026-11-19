@@ -96,9 +96,11 @@ export function Stat({
 }) {
   return (
     <div className={cn('rounded-card border bg-card p-3', big && 'bg-ink text-ink-foreground')}>
-      <div className={cn('text-xs', big ? 'opacity-80' : 'text-muted-foreground')}>{label}</div>
+      <div className={cn('text-xs', big ? 'text-ink-foreground/80' : 'text-muted-foreground')}>{label}</div>
       <div className={cn('font-semibold tabular-nums', big ? 'text-2xl' : 'text-lg')}>{value}</div>
-      {sub && <div className={cn('text-xs', big ? 'opacity-80' : 'text-muted-foreground')}>{sub}</div>}
+      {sub && (
+        <div className={cn('text-xs', big ? 'text-ink-foreground/80' : 'text-muted-foreground')}>{sub}</div>
+      )}
     </div>
   );
 }

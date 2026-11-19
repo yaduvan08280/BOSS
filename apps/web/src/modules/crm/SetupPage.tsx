@@ -210,8 +210,9 @@ function Overview({ plan, progress, go }: { plan: PlanData; progress: Progress; 
     progress.config.done.includes(x),
   ).length;
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+    <div className="@container space-y-4">
+      {/* Four across only when this column itself is wide enough (it sits beside the page list). */}
+      <div className="grid grid-cols-2 gap-2 @3xl:grid-cols-4">
         <Stat
           big
           label={t('crm.s.target')}
