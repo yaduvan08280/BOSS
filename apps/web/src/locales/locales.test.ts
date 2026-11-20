@@ -64,7 +64,8 @@ describe('translations', () => {
       }
     expect(seen, 'the scan found the screens').toBeGreaterThan(500);
     expect(missing).toEqual([]);
-  });
+    // (It reads every source file of the web app: on a cold disk that alone took longer than the default 5 s.)
+  }, 60_000);
   it('every event a rule can be made for has a name in words', () => {
     // The rules and templates screens fall back to the raw key ("banquet.beo") when a name is missing.
     const names = (en.notify as { event: Record<string, string> }).event;
