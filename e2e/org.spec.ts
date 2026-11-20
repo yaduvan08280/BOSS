@@ -20,12 +20,17 @@ async function drag(page: Page, from: ReturnType<Page['locator']>, to: ReturnTyp
   const b = (await to.boundingBox())!;
   await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
   await page.mouse.down();
-  await page.mouse.move(a.x + a.width / 2 + 10, a.y + a.height / 2 + 10, { steps: 4 });
-  await page.mouse.move(b.x + b.width / 2, b.y + Math.min(b.height / 2, 40), { steps: 12 });
+  // A real hand rests a moment after pressing and before letting go; without these pauses a busy machine now
+  // and then delivered the moves before the drag had started, and nothing was dropped.
+  await page.waitForTimeout(120);
+  await page.mouse.move(a.x + a.width / 2 + 10, a.y + a.height / 2 + 10, { steps: 6 });
+  await page.waitForTimeout(80);
+  await page.mouse.move(b.x + b.width / 2, b.y + Math.min(b.height / 2, 40), { steps: 16 });
   // dnd-kit auto-scrolls near the edges; aim again at where the target is now.
-  await page.waitForTimeout(150);
+  await page.waitForTimeout(200);
   const c = (await to.boundingBox())!;
-  await page.mouse.move(c.x + c.width / 2, c.y + Math.min(c.height / 2, 40), { steps: 3 });
+  await page.mouse.move(c.x + c.width / 2, c.y + Math.min(c.height / 2, 40), { steps: 4 });
+  await page.waitForTimeout(120);
   await page.mouse.up();
 }
 

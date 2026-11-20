@@ -176,7 +176,12 @@ export function OrgChartTab() {
       className="overflow-auto rounded-card border bg-card/60 p-3"
       style={{ maxHeight: 'calc(100dvh - 220px)' }}
     >
-      <div style={{ width: size.w * zoom || undefined, height: size.h * zoom || undefined }}>
+      {/* Clipped to the zoomed size: the layer inside keeps its full-size layout box, and without the clip the
+          scroll box could be scrolled (by a drag near its edge) far into that empty extent. */}
+      <div
+        className={size.w ? 'overflow-hidden' : undefined}
+        style={{ width: size.w * zoom || undefined, height: size.h * zoom || undefined }}
+      >
         <div
           ref={content}
           className="w-max origin-top-left space-y-4"
