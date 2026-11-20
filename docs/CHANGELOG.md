@@ -1,5 +1,17 @@
 # Changelog
 
+## 20/11/2026 — The worker no longer slows the tills in the small hours
+
+- **Fixed — on a large company, bills and payments were slower for a minute in every five**, most of all
+  after midnight. Two five-minute jobs (settling attendance, watching for absences) asked the database about
+  each person in turn on every pass, and worked every person's day out to learn it could not be kept yet:
+  37 seconds of processor time a pass at 2,200 people. They now read everybody at once and look at a day only
+  when it can be kept: under a second (decision 268). Found by repeating the load test at 04:00 India time.
+- The daily "still overdue" reminder round goes 500 tasks a pass instead of 2,000.
+- Also since 19/11: dragging a person on a zoomed-out org chart no longer scrolls the chart away; an error
+  inside the job queue reaches System Master → Errors in words; the delegation sheet fetches a hundred tasks
+  at a time (decision 266).
+
 ## 20/11/2026 — Two tabs renewing the sign-in at once
 
 - **Fixed — a person with MONO open in two tabs could be shown "Something went wrong", or be signed out on

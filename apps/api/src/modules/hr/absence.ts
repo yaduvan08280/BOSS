@@ -8,7 +8,7 @@ import { absenceMark } from './attendance';
 import { period } from './balance';
 import { companyCalendar } from './calendar';
 import { runCovers, scheduleCovers } from './cover';
-import { hrPeople, hrPerson, hrRulesOf, hrScope, type HrPerson } from './people';
+import { activeHrPeople, hrPeople, hrPerson, hrRulesOf, hrScope, type HrPerson } from './people';
 import { openWork, suggestionsFor, type WorkItem } from './work';
 
 const tzOf = async (db: Db, companyId: string) =>
@@ -286,13 +286,11 @@ export async function watchAbsences(db: Db, now = new Date(), onlyCompanyId?: st
     select: { id: true, timezone: true },
   })) {
     const rules = await hrRulesOf(db, c.id);
-    const users = await db.user.findMany({
-      where: { companyId: c.id, deletedAt: null, status: 'ACTIVE' },
-      select: { id: true },
-    });
-    for (const u of users) {
-      const p = await hrPerson(db, c.id, u.id);
-      const cal = await companyCalendar(db, c.id, p.branchId);
+    // Everybody in a few queries, and each branch's calendar once a pass (they were read once a person).
+    const cals = new Map<string | null, Awaited<ReturnType<typeof companyCalendar>>>();
+    for (const { p } of await activeHrPeople(db, c.id)) {
+      let cal = cals.get(p.branchId);
+      if (!cal) cals.set(p.branchId, (cal = await companyCalendar(db, c.id, p.branchId)));
       // "Today" on the person's own clock (a branch abroad is hours away from head office).
       const today = localDate(now, p.tz);
       // Yesterday too: a night shift that started last evening is still running after midnight.

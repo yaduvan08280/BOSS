@@ -6,7 +6,7 @@ import { moduleSettings } from '../work/settings';
 import { effectiveVerifier } from './service';
 
 /** How many tasks that are still late are told again in one pass, per company (the rest follow in later passes). */
-export const RETELL_PER_PASS = 2000;
+export const RETELL_PER_PASS = 500;
 
 /**
  * Overdue detection (every 5 minutes): open tasks past their planned time raise `delegation.overdue`.

@@ -20,7 +20,7 @@ import { AppError } from '../../lib/errors';
 import { emitEvent } from '../../lib/events';
 import type { Actor } from '../work/actor';
 import { companyCalendar, type CompanyCalendar } from './calendar';
-import { hrPerson, hrRulesOf, personRules, type HrPerson } from './people';
+import { activeHrPeople, hrPerson, hrRulesOf, personRules, type HrPerson } from './people';
 
 /** The shift date a punch belongs to: a night shift's morning punches belong to the evening before. */
 export function attendanceDate(at: Date, p: HrPerson, tz: string): string {
@@ -249,17 +249,30 @@ export async function settleAttendance(db: Db, now = new Date(), onlyCompanyId?:
   });
   let settled = 0;
   for (const c of companies) {
-    const people = await db.user.findMany({
-      where: { companyId: c.id, deletedAt: null, status: 'ACTIVE' },
-      select: { id: true, createdAt: true },
-    });
-    for (const u of people) {
-      const p = await hrPerson(db, c.id, u.id);
+    const people = await activeHrPeople(db, c.id);
+    if (!people.length) continue;
+    // The days already kept, read once. Company time zones differ by less than a day from any branch's, so
+    // three days around the company's today hold every person's yesterday and today.
+    const around = localDate(now, c.timezone);
+    const kept = new Set(
+      (
+        await db.attendanceDay.findMany({
+          where: { companyId: c.id, date: { gte: addDays(around, -2), lte: addDays(around, 1) } },
+          select: { userId: true, date: true },
+        })
+      ).map((d) => `${d.userId}:${d.date}`),
+    );
+    for (const { p, createdAt } of people) {
+      const u = { id: p.id, createdAt };
       // Each person's days are their branch's days.
       const today = localDate(now, p.tz);
       for (const date of [addDays(today, -1), today]) {
         if (date < localDate(u.createdAt, p.tz)) continue;
-        if (await db.attendanceDay.findUnique({ where: { userId_date: { userId: u.id, date } } })) continue;
+        if (kept.has(`${u.id}:${date}`)) continue;
+        // Not yet two hours past the shift's end: nothing to keep, so nothing is read for this person. (For
+        // most of the day that is everybody — working each day out on every pass to find that out cost
+        // 20 s of processor time a pass at 2,200 people.)
+        if (now.getTime() < punchWindow(date, p, p.tz).end.getTime() + 2 * 3600_000) continue;
         const r = await settleDay(db, c.id, p, date, now);
         if (!r.saved) continue;
         settled++;

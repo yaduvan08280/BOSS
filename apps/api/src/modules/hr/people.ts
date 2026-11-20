@@ -102,6 +102,33 @@ export async function hrPeople(
   return out;
 }
 
+/**
+ * Every active person of a company as the HR rules see them, with the day they were added — read in a few
+ * queries however many people there are. The five-minute sweeps go through everybody: asking for each person
+ * in turn was four queries a person a pass (20 s of processor time at 2,200 people, every five minutes).
+ */
+export async function activeHrPeople(db: Db | Tx, companyId: string) {
+  const users = await db.user.findMany({
+    where: { companyId, deletedAt: null, status: 'ACTIVE' },
+    select: { id: true, createdAt: true },
+    orderBy: { id: 'asc' },
+  });
+  const out: { p: HrPerson; createdAt: Date }[] = [];
+  for (let i = 0; i < users.length; i += 500) {
+    const part = users.slice(i, i + 500);
+    const people = await hrPeople(
+      db,
+      companyId,
+      part.map((u) => u.id),
+    );
+    for (const u of part) {
+      const p = people.get(u.id);
+      if (p) out.push({ p, createdAt: u.createdAt });
+    }
+  }
+  return out;
+}
+
 export const personRules = (rules: HrRules, p: HrPerson) =>
   rulesFor(rules, { id: p.id, departmentId: p.departmentId, branchId: p.branchId, entityId: p.entityId });
 
