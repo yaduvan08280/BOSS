@@ -122,7 +122,12 @@ test('the plan: unlock, change a month keeping the year, approve again', async (
     await page.getByLabel('Turnover', { exact: true }).fill('9500000');
     await page.getByRole('radio', { name: 'Keep the year total — adjust other months' }).click();
     await shot(page, 'crm-month-dialog', info.project.name);
+    // The check line read the same before the change (the year is kept), so wait for the save itself.
+    const saved = page.waitForResponse(
+      (r) => r.url().endsWith('/api/crm/plan/month') && r.request().method() === 'POST',
+    );
     await page.getByRole('button', { name: 'Save', exact: true }).click();
+    expect((await saved).ok()).toBe(true);
     await expect(page.getByText('All 12 months add up to ₹7,50,00,000.')).toBeVisible();
     const plan = (await (await page.request.get('/api/crm/plan')).json()) as {
       view: { months: { month: string; turnover: number }[]; addsUp: boolean };

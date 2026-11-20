@@ -83,7 +83,14 @@ describe(
         ['Deluxe', 'With breakfast', 8000_00],
         ['Suite', 'With breakfast', 16000_00],
       ]);
-      expect(JSON.stringify(first)).not.toContain('101');
+      // Nothing but these: no room number, no count of rooms left. (Ids and the company's name may hold any digits.)
+      expect(Object.keys(first).sort()).toEqual(
+        'adults arrive challenge children company depart logoUrl offers property today'.split(' '),
+      );
+      for (const o of first.offers)
+        expect(Object.keys(o).sort()).toEqual(
+          'meal nights plan ratePlanId room roomTypeId sleeps total'.split(' '),
+        );
       // Five guests fit nowhere; a past date is moved to today.
       expect((await page(`arrive=${h.d(2)}&depart=${h.d(4)}&adults=5`)).offers).toEqual([]);
       expect((await page(`arrive=2020-01-01&depart=2020-01-02`)).arrive).toBe(h.d(0));
