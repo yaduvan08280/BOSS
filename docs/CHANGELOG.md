@@ -1,5 +1,15 @@
 # Changelog
 
+## 20/11/2026 — Two tabs renewing the sign-in at once
+
+- **Fixed — a person with MONO open in two tabs could be shown "Something went wrong", or be signed out on
+  every device**, when both tabs renewed the sign-in at the same moment (a laptop waking up; every tab's
+  live connection coming back after a server update). The tabs of one browser now take turns and the
+  second does not ask again; the server treats a just-renewed token shown again within 20 seconds as the
+  same browser, not a thief — it issues nothing, revokes nothing and clears no cookie. After 20 seconds a
+  reused token still signs every device out, as before (decision 267). Found by the screen audit: the
+  session table showed a lost renewal between the audit's two pages.
+
 ## 19/11/2026 — Kill drills, front-end weight, accessibility, more browser tests, eye review
 
 Numbers are in `docs/production-readiness.md`; decisions 258–261 in `CLAUDE.md`.

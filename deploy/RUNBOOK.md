@@ -55,6 +55,8 @@ After an update that says so in `docs/CHANGELOG.md`, add the new settings to `.e
 
 Both scripts ask before they replace anything. `restore-pitr.sh` keeps the database it replaces beside the
 new one (`/srv/mono/pg.before-<time>`); delete that folder once you are sure.
+Right after a restore the health check says the backup is old (it reads the restored database, whose last
+backup mark is the dump's own): run one at once — `./deploy/compose.sh exec backup backup.sh`.
 Measured in Docker on a small machine: a dump restore of the demo company into an empty stack, 25 s;
 a rebuild from a base copy and its log pieces, 17 s.
 

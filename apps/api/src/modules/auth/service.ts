@@ -89,14 +89,24 @@ export async function login(
 }
 
 /**
- * Rotate a refresh token. Re-using an already-rotated token means it was stolen:
- * every session of that user is revoked.
+ * How long a refresh token that has just been rotated may be shown again without it counting as theft.
+ * Two tabs of one browser hold the same cookie: when both renew at the same moment (a laptop waking up,
+ * every tab's live connection coming back after a server restart) the second is not a thief.
+ */
+export const REFRESH_GRACE_MS = 20_000;
+
+/**
+ * Rotate a refresh token. Re-using an already-rotated token means it was stolen: every session of that
+ * user is revoked — except within `REFRESH_GRACE_MS` of the rotation, where the caller is told
+ * `{ again: true }`: nothing is issued and nothing is revoked; the browser already holds (or is about to
+ * receive) the cookies of the rotation that won.
  */
 export async function refresh(db: Db, refreshToken: string, client: ClientInfo) {
   const old = await db.session.findUnique({ where: { tokenHash: hashToken(refreshToken) } });
   if (!old) throw unauthenticated('Your session expired');
   if (old.revokedAt) {
     if (old.replacedById) {
+      if (Date.now() - old.revokedAt.getTime() <= REFRESH_GRACE_MS) return { again: true as const };
       await db.session.updateMany({
         where: { userId: old.userId, revokedAt: null },
         data: { revokedAt: new Date() },
@@ -116,9 +126,9 @@ export async function refresh(db: Db, refreshToken: string, client: ClientInfo) 
     data: { revokedAt: new Date(), replacedById: next.session.id, lastUsedAt: new Date() },
   });
   if (rotated.count === 0) {
-    // Lost a race with a parallel refresh using the same token.
+    // Lost a race with a parallel refresh using the same token: the other one's cookies stand.
     await db.session.update({ where: { id: next.session.id }, data: { revokedAt: new Date() } });
-    throw unauthenticated('Your session expired');
+    return { again: true as const };
   }
   return {
     userId: old.userId,

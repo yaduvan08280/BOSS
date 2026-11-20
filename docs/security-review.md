@@ -39,7 +39,8 @@ that fails without the change. Nothing here was tried on a live server.
 
 - **Sign-in**: argon2id; the same time is spent when the login ID does not exist; cookies are `HttpOnly`,
   `SameSite=Lax`, `Secure` in production, the refresh cookie only on `/api/auth`; refresh tokens are stored
-  hashed, rotated on every use, and re-using a rotated one signs every device out; a disabled person or a
+  hashed, rotated on every use, and re-using a rotated one signs every device out (shown again within 20
+  seconds of its rotation it is another tab of the same browser: nothing is issued or revoked — decision 267); a disabled person or a
   revoked session stops on the next request; password change signs other devices out; an admin reset gives
   a one-time password that must be changed.
 - **Rights**: 552 routes refuse a member with no rights with 403; 34 answers are open on purpose

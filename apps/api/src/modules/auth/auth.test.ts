@@ -76,7 +76,7 @@ describe('auth', () => {
   });
 
   it('rotates refresh tokens and revokes everything when an old one is reused', async () => {
-    const { mobile, password } = await makeCompany(ctx.app);
+    const { mobile, password, owner } = await makeCompany(ctx.app);
     const jar1 = cookieHeader(await login(mobile, password));
     const r1 = await ctx.app.inject({
       method: 'POST',
@@ -87,6 +87,11 @@ describe('auth', () => {
     const jar2 = cookieHeader(r1, jar1);
     expect(jar2.mono_rt).not.toBe(jar1.mono_rt);
 
+    // Well after the rotation (a moment after it is another tab of the same browser — the next test).
+    await ctx.app.prisma.session.updateMany({
+      where: { userId: owner.id, revokedAt: { not: null } },
+      data: { revokedAt: new Date(Date.now() - 60_000) },
+    });
     const reuse = await ctx.app.inject({
       method: 'POST',
       url: '/api/auth/refresh',
@@ -96,6 +101,30 @@ describe('auth', () => {
     // The legitimate new session is gone too.
     const me = await ctx.app.inject({ url: '/api/auth/me', headers: { cookie: asHeader(jar2) } });
     expect(me.statusCode).toBe(401);
+  });
+
+  it('two tabs renewing at the same moment: nobody is signed out and no cookie is cleared', async () => {
+    const { mobile, password, owner } = await makeCompany(ctx.app);
+    const jar1 = cookieHeader(await login(mobile, password));
+    const renew = () =>
+      ctx.app.inject({
+        method: 'POST',
+        url: '/api/auth/refresh',
+        headers: { cookie: asHeader(jar1), origin: ORIGIN },
+      });
+    // At the very same moment, and once more a second later (the tab that woke up last).
+    const [a, b] = await Promise.all([renew(), renew()]);
+    const c = await renew();
+    expect([a.statusCode, b.statusCode, c.statusCode]).toEqual([200, 200, 200]);
+    // Exactly one of them rotated; the others sent no cookie at all — in particular none that clears.
+    const sent = [a, b, c].map((r) => (r.cookies as { name: string }[]).length);
+    expect(sent.sort()).toEqual([0, 0, 2]);
+    const winner = [a, b, c].find((r) => r.cookies.length)!;
+    const jar2 = cookieHeader(winner, jar1);
+    const me = await ctx.app.inject({ url: '/api/auth/me', headers: { cookie: asHeader(jar2) } });
+    expect(me.statusCode).toBe(200);
+    // One live session: the losers' spare ones are not left open.
+    expect(await ctx.app.prisma.session.count({ where: { userId: owner.id, revokedAt: null } })).toBe(1);
   });
 
   it('logs out and kills the session', async () => {

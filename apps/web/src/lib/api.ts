@@ -1,5 +1,6 @@
 import type { ApiError as ApiErrorBody } from '@mono/shared';
 import { branchHeader } from './branch';
+import { refreshSession } from './refresh';
 import { viewAsHeader } from './view-as';
 
 export class ApiError extends Error {
@@ -13,18 +14,7 @@ export class ApiError extends Error {
   }
 }
 
-let refreshing: Promise<boolean> | null = null;
-
-/** One refresh at a time, shared by every request that hit a 401 together. */
-export function refreshSession(): Promise<boolean> {
-  refreshing ??= fetch('/api/auth/refresh', { method: 'POST', credentials: 'same-origin' })
-    .then((r) => r.ok)
-    .catch(() => false)
-    .finally(() => {
-      refreshing = null;
-    });
-  return refreshing;
-}
+export { refreshSession };
 
 type Options = Omit<RequestInit, 'body'> & { body?: unknown; retry?: boolean };
 

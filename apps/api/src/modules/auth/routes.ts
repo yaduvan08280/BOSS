@@ -84,7 +84,8 @@ export async function authRoutes(app: FastifyInstance, opts: { env: Env }) {
       if (!token) throw unauthenticated();
       try {
         const s = await auth.refresh(app.prisma, token, client(request));
-        await setSessionCookies(reply, s);
+        // Another tab of the same browser renewed a moment ago: its cookies stand, none are sent or cleared.
+        if (!('again' in s)) await setSessionCookies(reply, s);
         return { ok: true as const };
       } catch (err) {
         clearCookies(reply);
