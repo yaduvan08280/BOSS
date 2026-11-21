@@ -39,8 +39,10 @@ actions under 300 ms.
 | Office reads | 22,125 | 23 ms | 96 ms | 138 ms | 316 ms |
 
 44,016 requests in 15 minutes (49 a second), **0 failed**, with the worker running its sweeps on the same
-large company throughout. Target met with room: the slowest action's p95 is 193 ms against 300. It is still a
-measurement of this 4-core sandbox with the load generator on the same machine.
+large company throughout. That table is the best run. **The same code, run again and again on this sandbox,
+gives a payment p95 anywhere between 190 and 320 ms** (rows 14–15 below): the target is met in most runs and
+missed in some, always with 0 failures. It is a measurement of a 4-core sandbox with the load generator, the
+database and the worker on the same machine.
 
 ### How it got there (the same test, same data, same machine)
 
@@ -59,6 +61,8 @@ measurement of this 4-core sandbox with the load generator on the same machine.
 | 11 | a run that crossed midnight IST: every action twice as slow | all 97,000 late tasks were told "still overdue" in one pass — 58,000 events at once for the worker | the daily round is spread: 2,000 a pass |
 | 12 | 0 errors, payment p95 295–300 ms | the number still had eight round trips after it; each signed-in request asked three queries to check the person; a receipt read its company five times | the number is one statement and the last; one sign-in query; repeated reads removed (a payment: 58 statements → 50) |
 | 13 | **0 errors, payment p95 193 ms, bill 118 ms, kitchen 146 ms over 15 min** | the office task list sent 500 full tasks (427 KB) on every call — a fifth of the API process | a hundred at a time (86 KB) |
+| 14 | the unchanged code of row 13 over six more 15-minute runs (20–21/11): payment p95 **237, 322, 192, 197, 259, 312 ms**, 0 errors each time — two misses | nothing unusual in the processes (API about 60 % of one core, the machine half idle, no memory or disk pressure). An unloaded payment alone takes 87 ms: about 50 statements, one after the other. Slow requests come in clumps — tills falling into step with each other, and a burst at each of the worker's five-minute sweeps — and inside a clump every statement waits its turn in the one API process | (the next row) |
+| 15 | 0 errors, payment p50 90 → 75 ms; p95 256 and 243 ms in two runs — the median is better, the tail is not | every signed-in request asked a second query (has this company a franchise?) and up to four more for a person's branches; a paper was read back before its number; a payment read its invoice twice and the company's items and recipes even when nothing on the order is stocked | the sign-in query answers the franchise and home-branch questions itself; the read-backs are gone; recipes are read only for stocked orders (decision 269; a payment: 50 statements → 44) |
 
 Also found on the way and fixed: an open task vanishing from the delegation sheet behind 1,000 old ones;
 task events, process-record events and failed messages looked up with no index (3–9 s each on this data); the
@@ -71,6 +75,9 @@ everything queues: 65 requests a second is the ceiling here and people wait 2–
 **What gives first is the API's single process** (one CPU core at 100 %; the database was at about 30 % of
 one core and had connections to spare). The way past that is a second API copy behind Caddy (architecture
 rows A2–A10 of `docs/plans/coverage.md` — not built). For one property at thirty devices it is not needed.
+It is also what would take the payment's tail (rows 14–15) safely under the target on a small machine: the
+clumps queue in one process. On the i7-12700 (faster cores, twenty threads) the same load should sit well
+under the target, but that has not been measured.
 
 ## 2. Kill drills
 

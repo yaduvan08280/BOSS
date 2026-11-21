@@ -1,5 +1,17 @@
 # Changelog
 
+## 21/11/2026 — Every request asks the database a little less
+
+- Each signed-in request used to ask a second question after the sign-in check (has this company a
+  franchise?), and four more for anyone who does not see the whole company (which branches are theirs). The
+  sign-in check now answers these itself for the usual person — one branch, no franchise — so their reach
+  costs nothing more (decision 269). Test: `apps/api/src/modules/branches/reach-known.test.ts`.
+- A receipt or payment is no longer read back before it takes its number; a POS payment reads its invoice
+  once and reads recipes only when something on the order is stocked: 50 statements → 44, the median payment
+  under load 90 → 75 ms. Tests: `hosp/pos-pay-reads.test.ts`, `money/number-last.test.ts`.
+- Honest note in `docs/production-readiness.md`: on the 4-core sandbox the payment's p95 lies between 190 and
+  320 ms from run to run on the same code — most runs meet the 300 ms target, some miss it, none has errors.
+
 ## 21/11/2026 — A new hotel booking opens on something that can be sold
 
 - Front desk → New booking paired the first rate plan with the property's first room type, whether or not
