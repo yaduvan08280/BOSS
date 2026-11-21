@@ -1,5 +1,13 @@
 # Changelog
 
+## 21/11/2026 — A new hotel booking opens on something that can be sold
+
+- Front desk → New booking paired the first rate plan with the property's first room type, whether or not
+  that plan has a rate for it. When it had none, the price was refused (400) and the dialog showed nothing.
+  The dialog now offers only the room types the chosen plan prices, and says in words why a price cannot be
+  given (too many guests for the room, for instance). Found by the screen audit on a run where a test's plan
+  happened to sort first. Test: `e2e/hotel-booking.spec.ts`.
+
 ## 20/11/2026 — The worker no longer slows the tills in the small hours
 
 - **Fixed — on a large company, bills and payments were slower for a minute in every five**, most of all

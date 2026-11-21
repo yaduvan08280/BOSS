@@ -32,7 +32,10 @@ export function NewBookingDialog({
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
   const plan = planId || plans.data?.find((p) => p.active)?.id || '';
-  const type = typeId || types[0]?.id || '';
+  // Only the room types this plan has a rate for can be booked on it.
+  const priced = new Set(plans.data?.find((p) => p.id === plan)?.rates.map((r) => r.roomTypeId));
+  const offered = types.filter((x) => priced.has(x.id));
+  const type = offered.find((x) => x.id === typeId)?.id ?? offered[0]?.id ?? '';
   const ready = plan && type && depart > arrive && Number(adults) > 0;
   const quote = useQuote(
     ready
@@ -85,7 +88,7 @@ export function NewBookingDialog({
           </Field>
           <Field label={t('hotel.roomType')}>
             <Select value={type} onChange={(e) => setTypeId(e.target.value)}>
-              {types.map((x) => (
+              {offered.map((x) => (
                 <option key={x.id} value={x.id}>
                   {x.name}
                 </option>
@@ -107,7 +110,12 @@ export function NewBookingDialog({
             <Input inputMode="numeric" value={adults} onChange={(e) => setAdults(e.target.value)} />
           </Field>
         </div>
-        {q && (
+        {quote.error && (
+          <p className="text-sm text-status-bad-fg" role="alert">
+            {quote.error.message}
+          </p>
+        )}
+        {q && !quote.error && (
           <div className="rounded-control bg-muted p-3 text-sm" data-testid="hotel-quote">
             {q.problem ? (
               <p className="text-status-bad-fg">
