@@ -52,6 +52,8 @@ describe('a paper takes its number as late as it can', () => {
     expect(number).toBeGreaterThan(0);
     const before = calls.slice(0, number);
     const after = calls.slice(number + 1);
+    // The receipt is not read back before it is numbered: setting it against the invoice hands it on.
+    expect(calls).not.toContain('bill.findUniqueOrThrow');
     expect(before).toContain('billAllocation.create');
     expect(before).toContain('voucher.create');
     expect(before).toContain('auditLog.create');

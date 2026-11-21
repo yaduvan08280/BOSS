@@ -75,8 +75,9 @@ export async function finishIssue(
   }
   // One series per legal entity and kind of paper (a GSTIN's own invoice numbers); the company's own otherwise.
   const series = seriesOf('entity', p.head, `bill:${bill.type}`, p.prefix, p.fy);
-  // What the paper looks like now (money set against other papers changed its `settled` a moment ago).
-  const current = await tx.bill.findUniqueOrThrow({ where: { id: bill.id } });
+  // (`bill` is the paper as it now stands: the caller hands over what setting money against other papers
+  // left of it, so it is not read again here.)
+  const current = bill;
   await p.beforeNumber?.(current);
   // "INV/RJ/26-27/" — the running number follows, at least four digits wide.
   const front = series.number(0).slice(0, -4);

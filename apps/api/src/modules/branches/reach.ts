@@ -62,21 +62,34 @@ export async function branchesOf(db: Db | Tx, companyId: string, userId: string)
 }
 
 /**
+ * `known` is what the caller has already read (the sign-in check reads it with the person, in one query):
+ * whether the company has any franchise, and — for somebody who works nowhere but their home branch (no second
+ * branch, nothing managed, never lent) — that branch. With it the usual person's reach needs no query at all.
+ */
+type Who = {
+  companyId: string;
+  userId: string;
+  permissions: string[];
+  reach: string;
+  known?: { franchises: boolean; home?: { branchId: string | null } };
+};
+
+/**
  * How far a person sees (plan §3.3). Owners and roles with the reach "group" see everything. "entity" widens a
  * person's branches to every branch of their legal entities. "branches" and "own" are the person's branches at
  * the database fence — "own" people are narrowed further by each module's own rules (my tasks, my leave), as
  * before.
  */
-export async function reachFor(
-  db: Db | Tx,
-  who: { companyId: string; userId: string; permissions: string[]; reach: string },
-): Promise<Reach> {
+export async function reachFor(db: Db | Tx, who: Who): Promise<Reach> {
   // Franchises (stage D). Someone whose home branch belongs to a franchise entity is walled inside it, whatever
   // their role says. Group people see franchises only with the franchise-oversight right.
-  const franchises = await db.legalEntity.findMany({
-    where: { companyId: who.companyId, kind: 'FRANCHISE' },
-    select: { id: true },
-  });
+  const franchises =
+    who.known && !who.known.franchises
+      ? []
+      : await db.legalEntity.findMany({
+          where: { companyId: who.companyId, kind: 'FRANCHISE' },
+          select: { id: true },
+        });
   if (franchises.length) {
     const fIds = franchises.map((f) => f.id);
     const home = await db.user.findFirst({
@@ -120,14 +133,12 @@ export async function reachFor(
 }
 
 /** A person's reach by their role and branches alone (before franchises are taken into account). */
-async function ownReach(
-  db: Db | Tx,
-  who: { companyId: string; userId: string; permissions: string[]; reach: string },
-): Promise<Reach> {
+async function ownReach(db: Db | Tx, who: Who): Promise<Reach> {
   const everything = who.permissions.includes('*') || who.reach === 'group';
   let ids: string[] | null = null;
   if (!everything) {
-    ids = await branchesOf(db, who.companyId, who.userId);
+    const home = who.known?.home;
+    ids = home ? (home.branchId ? [home.branchId] : []) : await branchesOf(db, who.companyId, who.userId);
     if (who.reach === 'entity' && ids.length) {
       const mine = await db.branch.findMany({
         where: { companyId: who.companyId, id: { in: ids }, entityId: { not: null } },

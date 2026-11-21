@@ -24,6 +24,12 @@ type Mod = { itemId?: string | null; qty?: number | null; name: string };
 
 /** Stock for a paid order: each item's recipe, and add-ons that carry stock. What the location is short of is noted, never blocking. */
 async function consumeOrder(tx: Tx, actor: Actor, outlet: PosOutlet, order: LoadedOrder) {
+  // Nothing on the order is stocked (no stock item, no add-on that carries stock): there is nothing to take,
+  // so the company's items and recipes are not read at all.
+  const stocked = live(order).some(
+    (i) => i.stockItemId || ((i.modifiers as Mod[] | null) ?? []).some((m) => m.itemId && m.qty),
+  );
+  if (!stocked) return;
   const books = await booksOf(tx, actor.companyId);
   const ctx = ctxOf(actor);
   const heldAt = async (itemId: string, locationId: string) =>

@@ -10,7 +10,11 @@ export const dueOf = (b: { total: bigint; credited: bigint; settled: bigint }) =
 const OLDEST_PAGE = 50;
 
 /** Set a receipt against invoices (or a payment against purchase bills): the ones named, else the oldest first. */
-export async function allocate(tx: Tx, money: Bill, named?: { billId: string; amount: number }[]) {
+export async function allocate(
+  tx: Tx,
+  money: Bill,
+  named?: { billId: string; amount: number }[],
+): Promise<Bill> {
   const owedTypes = money.type === 'RECEIPT' ? ['INVOICE', 'DEBIT_NOTE'] : ['PURCHASE_BILL'];
   const waiting = {
     companyId: money.companyId,
@@ -73,7 +77,8 @@ export async function allocate(tx: Tx, money: Bill, named?: { billId: string; am
   const latest = new Map<string, Bill>();
   for (const { bill, amount } of plan)
     latest.set(bill.id, await settle(tx, latest.get(bill.id) ?? bill, money.id, amount, { held: true }));
-  await tx.bill.update({ where: { id: money.id }, data: { settled: BigInt(Number(money.total) - left) } });
+  // The money paper as it now stands is handed back, so issuing it need not read it again.
+  return tx.bill.update({ where: { id: money.id }, data: { settled: BigInt(Number(money.total) - left) } });
 }
 
 /**

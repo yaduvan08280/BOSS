@@ -44,14 +44,6 @@ export async function payCheck(db: Db, actor: Actor, checkId: string, input: z.i
       })
     ).map((m) => [m.id, m]),
   );
-  const bill = await db.bill.findUniqueOrThrow({ where: { id: check.billId } });
-  const due = Number(bill.total - bill.credited - bill.settled) - creditOf(check.payments);
-  if (p.payments.reduce((n, x) => n + x.amount, 0) > due)
-    throw new AppError(
-      400,
-      'VALIDATION_FAILED',
-      `Only ${(due / 100).toFixed(2)} is left to pay on this bill`,
-    );
   const rooms = new Map<(typeof p.payments)[number], RoomTarget>();
   for (const x of p.payments) {
     const mode = modes.get(x.modeId);
@@ -71,11 +63,24 @@ export async function payCheck(db: Db, actor: Actor, checkId: string, input: z.i
         'VALIDATION_FAILED',
         'A complimentary bill is made no-charge with a reason, not paid',
       );
-    if (mode.kind === 'COMPANY' && bill.partyId === `walkin_${actor.companyId}`)
-      throw new AppError(409, 'CONFLICT', 'Company credit needs the bill to be in the company’s name');
   }
   const ctx = ctxOf(actor);
   const orderStatus = await db.$transaction(async (tx) => {
+    // The invoice is read once, here (it used to be read before the transaction as well): what is still owed
+    // on it decides whether this much can be taken at all.
+    const bill = await tx.bill.findUniqueOrThrow({ where: { id: check.billId } });
+    const due = Number(bill.total - bill.credited - bill.settled) - creditOf(check.payments);
+    if (p.payments.reduce((n, x) => n + x.amount, 0) > due)
+      throw new AppError(
+        400,
+        'VALIDATION_FAILED',
+        `Only ${(due / 100).toFixed(2)} is left to pay on this bill`,
+      );
+    if (
+      bill.partyId === `walkin_${actor.companyId}` &&
+      p.payments.some((x) => modes.get(x.modeId)!.kind === 'COMPANY')
+    )
+      throw new AppError(409, 'CONFLICT', 'Company credit needs the bill to be in the company’s name');
     const taken: Payment[] = [...((check.payments as Payment[] | null) ?? [])];
     // Receipts are made LAST (below): a receipt takes the next number of its series, and that series stays
     // locked until this transaction ends — so everything that does not need the number (the room's folio, the
@@ -119,9 +124,8 @@ export async function payCheck(db: Db, actor: Actor, checkId: string, input: z.i
         modeId: p.tip.modeId ?? null,
       });
     // What will be left once the receipts below are set against the invoice (checked again after they are).
-    const before = await tx.bill.findUniqueOrThrow({ where: { id: bill.id } });
     const left =
-      Number(before.total - before.credited - before.settled) -
+      Number(bill.total - bill.credited - bill.settled) -
       receipts.reduce((n, r) => n + r.amount, 0) -
       creditOf(taken);
     const status = transition(checkMachine, {

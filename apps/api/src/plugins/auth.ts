@@ -65,9 +65,27 @@ export default fp(async function authPlugin(app: FastifyInstance, opts: { secret
     // this session still open, and what is their role. (Asked as three queries before; this is the first
     // thing every call does, so it is asked some fifty times a second in a busy service.)
     const found = await app.prisma.$queryRaw<
-      { id: string; mustChangePassword: boolean; key: string | null; permissions: string[]; reach: string }[]
+      {
+        id: string;
+        mustChangePassword: boolean;
+        key: string | null;
+        permissions: string[];
+        reach: string;
+        branchId: string | null;
+        franchises: boolean;
+        elsewhere: boolean;
+      }[]
     >`
-      SELECT u.id, u.must_change_password AS "mustChangePassword", r.key, r.permissions, r.reach
+      SELECT u.id, u.must_change_password AS "mustChangePassword", r.key, r.permissions, r.reach,
+        u.branch_id AS "branchId",
+        EXISTS (
+          SELECT 1 FROM legal_entities e WHERE e.company_id = u.company_id AND e.kind = 'FRANCHISE'
+        ) AS franchises,
+        (
+          EXISTS (SELECT 1 FROM user_branches w WHERE w.company_id = u.company_id AND w.user_id = u.id)
+          OR EXISTS (SELECT 1 FROM branch_managers m WHERE m.company_id = u.company_id AND m.user_id = u.id)
+          OR EXISTS (SELECT 1 FROM branch_loans l WHERE l.company_id = u.company_id AND l.user_id = u.id)
+        ) AS elsewhere
       FROM users u JOIN roles r ON r.id = u.role_id
       WHERE u.id = ${claims.sub} AND u.company_id = ${claims.cid} AND u.deleted_at IS NULL
         AND u.status = 'ACTIVE' AND u.login_enabled
@@ -138,6 +156,17 @@ export default fp(async function authPlugin(app: FastifyInstance, opts: { secret
       userId: user.id,
       permissions: user.role.permissions,
       reach: user.role.reach,
+      // What the question above already answered, so the usual person's reach costs no further query: a
+      // company with no franchise, and somebody whose only branch is their home branch. (Not when looking as
+      // someone else: the answers were about the Owner.)
+      ...(row && !shadowOf
+        ? {
+            known: {
+              franchises: row.franchises,
+              home: row.elsewhere ? undefined : { branchId: row.branchId },
+            },
+          }
+        : {}),
     });
     request.reach = await narrowTo(
       app.prisma,

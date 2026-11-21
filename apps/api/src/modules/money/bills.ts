@@ -290,8 +290,11 @@ async function issueIn(
       },
     });
   }
-  if (bill.type === 'RECEIPT' || bill.type === 'VENDOR_PAYMENT') await allocate(tx, bill, opts.allocate);
-  return finishIssue(tx, actor, bill, {
+  const now =
+    bill.type === 'RECEIPT' || bill.type === 'VENDOR_PAYMENT'
+      ? await allocate(tx, bill, opts.allocate)
+      : bill;
+  return finishIssue(tx, actor, now, {
     to,
     fy,
     prefix: BILL_PREFIX[bill.type as BillType],
