@@ -91,9 +91,13 @@ export function TaskList({
     q: q.trim() || undefined,
     doerId: doerId || undefined,
     scope,
+    // "This week" on work that is waiting means due by the end of this week — what is late from earlier
+    // weeks is this week's work too.
     from:
       range === 'week'
-        ? week.from.toISOString()
+        ? tab === 'done'
+          ? week.from.toISOString()
+          : undefined
         : range === 'custom' && from
           ? new Date(`${from}T00:00:00`).toISOString()
           : undefined,

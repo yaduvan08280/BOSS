@@ -132,6 +132,38 @@ test('a task goes from given to verified, all from the web', async ({ page, brow
   }
 });
 
+test('work that is waiting is not hidden by its date: a task due next week is on Pending when it opens', async ({
+  page,
+  browser,
+}, info) => {
+  const label = `E2E ${info.project.name} ${Date.now()}: next week’s stock count`;
+  await signIn(page, OWNER);
+  // Nine days ahead is next week (or later) whatever day this runs on.
+  const made = await post(page.request, page, '/api/tasks', {
+    doerId: await userId(page, 'Sandeep Pal'),
+    plannedAt: new Date(Date.now() + 9 * 86_400_000).toISOString(),
+    description: label,
+  });
+  expect(made.ok()).toBe(true);
+  const task = (await made.json()) as { id: string };
+  try {
+    const doer = await as(browser, SANDEEP, info);
+    await doer.page.goto('/delegation?tab=pending');
+    await expect(row(doer.page, label).getByRole('button', { name: 'Accept' })).toBeVisible();
+    // "This week" narrows to what is due by the end of this week; "All" brings it back.
+    await doer.page.getByRole('button', { name: 'This week', exact: true }).click();
+    await expect(row(doer.page, label)).toBeHidden();
+    await doer.page.getByRole('button', { name: 'All', exact: true }).click();
+    await expect(row(doer.page, label)).toBeVisible();
+    await doer.close();
+  } finally {
+    await post(page.request, page, `/api/tasks/${task.id}/actions`, {
+      action: 'cancel',
+      reason: 'E2E clean-up',
+    });
+  }
+});
+
 test('a task passed from one person to the next, with notes everyone on it sees', async ({
   page,
   browser,

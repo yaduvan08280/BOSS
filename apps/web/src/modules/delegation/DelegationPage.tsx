@@ -104,7 +104,9 @@ export function DelegationPage({ me }: { me: Me }) {
         <TaskList
           key={`${tab}-${range}`}
           tab={tab}
-          defaultRange={range}
+          // Work that is waiting is never hidden by its date: Pending and Verification open on everything
+          // (a task due next Monday must be there to accept on Sunday); "Reports open on" is for what is done.
+          defaultRange={tab === 'done' ? range : 'all'}
           people={people}
           tz={tz}
           onOpen={(id) => set({ task: id })}

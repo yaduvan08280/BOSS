@@ -1,5 +1,14 @@
 # Changelog
 
+## 22/11/2026 — A task due next week is there to accept
+
+- **Fixed — a task given for next week (every task given on a Sunday for Monday) was not on its doer's
+  Pending tab**, and neither was work late from an earlier week: the tab opened on "This week" and showed only
+  tasks planned inside it, while the counter above still counted them. Pending and Verification now open on
+  All; "This week" there means due by the end of this week (late work included). The Done tab opens as the
+  flow designer's "Reports open on" says, as before (decision 270). Found when the browser tests ran on a
+  Sunday. Test: `e2e/work.spec.ts`.
+
 ## 21/11/2026 — Every request asks the database a little less
 
 - Each signed-in request used to ask a second question after the sign-in check (has this company a
