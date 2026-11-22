@@ -1,5 +1,12 @@
 # Changelog
 
+## 22/11/2026 — Two full rounds, one after the other, with nothing changed between
+
+- Both rounds ran on the same commit: lint, typecheck, build, 952 unit tests, the time-zone tests, every Playwright spec (135 passed, 23 skipped by design), the size audit (58 passes, 0 problems), the load test, the kill drills and a restore into empty folders.
+- Load, 15 minutes, 30 POS + 10 desk + 50 office: 0 failed; payment p95 297 ms, then 276 ms. On the same code earlier runs gave 190–320 ms — the sandbox's own variation; a second API copy is what would remove the tail.
+- Kill drills: API and worker killed mid-work, nothing lost or doubled. Restore: 23 s and 25 s.
+- All of it on the development sandbox. Nothing was run on the live server.
+
 ## 22/11/2026 — A task due next week is there to accept
 
 - **Fixed — a task given for next week (every task given on a Sunday for Monday) was not on its doer's

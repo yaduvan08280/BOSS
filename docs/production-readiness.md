@@ -63,6 +63,7 @@ database and the worker on the same machine.
 | 13 | **0 errors, payment p95 193 ms, bill 118 ms, kitchen 146 ms over 15 min** | the office task list sent 500 full tasks (427 KB) on every call — a fifth of the API process | a hundred at a time (86 KB) |
 | 14 | the unchanged code of row 13 over six more 15-minute runs (20–21/11): payment p95 **237, 322, 192, 197, 259, 312 ms**, 0 errors each time — two misses | nothing unusual in the processes (API about 60 % of one core, the machine half idle, no memory or disk pressure). An unloaded payment alone takes 87 ms: about 50 statements, one after the other. Slow requests come in clumps — tills falling into step with each other, and a burst at each of the worker's five-minute sweeps — and inside a clump every statement waits its turn in the one API process | (the next row) |
 | 15 | 0 errors, payment p50 90 → 75 ms; p95 256 and 243 ms in two runs — the median is better, the tail is not | every signed-in request asked a second query (has this company a franchise?) and up to four more for a person's branches; a paper was read back before its number; a payment read its invoice twice and the company's items and recipes even when nothing on the order is stocked | the sign-in query answers the franchise and home-branch questions itself; the read-backs are gone; recipes are read only for stocked orders (decision 269; a payment: 50 statements → 44) |
+| 16 | the final two full rounds on the unchanged code (22/11, commit `9d6ad55`): payment p95 **297 ms** and **276 ms**, 0 errors of 43,533 and 43,564 requests — both inside the target, the first only just | — | — |
 
 Also found on the way and fixed: an open task vanishing from the delegation sheet behind 1,000 old ones;
 task events, process-record events and failed messages looked up with no index (3–9 s each on this data); the
@@ -87,7 +88,7 @@ under the target, but that has not been measured.
 | Worker killed while telling people | 600 tasks given at once (600 events); the worker killed with `kill -9` while they were coming in; two workers started together; one of them killed again | every event handled **once**: one notification a person an event, no message queued twice, none left |
 | Recovery time of the worker | — | **first run: nothing went out for 15 minutes** (the killed job stayed "running" in the queue); after the fix (heartbeat, one waiting job) everything was caught up **10 s** after the kill |
 | Database wiped | the database's folder deleted; rebuilt from the nightly base copy and the minute-by-minute log (`deploy/restore-pitr.sh`) | back in **17 s**, losing only the last seconds; rolling back to a chosen minute works |
-| Whole stack from a backup | the test stack backed up (`backup.sh`), its database folder and uploads deleted, then `deploy/restore.sh` on the empty folders | **22 s**; sign-in, a record made before the backup, an uploaded file and the saved keys are back |
+| Whole stack from a backup | the test stack backed up (`backup.sh`), its database folder and uploads deleted, then `deploy/restore.sh` on the empty folders | **23–25 s** (four runs); sign-in, a record made before the backup, an uploaded file and the saved keys are back |
 
 Not drilled here (they need the building): pulling the internet, cutting the power, a real printer, a second
 physical machine. Steps in `docs/go-live.md` §8–9.
